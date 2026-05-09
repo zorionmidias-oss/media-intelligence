@@ -1,0 +1,14 @@
+node_modules/
+.env
+.env.local
+.env.*.local
+credentials/
+*.log
+.DS_Store
+.cache/
+.next/
+.claude/
+audit-output.txt
+gam-debug.csv
+gam-diag-utm.csv
+C:*

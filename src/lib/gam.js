@@ -1,0 +1,515 @@
+'use strict';
+const { google } = require('googleapis');
+const axios = require('axios');
+const zlib = require('zlib');
+const { promisify } = require('util');
+const gunzip = promisify(zlib.gunzip);
+
+const GAM_VERSION = 'v202505';
+const SOAP_ENDPOINT = `https://ads.google.com/apis/ads/publisher/${GAM_VERSION}/ReportService`;
+const SCOPE = [
+  'https://www.googleapis.com/auth/admanager',
+  'https://www.googleapis.com/auth/devstorage.read_only',
+];
+const NETWORK_CODE = process.env.GOOGLE_ADM_NETWORK_CODE;
+const SA_JSON_CONTENT = process.env.GOOGLE_ADM_SERVICE_ACCOUNT_JSON_CONTENT;
+const KEY_FILE = process.env.GOOGLE_ADM_SERVICE_ACCOUNT_JSON || './credentials/google-service-account.json';
+
+let _cachedToken = null;
+let _tokenExpiry = 0;
+let _usdToBrl = null;
+let _usdToBrlExpiry = 0;
+
+async function getUSDtoBRL() {
+  if (_usdToBrl && Date.now() < _usdToBrlExpiry) return _usdToBrl;
+  try {
+    const res = await axios.get('https://api.exchangerate-api.com/v4/latest/USD', { timeout: 10000 });
+    _usdToBrl = res.data?.rates?.BRL || 5.0;
+    _usdToBrlExpiry = Date.now() + 3600 * 1000;
+  } catch (e) {
+    console.warn('[USD→BRL]', e.message);
+    if (!_usdToBrl) _usdToBrl = 5.0;
+    _usdToBrlExpiry = Date.now() + 300 * 1000;
+  }
+  return _usdToBrl;
+}
+
+async function getAccessToken() {
+  if (_cachedToken && Date.now() < _tokenExpiry - 60000) return _cachedToken;
+  let auth;
+  if (SA_JSON_CONTENT) {
+    auth = new google.auth.GoogleAuth({ credentials: JSON.parse(SA_JSON_CONTENT), scopes: SCOPE });
+  } else {
+    auth = new google.auth.GoogleAuth({ keyFile: KEY_FILE, scopes: SCOPE });
+  }
+  const client = await auth.getClient();
+  const tokenResponse = await client.getAccessToken();
+  _cachedToken = tokenResponse.token;
+  _tokenExpiry = Date.now() + 3500 * 1000;
+  return _cachedToken;
+}
+
+function soapHeader(networkCode) {
+  return `<soapenv:Header>
+    <ns1:RequestHeader xmlns:ns1="https://www.google.com/apis/ads/publisher/${GAM_VERSION}"
+      soapenv:actor="http://schemas.xmlsoap.org/soap/actor/next"
+      soapenv:mustUnderstand="0">
+      <ns1:networkCode>${networkCode}</ns1:networkCode>
+      <ns1:applicationName>media-intelligence</ns1:applicationName>
+    </ns1:RequestHeader>
+  </soapenv:Header>`;
+}
+
+function wrapEnvelope(header, body) {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope
+  xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  ${header}
+  <soapenv:Body>${body}</soapenv:Body>
+</soapenv:Envelope>`;
+}
+
+function dateToXML(dateStr) {
+  const [y, m, d] = dateStr.split('-');
+  return `<year>${y}</year><month>${parseInt(m)}</month><day>${parseInt(d)}</day>`;
+}
+
+function buildRunReportJobXML(networkCode, since, until) {
+  return wrapEnvelope(soapHeader(networkCode), `
+    <runReportJob xmlns="https://www.google.com/apis/ads/publisher/${GAM_VERSION}">
+      <reportJob>
+        <reportQuery>
+          <dimensions>DATE</dimensions>
+          <dimensions>AD_UNIT_NAME</dimensions>
+          <columns>AD_SERVER_IMPRESSIONS</columns>
+          <columns>AD_SERVER_CLICKS</columns>
+          <columns>AD_SERVER_CTR</columns>
+          <columns>AD_SERVER_CPM_AND_CPC_REVENUE</columns>
+          <columns>AD_SERVER_WITHOUT_CPD_AVERAGE_ECPM</columns>
+          <columns>TOTAL_ACTIVE_VIEW_VIEWABLE_IMPRESSIONS</columns>
+          <columns>TOTAL_ACTIVE_VIEW_MEASURABLE_IMPRESSIONS</columns>
+          <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE</columns>
+          <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS</columns>
+          <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM</columns>
+          <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_CPC</columns>
+          <startDate>${dateToXML(since)}</startDate>
+          <endDate>${dateToXML(until)}</endDate>
+          <dateRangeType>CUSTOM_DATE</dateRangeType>
+        </reportQuery>
+      </reportJob>
+    </runReportJob>`);
+}
+
+function buildAdvertiserReportXML(networkCode, since, until) {
+  return wrapEnvelope(soapHeader(networkCode), `
+    <runReportJob xmlns="https://www.google.com/apis/ads/publisher/${GAM_VERSION}">
+      <reportJob>
+        <reportQuery>
+          <dimensions>ADVERTISER_NAME</dimensions>
+          <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE</columns>
+          <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS</columns>
+          <columns>AD_SERVER_WITHOUT_CPD_AVERAGE_ECPM</columns>
+          <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_CPC</columns>
+          <columns>AD_SERVER_CTR</columns>
+          <startDate>${dateToXML(since)}</startDate>
+          <endDate>${dateToXML(until)}</endDate>
+          <dateRangeType>CUSTOM_DATE</dateRangeType>
+        </reportQuery>
+      </reportJob>
+    </runReportJob>`);
+}
+
+function buildGetStatusXML(networkCode, jobId) {
+  return wrapEnvelope(soapHeader(networkCode), `
+    <getReportJobStatus xmlns="https://www.google.com/apis/ads/publisher/${GAM_VERSION}">
+      <reportJobId>${jobId}</reportJobId>
+    </getReportJobStatus>`);
+}
+
+function buildGetDownloadURLXML(networkCode, jobId) {
+  return wrapEnvelope(soapHeader(networkCode), `
+    <getReportDownloadURL xmlns="https://www.google.com/apis/ads/publisher/${GAM_VERSION}">
+      <reportJobId>${jobId}</reportJobId>
+      <exportFormat>CSV_DUMP</exportFormat>
+    </getReportDownloadURL>`);
+}
+
+function extractTag(xml, tag) {
+  const re = new RegExp(`<(?:[\\w]+:)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:[\\w]+:)?${tag}>`, 'i');
+  const m = xml.match(re);
+  return m ? m[1].trim() : null;
+}
+
+async function soapCall(token, xml, action) {
+  const res = await axios.post(SOAP_ENDPOINT, xml, {
+    headers: {
+      'Content-Type': 'text/xml; charset=utf-8',
+      'SOAPAction': action || '',
+      Authorization: `Bearer ${token}`,
+    },
+    timeout: 30000,
+  });
+  return res.data;
+}
+
+function parseCSV(csv) {
+  const lines = csv.trim().split('\n').filter(Boolean);
+  if (lines.length < 2) return { headers: [], rows: [] };
+  const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g, '').trim());
+  const rows = lines.slice(1).map(line => {
+    const values = line.split(',').map(v => v.replace(/^"|"$/g, '').trim());
+    const row = {};
+    headers.forEach((h, i) => { row[h] = values[i] ?? ''; });
+    return row;
+  });
+  return { headers, rows };
+}
+
+function defaultDateRange() {
+  const until = new Date();
+  const since = new Date();
+  since.setDate(since.getDate() - 30);
+  return {
+    since: since.toISOString().slice(0, 10),
+    until: until.toISOString().slice(0, 10),
+  };
+}
+
+async function pollAndDownload(token, networkCode, jobId) {
+  let status = 'IN_PROGRESS';
+  for (let attempt = 0; attempt < 20 && status !== 'COMPLETED'; attempt++) {
+    await new Promise(r => setTimeout(r, 5000));
+    const statusResp = await soapCall(token, buildGetStatusXML(networkCode, jobId));
+    status = extractTag(statusResp, 'rval') || 'FAILED';
+    if (status === 'FAILED') throw new Error('GAM report job failed');
+  }
+  if (status !== 'COMPLETED') throw new Error('GAM report job timed out');
+
+  const urlResp = await soapCall(token, buildGetDownloadURLXML(networkCode, jobId));
+  const rawUrl = extractTag(urlResp, 'rval');
+  if (!rawUrl) throw new Error('GAM: failed to get download URL');
+  // XML-unescape ampersands in the signed URL query string
+  const downloadUrl = rawUrl.replace(/&amp;/g, '&');
+
+  const csvResp = await axios.get(downloadUrl, {
+    timeout: 60000,
+    responseType: 'arraybuffer',
+  });
+  const buf = Buffer.from(csvResp.data);
+  const csvText = buf[0] === 0x1f && buf[1] === 0x8b
+    ? (await gunzip(buf)).toString('utf8')
+    : buf.toString('utf8');
+  return parseCSV(csvText).rows;
+}
+
+async function fetchGAMReport(dateRange) {
+  const networkCode = NETWORK_CODE;
+  if (!networkCode) throw new Error('GOOGLE_ADM_NETWORK_CODE not configured');
+
+  const { since, until } = dateRange || defaultDateRange();
+  const [token, rate] = await Promise.all([getAccessToken(), getUSDtoBRL()]);
+
+  const runXML = buildRunReportJobXML(networkCode, since, until);
+  const runResp = await soapCall(token, runXML);
+  const jobId = extractTag(runResp, 'id');
+  if (!jobId) throw new Error('GAM: failed to create report job');
+
+  const rows = await pollAndDownload(token, networkCode, jobId);
+
+  const adUnitMap = {};
+  // adUnitsByDay: { 'yyyy-mm-dd' → { adUnit → { impressions, clicks, revenue, adxImp, viewable, measurable } } }
+  const adUnitsByDay = {};
+  const dailyRevenue = {};
+  let totalServerImpressions = 0, totalAdxImpressions = 0;
+  let totalClicks = 0, totalRevenue = 0;
+  let totalViewable = 0, totalMeasurable = 0;
+  let totalAdxCpcWtSum = 0, totalAdxCpcWt = 0;
+  let latestDate = '';
+
+  for (const row of rows) {
+    const date = row['Dimension.DATE'] || row['DATE'] || '';
+    const adUnit = row['Dimension.AD_UNIT_NAME'] || row['AD_UNIT_NAME'] || 'Unknown';
+    const serverImp = Number(row['Column.AD_SERVER_IMPRESSIONS'] || row['AD_SERVER_IMPRESSIONS'] || 0);
+    const clicks = Number(row['Column.AD_SERVER_CLICKS'] || row['AD_SERVER_CLICKS'] || 0);
+    // AD_SERVER revenue is in USD (not micros)
+    const adServerRevenue = Number(row['Column.AD_SERVER_CPM_AND_CPC_REVENUE'] || row['AD_SERVER_CPM_AND_CPC_REVENUE'] || 0) * rate;
+    const viewable = Number(row['Column.TOTAL_ACTIVE_VIEW_VIEWABLE_IMPRESSIONS'] || row['TOTAL_ACTIVE_VIEW_VIEWABLE_IMPRESSIONS'] || 0);
+    const measurable = Number(row['Column.TOTAL_ACTIVE_VIEW_MEASURABLE_IMPRESSIONS'] || row['TOTAL_ACTIVE_VIEW_MEASURABLE_IMPRESSIONS'] || 0);
+    // AD_EXCHANGE revenue is in micros
+    const adxRevenueMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE'] || 0);
+    const adxImp = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS'] || 0);
+    const adxRevenue = (adxRevenueMicros / 1_000_000) * rate;
+    const adxCpcMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CPC'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_CPC'] || 0);
+    if (adxCpcMicros > 0 && adxImp > 0) {
+      totalAdxCpcWtSum += adxCpcMicros * adxImp;
+      totalAdxCpcWt += adxImp;
+    }
+    const revenue = adServerRevenue + adxRevenue;
+    const allImpressions = serverImp + adxImp;
+
+    totalServerImpressions += serverImp;
+    totalAdxImpressions += adxImp;
+    totalClicks += clicks;
+    totalRevenue += revenue;
+    totalViewable += viewable;
+    totalMeasurable += measurable;
+    if (date > latestDate) latestDate = date;
+
+    if (!adUnitMap[adUnit]) {
+      adUnitMap[adUnit] = { name: adUnit, impressions: 0, serverImpressions: 0, adxImpressions: 0, clicks: 0, revenue: 0, viewable: 0, measurable: 0 };
+    }
+    const u = adUnitMap[adUnit];
+    u.impressions += allImpressions;
+    u.serverImpressions += serverImp;
+    u.adxImpressions += adxImp;
+    u.clicks += clicks;
+    u.revenue += revenue;
+    u.viewable += viewable;
+    u.measurable += measurable;
+
+    if (date) {
+      dailyRevenue[date] = (dailyRevenue[date] || 0) + revenue;
+      if (!adUnitsByDay[date]) adUnitsByDay[date] = {};
+      if (!adUnitsByDay[date][adUnit]) adUnitsByDay[date][adUnit] = { impressions: 0, serverImpressions: 0, adxImpressions: 0, clicks: 0, revenue: 0, viewable: 0, measurable: 0 };
+      const du = adUnitsByDay[date][adUnit];
+      du.impressions += allImpressions;
+      du.serverImpressions += serverImp;
+      du.adxImpressions += adxImp;
+      du.clicks += clicks;
+      du.revenue += revenue;
+      du.viewable += viewable;
+      du.measurable += measurable;
+    }
+  }
+
+  const totalImpressions = totalServerImpressions + totalAdxImpressions;
+  const ecpm = totalImpressions > 0 ? (totalRevenue / totalImpressions) * 1000 : 0;
+  const ctr = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
+  const cpc = totalAdxCpcWt > 0
+    ? (totalAdxCpcWtSum / totalAdxCpcWt / 1_000_000) * rate
+    : (totalClicks > 0 ? totalRevenue / totalClicks : 0);
+  const viewability = totalMeasurable > 0 ? (totalViewable / totalMeasurable) * 100 : 0;
+  // taxaProgramatica uses totalImpressions (server + adx) as denominator
+  const taxaProgramatica = totalImpressions > 0 ? (totalAdxImpressions / totalImpressions) * 100 : 0;
+  // RPS = (adxImpressions / totalImpressions × eCPM) / 100
+  const rps = totalImpressions > 0 ? (totalAdxImpressions / totalImpressions * ecpm) / 100 : 0;
+  const cpaIdeal = rps / 1000;
+  const delayHours = latestDate
+    ? Math.round((Date.now() - new Date(latestDate).getTime()) / 3600000)
+    : 0;
+
+  const adUnits = Object.values(adUnitMap)
+    .sort((a, b) => b.impressions - a.impressions)
+    .slice(0, 10)
+    .map(u => ({
+      ...u,
+      ecpm: u.impressions > 0 ? (u.revenue / u.impressions) * 1000 : 0,
+      ctr: u.impressions > 0 ? (u.clicks / u.impressions) * 100 : 0,
+      viewability: u.measurable > 0 ? (u.viewable / u.measurable) * 100 : 0,
+      taxaProgramatica: u.serverImpressions > 0 ? (u.adxImpressions / u.serverImpressions) * 100 : 0,
+    }));
+
+  return {
+    summary: {
+      impressions: totalImpressions,
+      serverImpressions: totalServerImpressions,
+      adxImpressions: totalAdxImpressions,
+      clicks: totalClicks,
+      revenue: totalRevenue,
+      ecpm, ctr, cpc, viewability,
+      taxaProgramatica, rps, cpaIdeal,
+    },
+    adUnits,
+    adUnitsByDay,
+    topAdvertisers: [],
+    dailyRevenue,
+    delayHours,
+    usdToBrl: rate,
+  };
+}
+
+async function fetchGAMAdvertisers(dateRange) {
+  const networkCode = NETWORK_CODE;
+  if (!networkCode) return [];
+  const { since, until } = dateRange || defaultDateRange();
+
+  try {
+    const [token, rate] = await Promise.all([getAccessToken(), getUSDtoBRL()]);
+    const xml = buildAdvertiserReportXML(networkCode, since, until);
+    const runResp = await soapCall(token, xml);
+    const jobId = extractTag(runResp, 'id');
+    if (!jobId) return [];
+
+    const rows = await pollAndDownload(token, networkCode, jobId);
+
+    return rows
+      .map(row => {
+        const name = row['Dimension.ADVERTISER_NAME'] || row['ADVERTISER_NAME'] || 'Unknown';
+        const revMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE'] || 0);
+        const revenue = (revMicros / 1_000_000) * rate;
+        const impressions = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS'] || 0);
+        // AD_SERVER_WITHOUT_CPD_AVERAGE_ECPM is an Ad Server metric → in USD (not micros)
+        const ecpm = Number(row['Column.AD_SERVER_WITHOUT_CPD_AVERAGE_ECPM'] || row['AD_SERVER_WITHOUT_CPD_AVERAGE_ECPM'] || 0) * rate;
+        // AD_EXCHANGE CPC is in micros
+        const cpcMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CPC'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_CPC'] || 0);
+        const cpc = (cpcMicros / 1_000_000) * rate;
+        // CTR as decimal (0.02 = 2%)
+        const ctr = Number(row['Column.AD_SERVER_CTR'] || row['AD_SERVER_CTR'] || 0) * 100;
+        return { name, revenue, impressions, ecpm, cpc, ctr };
+      })
+      .filter(a => a.impressions > 0 || a.revenue > 0)
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 20);
+  } catch (e) {
+    console.warn('[GAM advertisers]', e.message);
+    return [];
+  }
+}
+
+async function discoverGAMNetworks() {
+  try {
+    const token = await getAccessToken();
+    const res = await axios.get('https://admanager.googleapis.com/v1/networks', {
+      headers: { Authorization: `Bearer ${token}` },
+      timeout: 15000,
+    });
+    return (res.data.networks || []).map(n => ({
+      networkCode: n.networkCode || String(n.name || '').split('/').pop(),
+      displayName: n.displayName || '',
+      domain: _domainFromName(n.displayName || n.networkCode || ''),
+    }));
+  } catch (e) {
+    console.warn('[GAM discoverNetworks]', e.message);
+    if (NETWORK_CODE) {
+      return [{ networkCode: NETWORK_CODE, displayName: 'Rede configurada', domain: NETWORK_CODE }];
+    }
+    return [];
+  }
+}
+
+function _domainFromName(name) {
+  const m = String(name).match(/^([A-Z0-9_-]+)/i);
+  return m ? m[1].toUpperCase() : String(name).toUpperCase();
+}
+
+// Returns { campaigns: [...], sources: [...] } with revenue per utm_campaign and utm_source
+async function fetchGAMFunnelsByUTM(networkCode, dateRange) {
+  const nc = networkCode || NETWORK_CODE;
+  if (!nc) return { campaigns: [], sources: [] };
+  const { since, until } = dateRange || defaultDateRange();
+
+  try {
+    const [token, rate] = await Promise.all([getAccessToken(), getUSDtoBRL()]);
+
+    const xml = wrapEnvelope(soapHeader(nc), `
+      <runReportJob xmlns="https://www.google.com/apis/ads/publisher/${GAM_VERSION}">
+        <reportJob>
+          <reportQuery>
+            <dimensions>DATE</dimensions>
+            <dimensions>AD_UNIT_NAME</dimensions>
+            <dimensions>CUSTOM_CRITERIA</dimensions>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_CTR</columns>
+            <startDate>${dateToXML(since)}</startDate>
+            <endDate>${dateToXML(until)}</endDate>
+            <dateRangeType>CUSTOM_DATE</dateRangeType>
+          </reportQuery>
+        </reportJob>
+      </runReportJob>`);
+
+    const runResp = await soapCall(token, xml);
+    const jobId = extractTag(runResp, 'id');
+    if (!jobId) return { campaigns: [], sources: [] };
+
+    const rows = await pollAndDownload(token, nc, jobId);
+
+    // dayUtmMap: { 'yyyy-mm-dd|utm' → { date, utmCampaign, revenue, impressions, ecpm, _n } }
+    // campaignMap: { utm → totals across all days } (for backwards compat)
+    const dayUtmMap = {};
+    const campaignMap = {};
+    const sourceMap = {};
+
+    for (const row of rows) {
+      const date = row['Dimension.DATE'] || row['DATE'] || '';
+      const kv = row['Dimension.CUSTOM_CRITERIA'] || row['CUSTOM_CRITERIA'] || '';
+      const revMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE'] || 0);
+      const revenue = (revMicros / 1_000_000) * rate;
+      const impressions = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS'] || 0);
+      const ecpmMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM'] || 0);
+      const ecpm = (ecpmMicros / 1_000_000) * rate;
+      const ctr = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CTR'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_CTR'] || 0);
+
+      const utm = _extractUTMValue(kv, 'utm_campaign');
+      // Skip null/empty utm values
+      if (utm && utm.toLowerCase() !== 'null') {
+        const dayKey = `${date}|${utm}`;
+        if (!dayUtmMap[dayKey]) dayUtmMap[dayKey] = { date, utmCampaign: utm, revenue: 0, impressions: 0, ecpm: 0, _n: 0 };
+        dayUtmMap[dayKey].revenue += revenue;
+        dayUtmMap[dayKey].impressions += impressions;
+        dayUtmMap[dayKey].ecpm += ecpm;
+        dayUtmMap[dayKey]._n++;
+
+        if (!campaignMap[utm]) campaignMap[utm] = { utmCampaign: utm, revenue: 0, impressions: 0, ecpm: 0, ctr: 0, _n: 0 };
+        campaignMap[utm].revenue += revenue;
+        campaignMap[utm].impressions += impressions;
+        campaignMap[utm].ecpm += ecpm;
+        campaignMap[utm].ctr += ctr;
+        campaignMap[utm]._n++;
+      }
+
+      const src = _extractUTMValue(kv, 'utm_source');
+      if (src && src.toLowerCase() !== 'null') {
+        if (!sourceMap[src]) sourceMap[src] = { utmSource: src, revenue: 0, impressions: 0, ecpm: 0, ctr: 0, _n: 0 };
+        sourceMap[src].revenue += revenue;
+        sourceMap[src].impressions += impressions;
+        sourceMap[src].ecpm += ecpm;
+        sourceMap[src].ctr += ctr;
+        sourceMap[src]._n++;
+      }
+    }
+
+    // byDay: { 'yyyy-mm-dd' → { utm → { revenue, impressions, ecpm } } }
+    const byDay = {};
+    for (const v of Object.values(dayUtmMap)) {
+      if (!byDay[v.date]) byDay[v.date] = {};
+      byDay[v.date][v.utmCampaign.toLowerCase()] = {
+        revenue: v.revenue,
+        impressions: v.impressions,
+        ecpm: v._n > 0 ? v.ecpm / v._n : 0,
+      };
+    }
+
+    const campaigns = Object.values(campaignMap).map(u => ({
+      utmCampaign: u.utmCampaign,
+      revenue: u.revenue,
+      impressions: u.impressions,
+      ecpm: u._n > 0 ? u.ecpm / u._n : 0,
+      ctr: u._n > 0 ? u.ctr / u._n : 0,
+    }));
+
+    const sources = Object.values(sourceMap).map(u => ({
+      utmSource: u.utmSource,
+      revenue: u.revenue,
+      impressions: u.impressions,
+      ecpm: u._n > 0 ? u.ecpm / u._n : 0,
+      ctr: u._n > 0 ? u.ctr / u._n : 0,
+    }));
+
+    return { campaigns, sources, byDay };
+  } catch (e) {
+    console.warn('[GAM fetchFunnelsByUTM]', e.message);
+    return { campaigns: [], sources: [] };
+  }
+}
+
+function _extractUTMValue(kv, key) {
+  if (!kv) return null;
+  const m = kv.match(new RegExp(`${key}=([^;,\\s]+)`, 'i'));
+  return m ? m[1] : null;
+}
+
+module.exports = { fetchGAMReport, fetchGAMAdvertisers, discoverGAMNetworks, fetchGAMFunnelsByUTM, getUSDtoBRL };
