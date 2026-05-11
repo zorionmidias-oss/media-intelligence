@@ -6,7 +6,7 @@ const { fetchGAMReport, fetchGAMFunnelsByUTM, getUSDtoBRL } = require('./gam');
 const { extractDomainPrefix, extractAdUTM, extractTipo, groupAdsByUTM } = require('./parser');
 
 const BASE = 'https://graph.facebook.com/v19.0';
-const AD_FIELDS = 'ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name,spend,impressions,clicks,ctr,cpc,actions';
+const AD_FIELDS = 'ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name,spend,impressions,clicks,ctr,cpc,actions,objective,optimization_goal';
 
 function today() {
   return new Date().toISOString().slice(0, 10);
@@ -28,6 +28,31 @@ function getResults(actions) {
     findAction(actions, ['complete_registration', 'offsite_conversion.fb_pixel_complete_registration']) ||
     findAction(actions, 'link_click')
   );
+}
+
+const OBJECTIVE_ACTION_MAP = {
+  'OUTCOME_LEADS':      ['lead', 'onsite_conversion.lead_grouped'],
+  'LEAD_GENERATION':    ['lead'],
+  'OUTCOME_SALES':      ['purchase', 'omni_purchase'],
+  'CONVERSIONS':        ['offsite_conversion.fb_pixel_purchase', 'purchase'],
+  'OUTCOME_TRAFFIC':    ['link_click'],
+  'LINK_CLICKS':        ['link_click'],
+  'PAGE_VIEW':          ['landing_page_view'],
+  'OUTCOME_AWARENESS':  ['impressions'],
+  'OUTCOME_ENGAGEMENT': ['post_engagement'],
+};
+
+function getResultadoMeta(ad) {
+  const actions = ad.actions || [];
+  const objetivo = ad.objective || ad.optimization_goal;
+  // If objective is mapped, try those specific action types first
+  const expected = OBJECTIVE_ACTION_MAP[objetivo] || ['link_click'];
+  for (const type of expected) {
+    const found = actions.find(a => a.action_type === type);
+    if (found) return Number(found.value);
+  }
+  // Fallback: total clicks from Meta insights (cost-per-click metric)
+  return Number(ad.clicks || 0);
 }
 
 // Fetch all ads with insights for every configured BM account
@@ -192,6 +217,20 @@ async function syncAll(dateRange) {
       // Use ad's own date_start (from time_increment:1) for accurate per-day data
       const adDate = ad.date_start || until;
 
+      const spend = Number(ad.spend || 0);
+      const resultado = getResultadoMeta(ad);
+
+      if (adUTM.toLowerCase() === 'zurifb') {
+        console.log('[zurifb DEBUG]', {
+          spend,
+          clicks: Number(ad.clicks || 0),
+          actions: ad.actions,
+          objetivo: ad.objective || ad.optimization_goal,
+          resultado_calculado: resultado,
+          custo_resultado_calculado: resultado > 0 ? +(spend / resultado).toFixed(4) : 0,
+        });
+      }
+
       adsForGrouping.push({
         adUTM,
         domainId: domain.id,
@@ -199,10 +238,10 @@ async function syncAll(dateRange) {
         date: adDate,
         campaignName: ad.campaign_name,
         conjuntoMeta: ad.adset_name || null,
-        spend: Number(ad.spend || 0),
+        spend,
         clicks: Number(ad.clicks || 0),
         impressions: Number(ad.impressions || 0),
-        results: getResults(ad.actions),
+        results: resultado,
         cpc: Number(ad.cpc || 0),
         ctr: Number(ad.ctr || 0),
         adsetId: ad.adset_id || null,
@@ -258,6 +297,9 @@ async function syncAll(dateRange) {
       const rps = impressoesGam > 0 ? faturamentoReal / impressoesGam : 0;
       const ecpm = gam.ecpm || 0;
       const custo = g.results > 0 ? g.spend / g.results : 0;
+      const cliquesGam = gam.cliques_gam || 0;
+      const ctrGam = gam.ctr_gam || 0;
+      const cpcGam = gam.cpc_gam || 0;
 
       // Previsão: only for today when we have partial data and a known budget
       const isThisToday = g.date === today();
@@ -299,14 +341,25 @@ async function syncAll(dateRange) {
         previsao_faturamento_real: +prevFatReal.toFixed(2),
         previsao_lucro: +prevLucro.toFixed(2),
         previsao_roas: +prevRoas.toFixed(4),
+        cpc_gam: +cpcGam.toFixed(4),
+        ctr_gam: +ctrGam.toFixed(2),
+        cliques_gam: cliquesGam,
         updated_at: new Date().toISOString(),
       });
     }
 
     if (adsRows.length > 0) {
-      const { error: uErr } = await supabase
+      let { error: uErr } = await supabase
         .from('ads_consolidados')
         .upsert(adsRows, { onConflict: 'data,dominio_id,ad_utm' });
+      if (uErr && uErr.message.toLowerCase().includes('could not find')) {
+        // New GAM columns not yet migrated — retry without them
+        const fallback = adsRows.map(({ cpc_gam, ctr_gam, cliques_gam, ...rest }) => rest);
+        ({ error: uErr } = await supabase
+          .from('ads_consolidados')
+          .upsert(fallback, { onConflict: 'data,dominio_id,ad_utm' }));
+        if (!uErr) console.warn('[sync] upserted without cpc_gam/ctr_gam/cliques_gam — run ALTER TABLE migration');
+      }
       if (uErr) console.error('[sync] upsert ads_consolidados:', uErr.message);
       rowsProcessed += adsRows.length;
     }

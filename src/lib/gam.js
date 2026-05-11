@@ -93,7 +93,9 @@ function buildRunReportJobXML(networkCode, since, until) {
           <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE</columns>
           <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS</columns>
           <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM</columns>
-          <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_CPC</columns>
+          <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS</columns>
+          <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_CTR</columns>
+          <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_CPC</columns>
           <startDate>${dateToXML(since)}</startDate>
           <endDate>${dateToXML(until)}</endDate>
           <dateRangeType>CUSTOM_DATE</dateRangeType>
@@ -223,9 +225,10 @@ async function fetchGAMReport(dateRange) {
   const adUnitsByDay = {};
   const dailyRevenue = {};
   let totalServerImpressions = 0, totalAdxImpressions = 0;
-  let totalClicks = 0, totalRevenue = 0;
+  let totalClicks = 0, totalAdxClicks = 0, totalRevenue = 0;
   let totalViewable = 0, totalMeasurable = 0;
   let totalAdxCpcWtSum = 0, totalAdxCpcWt = 0;
+  let totalAdxCtrWtSum = 0, totalAdxCtrWt = 0;
   let latestDate = '';
 
   for (const row of rows) {
@@ -241,10 +244,16 @@ async function fetchGAMReport(dateRange) {
     const adxRevenueMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE'] || 0);
     const adxImp = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS'] || 0);
     const adxRevenue = (adxRevenueMicros / 1_000_000) * rate;
-    const adxCpcMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CPC'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_CPC'] || 0);
-    if (adxCpcMicros > 0 && adxImp > 0) {
-      totalAdxCpcWtSum += adxCpcMicros * adxImp;
-      totalAdxCpcWt += adxImp;
+    const adxClicks = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS'] || 0);
+    const adxCtrRaw = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CTR'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_CTR'] || 0);
+    const adxAvgCpcMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_CPC'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_CPC'] || 0);
+    if (adxClicks > 0) {
+      totalAdxCtrWtSum += adxCtrRaw * adxClicks;
+      totalAdxCtrWt += adxClicks;
+      if (adxAvgCpcMicros > 0) {
+        totalAdxCpcWtSum += adxAvgCpcMicros * adxClicks;
+        totalAdxCpcWt += adxClicks;
+      }
     }
     const revenue = adServerRevenue + adxRevenue;
     const allImpressions = serverImp + adxImp;
@@ -252,22 +261,28 @@ async function fetchGAMReport(dateRange) {
     totalServerImpressions += serverImp;
     totalAdxImpressions += adxImp;
     totalClicks += clicks;
+    totalAdxClicks += adxClicks;
     totalRevenue += revenue;
     totalViewable += viewable;
     totalMeasurable += measurable;
     if (date > latestDate) latestDate = date;
 
     if (!adUnitMap[adUnit]) {
-      adUnitMap[adUnit] = { name: adUnit, impressions: 0, serverImpressions: 0, adxImpressions: 0, clicks: 0, revenue: 0, viewable: 0, measurable: 0 };
+      adUnitMap[adUnit] = { name: adUnit, impressions: 0, serverImpressions: 0, adxImpressions: 0, clicks: 0, adxClicks: 0, revenue: 0, viewable: 0, measurable: 0, adxCpcWtSum: 0, adxCpcWt: 0 };
     }
     const u = adUnitMap[adUnit];
     u.impressions += allImpressions;
     u.serverImpressions += serverImp;
     u.adxImpressions += adxImp;
     u.clicks += clicks;
+    u.adxClicks += adxClicks;
     u.revenue += revenue;
     u.viewable += viewable;
     u.measurable += measurable;
+    if (adxClicks > 0 && adxAvgCpcMicros > 0) {
+      u.adxCpcWtSum += adxAvgCpcMicros * adxClicks;
+      u.adxCpcWt += adxClicks;
+    }
 
     if (date) {
       dailyRevenue[date] = (dailyRevenue[date] || 0) + revenue;
@@ -286,10 +301,14 @@ async function fetchGAMReport(dateRange) {
 
   const totalImpressions = totalServerImpressions + totalAdxImpressions;
   const ecpm = totalImpressions > 0 ? (totalRevenue / totalImpressions) * 1000 : 0;
-  const ctr = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
+  // CTR: use AdX weighted CTR if available, fall back to clicks/impressions
+  const ctr = totalAdxCtrWt > 0
+    ? (totalAdxCtrWtSum / totalAdxCtrWt) * 100
+    : (totalImpressions > 0 ? (totalAdxClicks / totalImpressions) * 100 : 0);
+  // CPC: use weighted average AdX CPC (micros → BRL) if available
   const cpc = totalAdxCpcWt > 0
     ? (totalAdxCpcWtSum / totalAdxCpcWt / 1_000_000) * rate
-    : (totalClicks > 0 ? totalRevenue / totalClicks : 0);
+    : (totalAdxClicks > 0 ? totalRevenue / totalAdxClicks : 0);
   const viewability = totalMeasurable > 0 ? (totalViewable / totalMeasurable) * 100 : 0;
   // taxaProgramatica uses totalImpressions (server + adx) as denominator
   const taxaProgramatica = totalImpressions > 0 ? (totalAdxImpressions / totalImpressions) * 100 : 0;
@@ -306,7 +325,9 @@ async function fetchGAMReport(dateRange) {
     .map(u => ({
       ...u,
       ecpm: u.impressions > 0 ? (u.revenue / u.impressions) * 1000 : 0,
-      ctr: u.impressions > 0 ? (u.clicks / u.impressions) * 100 : 0,
+      ctr: u.impressions > 0 ? (u.adxClicks / u.impressions) * 100 : 0,
+      cpc_gam: u.adxCpcWt > 0 ? (u.adxCpcWtSum / u.adxCpcWt / 1_000_000) * rate : 0,
+      cliques_gam: u.adxClicks,
       viewability: u.measurable > 0 ? (u.viewable / u.measurable) * 100 : 0,
       taxaProgramatica: u.serverImpressions > 0 ? (u.adxImpressions / u.serverImpressions) * 100 : 0,
     }));
@@ -413,7 +434,9 @@ async function fetchGAMFunnelsByUTM(networkCode, dateRange) {
             <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE</columns>
             <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS</columns>
             <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS</columns>
             <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_CTR</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_CPC</columns>
             <startDate>${dateToXML(since)}</startDate>
             <endDate>${dateToXML(until)}</endDate>
             <dateRangeType>CUSTOM_DATE</dateRangeType>
@@ -441,23 +464,31 @@ async function fetchGAMFunnelsByUTM(networkCode, dateRange) {
       const impressions = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS'] || 0);
       const ecpmMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM'] || 0);
       const ecpm = (ecpmMicros / 1_000_000) * rate;
-      const ctr = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CTR'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_CTR'] || 0);
+      const adxClicks = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS'] || 0);
+      const ctrRaw = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CTR'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_CTR'] || 0);
+      const avgCpcMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_CPC'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_CPC'] || 0);
 
       const utm = _extractUTMValue(kv, 'utm_campaign');
       // Skip null/empty utm values
       if (utm && utm.toLowerCase() !== 'null') {
         const dayKey = `${date}|${utm}`;
-        if (!dayUtmMap[dayKey]) dayUtmMap[dayKey] = { date, utmCampaign: utm, revenue: 0, impressions: 0, ecpm: 0, _n: 0 };
+        if (!dayUtmMap[dayKey]) dayUtmMap[dayKey] = { date, utmCampaign: utm, revenue: 0, impressions: 0, ecpm: 0, cliques: 0, ctrSum: 0, cpcWtSum: 0, cpcWt: 0, _n: 0 };
         dayUtmMap[dayKey].revenue += revenue;
         dayUtmMap[dayKey].impressions += impressions;
         dayUtmMap[dayKey].ecpm += ecpm;
+        dayUtmMap[dayKey].cliques += adxClicks;
+        dayUtmMap[dayKey].ctrSum += ctrRaw;
+        if (adxClicks > 0 && avgCpcMicros > 0) {
+          dayUtmMap[dayKey].cpcWtSum += avgCpcMicros * adxClicks;
+          dayUtmMap[dayKey].cpcWt += adxClicks;
+        }
         dayUtmMap[dayKey]._n++;
 
         if (!campaignMap[utm]) campaignMap[utm] = { utmCampaign: utm, revenue: 0, impressions: 0, ecpm: 0, ctr: 0, _n: 0 };
         campaignMap[utm].revenue += revenue;
         campaignMap[utm].impressions += impressions;
         campaignMap[utm].ecpm += ecpm;
-        campaignMap[utm].ctr += ctr;
+        campaignMap[utm].ctr += ctrRaw;
         campaignMap[utm]._n++;
       }
 
@@ -467,12 +498,12 @@ async function fetchGAMFunnelsByUTM(networkCode, dateRange) {
         sourceMap[src].revenue += revenue;
         sourceMap[src].impressions += impressions;
         sourceMap[src].ecpm += ecpm;
-        sourceMap[src].ctr += ctr;
+        sourceMap[src].ctr += ctrRaw;
         sourceMap[src]._n++;
       }
     }
 
-    // byDay: { 'yyyy-mm-dd' → { utm → { revenue, impressions, ecpm } } }
+    // byDay: { 'yyyy-mm-dd' → { utm → { revenue, impressions, ecpm, cpc_gam, ctr_gam, cliques_gam } } }
     const byDay = {};
     for (const v of Object.values(dayUtmMap)) {
       if (!byDay[v.date]) byDay[v.date] = {};
@@ -480,6 +511,9 @@ async function fetchGAMFunnelsByUTM(networkCode, dateRange) {
         revenue: v.revenue,
         impressions: v.impressions,
         ecpm: v._n > 0 ? v.ecpm / v._n : 0,
+        ctr_gam: v._n > 0 ? (v.ctrSum / v._n) * 100 : 0,
+        cpc_gam: v.cpcWt > 0 ? (v.cpcWtSum / v.cpcWt / 1_000_000) * rate : 0,
+        cliques_gam: v.cliques,
       };
     }
 

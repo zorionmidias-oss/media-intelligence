@@ -358,9 +358,30 @@
     .test-result{padding:.5rem .75rem;border-radius:var(--r);font-size:.8125rem;margin-top:.25rem;display:none}
     .test-result.ok{background:color-mix(in oklch,var(--ok) 10%,transparent);color:var(--ok);display:block}
     .test-result.err{background:color-mix(in oklch,var(--bad) 10%,transparent);color:var(--bad);display:block}
+
+    /* ── LOADING OVERLAY ── */
+    .loading-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,10,15,0.92);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
+    .loading-logo{font-family:'Playfair Display',serif;font-weight:900;font-style:italic;font-size:120px;color:transparent;background:linear-gradient(135deg,#00e5b4 0%,#7c6aff 50%,#00e5b4 100%);background-size:200% 200%;-webkit-background-clip:text;background-clip:text;animation:lo-shimmer 2s linear infinite,lo-pulse 1.5s ease-in-out infinite;text-shadow:0 0 60px rgba(124,106,255,0.4);position:relative;line-height:1}
+    .loading-logo::after{content:"'s";font-size:40px;position:absolute;top:10px;right:-30px;color:rgba(255,255,255,0.6)}
+    .loading-text{margin-top:30px;color:#888;font-size:14px;letter-spacing:3px;text-transform:uppercase;animation:lo-pulse 1.5s ease-in-out infinite}
+    @keyframes lo-shimmer{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+    @keyframes lo-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(0.95)}}
+
+    /* ── SORTABLE HEADERS ── */
+    thead th.sortable{cursor:pointer;user-select:none}
+    thead th.sortable:hover{color:var(--fg)}
+    .sort-arrow{opacity:.4;font-size:10px;margin-left:3px}
+    thead th[data-sort-dir="desc"] .sort-arrow,
+    thead th[data-sort-dir="asc"] .sort-arrow{opacity:1;color:var(--accent)}
   </style>
 </head>
 <body>
+
+<!-- ═══ LOADING OVERLAY ═══ -->
+<div id="loading-overlay" class="loading-overlay" style="display:none">
+  <div class="loading-logo">2</div>
+  <div class="loading-text">Carregando...</div>
+</div>
 
 <!-- ═══ SIDEBAR ═══ -->
 <aside class="sb" id="sb">
@@ -601,7 +622,7 @@
           <div class="search-bar">
             <input type="text" class="search-in" id="search-camp-db" placeholder="🔍 Pesquisar UTM / domínio…" oninput="filterCampDB(this.value)" />
           </div>
-          <table>
+          <table id="camp-table">
             <thead><tr>
               <th>UTM</th><th>Domínio</th><th>Investido</th><th>Fat. Real</th><th>Lucro</th><th>ROAS</th>
               <th>CPC</th><th>Custo/Result.</th><th>Resultados</th><th>Imp. GAM</th><th>eCPM</th><th>RPS</th>
@@ -652,7 +673,7 @@
             <div class="search-bar">
               <input type="text" class="search-in" id="search-adunit" placeholder="🔍 Pesquisar bloco de anúncio…" oninput="filterTable('adunit-body',this.value)" />
             </div>
-            <table>
+            <table id="adunit-table">
               <thead><tr><th>Ad Unit</th><th>Impressões</th><th>Receita</th><th>eCPM</th><th>Taxa Prog.</th></tr></thead>
               <tbody id="adunit-body"><tr><td colspan="5" class="empty">Carregando…</td></tr></tbody>
             </table>
@@ -665,7 +686,7 @@
             <div class="search-bar">
               <input type="text" class="search-in" id="search-adv" placeholder="🔍 Pesquisar anunciante…" oninput="filterTable('adv-body',this.value)" />
             </div>
-            <table>
+            <table id="adv-table">
               <thead><tr><th>Anunciante</th><th>Receita total</th><th>Imp. Ad Exchange</th><th>eCPM médio</th><th>CPC Ad Exchange</th><th>CTR Total</th></tr></thead>
               <tbody id="adv-body"><tr><td colspan="6" class="empty">—</td></tr></tbody>
             </table>
@@ -695,7 +716,7 @@
           </button>
         </div>
         <div class="tbl-wrap">
-          <table>
+          <table id="dom-table">
             <thead><tr>
               <th>Domínio</th><th>Prefixo Campanha</th><th>Código GAM</th><th>Detectado Auto</th><th>Status</th><th>Criado em</th>
             </tr></thead>
@@ -724,7 +745,7 @@
           <button class="btn btn-p" onclick="openModalAddConta()">+ Adicionar Conta</button>
         </div>
         <div class="tbl-wrap scroll">
-          <table>
+          <table id="contas-table">
             <thead><tr>
               <th>Nome</th><th>Ad Account ID</th><th>Moeda</th><th>Status</th><th>Último Sync</th><th>Ações</th>
             </tr></thead>
@@ -824,6 +845,18 @@ function animateTo(el,target,formatter,duration=900){
   requestAnimationFrame(step);
 }
 
+/* ═══ LOADING OVERLAY ═══ */
+function showOverlay(msg='Carregando...'){
+  const ol=document.getElementById('loading-overlay');
+  if(!ol)return;
+  ol.querySelector('.loading-text').textContent=msg;
+  ol.style.display='flex';
+}
+function hideOverlay(){
+  const ol=document.getElementById('loading-overlay');
+  if(ol)ol.style.display='none';
+}
+
 /* ═══ SKELETON LOADING ═══ */
 function showLoading(){
   const ids=['kpi-fat','kpi-inv','kpi-lucro','kpi-roi'];
@@ -831,7 +864,6 @@ function showLoading(){
     const el=document.getElementById(id);
     if(el){el.textContent='R$ 000,00';el.classList.add('skeleton');}
   });
-  // Spinner on delay badge
   const ds=document.getElementById('delay-spin-ico');
   const dd=document.getElementById('delay-dot');
   const db=document.getElementById('delay-badge');
@@ -839,7 +871,6 @@ function showLoading(){
   if(dd)dd.style.display='none';
   if(db){db.style.display='inline-flex';db.className='delay-badge st';}
   document.getElementById('delay-txt').textContent='GAM…';
-  // Spinner on force button
   const fs=document.getElementById('force-spin-ico');
   if(fs)fs.style.display='inline';
   fs&&fs.classList.add('spin-ico');
@@ -853,6 +884,58 @@ function hideLoading(){
   if(dd)dd.style.display='';
   const fs=document.getElementById('force-spin-ico');
   if(fs){fs.style.display='none';fs.classList.remove('spin-ico');}
+}
+
+/* ═══ SORTABLE TABLES ═══ */
+function makeTableSortable(tableId){
+  const table=document.getElementById(tableId);
+  if(!table)return;
+  table.querySelectorAll('thead th').forEach((th,idx)=>{
+    th.classList.add('sortable');
+    if(!th.querySelector('.sort-arrow')){
+      const a=document.createElement('span');
+      a.className='sort-arrow';a.textContent=' ↕';
+      th.appendChild(a);
+    }
+    th.onclick=()=>sortTable(tableId,idx,th);
+  });
+}
+
+function sortTable(tableId,colIdx,headerEl){
+  const table=document.getElementById(tableId);
+  if(!table)return;
+  const tbody=table.tBodies[0];
+  if(!tbody)return;
+  const rows=Array.from(tbody.rows).filter(r=>!r.querySelector('td[colspan]'));
+  const cur=headerEl.dataset.sortDir||'';
+  const dir=cur==='desc'?'asc':'desc';
+  table.querySelectorAll('thead th').forEach(th=>{
+    th.dataset.sortDir='';
+    const a=th.querySelector('.sort-arrow');
+    if(a){a.textContent=' ↕';a.style.opacity='.4';}
+  });
+  headerEl.dataset.sortDir=dir;
+  const a=headerEl.querySelector('.sort-arrow');
+  if(a){a.textContent=dir==='desc'?' ↓':' ↑';a.style.opacity='1';}
+  rows.sort((ra,rb)=>{
+    const av=ra.cells[colIdx]?.dataset.sort??ra.cells[colIdx]?.textContent??'';
+    const bv=rb.cells[colIdx]?.dataset.sort??rb.cells[colIdx]?.textContent??'';
+    const an=parseFloat(String(av).replace(/[^0-9.-]/g,''));
+    const bn=parseFloat(String(bv).replace(/[^0-9.-]/g,''));
+    const isNum=!isNaN(an)&&!isNaN(bn);
+    if(isNum)return dir==='desc'?bn-an:an-bn;
+    return dir==='desc'?String(bv).localeCompare(String(av),'pt-BR'):String(av).localeCompare(String(bv),'pt-BR');
+  });
+  rows.forEach(r=>tbody.appendChild(r));
+}
+
+function applyDefaultSort(tableId,colIdx){
+  const table=document.getElementById(tableId);
+  if(!table)return;
+  const th=table.querySelectorAll('thead th')[colIdx];
+  if(!th)return;
+  th.dataset.sortDir='';
+  sortTable(tableId,colIdx,th);
 }
 
 /* ═══ TABLE SEARCH FILTER ═══ */
@@ -922,6 +1005,8 @@ async function loadData(force=false){
   if(S.busy)return;
   S.busy=true;
   showLoading();
+  if(force||S.firstLoad)showOverlay(force?'Sincronizando dados...':'Carregando...');
+  S.firstLoad=false;
   const since=document.getElementById('f-since').value;
   const until=document.getElementById('f-until').value;
   const domain=document.getElementById('f-domain').value;
@@ -936,7 +1021,7 @@ async function loadData(force=false){
     S.metrics=await res.json();
     renderAll(S.metrics);
   }catch(e){console.error('[loadData]',e)}
-  finally{S.busy=false;hideLoading();}
+  finally{S.busy=false;hideLoading();hideOverlay();}
   if(S.tab==='gam')loadGAMReport();
 }
 
@@ -1334,10 +1419,10 @@ function renderGAM(k,adUnits,advertisers){
   document.getElementById('adunit-body').innerHTML=adUnits.length
     ?adUnits.map(u=>`<tr>
         <td><div class="td-av"><div class="t-av">${esc((u.name||'?').charAt(0))}</div><span>${esc(u.name)}</span></div></td>
-        <td class="mo">${NUM(u.impressions)}</td>
-        <td class="mo">${BRL(u.revenue)}</td>
-        <td class="mo">${BRL(u.ecpm)}</td>
-        <td class="mo">${PCT(u.taxaProgramatica)}</td>
+        <td class="mo" data-sort="${u.impressions||0}">${NUM(u.impressions)}</td>
+        <td class="mo" data-sort="${u.revenue||0}">${BRL(u.revenue)}</td>
+        <td class="mo" data-sort="${u.ecpm||0}">${BRL(u.ecpm)}</td>
+        <td class="mo" data-sort="${u.taxaProgramatica||0}">${PCT(u.taxaProgramatica)}</td>
       </tr>`).join('')
     :'<tr><td colspan="5" class="empty">Sem dados GAM — verifique credenciais</td></tr>';
 
@@ -1345,13 +1430,18 @@ function renderGAM(k,adUnits,advertisers){
   document.getElementById('adv-body').innerHTML=advertisers.length
     ?advertisers.map(a=>`<tr>
         <td><div class="td-av"><div class="t-av">${esc((a.name||'?').charAt(0))}</div><span>${esc(a.name)}</span></div></td>
-        <td class="mo">${BRL(a.revenue)}</td>
-        <td class="mo">${NUM(a.impressions)}</td>
-        <td class="mo">${BRL(a.ecpm)}</td>
-        <td class="mo">${BRL(a.cpc)}</td>
-        <td class="mo">${PCT(a.ctr)}</td>
+        <td class="mo" data-sort="${a.revenue||0}">${BRL(a.revenue)}</td>
+        <td class="mo" data-sort="${a.impressions||0}">${NUM(a.impressions)}</td>
+        <td class="mo" data-sort="${a.ecpm||0}">${BRL(a.ecpm)}</td>
+        <td class="mo" data-sort="${a.cpc||0}">${BRL(a.cpc)}</td>
+        <td class="mo" data-sort="${a.ctr||0}">${PCT(a.ctr)}</td>
       </tr>`).join('')
     :'<tr><td colspan="6" class="empty">—</td></tr>';
+
+  makeTableSortable('adunit-table');
+  applyDefaultSort('adunit-table',2);
+  makeTableSortable('adv-table');
+  applyDefaultSort('adv-table',1);
 }
 
 /* ═══ AI ═══ */
@@ -1579,16 +1669,16 @@ function renderCampTable(rows){
         <span style="font-family:'JetBrains Mono',monospace;font-size:.8rem">${esc(r.ad_utm)}</span>
       </div></td>
       <td>${domBadge}</td>
-      <td class="mo">${BRL(r.valor_gasto)}</td>
-      <td class="mo" style="color:var(--c2)">${r.faturamento_real>0?BRL(r.faturamento_real):'<span style="color:var(--muted)">—</span>'}</td>
-      <td class="mo" style="color:${lucroColor}">${r.faturamento_real>0?BRL(lucro):'—'}</td>
-      <td class="mo" style="color:${roasColor}">${r.faturamento_real>0?ROAS(roas):'—'}</td>
-      <td class="mo" style="color:var(--warn)">${r.cpc>0?BRL(r.cpc):'—'}</td>
-      <td class="mo">${r.custo_resultado>0?BRL(r.custo_resultado):'—'}</td>
-      <td class="mo">${NUM(r.resultado)}</td>
-      <td class="mo">${r.impressoes_gam>0?NUM(r.impressoes_gam):'—'}</td>
-      <td class="mo">${r.ecpm>0?BRL(r.ecpm):'—'}</td>
-      <td class="mo">${r.rps>0?BRL(r.rps):'—'}</td>
+      <td class="mo" data-sort="${r.valor_gasto||0}">${BRL(r.valor_gasto)}</td>
+      <td class="mo" style="color:var(--c2)" data-sort="${r.faturamento_real||0}">${r.faturamento_real>0?BRL(r.faturamento_real):'<span style="color:var(--muted)">—</span>'}</td>
+      <td class="mo" style="color:${lucroColor}" data-sort="${lucro}">${r.faturamento_real>0?BRL(lucro):'—'}</td>
+      <td class="mo" style="color:${roasColor}" data-sort="${roas}">${r.faturamento_real>0?ROAS(roas):'—'}</td>
+      <td class="mo" style="color:var(--warn)" data-sort="${r.cpc||0}">${r.cpc>0?BRL(r.cpc):'—'}</td>
+      <td class="mo" data-sort="${r.custo_resultado||0}">${r.custo_resultado>0?BRL(r.custo_resultado):'—'}</td>
+      <td class="mo" data-sort="${r.resultado||0}">${NUM(r.resultado)}</td>
+      <td class="mo" data-sort="${r.impressoes_gam||0}">${r.impressoes_gam>0?NUM(r.impressoes_gam):'—'}</td>
+      <td class="mo" data-sort="${r.ecpm||0}">${r.ecpm>0?BRL(r.ecpm):'—'}</td>
+      <td class="mo" data-sort="${r.rps||0}">${r.rps>0?BRL(r.rps):'—'}</td>
     </tr>`;
 
     // Forecast sub-row
@@ -1630,13 +1720,11 @@ function renderCampTable(rows){
   tb.innerHTML=html;
   ct.textContent=`${rows.length} UTM${rows.length!==1?'s':''}`;
   if(noteEl){
-    if(prevCount>0){
-      noteEl.style.display='';
-      noteEl.textContent=`${prevCount} com previsão de hoje`;
-    } else {
-      noteEl.style.display='none';
-    }
+    if(prevCount>0){noteEl.style.display='';noteEl.textContent=`${prevCount} com previsão de hoje`;}
+    else{noteEl.style.display='none';}
   }
+  makeTableSortable('camp-table');
+  applyDefaultSort('camp-table',2);
 }
 
 /* ═══ DOMÍNIOS ═══ */
@@ -1662,6 +1750,7 @@ function renderDominiosTable(doms){
     <td>${d.ativo?'<span class="badge b-ok">Ativo</span>':'<span class="badge b-bad">Inativo</span>'}</td>
     <td class="mo" style="color:var(--muted);font-size:.75rem">${d.created_at?(new Date(d.created_at)).toLocaleDateString('pt-BR'):'—'}</td>
   </tr>`).join('');
+  makeTableSortable('dom-table');
 }
 
 function renderPendentesList(pendentes){
@@ -1820,6 +1909,7 @@ async function loadContas(){
         </div></td>
       </tr>`;
     }).join('');
+    makeTableSortable('contas-table');
   }catch(e){
     if(tbody)tbody.innerHTML=`<tr><td colspan="6" class="empty">Erro: ${esc(e.message)}</td></tr>`;
   }
@@ -1938,9 +2028,12 @@ async function deletarConta(id,nome){
 
 /* ═══ INIT ═══ */
 (async()=>{
+  S.firstLoad=true;
   initDates();
   await populateDomainSelect();
   await loadDominios();
+  // Init sortable headers (thead is static even before data)
+  ['camp-table','adunit-table','adv-table','dom-table','contas-table'].forEach(makeTableSortable);
   loadData();
   checkSyncStatus();
   checkPendingStatus();
