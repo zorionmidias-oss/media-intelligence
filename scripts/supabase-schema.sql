@@ -82,3 +82,29 @@ INSERT INTO dominios (nome, prefixo_campanha, codigo_pedido_gam)
 VALUES ('mkuker.com', 'MKUKER', 'MKU-AdX'),
        ('euro.mkuker.com', 'EURO', 'EUR-AdX')
 ON CONFLICT (nome) DO NOTHING;
+
+-- ── Usuários ──────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS usuarios (
+  id SERIAL PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  senha_hash TEXT NOT NULL,
+  nome TEXT,
+  ativo BOOLEAN DEFAULT true,
+  ultimo_acesso TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- ── Contas Meta (migrado do .env) ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS meta_accounts (
+  id SERIAL PRIMARY KEY,
+  nome TEXT NOT NULL,
+  bm_id TEXT,
+  ad_account_id TEXT NOT NULL UNIQUE,
+  access_token TEXT NOT NULL,
+  currency TEXT DEFAULT 'BRL',
+  ativo BOOLEAN DEFAULT true,
+  ultimo_sync TIMESTAMP,
+  ultimo_status TEXT,
+  ultimo_erro TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);

@@ -1,7 +1,7 @@
 'use strict';
 const axios = require('axios');
 const supabase = require('./supabase');
-const { getBMConfigs } = require('./meta');
+const { getBMConfigs, updateBMStatus } = require('./meta');
 const { fetchGAMReport, fetchGAMFunnelsByUTM, getUSDtoBRL } = require('./gam');
 const { extractDomainPrefix, extractAdUTM, extractTipo, groupAdsByUTM } = require('./parser');
 
@@ -32,7 +32,7 @@ function getResults(actions) {
 
 // Fetch all ads with insights for every configured BM account
 async function fetchMetaAdsForSync(dateRange) {
-  const configs = getBMConfigs();
+  const configs = await getBMConfigs();
   const since = dateRange?.since || today();
   const until = dateRange?.until || today();
   const timeParams = { time_range: JSON.stringify({ since, until }) };
@@ -68,6 +68,9 @@ async function fetchMetaAdsForSync(dateRange) {
       const adsetBudgetRes = await axios.get(`${BASE}/${accountId}/adsets`, {
         params: { access_token: token, fields: 'id,campaign_id,daily_budget,lifetime_budget', limit: 500 },
         timeout: 30000,
+      }).catch(e => {
+        console.warn(`[sync Meta BM${config.id}] adsets fetch failed (${e.response?.status ?? e.code}): ${e.message} — budgets will be 0`);
+        return { data: { data: [] } };
       });
       const budgetMap = new Map();
       for (const a of adsetBudgetRes.data?.data || []) {
@@ -116,8 +119,11 @@ async function fetchMetaAdsForSync(dateRange) {
           hasMore = false;
         }
       }
+      await updateBMStatus(config.id, 'OK');
     } catch (e) {
-      console.error(`[sync Meta BM${config.id}]`, e.message);
+      const detail = e.response?.data ? JSON.stringify(e.response.data) : e.message;
+      console.error(`[sync Meta BM${config.id}] status=${e.response?.status ?? 'N/A'} ${detail}`);
+      await updateBMStatus(config.id, `ERR_${e.response?.status ?? 'N/A'}`, detail);
     }
   }
 

@@ -2,6 +2,8 @@
 require('dotenv').config({ path: '.env.local' });
 const express = require('express');
 const path = require('path');
+const cookieParser = require('cookie-parser');
+const axios = require('axios');
 
 const metricsHandler = require('./src/app/api/metrics/route');
 const insightsHandler = require('./src/app/api/insights/route');
@@ -11,25 +13,141 @@ const reportsGamHandler = require('./src/app/api/reports-gam/route');
 const supabase = require('./src/lib/supabase');
 const { syncAll } = require('./src/lib/sync');
 const { startScheduler } = require('./src/lib/scheduler');
+const { hashPassword, verifyPassword, generateToken, requireAuth, COOKIE_NAME } = require('./src/lib/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const META_BASE = 'https://graph.facebook.com/v19.0';
+const COOKIE_OPTS = { httpOnly: true, sameSite: 'strict', maxAge: 7 * 24 * 3600 * 1000, path: '/' };
 
 app.use(express.json({ limit: '10mb' }));
+app.use(cookieParser());
+
+// ── Protected HTML routes (before static) ────────────────────────────────────
+app.get('/', requireAuth, (_req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
+app.get('/dashboard.html', requireAuth, (_req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/lib/chart.umd.min.js', (_req, res) => res.sendFile(path.join(__dirname, 'node_modules/chart.js/dist/chart.umd.min.js')));
 
+// ── Auth routes (public) ─────────────────────────────────────────────────────
+app.post('/api/auth/login', async (req, res) => {
+  const { email, password } = req.body || {};
+  if (!email || !password) return res.status(400).json({ error: 'Email e senha são obrigatórios' });
+  const { data: users, error } = await supabase
+    .from('usuarios')
+    .select('id,email,senha_hash,nome,ativo')
+    .eq('email', email.toLowerCase().trim())
+    .limit(1);
+  if (error || !users?.length) return res.status(401).json({ error: 'Credenciais inválidas' });
+  const user = users[0];
+  if (!user.ativo) return res.status(403).json({ error: 'Conta desativada' });
+  const ok = await verifyPassword(password, user.senha_hash);
+  if (!ok) return res.status(401).json({ error: 'Credenciais inválidas' });
+  await supabase.from('usuarios').update({ ultimo_acesso: new Date().toISOString() }).eq('id', user.id);
+  const token = generateToken(user.id);
+  res.cookie(COOKIE_NAME, token, COOKIE_OPTS);
+  res.json({ ok: true, nome: user.nome || user.email });
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  res.clearCookie(COOKIE_NAME, { path: '/' });
+  res.json({ ok: true });
+});
+
+app.get('/api/auth/me', requireAuth, async (req, res) => {
+  const { data } = await supabase.from('usuarios').select('id,email,nome').eq('id', req.userId).single();
+  res.json(data || { id: req.userId });
+});
+
 // ── Legacy live-API routes ──────────────────────────────────────────────────
-app.get('/api/metrics', metricsHandler);
-app.post('/api/insights', insightsHandler);
+app.get('/api/metrics', requireAuth, metricsHandler);
+app.post('/api/insights', requireAuth, insightsHandler);
 
 // ── Supabase-backed routes (fast — no external API calls) ──────────────────
-app.get('/api/overview', overviewHandler);
-app.get('/api/dashboard', dashboardHandler);
-app.get('/api/reports-gam', reportsGamHandler);
+app.get('/api/overview', requireAuth, overviewHandler);
+app.get('/api/dashboard', requireAuth, dashboardHandler);
+app.get('/api/reports-gam', requireAuth, reportsGamHandler);
+
+// ── Contas Meta ──────────────────────────────────────────────────────────────
+app.get('/api/contas', requireAuth, async (_req, res) => {
+  const { data, error } = await supabase.from('meta_accounts').select('*').order('id');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
+});
+
+app.post('/api/contas', requireAuth, async (req, res) => {
+  const { nome, bm_id, ad_account_id, access_token } = req.body || {};
+  if (!nome || !ad_account_id || !access_token)
+    return res.status(400).json({ error: 'nome, ad_account_id e access_token são obrigatórios' });
+  const accountId = ad_account_id.startsWith('act_') ? ad_account_id : `act_${ad_account_id}`;
+  try {
+    const r = await axios.get(`${META_BASE}/${accountId}`, {
+      params: { access_token, fields: 'id,name,account_status,currency' }, timeout: 15000,
+    });
+    const { data, error } = await supabase.from('meta_accounts').insert({
+      nome, bm_id: bm_id || null, ad_account_id: accountId, access_token,
+      currency: r.data.currency || 'BRL', ativo: r.data.account_status === 1,
+      ultimo_status: r.data.account_status === 1 ? 'ACTIVE' : `STATUS_${r.data.account_status}`,
+    }).select().single();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+  } catch (e) {
+    const msg = e.response?.data?.error?.message || e.message;
+    return res.status(400).json({ error: `Token ou conta inválidos: ${msg}` });
+  }
+});
+
+app.put('/api/contas/:id', requireAuth, async (req, res) => {
+  const id = Number(req.params.id);
+  const allowed = ['nome', 'bm_id', 'ad_account_id', 'access_token', 'currency', 'ativo'];
+  const update = {};
+  for (const k of allowed) if (req.body[k] !== undefined) update[k] = req.body[k];
+  if (!Object.keys(update).length) return res.status(400).json({ error: 'Nada para atualizar' });
+  const { data, error } = await supabase.from('meta_accounts').update(update).eq('id', id).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.delete('/api/contas/:id', requireAuth, async (req, res) => {
+  const { error } = await supabase.from('meta_accounts').delete().eq('id', Number(req.params.id));
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
+app.post('/api/contas/testar', requireAuth, async (req, res) => {
+  const { ad_account_id, access_token } = req.body || {};
+  if (!ad_account_id || !access_token) return res.status(400).json({ error: 'ad_account_id e access_token são obrigatórios' });
+  const accountId = ad_account_id.startsWith('act_') ? ad_account_id : `act_${ad_account_id}`;
+  try {
+    const r = await axios.get(`${META_BASE}/${accountId}`, {
+      params: { access_token, fields: 'id,name,account_status,currency,business' }, timeout: 15000,
+    });
+    res.json(r.data);
+  } catch (e) {
+    res.status(400).json({ error: e.response?.data?.error?.message || e.message });
+  }
+});
+
+app.post('/api/contas/:id/testar', requireAuth, async (req, res) => {
+  const { data: conta, error } = await supabase.from('meta_accounts').select('*').eq('id', Number(req.params.id)).single();
+  if (error || !conta) return res.status(404).json({ error: 'Conta não encontrada' });
+  try {
+    const r = await axios.get(`${META_BASE}/${conta.ad_account_id}`, {
+      params: { access_token: conta.access_token, fields: 'id,name,account_status,currency' }, timeout: 15000,
+    });
+    const status = r.data.account_status === 1 ? 'ACTIVE' : `STATUS_${r.data.account_status}`;
+    await supabase.from('meta_accounts').update({ ultimo_sync: new Date().toISOString(), ultimo_status: status, ultimo_erro: null }).eq('id', conta.id);
+    res.json(r.data);
+  } catch (e) {
+    const msg = e.response?.data?.error?.message || e.message;
+    await supabase.from('meta_accounts').update({ ultimo_status: 'ERRO', ultimo_erro: msg }).eq('id', conta.id);
+    res.status(400).json({ error: msg });
+  }
+});
 
 // ── Domínios ────────────────────────────────────────────────────────────────
-app.get('/api/dominios', async (req, res) => {
+app.get('/api/dominios', requireAuth, async (req, res) => {
   const { data, error } = await supabase
     .from('dominios')
     .select('*')
@@ -38,7 +156,7 @@ app.get('/api/dominios', async (req, res) => {
   res.json(data);
 });
 
-app.post('/api/dominios', async (req, res) => {
+app.post('/api/dominios', requireAuth, async (req, res) => {
   const { nome, prefixo_campanha, codigo_pedido_gam } = req.body || {};
   if (!nome || !prefixo_campanha) {
     return res.status(400).json({ error: 'nome e prefixo_campanha são obrigatórios' });
@@ -52,7 +170,7 @@ app.post('/api/dominios', async (req, res) => {
   res.json(data);
 });
 
-app.get('/api/dominios/pendentes', async (req, res) => {
+app.get('/api/dominios/pendentes', requireAuth, async (req, res) => {
   const { data, error } = await supabase
     .from('dominios_pendentes')
     .select('*')
@@ -62,7 +180,7 @@ app.get('/api/dominios/pendentes', async (req, res) => {
   res.json(data);
 });
 
-app.post('/api/dominios/aprovar', async (req, res) => {
+app.post('/api/dominios/aprovar', requireAuth, async (req, res) => {
   const { prefixo_detectado, nome, codigo_pedido_gam } = req.body || {};
   if (!prefixo_detectado || !nome) {
     return res.status(400).json({ error: 'prefixo_detectado e nome são obrigatórios' });
@@ -90,7 +208,7 @@ app.post('/api/dominios/aprovar', async (req, res) => {
 });
 
 // ── Sync ─────────────────────────────────────────────────────────────────────
-app.post('/api/sync/forcar', async (req, res) => {
+app.post('/api/sync/forcar', requireAuth, async (req, res) => {
   try {
     const result = await syncAll(req.body?.dateRange || undefined);
     res.json(result);
@@ -99,7 +217,7 @@ app.post('/api/sync/forcar', async (req, res) => {
   }
 });
 
-app.get('/api/sync/log', async (req, res) => {
+app.get('/api/sync/log', requireAuth, async (req, res) => {
   const { data, error } = await supabase
     .from('sync_log')
     .select('*')
@@ -109,16 +227,11 @@ app.get('/api/sync/log', async (req, res) => {
   res.json(data);
 });
 
-// ── Root ──────────────────────────────────────────────────────────────────────
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
 // ── Start ─────────────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => res.json({ ok: true, ts: Date.now() }));
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Media Intelligence Dashboard running at http://localhost:${PORT}`);
+  console.log(`2Junior's — Inteligência de Mídia running at http://localhost:${PORT}`);
   startScheduler();
 });
 

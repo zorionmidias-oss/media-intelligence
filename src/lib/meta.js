@@ -1,5 +1,6 @@
 'use strict';
 const axios = require('axios');
+const supabase = require('./supabase');
 
 const BASE = 'https://graph.facebook.com/v19.0';
 const INSIGHT_FIELDS = 'spend,impressions,clicks,ctr,cpm,cpc,purchase_roas,actions,action_values';
@@ -23,16 +24,34 @@ function extractPage(name) {
   return m ? m[1].trim() : null;
 }
 
-function getBMConfigs() {
+async function getBMConfigs() {
+  try {
+    const { data, error } = await supabase
+      .from('meta_accounts')
+      .select('id,nome,ad_account_id,access_token')
+      .eq('ativo', true)
+      .order('id');
+    if (!error && data && data.length > 0) {
+      return data.map(a => ({ id: a.id, nome: a.nome, token: a.access_token, account: a.ad_account_id }));
+    }
+  } catch { /* fall through */ }
+
+  // Fallback: .env
   const configs = [];
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= 10; i++) {
     const token = process.env[`META_ACCESS_TOKEN_BM${i}`];
     const account = process.env[`META_AD_ACCOUNT_BM${i}`];
-    if (token && account) {
-      configs.push({ id: i, token, account });
-    }
+    if (token && account) configs.push({ id: i, token, account });
   }
   return configs;
+}
+
+async function updateBMStatus(id, status, erro) {
+  try {
+    const update = { ultimo_sync: new Date().toISOString(), ultimo_status: status };
+    if (erro) update.ultimo_erro = String(erro).slice(0, 500);
+    await supabase.from('meta_accounts').update(update).eq('id', id);
+  } catch { /* non-critical */ }
 }
 
 function findAction(arr, types) {
@@ -288,7 +307,7 @@ async function fetchBMMetrics(config, dateRange) {
 }
 
 async function fetchAllBMs(dateRange) {
-  const configs = getBMConfigs();
+  const configs = await getBMConfigs();
   if (!configs.length) return [];
   const settled = await Promise.allSettled(configs.map(c => fetchBMMetrics(c, dateRange)));
   return settled
@@ -296,4 +315,4 @@ async function fetchAllBMs(dateRange) {
     .map(r => r.value);
 }
 
-module.exports = { fetchAllBMs, fetchBMMetrics, getBMConfigs };
+module.exports = { fetchAllBMs, fetchBMMetrics, getBMConfigs, updateBMStatus };
