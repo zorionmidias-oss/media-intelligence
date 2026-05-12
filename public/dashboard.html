@@ -939,7 +939,20 @@ function sortTable(tableId,colIdx,headerEl){
   if(!table)return;
   const tbody=table.tBodies[0];
   if(!tbody)return;
-  const rows=Array.from(tbody.rows).filter(r=>!r.querySelector('td[colspan]'));
+
+  // Build pairs [mainRow, subRow|null] so preview rows stay glued to their parent
+  const allRows=Array.from(tbody.rows);
+  const pairs=[];
+  let i=0;
+  while(i<allRows.length){
+    const row=allRows[i];
+    if(row.querySelector('td[colspan]')){i++;continue;} // orphan — skip
+    const next=allRows[i+1];
+    const sub=(next&&next.querySelector('td[colspan]'))?next:null;
+    pairs.push([row,sub]);
+    i+=sub?2:1;
+  }
+
   const cur=headerEl.dataset.sortDir||'';
   const dir=cur==='desc'?'asc':'desc';
   table.querySelectorAll('thead th').forEach(th=>{
@@ -950,7 +963,8 @@ function sortTable(tableId,colIdx,headerEl){
   headerEl.dataset.sortDir=dir;
   const a=headerEl.querySelector('.sort-arrow');
   if(a){a.textContent=dir==='desc'?' ↓':' ↑';a.style.opacity='1';}
-  rows.sort((ra,rb)=>{
+
+  pairs.sort(([ra],[rb])=>{
     const av=ra.cells[colIdx]?.dataset.sort??ra.cells[colIdx]?.textContent??'';
     const bv=rb.cells[colIdx]?.dataset.sort??rb.cells[colIdx]?.textContent??'';
     const an=parseFloat(String(av).replace(/[^0-9.-]/g,''));
@@ -959,7 +973,12 @@ function sortTable(tableId,colIdx,headerEl){
     if(isNum)return dir==='desc'?bn-an:an-bn;
     return dir==='desc'?String(bv).localeCompare(String(av),'pt-BR'):String(av).localeCompare(String(bv),'pt-BR');
   });
-  rows.forEach(r=>tbody.appendChild(r));
+
+  // Re-insert each pair: main row immediately followed by its sub row
+  pairs.forEach(([main,sub])=>{
+    tbody.appendChild(main);
+    if(sub)tbody.appendChild(sub);
+  });
 }
 
 function applyDefaultSort(tableId,colIdx){
