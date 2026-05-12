@@ -285,6 +285,7 @@ async function syncAll(dateRange) {
       const utmKeyNoDireto = utmKey.replace(/-direto-?/, '-').replace(/-$/, '');
       const gam = dayGam[utmKey] || dayGam[utmKeyNoDireto] || {};
       const faturamentoBruto = gam.revenue || 0;
+      // Taxa 10% aplicada AQUI. Não aplicar de novo no frontend nem nas rotas de API.
       if (g.tipo === 'direto') {
         const availKeys = Object.keys(dayGam);
         const matched = dayGam[utmKey] ? utmKey : (dayGam[utmKeyNoDireto] ? utmKeyNoDireto : 'NONE');

@@ -326,7 +326,10 @@ async function fetchGAMReport(dateRange) {
       ...u,
       ecpm: u.impressions > 0 ? (u.revenue / u.impressions) * 1000 : 0,
       ctr: u.impressions > 0 ? (u.adxClicks / u.impressions) * 100 : 0,
-      cpc_gam: u.adxCpcWt > 0 ? (u.adxCpcWtSum / u.adxCpcWt / 1_000_000) * rate : 0,
+      // CPC: use GAM column if available; fall back to revenue/clicks (CPM inventory)
+      cpc_gam: u.adxCpcWt > 0
+        ? (u.adxCpcWtSum / u.adxCpcWt / 1_000_000) * rate
+        : (u.adxClicks > 0 ? u.revenue / u.adxClicks : 0),
       cliques_gam: u.adxClicks,
       viewability: u.measurable > 0 ? (u.viewable / u.measurable) * 100 : 0,
       taxaProgramatica: u.serverImpressions > 0 ? (u.adxImpressions / u.serverImpressions) * 100 : 0,
@@ -512,7 +515,10 @@ async function fetchGAMFunnelsByUTM(networkCode, dateRange) {
         impressions: v.impressions,
         ecpm: v._n > 0 ? v.ecpm / v._n : 0,
         ctr_gam: v._n > 0 ? (v.ctrSum / v._n) * 100 : 0,
-        cpc_gam: v.cpcWt > 0 ? (v.cpcWtSum / v.cpcWt / 1_000_000) * rate : 0,
+        // CPC: use GAM column if available; fall back to revenue/clicks (CPM inventory)
+        cpc_gam: v.cpcWt > 0
+          ? (v.cpcWtSum / v.cpcWt / 1_000_000) * rate
+          : (v.cliques > 0 ? v.revenue / v.cliques : 0),
         cliques_gam: v.cliques,
       };
     }

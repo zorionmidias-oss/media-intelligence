@@ -360,12 +360,17 @@
     .test-result.err{background:color-mix(in oklch,var(--bad) 10%,transparent);color:var(--bad);display:block}
 
     /* ── LOADING OVERLAY ── */
-    .loading-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,10,15,0.92);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
-    .loading-logo{font-family:'Playfair Display',serif;font-weight:900;font-style:italic;font-size:120px;color:transparent;background:linear-gradient(135deg,#00e5b4 0%,#7c6aff 50%,#00e5b4 100%);background-size:200% 200%;-webkit-background-clip:text;background-clip:text;animation:lo-shimmer 2s linear infinite,lo-pulse 1.5s ease-in-out infinite;text-shadow:0 0 60px rgba(124,106,255,0.4);position:relative;line-height:1}
-    .loading-logo::after{content:"'s";font-size:40px;position:absolute;top:10px;right:-30px;color:rgba(255,255,255,0.6)}
-    .loading-text{margin-top:30px;color:#888;font-size:14px;letter-spacing:3px;text-transform:uppercase;animation:lo-pulse 1.5s ease-in-out infinite}
-    @keyframes lo-shimmer{0%{background-position:0% 50%}100%{background-position:200% 50%}}
-    @keyframes lo-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(0.95)}}
+    .loading-overlay{position:fixed;inset:0;background:rgba(10,10,15,0.95);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;backdrop-filter:blur(12px)}
+    .loading-container{position:relative;width:200px;height:200px;display:flex;align-items:center;justify-content:center}
+    .loading-spinner{position:absolute;width:100%;height:100%;animation:lo-rotate 3s linear infinite}
+    .loading-ring{animation:lo-dash 2s ease-in-out infinite}
+    .loading-logo{font-family:'Playfair Display','Georgia',serif;font-weight:900;font-style:italic;font-size:90px;color:white;text-shadow:0 0 30px rgba(255,255,255,0.5);animation:lo-glow 2s ease-in-out infinite;position:relative;line-height:1}
+    .loading-logo .apostrofo{font-size:32px;position:absolute;top:10px;right:-22px;color:rgba(255,255,255,0.7)}
+    .loading-text{margin-top:40px;color:rgba(255,255,255,0.8);font-size:12px;letter-spacing:4px;text-transform:uppercase;animation:lo-pulse 1.8s ease-in-out infinite}
+    @keyframes lo-rotate{100%{transform:rotate(360deg)}}
+    @keyframes lo-dash{0%{stroke-dashoffset:565}50%{stroke-dashoffset:141}100%{stroke-dashoffset:565;transform:rotate(360deg)}}
+    @keyframes lo-glow{0%,100%{text-shadow:0 0 20px rgba(255,255,255,0.4),0 0 40px rgba(255,255,255,0.2)}50%{text-shadow:0 0 30px rgba(255,255,255,0.8),0 0 60px rgba(255,255,255,0.4)}}
+    @keyframes lo-pulse{0%,100%{opacity:0.6}50%{opacity:1}}
 
     /* ── SORTABLE HEADERS ── */
     thead th.sortable{cursor:pointer;user-select:none}
@@ -379,8 +384,16 @@
 
 <!-- ═══ LOADING OVERLAY ═══ -->
 <div id="loading-overlay" class="loading-overlay" style="display:none">
-  <div class="loading-logo">2</div>
-  <div class="loading-text">Carregando...</div>
+  <div class="loading-container">
+    <svg class="loading-spinner" viewBox="0 0 200 200">
+      <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
+      <circle cx="100" cy="100" r="90" fill="none" stroke="white" stroke-width="2"
+              stroke-linecap="round" stroke-dasharray="565" stroke-dashoffset="565"
+              class="loading-ring"/>
+    </svg>
+    <div class="loading-logo">2<span class="apostrofo">'s</span></div>
+  </div>
+  <div class="loading-text" id="loading-text">Carregando...</div>
 </div>
 
 <!-- ═══ SIDEBAR ═══ -->
@@ -455,8 +468,8 @@
         <span class="f-lbl">Até</span>
         <input type="date" id="f-until" />
         <select id="f-domain" style="min-width:140px"><option value="all">Todos os domínios</option></select>
-        <button class="btn btn-s" onclick="loadData(false)">↻ Atualizar</button>
-        <button class="btn btn-p" id="btn-force" onclick="loadData(true)">
+        <button class="btn btn-s" onclick="refreshAll()">↻ Atualizar</button>
+        <button class="btn btn-p" id="btn-force" onclick="forceSync()">
           <svg id="force-spin-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:none"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
           ⟳ Forçar
         </button>
@@ -849,12 +862,32 @@ function animateTo(el,target,formatter,duration=900){
 function showOverlay(msg='Carregando...'){
   const ol=document.getElementById('loading-overlay');
   if(!ol)return;
-  ol.querySelector('.loading-text').textContent=msg;
+  const t=document.getElementById('loading-text');
+  if(t)t.textContent=msg;
   ol.style.display='flex';
 }
 function hideOverlay(){
   const ol=document.getElementById('loading-overlay');
   if(ol)ol.style.display='none';
+}
+
+/* ═══ REFRESH / FORCE SYNC ═══ */
+async function refreshAll(){
+  showOverlay('Atualizando dados...');
+  try{
+    await loadData(false);
+    if(S.tab==='campaigns') loadCampaignsDB(S.campTipo||'bot');
+  }catch(e){console.error('[refreshAll]',e)}
+  finally{hideOverlay();}
+}
+
+async function forceSync(){
+  showOverlay('Sincronizando com Meta e GAM...');
+  try{
+    await loadData(true);
+    if(S.tab==='campaigns') loadCampaignsDB(S.campTipo||'bot');
+  }catch(e){console.error('[forceSync]',e)}
+  finally{hideOverlay();}
 }
 
 /* ═══ SKELETON LOADING ═══ */
@@ -968,11 +1001,11 @@ function nav(id,btn){
   document.getElementById('tab-'+id).classList.add('on');
   document.getElementById('hdr-title').textContent=TITLES[id]||id;
   S.tab=id;
-  if(id==='ai')checkAI();
-  if(id==='campaigns')loadCampaignsDB(S.campTipo||'bot');
-  if(id==='domains')loadDominios();
-  if(id==='gam')loadGAMReport();
-  if(id==='contas')loadContas();
+  if(id==='ai'){checkAI();return;}
+  if(id==='campaigns'){showOverlay('Carregando...');loadCampaignsDB(S.campTipo||'bot').finally(hideOverlay);return;}
+  if(id==='domains'){showOverlay('Carregando...');loadDominios().finally(hideOverlay);return;}
+  if(id==='gam'){showOverlay('Carregando...');loadGAMReport().finally(hideOverlay);return;}
+  if(id==='contas'){showOverlay('Carregando...');loadContas().finally(hideOverlay);}
 }
 
 /* ═══ DATES ═══ */
@@ -990,7 +1023,7 @@ function setDatePreset(preset,btn){
   document.getElementById('f-until').value=until;
   document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('act'));
   if(btn)btn.classList.add('act');
-  loadData(false);
+  refreshAll();
 }
 
 function initDates(){
@@ -1005,8 +1038,6 @@ async function loadData(force=false){
   if(S.busy)return;
   S.busy=true;
   showLoading();
-  if(force||S.firstLoad)showOverlay(force?'Sincronizando dados...':'Carregando...');
-  S.firstLoad=false;
   const since=document.getElementById('f-since').value;
   const until=document.getElementById('f-until').value;
   const domain=document.getElementById('f-domain').value;
@@ -1021,7 +1052,7 @@ async function loadData(force=false){
     S.metrics=await res.json();
     renderAll(S.metrics);
   }catch(e){console.error('[loadData]',e)}
-  finally{S.busy=false;hideLoading();hideOverlay();}
+  finally{S.busy=false;hideLoading();}
   if(S.tab==='gam')loadGAMReport();
 }
 
@@ -1577,7 +1608,8 @@ function switchCampTab(tipo,btn){
   S.campTipo=tipo;
   document.querySelectorAll('.itab').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
-  loadCampaignsDB(tipo);
+  showOverlay('Carregando...');
+  loadCampaignsDB(tipo).finally(hideOverlay);
 }
 
 function filterCampDB(q){
@@ -2028,13 +2060,13 @@ async function deletarConta(id,nome){
 
 /* ═══ INIT ═══ */
 (async()=>{
-  S.firstLoad=true;
   initDates();
   await populateDomainSelect();
   await loadDominios();
   // Init sortable headers (thead is static even before data)
   ['camp-table','adunit-table','adv-table','dom-table','contas-table'].forEach(makeTableSortable);
-  loadData();
+  showOverlay('Carregando...');
+  loadData().finally(hideOverlay);
   checkSyncStatus();
   checkPendingStatus();
   setInterval(checkSyncStatus,60000);

@@ -66,20 +66,27 @@ function groupAdsByUTM(ads) {
     }
   }
 
-  return Object.values(groups).map(g => ({
-    adUTM: g.adUTM,
-    domainId: g.domainId,
-    tipo: g.tipo,
-    date: g.date,
-    campaignName: g.campaignName,
-    spend: g.spend,
-    clicks: g.clicks,
-    impressions: g.impressions,
-    results: g.results,
-    cpc: g._cpcW > 0 ? g._cpcSum / g._cpcW : (g.clicks > 0 ? g.spend / g.clicks : 0),
-    ctr: g._ctrW > 0 ? g._ctrSum / g._ctrW : (g.impressions > 0 ? (g.clicks / g.impressions) * 100 : 0),
-    orcamentoTotal: [...g._adsetBudgets.values()].reduce((a, b) => a + b, 0),
-  }));
+  return Object.values(groups).map(g => {
+    // CPC = total_spend / total_clicks (weighted — avoids artifacts from ads with 0 clicks)
+    const cpc = g.clicks > 0 ? g.spend / g.clicks : 0;
+    // CTR = total_clicks / total_impressions × 100
+    const ctr = g.impressions > 0 ? (g.clicks / g.impressions) * 100 : 0;
+    console.log(`[utm ${g.adUTM} ${g.date}] spend=${g.spend.toFixed(2)}, clicks=${g.clicks}, cpc=${cpc.toFixed(4)}`);
+    return {
+      adUTM: g.adUTM,
+      domainId: g.domainId,
+      tipo: g.tipo,
+      date: g.date,
+      campaignName: g.campaignName,
+      spend: g.spend,
+      clicks: g.clicks,
+      impressions: g.impressions,
+      results: g.results,
+      cpc,
+      ctr,
+      orcamentoTotal: [...g._adsetBudgets.values()].reduce((a, b) => a + b, 0),
+    };
+  });
 }
 
 module.exports = { extractDomainPrefix, extractAdUTM, extractTipo, groupAdsByUTM };

@@ -32,6 +32,7 @@ async function handler(req, res) {
 
     // ─── Aggregate ads_consolidados (Meta spend + UTM attribution) ───
     const invByDay = {};
+    const fatByDay = {}; // from ads_consolidados.faturamento_real (0.9 applied by sync.js)
     const utmMap = {};
     let totSpend = 0, totResults = 0, totClicks = 0;
     let _viewWtSum = 0, _viewWt = 0;
@@ -40,6 +41,8 @@ async function handler(req, res) {
       const day = r.data;
       if (!invByDay[day]) invByDay[day] = 0;
       invByDay[day] += Number(r.valor_gasto || 0);
+      if (!fatByDay[day]) fatByDay[day] = 0;
+      fatByDay[day] += Number(r.faturamento_real || 0);
 
       const key = `${r.dominio_id}|${r.ad_utm}`;
       if (!utmMap[key]) {
@@ -72,19 +75,15 @@ async function handler(req, res) {
       totClicks += Number(r.cliques || 0);
     }
 
-    // ─── Aggregate blocos_anuncio (GAM ground truth for faturamento) ───
-    const fatByDay = {}, ecpmByDay = {};
-    let gamImps = 0, gamClicks = 0, totFatBruto = 0;
+    // ─── Aggregate blocos_anuncio (GAM: ecpm, impressions, viewability only) ───
+    const ecpmByDay = {};
+    let gamImps = 0, gamClicks = 0;
     let _ecpmWtSum = 0, _ecpmWt = 0, _pmrWtSum = 0, _pmrWt = 0;
     const adUnitMap = {};
 
     for (const r of gam || []) {
       const day = r.data;
       const revBruto = Number(r.receita_total || 0);
-      const revNet = revBruto * 0.9; // 10% platform fee
-      if (!fatByDay[day]) fatByDay[day] = 0;
-      fatByDay[day] += revNet;
-      totFatBruto += revBruto;
 
       const imp = Number(r.impressoes || 0);
       const clk = Number(r.total_clicks || 0);
@@ -108,7 +107,8 @@ async function handler(req, res) {
       adUnitMap[bk]._n++;
     }
 
-    const totFat = totFatBruto * 0.9; // net faturamento (from blocos_anuncio — more complete)
+    // faturamento_real already stored net in ads_consolidados (0.9 applied in sync.js)
+    const totFat = Object.values(utmMap).reduce((s, u) => s + u.faturamento, 0);
     const totLucro = totFat - totSpend;
     const ecpm = _ecpmWt > 0 ? _ecpmWtSum / _ecpmWt : 0;
     const taxaProgramatica = _pmrWt > 0 ? _pmrWtSum / _pmrWt : 0;

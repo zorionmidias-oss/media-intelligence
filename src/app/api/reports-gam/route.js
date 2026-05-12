@@ -23,7 +23,7 @@ async function handler(req, res) {
 
     let adsQ = supabase
       .from('ads_consolidados')
-      .select('viewability,impressoes_gam')
+      .select('viewability,impressoes_gam,cpc_gam,ctr_gam,cliques_gam')
       .gte('data', df)
       .lte('data', dt);
     if (domainId) adsQ = adsQ.eq('dominio_id', domainId);
@@ -58,10 +58,17 @@ async function handler(req, res) {
     }
 
     let _viewWtSum = 0, _viewWt = 0;
+    let _cpcGamWtSum = 0, _cpcGamWt = 0;
+    let _cliquesGamTotal = 0, _impGamForCtr = 0;
     for (const r of adsRows || []) {
       const vw = Number(r.viewability || 0);
       const im = Number(r.impressoes_gam || 0);
+      const cpcG = Number(r.cpc_gam || 0);
+      const clG = Number(r.cliques_gam || 0);
       if (vw > 0 && im > 0) { _viewWtSum += vw * im; _viewWt += im; }
+      if (cpcG > 0 && clG > 0) { _cpcGamWtSum += cpcG * clG; _cpcGamWt += clG; }
+      _cliquesGamTotal += clG;
+      _impGamForCtr += im;
     }
 
     const ecpm = _ecpmWt > 0 ? _ecpmWtSum / _ecpmWt : 0;
@@ -69,6 +76,8 @@ async function handler(req, res) {
     const ctr = totImps > 0 ? (totClicks / totImps) * 100 : 0;
     const rps = totImps > 0 ? totRev / totImps : 0;
     const viewability = _viewWt > 0 ? _viewWtSum / _viewWt : 0;
+    const cpc_gam = _cpcGamWt > 0 ? _cpcGamWtSum / _cpcGamWt : 0;
+    const ctr_gam = _impGamForCtr > 0 ? (_cliquesGamTotal / _impGamForCtr) * 100 : 0;
 
     const adUnits = Object.values(adUnitMap).map(u => ({
       name: u.name,
@@ -85,8 +94,9 @@ async function handler(req, res) {
         rps: +rps.toFixed(4),
         taxaProgramatica: +pmr.toFixed(2),
         viewability: +viewability.toFixed(2),
-        cpc: 0,
-        ctr: +ctr.toFixed(2),
+        cpc: +cpc_gam.toFixed(4),
+        ctr: +ctr_gam.toFixed(2),
+        cliques_gam: _cliquesGamTotal,
         // For renderGAM PMR formula: faturamento / impressions * 1000
         faturamento: +totRev.toFixed(2),
         impressions: totImps,
