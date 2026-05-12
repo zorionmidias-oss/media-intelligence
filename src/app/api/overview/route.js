@@ -1,6 +1,29 @@
 'use strict';
 const supabase = require('../../../lib/supabase');
 
+async function getMetasProgresso(totFat, totSpend, totLucro, roi) {
+  try {
+    const { data } = await supabase.from('metas').select('*').eq('ativa', true).is('dominio_id', null);
+    const byTipo = {};
+    for (const m of data || []) byTipo[m.tipo] = m;
+    const prog = (atual, meta) => meta > 0 ? +((atual / meta) * 100).toFixed(1) : null;
+    return {
+      faturamento_diario: byTipo.faturamento_diario
+        ? { id: byTipo.faturamento_diario.id, meta: +byTipo.faturamento_diario.valor, atual: +totFat.toFixed(2), percentual: prog(totFat, +byTipo.faturamento_diario.valor) }
+        : null,
+      investimento_diario: byTipo.investimento_diario
+        ? { id: byTipo.investimento_diario.id, meta: +byTipo.investimento_diario.valor, atual: +totSpend.toFixed(2), percentual: prog(totSpend, +byTipo.investimento_diario.valor) }
+        : null,
+      lucro_diario: byTipo.lucro_diario
+        ? { id: byTipo.lucro_diario.id, meta: +byTipo.lucro_diario.valor, atual: +totLucro.toFixed(2), percentual: prog(totLucro, +byTipo.lucro_diario.valor) }
+        : null,
+      roas_diario: byTipo.roas_diario
+        ? { id: byTipo.roas_diario.id, meta: +byTipo.roas_diario.valor, atual: +roi, percentual: prog(roi, +byTipo.roas_diario.valor) }
+        : null,
+    };
+  } catch { return {}; }
+}
+
 async function handler(req, res) {
   try {
     const { since, until, domain } = req.query;
@@ -261,7 +284,7 @@ async function handler(req, res) {
       },
       trend,
       topFunnels,
-      topCampaigns: [...allUTMs].sort((a, b) => b.spend - a.spend),
+      topCampaigns: [...allUTMs].sort((a, b) => b.roi - a.roi),
       adsets: allUTMs,
       adUnits,
       topAdvertisers: [],
@@ -270,6 +293,7 @@ async function handler(req, res) {
       gamUTMMap,
       networks: [],
       previsao,
+      metas_progresso: await getMetasProgresso(totFat, totSpend, totLucro, roi),
     });
   } catch (err) {
     console.error('[overview]', err.message);

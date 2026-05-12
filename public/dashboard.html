@@ -385,6 +385,106 @@
     .sort-arrow{opacity:.4;font-size:10px;margin-left:3px}
     thead th[data-sort-dir="desc"] .sort-arrow,
     thead th[data-sort-dir="asc"] .sort-arrow{opacity:1;color:var(--accent)}
+
+    /* ── META PROGRESS ── */
+    .meta-progress{margin-top:.75rem}
+    .meta-bar{width:100%;height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden}
+    .meta-fill{height:100%;background:linear-gradient(90deg,#00e5b4,#7c6aff);transition:width .5s ease;border-radius:2px;min-width:0}
+    .meta-fill.over{background:linear-gradient(90deg,#ffb830,#ff4d6a)}
+    .meta-fill.complete{background:#00e5b4}
+    .meta-lbl-row{display:flex;justify-content:space-between;align-items:center;margin-top:.35rem;font-size:.65rem;color:#888}
+    .meta-lbl-cur{color:#fff;font-weight:600}
+    .meta-edit-btn{background:transparent;border:none;cursor:pointer;opacity:.35;font-size:.7rem;padding:0;line-height:1;transition:opacity .15s;color:var(--fg)}
+    .meta-edit-btn:hover{opacity:1}
+
+    /* ── NOTIFICATIONS ── */
+    .notif-bell-btn{background:transparent;border:none;cursor:pointer;position:relative;padding:.35rem;color:var(--muted);transition:color .15s;border-radius:.5rem}
+    .notif-bell-btn:hover{color:var(--fg);background:rgba(255,255,255,.05)}
+    .notif-badge{position:absolute;top:1px;right:1px;min-width:16px;height:16px;padding:0 3px;background:#ff4d6a;color:#fff;font-size:.55rem;font-weight:700;border-radius:8px;display:none;align-items:center;justify-content:center;line-height:1}
+    .notif-panel{position:fixed;top:60px;right:1rem;width:360px;max-height:520px;background:var(--card);border:1px solid var(--border);border-radius:var(--rl);z-index:200;display:none;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+    .notif-panel.on{display:flex}
+    .notif-ph{display:flex;align-items:center;justify-content:space-between;padding:.875rem 1rem;border-bottom:1px solid var(--border)}
+    .notif-ph h3{font-size:.875rem;margin:0;font-weight:600}
+    .notif-ph button{background:transparent;border:1px solid var(--border);border-radius:.375rem;padding:.2rem .6rem;font-size:.65rem;color:var(--muted);cursor:pointer}
+    .notif-ph button:hover{color:var(--fg)}
+    .notif-body{overflow-y:auto;flex:1}
+    .notif-item{display:flex;gap:.75rem;padding:.875rem 1rem;border-bottom:1px solid rgba(255,255,255,.03);cursor:pointer;transition:background .1s}
+    .notif-item:hover{background:rgba(255,255,255,.025)}
+    .notif-item.unread{background:rgba(124,106,255,.04)}
+    .notif-ico{font-size:1.125rem;flex-shrink:0;margin-top:.1rem}
+    .notif-txt strong{font-size:.8125rem;display:block;margin-bottom:.15rem}
+    .notif-txt p{font-size:.75rem;color:var(--muted);margin:0 0 .25rem}
+    .notif-txt small{font-size:.65rem;color:#555}
+
+    /* ── TOAST ── */
+    .toast-box{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--card);border:1px solid var(--border);border-radius:.75rem;padding:.875rem 1.25rem;font-size:.875rem;z-index:9999;display:none;align-items:center;gap:.75rem;box-shadow:0 8px 32px rgba(0,0,0,.4);max-width:320px}
+    .toast-box.on{display:flex}
+    .toast-box.ok{border-color:var(--ok)}
+    .toast-box.err{border-color:var(--bad)}
+
+    /* ── TOP CAMP CARD ── */
+    .top-camp-card{padding:.875rem 1rem;border-bottom:1px solid rgba(255,255,255,.03);cursor:pointer;transition:background .15s;border-radius:.5rem}
+    .top-camp-card:hover{background:rgba(255,255,255,.03)}
+    .tc-header{display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem}
+    .tc-av{width:32px;height:32px;border-radius:50%;background:color-mix(in oklch,var(--c1) 15%,transparent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8125rem;flex-shrink:0;color:var(--c1)}
+    .tc-name{flex:1;font-size:.875rem;font-weight:600;font-family:'JetBrains Mono',monospace}
+    .tc-roi{font-size:.72rem;font-weight:700;padding:.15rem .5rem;border-radius:.375rem;flex-shrink:0}
+    .tc-roi.ok{background:rgba(0,229,180,.12);color:#00e5b4}
+    .tc-roi.bad{background:rgba(255,77,106,.12);color:#ff4d6a}
+    .tc-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem}
+    .tc-metric label{display:block;font-size:.58rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.15rem}
+    .tc-metric b{font-size:.8rem;font-family:'JetBrains Mono',monospace}
+
+    /* ── DRILLDOWN MODAL ── */
+    .modal-fs{position:fixed;inset:0;background:var(--bg);z-index:300;display:none;flex-direction:column;overflow:hidden}
+    .modal-fs.on{display:flex}
+    .modal-fs-hd{display:flex;align-items:center;gap:1rem;padding:1rem 1.5rem;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
+    .modal-fs-hd h2{font-size:1.125rem;margin:0;flex:1}
+    .modal-fs-close{background:transparent;border:1px solid var(--border);border-radius:.5rem;padding:.35rem .875rem;cursor:pointer;font-size:.875rem;color:var(--fg)}
+    .modal-fs-body{flex:1;overflow-y:auto;padding:1.5rem}
+    .drill-summary-row{display:flex;gap:1.25rem;flex-wrap:wrap;font-size:.8125rem;color:var(--muted);margin-bottom:.25rem}
+    .drill-summary-row b{color:var(--fg)}
+    .adset-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:1rem 1.25rem;margin-bottom:1rem}
+    .adset-hd{display:flex;align-items:center;gap:.875rem;margin-bottom:.875rem;flex-wrap:wrap}
+    .adset-name{flex:1;font-weight:600;font-size:.9375rem}
+    .adset-camp-tag{font-size:.65rem;background:rgba(124,106,255,.12);color:#b8a8ff;padding:.15rem .45rem;border-radius:.25rem}
+    .adset-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:.875rem;padding:.75rem;background:rgba(255,255,255,.02);border-radius:.5rem;font-size:.8125rem}
+    .adset-metrics label{display:block;font-size:.58rem;color:var(--muted);text-transform:uppercase;margin-bottom:.2rem}
+    .adset-creatives{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:.75rem}
+    .creative-card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:.5rem;overflow:hidden}
+    .creative-card img{width:100%;aspect-ratio:1;object-fit:cover;background:#111}
+    .creative-info{padding:.5rem}
+    .creative-info strong{display:block;font-size:.68rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .cr-status{font-size:.58rem;padding:.1rem .35rem;border-radius:.2rem;display:inline-block;margin-top:.2rem}
+    .cr-status.ACTIVE{background:rgba(0,229,180,.12);color:#00e5b4}
+    .cr-status.PAUSED{background:rgba(255,255,255,.07);color:var(--muted)}
+    .toggle-btn{background:transparent;border:1px solid var(--border);border-radius:.375rem;padding:.25rem .6rem;font-size:.7rem;cursor:pointer;transition:all .15s;color:var(--muted)}
+    .toggle-btn.active-st{border-color:var(--ok);color:var(--ok)}
+    .budget-wrap{display:flex;align-items:center;gap:.35rem}
+    .budget-input{background:var(--bg);border:1px solid var(--border);border-radius:.375rem;padding:.25rem .5rem;font-size:.8125rem;color:var(--fg);width:80px;text-align:right}
+    .budget-input:focus{outline:none;border-color:var(--c1)}
+    .budget-save-btn{background:var(--c1);border:none;border-radius:.375rem;padding:.25rem .625rem;font-size:.68rem;color:#000;cursor:pointer;font-weight:700}
+    .drill-no-meta{color:var(--muted);font-size:.8125rem;padding:1rem 0;font-style:italic}
+
+    /* ── HISTORICO ── */
+    .timeline{list-style:none;padding:0;margin:0;position:relative}
+    .timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:1px;background:var(--border)}
+    .timeline-item{padding:.75rem 0 .75rem 2rem;position:relative;font-size:.8125rem}
+    .timeline-item::before{content:'';position:absolute;left:4px;top:1.1rem;width:9px;height:9px;border-radius:50%;background:var(--c1);border:2px solid var(--bg)}
+    .tl-time{font-size:.65rem;color:var(--muted);margin-bottom:.2rem}
+    .tl-acao{font-weight:600;margin-bottom:.2rem}
+    .tl-vals{color:var(--muted);font-size:.75rem;font-family:'JetBrains Mono',monospace}
+    .tl-impact{font-size:.7rem;margin-top:.35rem;padding:.25rem .5rem;border-radius:.375rem;background:rgba(255,255,255,.03);color:#888;display:inline-block}
+
+    /* ── ACTIONS COLUMN ── */
+    .act-btn{background:transparent;border:none;cursor:pointer;opacity:.5;font-size:.875rem;padding:.15rem .3rem;transition:opacity .15s;border-radius:.25rem}
+    .act-btn:hover{opacity:1;background:rgba(255,255,255,.07)}
+
+    /* ── FUNIL ── */
+    .funil-tabs-row{display:flex;gap:.5rem;margin-bottom:1.5rem}
+    .funil-tab-btn{padding:.5rem 1rem;border-radius:.5rem;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:.8125rem;transition:all .15s}
+    .funil-tab-btn.on{background:var(--card);color:var(--fg);border-color:var(--c1)}
+    .funil-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;gap:.75rem;color:var(--muted);text-align:center;font-size:.875rem}
   </style>
 </head>
 <body>
@@ -439,6 +539,11 @@
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
       <span class="nav-lbl">Domínios</span>
       <span class="nav-badge" id="nav-dom-badge">0</span>
+    </button>
+    <button class="nav-btn" onclick="nav('funil',this)">
+      <span class="nav-ind"></span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      <span class="nav-lbl">Análise de Funil</span>
     </button>
   </nav>
     <button class="nav-btn" id="nav-contas" onclick="nav('contas',this)">
@@ -495,9 +600,9 @@
         <svg id="delay-spin-ico" class="spin-ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
         <span id="delay-txt">GAM</span>
       </div>
-      <button class="ico-btn">
+      <button class="ico-btn notif-bell-btn" id="notif-bell-btn" onclick="toggleNotifPanel()">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-        <span class="notif-dot"></span>
+        <span class="notif-badge" id="notif-badge"></span>
       </button>
       <div class="avatar" title="Sair" onclick="logout()" style="cursor:pointer">2J</div>
     </div>
@@ -512,18 +617,38 @@
           <div class="card card-hv anim" style="animation-delay:0ms">
             <div class="kpi-top"><span class="kpi-lbl">Faturamento</span><div class="kpi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div></div>
             <div class="kpi-bot"><span class="kpi-val" id="kpi-fat">—</span><div class="kpi-ch neu" id="kpi-fat-sub"></div></div>
+            <div class="meta-progress" id="meta-prog-fat" style="display:none">
+              <div class="meta-bar"><div class="meta-fill" id="meta-fill-fat" style="width:0%"></div></div>
+              <div class="meta-lbl-row"><span class="meta-lbl-cur" id="meta-cur-fat">—</span><span>Meta: <span id="meta-tgt-fat" style="color:#aaa">—</span></span><button class="meta-edit-btn" onclick="openMetaModal('faturamento_diario')" title="Editar meta">✏</button></div>
+            </div>
+            <button class="meta-edit-btn" id="meta-add-fat" onclick="openMetaModal('faturamento_diario')" title="Definir meta" style="font-size:.68rem;opacity:.3;margin-top:.5rem">+ meta</button>
           </div>
           <div class="card card-hv anim" style="animation-delay:100ms">
             <div class="kpi-top"><span class="kpi-lbl">Investimento</span><div class="kpi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 16s1-1 4-1 5 2 8 2 4-1 4-1V2s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="2" x2="2" y1="21" y2="16"/></svg></div></div>
             <div class="kpi-bot"><span class="kpi-val" id="kpi-inv">—</span><div class="kpi-ch neu" id="kpi-inv-sub"></div></div>
+            <div class="meta-progress" id="meta-prog-inv" style="display:none">
+              <div class="meta-bar"><div class="meta-fill" id="meta-fill-inv" style="width:0%"></div></div>
+              <div class="meta-lbl-row"><span class="meta-lbl-cur" id="meta-cur-inv">—</span><span>Meta: <span id="meta-tgt-inv" style="color:#aaa">—</span></span><button class="meta-edit-btn" onclick="openMetaModal('investimento_diario')" title="Editar meta">✏</button></div>
+            </div>
+            <button class="meta-edit-btn" id="meta-add-inv" onclick="openMetaModal('investimento_diario')" title="Definir meta" style="font-size:.68rem;opacity:.3;margin-top:.5rem">+ meta</button>
           </div>
           <div class="card card-hv anim" style="animation-delay:200ms">
             <div class="kpi-top"><span class="kpi-lbl">Lucro</span><div class="kpi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div></div>
             <div class="kpi-bot"><span class="kpi-val" id="kpi-lucro">—</span><div class="kpi-ch neu" id="kpi-lucro-sub"></div></div>
+            <div class="meta-progress" id="meta-prog-lucro" style="display:none">
+              <div class="meta-bar"><div class="meta-fill" id="meta-fill-lucro" style="width:0%"></div></div>
+              <div class="meta-lbl-row"><span class="meta-lbl-cur" id="meta-cur-lucro">—</span><span>Meta: <span id="meta-tgt-lucro" style="color:#aaa">—</span></span><button class="meta-edit-btn" onclick="openMetaModal('lucro_diario')" title="Editar meta">✏</button></div>
+            </div>
+            <button class="meta-edit-btn" id="meta-add-lucro" onclick="openMetaModal('lucro_diario')" title="Definir meta" style="font-size:.68rem;opacity:.3;margin-top:.5rem">+ meta</button>
           </div>
           <div class="card card-hv anim" style="animation-delay:300ms">
             <div class="kpi-top"><span class="kpi-lbl">ROI</span><div class="kpi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div></div>
             <div class="kpi-bot"><span class="kpi-val" id="kpi-roi">—</span><div class="kpi-ch neu" id="kpi-roi-sub"></div></div>
+            <div class="meta-progress" id="meta-prog-roas" style="display:none">
+              <div class="meta-bar"><div class="meta-fill" id="meta-fill-roas" style="width:0%"></div></div>
+              <div class="meta-lbl-row"><span class="meta-lbl-cur" id="meta-cur-roas">—</span><span>Meta: <span id="meta-tgt-roas" style="color:#aaa">—</span></span><button class="meta-edit-btn" onclick="openMetaModal('roas_diario')" title="Editar meta">✏</button></div>
+            </div>
+            <button class="meta-edit-btn" id="meta-add-roas" onclick="openMetaModal('roas_diario')" title="Definir meta" style="font-size:.68rem;opacity:.3;margin-top:.5rem">+ meta</button>
           </div>
         </div>
 
@@ -594,7 +719,7 @@
 
         <div class="card anim" style="animation-delay:300ms">
           <div class="deals-hd">
-            <div><div class="deals-title">Top Campanhas</div><div class="deals-sub">Por investimento no período</div></div>
+            <div><div class="deals-title">Top Campanhas</div><div class="deals-sub">Por ROI no período — clique para filtrar</div></div>
           </div>
           <div class="deal-list" id="top-camp-list"><div class="empty">Carregando…</div></div>
         </div>
@@ -645,9 +770,9 @@
           <table id="camp-table">
             <thead><tr>
               <th>UTM</th><th>Domínio</th><th>Investido</th><th>Fat. Real</th><th>Lucro</th><th>ROAS</th>
-              <th>CPC</th><th>Custo/Result.</th><th>Resultados</th><th>Imp. GAM</th><th>eCPM</th><th>RPS</th>
+              <th>CPC</th><th>Custo/Result.</th><th>Resultados</th><th>Imp. GAM</th><th>eCPM</th><th>RPS</th><th>Ações</th>
             </tr></thead>
-            <tbody id="camp-db-body"><tr><td colspan="12" class="empty">Carregando…</td></tr></tbody>
+            <tbody id="camp-db-body"><tr><td colspan="13" class="empty">Carregando…</td></tr></tbody>
           </table>
           <div class="tbl-foot">
             <span style="font-size:.875rem;color:var(--muted)" id="camp-db-count">—</span>
@@ -776,8 +901,35 @@
       </div>
     </div>
 
+    <!-- ANÁLISE DE FUNIL -->
+    <div id="tab-funil" class="tab-panel">
+      <div class="sec">
+        <div class="chart-title" style="margin-bottom:.5rem">Análise de Funil</div>
+        <div class="funil-tabs-row">
+          <button class="funil-tab-btn on">Botões</button>
+          <button class="funil-tab-btn">Blocos de Mensagens</button>
+        </div>
+        <div class="funil-placeholder">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          <p>Em desenvolvimento — passe os detalhes da estrutura.</p>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
+
+<!-- ═══ NOTIF PANEL ═══ -->
+<aside class="notif-panel" id="notif-panel">
+  <div class="notif-ph">
+    <h3>Notificações</h3>
+    <button onclick="marcarTodasLidasFE()">Marcar todas como lidas</button>
+  </div>
+  <div class="notif-body" id="notif-list"><div style="padding:1.5rem;color:var(--muted);font-size:.8125rem;text-align:center">Carregando…</div></div>
+</aside>
+
+<!-- ═══ TOAST ═══ -->
+<div class="toast-box" id="toast-box"><span id="toast-ico"></span><span id="toast-msg"></span></div>
 
 <!-- ═══ MODAIS ═══ -->
 <div class="modal-bg" id="modal-add-domain" onclick="if(event.target===this)closeModal('modal-add-domain')">
@@ -832,6 +984,49 @@
       <button class="btn btn-s" onclick="closeModal('modal-conta')">Cancelar</button>
       <button class="btn btn-s" onclick="testarConta()">Testar Conexão</button>
       <button class="btn btn-p" id="btn-salvar-conta" onclick="salvarConta()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DRILLDOWN -->
+<div class="modal-fs" id="modal-drilldown">
+  <div class="modal-fs-hd">
+    <h2 id="drill-utm-title">UTM</h2>
+    <div class="drill-summary-row" id="drill-summary-row"></div>
+    <button class="modal-fs-close" onclick="closeDrilldown()">✕ Fechar</button>
+  </div>
+  <div class="modal-fs-body">
+    <div id="drill-adsets-container"></div>
+  </div>
+</div>
+
+<!-- MODAL HISTÓRICO -->
+<div class="modal-bg" id="modal-historico" onclick="if(event.target===this)closeModal('modal-historico')">
+  <div class="modal" style="width:min(600px,95vw);max-height:80vh;overflow-y:auto">
+    <div class="modal-hd">
+      <span class="modal-title" id="hist-modal-title">Histórico</span>
+      <button class="modal-close" onclick="closeModal('modal-historico')">✕</button>
+    </div>
+    <ul class="timeline" id="historico-timeline" style="margin-top:.5rem"></ul>
+  </div>
+</div>
+
+<!-- MODAL META -->
+<div class="modal-bg" id="modal-meta" onclick="if(event.target===this)closeModal('modal-meta')">
+  <div class="modal" style="width:min(380px,95vw)">
+    <div class="modal-hd">
+      <span class="modal-title" id="meta-modal-title">Definir Meta</span>
+      <button class="modal-close" onclick="closeModal('modal-meta')">✕</button>
+    </div>
+    <input type="hidden" id="meta-tipo-hidden" />
+    <input type="hidden" id="meta-id-hidden" />
+    <div class="field">
+      <label id="meta-label-field">Valor da meta</label>
+      <input type="number" id="meta-valor-input" min="0" step="0.01" placeholder="ex: 1500.00" style="font-size:1.125rem;text-align:right"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-s" onclick="closeModal('modal-meta')">Cancelar</button>
+      <button class="btn btn-p" onclick="saveMetaValue()">Salvar</button>
     </div>
   </div>
 </div>
@@ -1031,6 +1226,7 @@ function nav(id,btn){
   if(id==='domains'){showOverlay('Carregando...');loadDominios().finally(hideOverlay);return;}
   if(id==='gam'){showOverlay('Carregando...');loadGAMReport().finally(hideOverlay);return;}
   if(id==='contas'){showOverlay('Carregando...');loadContas().finally(hideOverlay);}
+  if(id==='funil'){/* placeholder */}
 }
 
 /* ═══ DATES ═══ */
@@ -1095,6 +1291,7 @@ function renderAll(d){
   renderGAM(k,d.adUnits||[],d.topAdvertisers||[]);
   renderUTMCards(d.utmCampaignTop3||[],d.utmSourceTop3||[]);
   renderNetworks(d.networks||[]);
+  updateMetaProgress(d.metas_progresso||{},k);
 }
 
 /* ── NETWORKS ── */
@@ -1337,24 +1534,28 @@ function groupCampsByCreative(camps,gamUTMMap){
 /* ── TOP CAMPAIGNS ── */
 function renderTopCamps(camps){
   const el=document.getElementById('top-camp-list');
-  if(!camps.length){el.innerHTML='<div class="empty">Sem campanhas</div>';return}
-  const gamUTMMap=S.metrics?.gamUTMMap||{};
-  const creatives=groupCampsByCreative(camps,gamUTMMap);
-  el.innerHTML=creatives.slice(0,8).map((c,i)=>`
-    <div class="deal-row anim" style="animation-delay:${(i+3)*50}ms">
-      <div class="deal-l">
-        <div class="deal-av">${esc((c.name||'?').charAt(0).toUpperCase())}</div>
-        <div>
-          <div class="deal-name">${esc(c.name)}</div>
-          <div class="deal-meta">${NUM(c.results)} results · ${PCT(c.ctr)} CTR · eCPM ${BRL(c.ecpm)}</div>
-        </div>
+  if(!camps||!camps.length){el.innerHTML='<div class="empty">Sem campanhas</div>';return}
+  const sorted=[...camps].sort((a,b)=>b.roi-a.roi).slice(0,8);
+  el.innerHTML=sorted.map((c,i)=>{
+    const roi=+(c.roi||0);
+    const lucro=+(c.lucro||0);
+    const cpc=+(c.cpc||0);
+    const spend=+(c.spend||0);
+    const roiOk=roi>=0;
+    return `<div class="top-camp-card anim" style="animation-delay:${(i+3)*50}ms" onclick="goToCampaigns('${esc(c.ad_utm||c.name||'')}')">
+      <div class="tc-header">
+        <div class="tc-av">${esc((c.ad_utm||c.name||'?').charAt(0).toUpperCase())}</div>
+        <span class="tc-name">${esc(c.ad_utm||c.name||'—')}</span>
+        <span class="tc-roi ${roiOk?'ok':'bad'}">${roi.toFixed(1)}% ROI</span>
       </div>
-      <div class="deal-r">
-        <span class="deal-val">${BRL(c.spend)}</span>
-        ${c.faturado>0?`<span class="deal-val" style="color:var(--c2);font-size:.8125rem">${BRL(c.faturado)}</span>`:''}
-        <span class="badge ${roasClass(c.roas)}">${c.roi.toFixed(1)}%</span>
+      <div class="tc-metrics">
+        <div class="tc-metric"><label>CPC</label><b>${cpc>0?BRL(cpc):'—'}</b></div>
+        <div class="tc-metric"><label>Investido</label><b>${BRL(spend)}</b></div>
+        <div class="tc-metric"><label>Lucro</label><b style="color:${lucro>=0?'var(--ok)':'var(--bad)'}">${BRL(lucro)}</b></div>
+        <div class="tc-metric"><label>ROAS</label><b>${ROAS(c.roas)}</b></div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 /* ── GROUP ADSETS BY CREATIVE ── */
@@ -1650,7 +1851,7 @@ async function loadCampaignsDB(tipo){
   const tb=document.getElementById('camp-db-body');
   const ct=document.getElementById('camp-db-count');
   const kpiStrip=document.getElementById('camp-kpis');
-  if(tb)tb.innerHTML='<tr><td colspan="12" class="empty">Carregando…</td></tr>';
+  if(tb)tb.innerHTML='<tr><td colspan="13" class="empty">Carregando…</td></tr>';
   if(kpiStrip)kpiStrip.style.display='none';
   const since=document.getElementById('f-since').value;
   const until=document.getElementById('f-until').value;
@@ -1665,7 +1866,7 @@ async function loadCampaignsDB(tipo){
     renderCampKPIs(d.kpis||{},tipo);
     renderCampTable(S.campRows);
   }catch(e){
-    if(tb)tb.innerHTML=`<tr><td colspan="12" class="empty" style="color:var(--bad)">${esc(e.message)}</td></tr>`;
+    if(tb)tb.innerHTML=`<tr><td colspan="13" class="empty" style="color:var(--bad)">${esc(e.message)}</td></tr>`;
     if(ct)ct.textContent='Erro';
   }
 }
@@ -1702,7 +1903,7 @@ function renderCampTable(rows){
   const noteEl=document.getElementById('camp-prev-note');
 
   if(!rows.length){
-    tb.innerHTML='<tr><td colspan="12" class="empty">Sem dados no banco para o período selecionado.</td></tr>';
+    tb.innerHTML='<tr><td colspan="13" class="empty">Sem dados no banco para o período selecionado.</td></tr>';
     ct.textContent='0 UTMs';
     return;
   }
@@ -1736,6 +1937,10 @@ function renderCampTable(rows){
       <td class="mo" data-sort="${r.impressoes_gam||0}">${r.impressoes_gam>0?NUM(r.impressoes_gam):'—'}</td>
       <td class="mo" data-sort="${r.ecpm||0}">${r.ecpm>0?BRL(r.ecpm):'—'}</td>
       <td class="mo" data-sort="${r.rps||0}">${r.rps>0?BRL(r.rps):'—'}</td>
+      <td style="white-space:nowrap">
+        <button class="act-btn" onclick="openDrilldown('${esc(r.ad_utm||'')}')" title="Drill-down adsets">🔍</button>
+        <button class="act-btn" onclick="abrirHistorico('${esc(r.ad_utm||'')}')" title="Histórico">📜</button>
+      </td>
     </tr>`;
 
     // Forecast sub-row
@@ -1748,7 +1953,7 @@ function renderCampTable(rows){
       const pLucroColor=(r.previsao_lucro||0)>=0?'var(--ok)':'var(--bad)';
       const pRoasColor=(r.previsao_roas||0)>=2?'var(--ok)':(r.previsao_roas||0)>=1?'var(--warn)':'var(--bad)';
       prevRow=`<tr class="tr-prev previsao-row">
-        <td colspan="12">
+        <td colspan="13">
           <div class="prev-line">
             <span class="prev-tag">↳ Previsão dia</span>
             <div class="prev-metric"><span>Fat. Real</span><strong style="color:var(--c2)">${BRL(r.previsao_faturamento_real)}</strong></div>
@@ -1762,7 +1967,7 @@ function renderCampTable(rows){
     } else if(hasOrc){
       // Budget known but no intraday data yet
       prevRow=`<tr class="tr-prev previsao-row">
-        <td colspan="12">
+        <td colspan="13">
           <div class="prev-line">
             <span class="prev-tag">↳ Previsão dia</span>
             <span class="prev-pending">Aguardando dados do dia — Orç. ${BRL(r.orcamento_total)}/dia</span>
@@ -2083,6 +2288,298 @@ async function deletarConta(id,nome){
   }catch(e){alert('Erro: '+e.message);}
 }
 
+/* ═══ META PROGRESS ═══ */
+const META_LABELS={faturamento_diario:'Faturamento',investimento_diario:'Investimento',lucro_diario:'Lucro',roas_diario:'ROAS'};
+const META_MAP={faturamento_diario:'fat',investimento_diario:'inv',lucro_diario:'lucro',roas_diario:'roas'};
+S._metas={};
+
+function updateMetaProgress(prog,k){
+  const entries=[
+    {tipo:'faturamento_diario',key:'fat',fmt:BRL},
+    {tipo:'investimento_diario',key:'inv',fmt:BRL},
+    {tipo:'lucro_diario',key:'lucro',fmt:BRL},
+    {tipo:'roas_diario',key:'roas',fmt:v=>v.toFixed(1)+'%'},
+  ];
+  for(const {tipo,key,fmt} of entries){
+    const p=prog[tipo];
+    const addBtn=document.getElementById(`meta-add-${key}`);
+    const progEl=document.getElementById(`meta-prog-${key}`);
+    if(!p){
+      if(addBtn)addBtn.style.display='inline';
+      if(progEl)progEl.style.display='none';
+      continue;
+    }
+    if(addBtn)addBtn.style.display='none';
+    if(progEl)progEl.style.display='block';
+    const pct=Math.min(p.percentual||0,200);
+    const fill=document.getElementById(`meta-fill-${key}`);
+    if(fill){
+      fill.style.width=Math.min(pct,100)+'%';
+      fill.className='meta-fill'+(pct>=200?' over':pct>=100?' complete':'');
+    }
+    const curEl=document.getElementById(`meta-cur-${key}`);
+    if(curEl)curEl.textContent=fmt(p.atual);
+    const tgtEl=document.getElementById(`meta-tgt-${key}`);
+    if(tgtEl)tgtEl.textContent=fmt(p.meta);
+    S._metas[tipo]={id:p.id,valor:p.meta};
+  }
+}
+
+function openMetaModal(tipo){
+  document.getElementById('meta-tipo-hidden').value=tipo;
+  const existing=S._metas[tipo];
+  document.getElementById('meta-id-hidden').value=existing?.id||'';
+  document.getElementById('meta-valor-input').value=existing?.valor||'';
+  document.getElementById('meta-modal-title').textContent=(existing?'Editar':'Definir')+' Meta — '+META_LABELS[tipo];
+  document.getElementById('meta-label-field').textContent=META_LABELS[tipo];
+  openModal('modal-meta');
+  setTimeout(()=>document.getElementById('meta-valor-input').focus(),50);
+}
+
+async function saveMetaValue(){
+  const tipo=document.getElementById('meta-tipo-hidden').value;
+  const id=document.getElementById('meta-id-hidden').value;
+  const valor=parseFloat(document.getElementById('meta-valor-input').value);
+  if(isNaN(valor)||valor<0){alert('Valor inválido');return}
+  try{
+    let r;
+    if(id){r=await fetch(`/api/metas/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({valor})});}
+    else{r=await fetch('/api/metas',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tipo,valor})});}
+    if(!r.ok){const d=await r.json();throw new Error(d.error||r.statusText);}
+    closeModal('modal-meta');
+    showToast('ok','Meta salva com sucesso!');
+    await refreshAll();
+  }catch(e){alert('Erro: '+e.message);}
+}
+
+/* ═══ NOTIFICATIONS ═══ */
+let _notifPanelOpen=false;
+
+function toggleNotifPanel(){
+  _notifPanelOpen=!_notifPanelOpen;
+  const panel=document.getElementById('notif-panel');
+  if(!panel)return;
+  panel.classList.toggle('on',_notifPanelOpen);
+  if(_notifPanelOpen)loadNotifPanel();
+}
+
+document.addEventListener('click',e=>{
+  const panel=document.getElementById('notif-panel');
+  const bell=document.getElementById('notif-bell-btn');
+  if(panel&&bell&&!panel.contains(e.target)&&!bell.contains(e.target)){
+    panel.classList.remove('on');
+    _notifPanelOpen=false;
+  }
+});
+
+async function loadNotifCount(){
+  try{
+    const r=await fetch('/api/notificacoes?lidas=false&limit=50');
+    if(!r.ok)return;
+    const data=await r.json();
+    const count=(data||[]).length;
+    const badge=document.getElementById('notif-badge');
+    if(!badge)return;
+    if(count>0){badge.textContent=count>9?'9+':count;badge.style.display='flex';}
+    else{badge.style.display='none';}
+  }catch{/* silent */}
+}
+
+async function loadNotifPanel(){
+  const list=document.getElementById('notif-list');
+  if(!list)return;
+  try{
+    const r=await fetch('/api/notificacoes?limit=30');
+    if(!r.ok)throw new Error();
+    const data=await r.json();
+    if(!data.length){list.innerHTML='<div style="padding:1.5rem;color:var(--muted);font-size:.8125rem;text-align:center">Nenhuma notificação</div>';return;}
+    const ico={info:'ℹ️',warning:'⚠️',danger:'🚨',success:'✅'};
+    list.innerHTML=data.map(n=>`
+      <div class="notif-item${n.lida?'':' unread'}" onclick="marcarLidaFE(${n.id},this)">
+        <div class="notif-ico">${ico[n.severidade]||'🔔'}</div>
+        <div class="notif-txt">
+          <strong>${esc(n.titulo)}</strong>
+          <p>${esc(n.mensagem)}</p>
+          <small>${timeAgo(n.created_at)}${n.ad_utm?' · '+esc(n.ad_utm):''}</small>
+        </div>
+      </div>`).join('');
+  }catch{list.innerHTML='<div style="padding:1rem;color:var(--bad);font-size:.8125rem">Erro ao carregar</div>';}
+}
+
+async function marcarLidaFE(id,el){
+  try{
+    await fetch(`/api/notificacoes/${id}/marcar-lida`,{method:'POST'});
+    if(el)el.classList.remove('unread');
+    loadNotifCount();
+  }catch{}
+}
+
+async function marcarTodasLidasFE(){
+  try{
+    await fetch('/api/notificacoes/marcar-todas-lidas',{method:'POST'});
+    showToast('ok','Todas as notificações marcadas como lidas');
+    await loadNotifPanel();
+    loadNotifCount();
+  }catch(e){showToast('err','Erro: '+e.message);}
+}
+
+function timeAgo(iso){
+  const ms=Date.now()-new Date(iso).getTime();
+  const min=Math.round(ms/60000);
+  if(min<1)return'agora';if(min<60)return min+'m';
+  const h=Math.round(min/60);if(h<24)return h+'h';
+  return Math.round(h/24)+'d';
+}
+
+/* ═══ TOAST ═══ */
+let _toastTimer;
+function showToast(type,msg,duration=3500){
+  const box=document.getElementById('toast-box');
+  if(!box)return;
+  document.getElementById('toast-ico').textContent=type==='ok'?'✅':'❌';
+  document.getElementById('toast-msg').textContent=msg;
+  box.className='toast-box on '+(type==='ok'?'ok':'err');
+  clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(()=>box.className='toast-box',duration);
+}
+
+/* ═══ GOTO CAMPAIGNS ═══ */
+function goToCampaigns(utm){
+  nav('campaigns',document.querySelector('.nav-btn[onclick*="campaigns"]'));
+  setTimeout(()=>{
+    const inp=document.getElementById('search-camp-db');
+    if(inp){inp.value=utm;filterCampDB(utm);}
+  },300);
+}
+
+/* ═══ DRILLDOWN ═══ */
+async function openDrilldown(utm){
+  if(!utm)return;
+  document.getElementById('modal-drilldown').classList.add('on');
+  document.getElementById('drill-utm-title').textContent=utm;
+  document.getElementById('drill-summary-row').innerHTML='<span style="color:var(--muted)">Carregando…</span>';
+  document.getElementById('drill-adsets-container').innerHTML='';
+  try{
+    const since=document.getElementById('f-since').value;
+    const until=document.getElementById('f-until').value;
+    const r=await fetch(`/api/drilldown/${encodeURIComponent(utm)}?since=${since}&until=${until}`);
+    if(!r.ok)throw new Error((await r.json()).error||r.statusText);
+    const d=await r.json();
+    renderDrilldown(d);
+  }catch(e){
+    document.getElementById('drill-adsets-container').innerHTML=`<p style="color:var(--bad)">${esc(e.message)}</p>`;
+    document.getElementById('drill-summary-row').innerHTML='';
+  }
+}
+
+function closeDrilldown(){
+  document.getElementById('modal-drilldown').classList.remove('on');
+}
+
+function renderDrilldown(d){
+  const tot=d.total||{};
+  document.getElementById('drill-summary-row').innerHTML=`
+    <span>Invest. <b>${BRL(tot.spend)}</b></span>
+    <span>Faturamento <b>${BRL(tot.fat)}</b></span>
+    <span>Lucro <b style="color:${(tot.lucro||0)>=0?'var(--ok)':'var(--bad)'}">${BRL(tot.lucro)}</b></span>
+    <span>ROAS <b>${ROAS(tot.roas)}</b></span>
+    <span>CPC <b>${BRL(tot.cpc)}</b></span>`;
+
+  const cont=document.getElementById('drill-adsets-container');
+  if(!d.adsets||!d.adsets.length){
+    cont.innerHTML='<p class="drill-no-meta">Nenhum adset encontrado via Meta API (verifique token e nome da UTM).<br>Dados locais mostrados no resumo acima.</p>';
+    return;
+  }
+  cont.innerHTML=d.adsets.map(a=>{
+    const isActive=a.status==='ACTIVE';
+    const creativeHtml=(a.ads||[]).map(ad=>`
+      <div class="creative-card">
+        ${ad.creative?.thumbnail_url?`<img src="${esc(ad.creative.thumbnail_url)}" loading="lazy" alt=""/>`:
+          '<div style="aspect-ratio:1;background:#1a1a2e;display:flex;align-items:center;justify-content:center;color:#444;font-size:.7rem">sem prévia</div>'}
+        <div class="creative-info">
+          <strong title="${esc(ad.name)}">${esc(ad.name)}</strong>
+          <span class="cr-status ${esc(ad.status)}">${esc(ad.status)}</span>
+        </div>
+      </div>`).join('');
+    return `<div class="adset-card">
+      <div class="adset-hd">
+        <button class="toggle-btn ${isActive?'active-st':''}" onclick="toggleAdset('${esc(a.adset_id)}','${isActive?'PAUSED':'ACTIVE'}','${esc(d.utm||'')}','${esc(a.adset_name||'')}',this)">
+          ${isActive?'● ATIVO':'○ PAUSADO'}
+        </button>
+        <span class="adset-name">${esc(a.adset_name)}</span>
+        <span class="adset-camp-tag">${esc(a.campaign_name)}</span>
+      </div>
+      <div class="adset-metrics">
+        <div><label>Orçamento/dia</label>
+          <div class="budget-wrap">
+            <input class="budget-input" type="number" value="${a.daily_budget||''}" id="bud-${esc(a.adset_id)}" placeholder="—"/>
+            <button class="budget-save-btn" onclick="saveBudget('${esc(a.adset_id)}','${esc(d.utm||'')}','${esc(a.adset_name||'')}',${a.daily_budget||0})">✓</button>
+          </div>
+        </div>
+        <div><label>Gasto</label>${BRL(a.spend)}</div>
+        <div><label>Resultados</label>${NUM(a.results)}</div>
+        <div><label>CPC</label>${BRL(a.cpc)}</div>
+      </div>
+      ${creativeHtml?`<div class="adset-creatives">${creativeHtml}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+async function toggleAdset(adsetId,newStatus,utm,adsetName,btn){
+  if(!confirm(`${newStatus==='ACTIVE'?'Ativar':'Pausar'} adset "${adsetName}"?`))return;
+  try{
+    const r=await fetch(`/api/meta/adset/${adsetId}/toggle`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:newStatus,utm,adset_name:adsetName})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||r.statusText);
+    showToast('ok',`Adset ${newStatus==='ACTIVE'?'ativado':'pausado'}`);
+    btn.textContent=newStatus==='ACTIVE'?'● ATIVO':'○ PAUSADO';
+    btn.className='toggle-btn '+(newStatus==='ACTIVE'?'active-st':'');
+    btn.onclick=()=>toggleAdset(adsetId,newStatus==='ACTIVE'?'PAUSED':'ACTIVE',utm,adsetName,btn);
+  }catch(e){showToast('err','Erro: '+e.message);}
+}
+
+async function saveBudget(adsetId,utm,adsetName,budgetAntes){
+  const val=parseFloat(document.getElementById(`bud-${adsetId}`)?.value);
+  if(isNaN(val)||val<=0){alert('Orçamento inválido');return}
+  if(!confirm(`Alterar orçamento de "${adsetName}" para R$ ${val.toFixed(2)}/dia?`))return;
+  try{
+    const r=await fetch(`/api/meta/adset/${adsetId}/budget`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({daily_budget:val,utm,adset_name:adsetName,budget_antes:budgetAntes})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||r.statusText);
+    showToast('ok','Orçamento atualizado!');
+  }catch(e){showToast('err','Erro: '+e.message);}
+}
+
+/* ═══ HISTÓRICO ═══ */
+async function abrirHistorico(utm){
+  document.getElementById('hist-modal-title').textContent=`Histórico — ${utm}`;
+  document.getElementById('historico-timeline').innerHTML='<li style="padding:.75rem 0;color:var(--muted)">Carregando…</li>';
+  openModal('modal-historico');
+  try{
+    const r=await fetch(`/api/historico/${encodeURIComponent(utm)}`);
+    if(!r.ok)throw new Error((await r.json()).error||r.statusText);
+    const data=await r.json();
+    if(!data.length){
+      document.getElementById('historico-timeline').innerHTML='<li style="padding:.75rem 0;color:var(--muted);font-style:italic">Sem histórico para esta UTM.</li>';
+      return;
+    }
+    document.getElementById('historico-timeline').innerHTML=data.map(h=>{
+      const ant=h.valor_antes?`<span style="color:var(--bad)">${esc(h.valor_antes)}</span>`:'';
+      const dep=h.valor_depois?`<span style="color:var(--ok)">${esc(h.valor_depois)}</span>`:'';
+      const seta=ant&&dep?` ${ant} → ${dep}`:'';
+      const impact=h.metricas_depois_24h?`<div class="tl-impact">Impacto 24h: ${esc(JSON.stringify(h.metricas_depois_24h))}</div>`:'';
+      return `<li class="timeline-item">
+        <div class="tl-time">${new Date(h.created_at).toLocaleString('pt-BR')}</div>
+        <div class="tl-acao">${esc(h.acao.replace(/_/g,' '))}${h.adset_name?' — '+esc(h.adset_name):''}</div>
+        ${seta?`<div class="tl-vals">${seta}</div>`:''}
+        ${impact}
+      </li>`;
+    }).join('');
+  }catch(e){
+    document.getElementById('historico-timeline').innerHTML=`<li style="color:var(--bad)">${esc(e.message)}</li>`;
+  }
+}
+
 /* ═══ INIT ═══ */
 (async()=>{
   initDates();
@@ -2094,8 +2591,10 @@ async function deletarConta(id,nome){
   loadData().finally(hideOverlay);
   checkSyncStatus();
   checkPendingStatus();
+  loadNotifCount();
   setInterval(checkSyncStatus,60000);
   setInterval(checkPendingStatus,120000);
+  setInterval(loadNotifCount,30000);
   window.addEventListener('resize',()=>{if(S.metrics?.trend)renderTrend(S.metrics.trend)});
 })();
 </script>

@@ -10,10 +10,15 @@ const insightsHandler = require('./src/app/api/insights/route');
 const dashboardHandler = require('./src/app/api/dashboard/route');
 const overviewHandler = require('./src/app/api/overview/route');
 const reportsGamHandler = require('./src/app/api/reports-gam/route');
+const metasHandler = require('./src/app/api/metas/route');
+const { handler: notifHandler, marcarLida, marcarTodasLidas } = require('./src/app/api/notificacoes/route');
+const drilldownHandler = require('./src/app/api/drilldown/route');
+const historicoHandler = require('./src/app/api/historico/route');
 const supabase = require('./src/lib/supabase');
 const { syncAll } = require('./src/lib/sync');
 const { startScheduler } = require('./src/lib/scheduler');
 const { hashPassword, verifyPassword, generateToken, requireAuth, COOKIE_NAME } = require('./src/lib/auth');
+const { registrarHistorico } = require('./src/lib/historico');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -205,6 +210,73 @@ app.post('/api/dominios/aprovar', requireAuth, async (req, res) => {
     .eq('prefixo_detectado', prefixo_detectado);
 
   res.json(newDomain);
+});
+
+// ── Metas ─────────────────────────────────────────────────────────────────────
+app.get('/api/metas', requireAuth, metasHandler);
+app.post('/api/metas', requireAuth, metasHandler);
+app.put('/api/metas/:id', requireAuth, (req, res) => metasHandler(req, res));
+app.delete('/api/metas/:id', requireAuth, (req, res) => metasHandler(req, res));
+
+// ── Notificações ──────────────────────────────────────────────────────────────
+app.get('/api/notificacoes', requireAuth, notifHandler);
+app.post('/api/notificacoes/:id/marcar-lida', requireAuth, marcarLida);
+app.post('/api/notificacoes/marcar-todas-lidas', requireAuth, marcarTodasLidas);
+
+// ── Drilldown ─────────────────────────────────────────────────────────────────
+app.get('/api/drilldown/:utm', requireAuth, drilldownHandler);
+
+// ── Histórico ─────────────────────────────────────────────────────────────────
+app.get('/api/historico/:utm', requireAuth, historicoHandler);
+
+// ── Meta Adset Actions ────────────────────────────────────────────────────────
+app.post('/api/meta/adset/:id/toggle', requireAuth, async (req, res) => {
+  const adsetId = req.params.id;
+  const { status, utm, adset_name } = req.body || {};
+  if (!status || !['ACTIVE', 'PAUSED'].includes(status))
+    return res.status(400).json({ error: 'status deve ser ACTIVE ou PAUSED' });
+
+  const { data: accounts } = await supabase.from('meta_accounts').select('*').eq('ativo', true);
+  let lastErr = 'Nenhuma conta Meta ativa';
+  for (const account of accounts || []) {
+    try {
+      const r = await axios.post(`${META_BASE}/${adsetId}`,
+        { status },
+        { params: { access_token: account.access_token }, timeout: 15000 }
+      );
+      if (r.data?.success) {
+        await registrarHistorico({ utm, adset_id: adsetId, adset_name, acao: 'toggle_status', antes: status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE', depois: status, usuario_id: req.userId });
+        return res.json({ ok: true });
+      }
+    } catch (e) {
+      lastErr = e.response?.data?.error?.message || e.message;
+    }
+  }
+  res.status(400).json({ error: lastErr });
+});
+
+app.post('/api/meta/adset/:id/budget', requireAuth, async (req, res) => {
+  const adsetId = req.params.id;
+  const { daily_budget, utm, adset_name, budget_antes } = req.body || {};
+  if (!daily_budget) return res.status(400).json({ error: 'daily_budget é obrigatório (em centavos)' });
+
+  const { data: accounts } = await supabase.from('meta_accounts').select('*').eq('ativo', true);
+  let lastErr = 'Nenhuma conta Meta ativa';
+  for (const account of accounts || []) {
+    try {
+      const r = await axios.post(`${META_BASE}/${adsetId}`,
+        { daily_budget: Math.round(+daily_budget * 100) },
+        { params: { access_token: account.access_token }, timeout: 15000 }
+      );
+      if (r.data?.success) {
+        await registrarHistorico({ utm, adset_id: adsetId, adset_name, acao: 'alterar_orcamento', antes: budget_antes, depois: daily_budget, usuario_id: req.userId });
+        return res.json({ ok: true });
+      }
+    } catch (e) {
+      lastErr = e.response?.data?.error?.message || e.message;
+    }
+  }
+  res.status(400).json({ error: lastErr });
 });
 
 // ── Sync ─────────────────────────────────────────────────────────────────────

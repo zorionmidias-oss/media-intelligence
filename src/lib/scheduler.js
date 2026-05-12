@@ -1,6 +1,7 @@
 'use strict';
 const cron = require('node-cron');
 const { syncAll } = require('./sync');
+const { detectarAlertas } = require('./alertas');
 
 function startScheduler() {
   console.log('[scheduler] Iniciando sync inicial…');
@@ -9,7 +10,9 @@ function startScheduler() {
   // Every 30 minutes for intraday updates
   cron.schedule('*/30 * * * *', () => {
     console.log('[scheduler] Sync automático…');
-    syncAll().catch(e => console.error('[scheduler] Sync cron falhou:', e.message));
+    syncAll()
+      .then(() => detectarAlertas())
+      .catch(e => console.error('[scheduler] Sync cron falhou:', e.message));
   });
 
   // Every day at 06:00 — full backfill of yesterday's finalized data
