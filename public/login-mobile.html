@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0e0f16">
+  <title>2Junior's — Entrar</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,700;1,900&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    body{
+      background:oklch(0.09 0.005 260);
+      color:oklch(0.95 0 0);
+      font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+      min-height:100vh;
+      display:flex;align-items:center;justify-content:center;
+      padding:24px;
+      padding-top:calc(env(safe-area-inset-top) + 24px);
+      padding-bottom:calc(env(safe-area-inset-bottom) + 24px);
+    }
+    .container{width:100%;max-width:400px}
+    .logo{
+      font-family:'Playfair Display',serif;
+      font-weight:900;font-style:italic;
+      font-size:48px;
+      color:#fff;text-align:center;margin-bottom:8px;
+    }
+    .subtitle{text-align:center;color:oklch(0.65 0 0);font-size:14px;margin-bottom:48px}
+    .field{margin-bottom:20px}
+    .field label{
+      display:block;font-size:11px;color:oklch(0.65 0 0);
+      text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;
+    }
+    .field input{
+      width:100%;background:rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.1);border-radius:12px;
+      padding:16px;color:#fff;font-size:16px;outline:none;
+      transition:border-color .2s;
+    }
+    .field input:focus{border-color:oklch(0.7 0.18 145)}
+    .btn-entrar{
+      width:100%;background:oklch(0.7 0.18 145);
+      color:oklch(0.09 0.005 260);border:none;border-radius:12px;
+      padding:16px;font-size:16px;font-weight:700;cursor:pointer;
+      margin-top:24px;transition:opacity .15s;
+    }
+    .btn-entrar:active{opacity:.85}
+    .btn-entrar:disabled{opacity:.5;cursor:default}
+    .erro{
+      background:color-mix(in oklch,oklch(0.65 0.2 25) 12%,transparent);
+      border:1px solid color-mix(in oklch,oklch(0.65 0.2 25) 30%,transparent);
+      color:oklch(0.75 0.18 25);
+      padding:12px;border-radius:8px;margin-top:16px;
+      text-align:center;font-size:13px;display:none;
+    }
+    .erro.show{display:block}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">2<i>'s</i></div>
+    <div class="subtitle">Inteligência de Mídia</div>
+    <form id="login-form">
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="email" placeholder="admin@2juniors.com" required autocomplete="email">
+      </div>
+      <div class="field">
+        <label>Senha</label>
+        <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn-entrar" id="btn">Entrar</button>
+      <div class="erro" id="erro"></div>
+    </form>
+  </div>
+  <script>
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const erro = document.getElementById('erro');
+      const btn = document.getElementById('btn');
+      erro.className = 'erro';
+      btn.disabled = true;
+      btn.textContent = 'Entrando…';
+      try {
+        const r = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        if (r.ok) {
+          window.location.href = '/mobile';
+        } else {
+          const d = await r.json();
+          erro.textContent = d.error || 'Email ou senha incorretos';
+          erro.classList.add('show');
+          document.getElementById('password').value = '';
+        }
+      } catch {
+        erro.textContent = 'Erro de conexão';
+        erro.classList.add('show');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Entrar';
+      }
+    });
+  </script>
+</body>
+</html>

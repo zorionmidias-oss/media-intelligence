@@ -3,6 +3,7 @@
   "short_name": "2Junior's",
   "description": "Dashboard de inteligência de mídia",
   "start_url": "/mobile",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0e0f16",
   "theme_color": "#0e0f16",

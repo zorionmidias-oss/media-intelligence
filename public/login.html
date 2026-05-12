@@ -121,7 +121,9 @@
         });
         const data = await res.json();
         if (res.ok) {
-          window.location.href = '/dashboard.html';
+          const isMobile = window.matchMedia('(max-width: 768px)').matches ||
+            /Mobile|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+          window.location.href = isMobile ? '/mobile' : '/dashboard.html';
         } else {
           errEl.textContent = data.error || 'Credenciais inválidas';
           errEl.classList.add('show');

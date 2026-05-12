@@ -35,6 +35,12 @@ function requireAuth(req, res, next) {
     if (req.path.startsWith('/api/')) {
       return res.status(401).json({ error: 'Não autenticado' });
     }
+    const ua = req.headers['user-agent'] || '';
+    const isMobile = /Mobile|Android|iPhone|iPad|iPod/i.test(ua);
+    const isMobilePath = req.path.includes('/mobile') || req.path === '/m';
+    if (isMobile || isMobilePath) {
+      return res.redirect('/login-mobile.html');
+    }
     return res.redirect('/login.html');
   }
   req.userId = userId;
