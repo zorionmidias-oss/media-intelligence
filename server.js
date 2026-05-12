@@ -29,8 +29,13 @@ app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Protected HTML routes (before static) ────────────────────────────────────
-app.get('/', requireAuth, (_req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
+const MOBILE_UA = /Android|iPhone|iPad|iPod|Mobile/i;
+app.get('/', requireAuth, (req, res) => {
+  if (MOBILE_UA.test(req.headers['user-agent'] || '')) return res.redirect('/mobile');
+  res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+});
 app.get('/dashboard.html', requireAuth, (_req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
+app.get('/mobile', requireAuth, (_req, res) => res.sendFile(path.join(__dirname, 'public', 'mobile.html')));
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/lib/chart.umd.min.js', (_req, res) => res.sendFile(path.join(__dirname, 'node_modules/chart.js/dist/chart.umd.min.js')));

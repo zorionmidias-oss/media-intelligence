@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>2Junior's — Inteligência de Mídia</title>
+  <link rel="manifest" href="/manifest.json"/>
+  <link rel="apple-touch-icon" href="/icon-192.png"/>
+  <meta name="theme-color" content="#0e0f16"/>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,700;1,900&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <script src="/lib/chart.umd.min.js"></script>
   <style>
@@ -387,6 +390,7 @@
     thead th[data-sort-dir="asc"] .sort-arrow{opacity:1;color:var(--accent)}
 
     /* ── META PROGRESS ── */
+    .usd-sub{font-size:.7rem;color:var(--muted);margin-top:.15rem;display:block}
     .meta-progress{margin-top:.75rem}
     .meta-bar{width:100%;height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden}
     .meta-fill{height:100%;background:linear-gradient(90deg,#00e5b4,#7c6aff);transition:width .5s ease;border-radius:2px;min-width:0}
@@ -617,6 +621,7 @@
           <div class="card card-hv anim" style="animation-delay:0ms">
             <div class="kpi-top"><span class="kpi-lbl">Faturamento</span><div class="kpi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div></div>
             <div class="kpi-bot"><span class="kpi-val" id="kpi-fat">—</span><div class="kpi-ch neu" id="kpi-fat-sub"></div></div>
+            <span class="usd-sub" id="kpi-fat-usd"></span>
             <div class="meta-progress" id="meta-prog-fat" style="display:none">
               <div class="meta-bar"><div class="meta-fill" id="meta-fill-fat" style="width:0%"></div></div>
               <div class="meta-lbl-row"><span class="meta-lbl-cur" id="meta-cur-fat">—</span><span>Meta: <span id="meta-tgt-fat" style="color:#aaa">—</span></span><button class="meta-edit-btn" onclick="openMetaModal('faturamento_diario')" title="Editar meta">✏</button></div>
@@ -626,6 +631,7 @@
           <div class="card card-hv anim" style="animation-delay:100ms">
             <div class="kpi-top"><span class="kpi-lbl">Investimento</span><div class="kpi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 16s1-1 4-1 5 2 8 2 4-1 4-1V2s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="2" x2="2" y1="21" y2="16"/></svg></div></div>
             <div class="kpi-bot"><span class="kpi-val" id="kpi-inv">—</span><div class="kpi-ch neu" id="kpi-inv-sub"></div></div>
+            <span class="usd-sub" id="kpi-inv-usd"></span>
             <div class="meta-progress" id="meta-prog-inv" style="display:none">
               <div class="meta-bar"><div class="meta-fill" id="meta-fill-inv" style="width:0%"></div></div>
               <div class="meta-lbl-row"><span class="meta-lbl-cur" id="meta-cur-inv">—</span><span>Meta: <span id="meta-tgt-inv" style="color:#aaa">—</span></span><button class="meta-edit-btn" onclick="openMetaModal('investimento_diario')" title="Editar meta">✏</button></div>
@@ -635,6 +641,7 @@
           <div class="card card-hv anim" style="animation-delay:200ms">
             <div class="kpi-top"><span class="kpi-lbl">Lucro</span><div class="kpi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div></div>
             <div class="kpi-bot"><span class="kpi-val" id="kpi-lucro">—</span><div class="kpi-ch neu" id="kpi-lucro-sub"></div></div>
+            <span class="usd-sub" id="kpi-lucro-usd"></span>
             <div class="meta-progress" id="meta-prog-lucro" style="display:none">
               <div class="meta-bar"><div class="meta-fill" id="meta-fill-lucro" style="width:0%"></div></div>
               <div class="meta-lbl-row"><span class="meta-lbl-cur" id="meta-cur-lucro">—</span><span>Meta: <span id="meta-tgt-lucro" style="color:#aaa">—</span></span><button class="meta-edit-btn" onclick="openMetaModal('lucro_diario')" title="Editar meta">✏</button></div>
@@ -1280,10 +1287,10 @@ async function loadData(force=false){
 /* ═══ RENDER ALL ═══ */
 function renderAll(d){
   const k=d.kpis||{};
+  renderFXRate(k.usdToBrl);
   renderKPIs(k);
   renderPrevisao(d.previsao||null);
   renderDelay(k);
-  renderFXRate(k.usdToBrl);
   renderTrend(d.trend||[]);
   renderFunnels(d.topFunnels||[]);
   renderTopCamps(d.topCampaigns||[]);
@@ -1314,8 +1321,13 @@ function renderFXRate(rate){
   const badge=document.getElementById('fx-badge');
   const span=document.getElementById('fx-rate');
   if(!rate||!badge)return;
+  window.USD_RATE=+rate;
   badge.style.display='inline-flex';
   if(span)span.textContent=loc(rate,2);
+}
+function USD(brl){
+  if(!window.USD_RATE||!brl&&brl!==0)return '';
+  return '$'+loc(brl/window.USD_RATE,2);
 }
 
 /* ── KPIs ── */
@@ -1327,11 +1339,15 @@ function renderKPIs(k){
 
   animateTo(document.getElementById('kpi-fat'),fat,BRL);
   animateTo(document.getElementById('kpi-inv'),inv,BRL);
+  const _setUSD=(id,v)=>{const e=document.getElementById(id);if(e){const u=USD(v);e.textContent=u;e.style.display=u?'block':'none';}};
+  _setUSD('kpi-fat-usd',fat);
+  _setUSD('kpi-inv-usd',inv);
 
   const elL=document.getElementById('kpi-lucro');
   animateTo(elL,lucro,BRL);
   setTimeout(()=>{if(elL)elL.style.color=lucro>=0?'var(--ok)':'var(--bad)'},50);
   document.getElementById('kpi-lucro-sub').className='kpi-ch '+(lucro>=0?'pos':'neg');
+  _setUSD('kpi-lucro-usd',lucro);
 
   const elR=document.getElementById('kpi-roi');
   animateTo(elR,roi,PCT);
@@ -1603,7 +1619,8 @@ function groupAdsetsByCreative(adsets,gamUTMMap){
 function renderAdsets(adsets,kpis){
   const tb=document.getElementById('adsets-body');
   const ct=document.getElementById('adsets-count');
-  if(!adsets.length){tb.innerHTML='<tr><td colspan="13" class="empty">Sem conjuntos</td></tr>';ct.textContent='—';return}
+  if(!tb)return;
+  if(!adsets.length){tb.innerHTML='<tr><td colspan="13" class="empty">Sem conjuntos</td></tr>';if(ct)ct.textContent='—';return}
 
   const globalRps=+(kpis?.rps)||0;
   const globalCpaIdeal=+(kpis?.cpaIdeal)||0;
@@ -1637,7 +1654,7 @@ function renderAdsets(adsets,kpis){
       <td><span class="badge ${bc}">${esc(g.status||'—')}</span></td>
     </tr>`;
   }).join('');
-  ct.textContent=`${groups.length} criativos · ${adsets.length} conjuntos`;
+  if(ct)ct.textContent=`${groups.length} criativos · ${adsets.length} conjuntos`;
 }
 
 /* ── UTM CARDS ── */
@@ -2295,10 +2312,10 @@ S._metas={};
 
 function updateMetaProgress(prog,k){
   const entries=[
-    {tipo:'faturamento_diario',key:'fat',fmt:BRL},
-    {tipo:'investimento_diario',key:'inv',fmt:BRL},
-    {tipo:'lucro_diario',key:'lucro',fmt:BRL},
-    {tipo:'roas_diario',key:'roas',fmt:v=>v.toFixed(1)+'%'},
+    {tipo:'faturamento',key:'fat',fmt:BRL},
+    {tipo:'investimento',key:'inv',fmt:BRL},
+    {tipo:'lucro',key:'lucro',fmt:BRL},
+    {tipo:'roas',key:'roas',fmt:v=>v.toFixed(1)+'%'},
   ];
   for(const {tipo,key,fmt} of entries){
     const p=prog[tipo];
@@ -2348,7 +2365,8 @@ async function saveMetaValue(){
     if(!r.ok){const d=await r.json();throw new Error(d.error||r.statusText);}
     closeModal('modal-meta');
     showToast('ok','Meta salva com sucesso!');
-    await refreshAll();
+    S.busy=false;
+    await loadData(false);
   }catch(e){alert('Erro: '+e.message);}
 }
 

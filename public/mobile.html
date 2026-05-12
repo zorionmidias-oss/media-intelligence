@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="2Junior's"/>
+  <meta name="theme-color" content="#0e0f16"/>
+  <link rel="manifest" href="/manifest.json"/>
+  <link rel="apple-touch-icon" href="/icon-192.png"/>
+  <title>2Junior's</title>
+  <style>
+    :root{
+      --bg:#0e0f16;--card:#161820;--sec:#1e2028;--border:#2a2c38;
+      --fg:#f3f4f6;--muted:#6b7280;--accent:#00e5b4;--bad:#f43f5e;--ok:#00e5b4;--warn:#f59e0b;
+      --safe-top:env(safe-area-inset-top,0px);
+      --safe-bot:env(safe-area-inset-bottom,0px);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    html,body{height:100%;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;overscroll-behavior:none}
+    body{display:flex;flex-direction:column;overflow:hidden}
+
+    /* header */
+    .hdr{padding:calc(var(--safe-top) + .75rem) 1rem .75rem;background:color-mix(in srgb,var(--bg) 85%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;z-index:20}
+    .hdr-title{font-size:1.1rem;font-weight:700;letter-spacing:-.015em}
+    .hdr-title span{color:var(--accent)}
+    .hdr-r{display:flex;align-items:center;gap:.625rem}
+    .ico-btn{width:2.25rem;height:2.25rem;border-radius:.5rem;border:none;background:var(--sec);color:var(--fg);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.1rem;transition:background .15s}
+    .ico-btn:active{background:var(--border)}
+    .notif-dot{position:relative}
+    .notif-dot::after{content:'';position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--bad);display:none}
+    .notif-dot.has-unread::after{display:block}
+
+    /* date strip */
+    .date-strip{display:flex;align-items:center;gap:.375rem;padding:.5rem 1rem;overflow-x:auto;scrollbar-width:none;flex-shrink:0;border-bottom:1px solid var(--border)}
+    .date-strip::-webkit-scrollbar{display:none}
+    .preset{height:2rem;padding:0 .75rem;border-radius:1rem;border:1px solid var(--border);background:var(--sec);color:var(--muted);font-size:.8rem;cursor:pointer;white-space:nowrap;transition:color .15s,border-color .15s}
+    .preset.act{color:var(--accent);border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--sec))}
+    .date-in{height:2rem;padding:0 .625rem;border-radius:.4rem;background:var(--sec);border:1px solid var(--border);color:var(--fg);font-size:.75rem;min-width:6.5rem}
+
+    /* scrollable main */
+    .main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:.875rem 1rem calc(var(--safe-bot) + 4rem)}
+
+    /* KPI grid */
+    .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:.625rem;margin-bottom:1rem}
+    .kpi-card{background:var(--card);border:1px solid var(--border);border-radius:.75rem;padding:.875rem}
+    .kpi-label{font-size:.75rem;color:var(--muted);margin-bottom:.375rem;font-weight:500}
+    .kpi-val{font-size:1.35rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+    .kpi-usd{font-size:.68rem;color:var(--muted);margin-top:.1rem}
+    .kpi-card.lucro .kpi-val{color:var(--ok)}
+    .kpi-card.lucro.neg .kpi-val{color:var(--bad)}
+
+    /* section */
+    .section-title{font-size:.875rem;font-weight:600;color:var(--muted);margin-bottom:.625rem;letter-spacing:.04em;text-transform:uppercase;font-size:.72rem}
+
+    /* funnel cards */
+    .funnel-list{display:flex;flex-direction:column;gap:.5rem;margin-bottom:1rem}
+    .funnel-card{background:var(--card);border:1px solid var(--border);border-radius:.75rem;padding:.75rem}
+    .funnel-name{font-size:.85rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:.4rem}
+    .funnel-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:.375rem}
+    .fm{display:flex;flex-direction:column;align-items:center}
+    .fm label{font-size:.65rem;color:var(--muted);margin-bottom:.1rem}
+    .fm b{font-size:.82rem;font-weight:600;font-variant-numeric:tabular-nums}
+    .roi-ok{color:var(--ok)}
+    .roi-bad{color:var(--bad)}
+
+    /* campaigns table */
+    .camp-table{width:100%;border-collapse:collapse;font-size:.78rem;margin-bottom:1rem}
+    .camp-table th{text-align:left;color:var(--muted);font-weight:500;padding:.4rem .375rem;border-bottom:1px solid var(--border);white-space:nowrap}
+    .camp-table td{padding:.5rem .375rem;border-bottom:1px solid color-mix(in srgb,var(--border) 60%,transparent);vertical-align:middle}
+    .camp-table tr:last-child td{border-bottom:none}
+    .camp-name{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+    .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;background:var(--card);border:1px solid var(--border);border-radius:.75rem;margin-bottom:1rem}
+
+    /* sync overlay */
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50;backdrop-filter:blur(4px)}
+    .overlay.on{display:flex}
+    .spin{width:2rem;height:2rem;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* empty state */
+    .empty{text-align:center;color:var(--muted);padding:2rem 1rem;font-size:.875rem}
+
+    /* bottom nav */
+    .bnav{position:fixed;bottom:0;left:0;right:0;padding:0 1rem calc(var(--safe-bot) + .375rem) 1rem;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--border);display:flex;justify-content:space-around;z-index:20}
+    .bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:.2rem;padding:.6rem 0;font-size:.65rem;color:var(--muted);background:none;border:none;cursor:pointer;transition:color .15s}
+    .bnav-btn.act{color:var(--accent)}
+    .bnav-btn svg{width:22px;height:22px}
+
+    /* toast */
+    .toast{position:fixed;bottom:calc(var(--safe-bot) + 5rem);left:50%;transform:translateX(-50%) translateY(1rem);background:#1e2028;border:1px solid var(--border);color:var(--fg);padding:.5rem 1.25rem;border-radius:2rem;font-size:.8rem;opacity:0;transition:opacity .25s,transform .25s;z-index:60;white-space:nowrap}
+    .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="hdr">
+  <div class="hdr-title"><span>2</span>Junior's</div>
+  <div class="hdr-r">
+    <button class="ico-btn notif-dot" id="notif-btn" onclick="alert('Notificações em breve')" title="Notificações">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    </button>
+    <button class="ico-btn" onclick="forceSync()" title="Sincronizar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- Date strip -->
+<div class="date-strip">
+  <button class="preset" data-p="hoje" onclick="setPreset(this)">Hoje</button>
+  <button class="preset act" data-p="7d" onclick="setPreset(this)">7 dias</button>
+  <button class="preset" data-p="14d" onclick="setPreset(this)">14 dias</button>
+  <button class="preset" data-p="30d" onclick="setPreset(this)">30 dias</button>
+  <input type="date" class="date-in" id="f-since" onchange="clearPresets();loadData()"/>
+  <input type="date" class="date-in" id="f-until" onchange="clearPresets();loadData()"/>
+</div>
+
+<!-- Main content -->
+<main class="main" id="main-content">
+  <!-- KPI grid -->
+  <div class="kpi-grid" id="kpi-grid">
+    <div class="kpi-card"><div class="kpi-label">Faturamento</div><div class="kpi-val" id="kpi-fat">—</div><div class="kpi-usd" id="kpi-fat-usd"></div></div>
+    <div class="kpi-card"><div class="kpi-label">Investimento</div><div class="kpi-val" id="kpi-inv">—</div><div class="kpi-usd" id="kpi-inv-usd"></div></div>
+    <div class="kpi-card lucro" id="kpi-lucro-card"><div class="kpi-label">Lucro</div><div class="kpi-val" id="kpi-lucro">—</div><div class="kpi-usd" id="kpi-lucro-usd"></div></div>
+    <div class="kpi-card"><div class="kpi-label">ROI</div><div class="kpi-val" id="kpi-roi">—</div></div>
+  </div>
+
+  <!-- Top funnels -->
+  <div class="section-title">Top Funis</div>
+  <div class="funnel-list" id="funnel-list">
+    <div class="empty">Carregando…</div>
+  </div>
+
+  <!-- Campaigns -->
+  <div class="section-title">Campanhas</div>
+  <div class="tbl-wrap">
+    <table class="camp-table">
+      <thead><tr><th>Campanha</th><th>Fat.</th><th>Invest.</th><th>ROI</th></tr></thead>
+      <tbody id="camp-body"><tr><td colspan="4" class="empty">Carregando…</td></tr></tbody>
+    </table>
+  </div>
+</main>
+
+<!-- Bottom nav -->
+<nav class="bnav">
+  <button class="bnav-btn act" onclick="window.location.href='/mobile'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    Overview
+  </button>
+  <button class="bnav-btn" onclick="window.location.href='/dashboard.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+    Desktop
+  </button>
+</nav>
+
+<div class="overlay" id="overlay"><div class="spin"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+let USD_RATE = null;
+let S = { busy: false };
+
+function fmt(d){ return d.toISOString().slice(0,10); }
+function BRL(v){ return 'R$'+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function PCT(v){ return Number(v).toFixed(1)+'%'; }
+function usd(brl){ if(!USD_RATE||brl==null)return ''; return '$'+((+brl)/USD_RATE).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+function esc(s){ const d=document.createElement('div');d.textContent=s||'';return d.innerHTML; }
+
+function showOverlay(){ document.getElementById('overlay').classList.add('on'); }
+function hideOverlay(){ document.getElementById('overlay').classList.remove('on'); }
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'),2500);
+}
+
+function initDates(){
+  const u=new Date(),s=new Date();
+  s.setDate(s.getDate()-6);
+  document.getElementById('f-until').value=fmt(u);
+  document.getElementById('f-since').value=fmt(s);
+}
+
+function clearPresets(){
+  document.querySelectorAll('.preset').forEach(b=>b.classList.remove('act'));
+}
+
+function setPreset(btn){
+  clearPresets();
+  btn.classList.add('act');
+  const now=new Date();
+  const fmtD=d=>d.toISOString().slice(0,10);
+  let since=fmtD(now),until=fmtD(now);
+  const p=btn.dataset.p;
+  if(p==='7d'){const s=new Date(now);s.setDate(s.getDate()-6);since=fmtD(s);}
+  else if(p==='14d'){const s=new Date(now);s.setDate(s.getDate()-13);since=fmtD(s);}
+  else if(p==='30d'){const s=new Date(now);s.setDate(s.getDate()-29);since=fmtD(s);}
+  document.getElementById('f-since').value=since;
+  document.getElementById('f-until').value=until;
+  loadData();
+}
+
+async function loadData(){
+  if(S.busy)return;
+  S.busy=true;
+  showOverlay();
+  const since=document.getElementById('f-since').value;
+  const until=document.getElementById('f-until').value;
+  try{
+    const r=await fetch(`/api/overview?since=${since}&until=${until}`);
+    if(!r.ok)throw new Error(r.statusText);
+    const d=await r.json();
+    renderAll(d);
+  }catch(e){console.error('[mobile]',e);showToast('Erro ao carregar dados');}
+  finally{S.busy=false;hideOverlay();}
+}
+
+async function forceSync(){
+  if(S.busy)return;
+  S.busy=true;
+  showOverlay();
+  const since=document.getElementById('f-since').value;
+  const until=document.getElementById('f-until').value;
+  try{
+    await fetch('/api/sync/forcar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dateRange:{since,until}})});
+    const r=await fetch(`/api/overview?since=${since}&until=${until}`);
+    const d=await r.json();
+    renderAll(d);
+    showToast('Sincronizado!');
+  }catch(e){showToast('Erro ao sincronizar');}
+  finally{S.busy=false;hideOverlay();}
+}
+
+function renderAll(d){
+  const k=d.kpis||{};
+  if(k.usdToBrl)USD_RATE=+k.usdToBrl;
+
+  const fat=+(k.faturamento)||0;
+  const inv=+(k.investimento)||0;
+  const lucro=+(k.lucro)||0;
+  const roi=+(k.roi)||0;
+
+  document.getElementById('kpi-fat').textContent=BRL(fat);
+  document.getElementById('kpi-inv').textContent=BRL(inv);
+  document.getElementById('kpi-lucro').textContent=BRL(lucro);
+  document.getElementById('kpi-roi').textContent=PCT(roi);
+
+  const setUSD=(id,v)=>{const e=document.getElementById(id);if(e){const u=usd(v);e.textContent=u;e.style.display=u?'block':'none';}};
+  setUSD('kpi-fat-usd',fat);
+  setUSD('kpi-inv-usd',inv);
+  setUSD('kpi-lucro-usd',lucro);
+
+  const lCard=document.getElementById('kpi-lucro-card');
+  if(lCard)lCard.classList.toggle('neg',lucro<0);
+
+  renderFunnels(d.topFunnels||[]);
+  renderCamps(d.topCampaigns||[]);
+}
+
+function renderFunnels(funnels){
+  const el=document.getElementById('funnel-list');
+  if(!funnels.length){el.innerHTML='<div class="empty">Sem dados de funis</div>';return;}
+  el.innerHTML=funnels.slice(0,4).map(f=>{
+    const roi=+(f.roi||0);
+    const roiCls=roi>=0?'roi-ok':'roi-bad';
+    return `<div class="funnel-card">
+      <div class="funnel-name">${esc(f.name||f.ad_utm||'—')}</div>
+      <div class="funnel-metrics">
+        <div class="fm"><label>Invest.</label><b>${BRL(f.investimento||f.spend||0)}</b></div>
+        <div class="fm"><label>Fatur.</label><b>${BRL(f.faturamento||0)}</b></div>
+        <div class="fm"><label>ROI</label><b class="${roiCls}">${roi.toFixed(1)}%</b></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderCamps(camps){
+  const tb=document.getElementById('camp-body');
+  if(!camps.length){tb.innerHTML='<tr><td colspan="4" class="empty">Sem campanhas</td></tr>';return;}
+  tb.innerHTML=camps.slice(0,15).map(c=>{
+    const roi=+(c.roi||0);
+    const roiCls=roi>=0?'roi-ok':'roi-bad';
+    return `<tr>
+      <td><span class="camp-name" title="${esc(c.ad_utm||c.name||'')}">${esc(c.ad_utm||c.name||'—')}</span></td>
+      <td>${BRL(c.faturado||0)}</td>
+      <td>${BRL(c.spend||0)}</td>
+      <td class="${roiCls}">${roi.toFixed(1)}%</td>
+    </tr>`;
+  }).join('');
+}
+
+// Register service worker
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').catch(()=>{});
+}
+
+initDates();
+loadData();
+</script>
+</body>
+</html>
