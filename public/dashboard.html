@@ -486,6 +486,29 @@
     .budget-input:focus{outline:none;border-color:var(--c1)}
     .budget-save-btn{background:var(--c1);border:none;border-radius:.375rem;padding:.25rem .625rem;font-size:.68rem;color:#000;cursor:pointer;font-weight:700}
     .drill-no-meta{color:var(--muted);font-size:.8125rem;padding:1rem 0;font-style:italic}
+    /* utm selector */
+    .drill-title-row{position:relative;display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem}
+    .utm-selector{display:inline-flex;align-items:center;gap:.5rem;cursor:pointer;padding:.4rem .875rem;background:var(--sec);border:1px solid var(--border);border-radius:.625rem;transition:all .15s;user-select:none}
+    .utm-selector:hover{border-color:var(--accent)}
+    .utm-selector.open{border-color:var(--accent);background:color-mix(in oklch,var(--accent) 8%,var(--sec))}
+    .utm-current{font-size:1.375rem;font-weight:700;color:var(--fg)}
+    .utm-chevron{font-size:.625rem;color:var(--muted);transition:transform .2s;margin-top:2px}
+    .utm-selector.open .utm-chevron{transform:rotate(180deg)}
+    .utm-dropdown{display:none;position:absolute;top:calc(100% + .375rem);left:0;background:var(--card);border:1px solid var(--border);border-radius:.75rem;padding:.75rem;min-width:300px;max-height:380px;overflow-y:auto;z-index:500;box-shadow:0 12px 32px rgba(0,0,0,.5)}
+    .utm-dropdown.open{display:block}
+    .utm-search{width:100%;background:var(--sec);border:1px solid var(--border);color:var(--fg);padding:.5rem .75rem;border-radius:.5rem;font-family:inherit;font-size:.8125rem;outline:none;margin-bottom:.625rem}
+    .utm-search:focus{border-color:var(--accent)}
+    .utm-tabs{display:flex;gap:.25rem;margin-bottom:.625rem;padding-bottom:.625rem;border-bottom:1px solid var(--border)}
+    .utmtab{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.3rem .75rem;border-radius:.375rem;font-size:.6875rem;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.04em;transition:all .15s}
+    .utmtab.active{background:var(--accent);color:var(--acc-fg);border-color:var(--accent)}
+    .utm-list{display:flex;flex-direction:column;gap:2px}
+    .utm-item{display:flex;justify-content:space-between;align-items:center;padding:.5rem .75rem;border-radius:.5rem;cursor:pointer;transition:background .12s}
+    .utm-item:hover{background:var(--sec)}
+    .utm-item.current{background:color-mix(in oklch,var(--accent) 10%,transparent)}
+    .utm-item-name{font-size:.875rem;font-weight:600;color:var(--fg);font-family:'JetBrains Mono',monospace}
+    .utm-item-tipo{font-size:.6rem;text-transform:uppercase;letter-spacing:.06em;padding:.1rem .4rem;border-radius:.25rem;flex-shrink:0}
+    .utm-item-tipo.bot{background:rgba(0,229,180,.15);color:#00e5b4}
+    .utm-item-tipo.direto{background:rgba(124,106,255,.15);color:#b8a8ff}
     /* skeleton */
     .drill-skel{display:flex;flex-direction:column;gap:.875rem}
     .drill-sk{border-radius:var(--rl);background:linear-gradient(90deg,var(--sec) 25%,oklch(0.22 0.005 260) 50%,var(--sec) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite}
@@ -1036,7 +1059,21 @@
 <div class="modal-fs" id="modal-drilldown">
   <div class="modal-fs-hd">
     <div class="modal-fs-hd-left">
-      <div class="drill-utm-name" id="drill-utm-title">UTM</div>
+      <div class="drill-title-row">
+        <div class="utm-selector" id="utm-selector" onclick="toggleUtmDropdown(event)">
+          <span class="utm-current" id="drill-utm-title">UTM</span>
+          <span class="utm-chevron">▼</span>
+        </div>
+        <div class="utm-dropdown" id="utm-dropdown">
+          <input type="text" class="utm-search" id="utm-search-input" placeholder="Buscar UTM…" oninput="renderUtmList()">
+          <div class="utm-tabs">
+            <button class="utmtab active" onclick="filtrarTipo('all',event)">Todas</button>
+            <button class="utmtab" onclick="filtrarTipo('bot',event)">Bot</button>
+            <button class="utmtab" onclick="filtrarTipo('direto',event)">Direto</button>
+          </div>
+          <div class="utm-list" id="utm-list"><div style="padding:.75rem;color:var(--muted);font-size:.8125rem">Carregando…</div></div>
+        </div>
+      </div>
       <div class="drill-stats-row" id="drill-summary-row"></div>
       <div class="drill-legend" id="drill-legend"></div>
     </div>
@@ -2450,6 +2487,13 @@ document.addEventListener('click',e=>{
     panel.classList.remove('on');
     _notifPanelOpen=false;
   }
+  // close utm dropdown if click outside
+  const dd=document.getElementById('utm-dropdown');
+  const sel=document.getElementById('utm-selector');
+  if(dd&&sel&&dd.classList.contains('open')&&!sel.contains(e.target)&&!dd.contains(e.target)){
+    dd.classList.remove('open');
+    sel.classList.remove('open');
+  }
 });
 
 async function loadNotifCount(){
@@ -2532,6 +2576,65 @@ function goToCampaigns(utm){
   },300);
 }
 
+/* ═══ UTM SELECTOR ═══ */
+let _allUtms=[];
+let _utmTipoFilter='all';
+
+async function carregarListaUtms(){
+  if(_allUtms.length>0){renderUtmList();return;}
+  try{
+    const r=await fetch('/api/utms');
+    if(r.ok)_allUtms=await r.json();
+  }catch{}
+  renderUtmList();
+}
+
+function renderUtmList(){
+  const search=(document.getElementById('utm-search-input')?.value||'').toLowerCase();
+  const cur=document.getElementById('drill-utm-title')?.textContent||'';
+  const filtered=_allUtms.filter(u=>{
+    if(_utmTipoFilter!=='all'&&u.tipo!==_utmTipoFilter)return false;
+    if(search&&!u.ad_utm.toLowerCase().includes(search))return false;
+    return true;
+  });
+  const el=document.getElementById('utm-list');
+  if(!el)return;
+  el.innerHTML=filtered.length
+    ?filtered.map(u=>`<div class="utm-item ${u.ad_utm===cur?'current':''}" onclick="trocarUtm('${esc(u.ad_utm)}')"><span class="utm-item-name">${esc(u.ad_utm)}</span><span class="utm-item-tipo ${esc(u.tipo||'')}">${esc(u.tipo||'')}</span></div>`).join('')
+    :'<div style="padding:.75rem;text-align:center;color:var(--muted);font-size:.8125rem">Nenhuma UTM</div>';
+}
+
+function toggleUtmDropdown(e){
+  e?.stopPropagation();
+  const sel=document.getElementById('utm-selector');
+  const dd=document.getElementById('utm-dropdown');
+  const isOpen=dd.classList.contains('open');
+  if(isOpen){
+    dd.classList.remove('open');sel.classList.remove('open');
+  }else{
+    dd.classList.add('open');sel.classList.add('open');
+    carregarListaUtms();
+    setTimeout(()=>document.getElementById('utm-search-input')?.focus(),50);
+  }
+}
+
+function filtrarTipo(tipo,e){
+  e?.stopPropagation();
+  _utmTipoFilter=tipo;
+  document.querySelectorAll('.utmtab').forEach(b=>b.classList.remove('active'));
+  if(e?.target)e.target.classList.add('active');
+  renderUtmList();
+}
+
+async function trocarUtm(novaUtm){
+  const dd=document.getElementById('utm-dropdown');
+  const sel=document.getElementById('utm-selector');
+  dd?.classList.remove('open');sel?.classList.remove('open');
+  const cur=document.getElementById('drill-utm-title')?.textContent;
+  if(novaUtm===cur)return;
+  await openDrilldown(novaUtm);
+}
+
 /* ═══ DRILLDOWN ═══ */
 let _drillData=null;
 let _adsetMap={};
@@ -2541,6 +2644,7 @@ async function openDrilldown(utm){
   _drillData=null;_adsetMap={};
   document.getElementById('modal-drilldown').classList.add('on');
   document.getElementById('drill-utm-title').textContent=utm;
+  if(_allUtms.length===0)carregarListaUtms();
   document.getElementById('drill-summary-row').innerHTML='';
   document.getElementById('drill-legend').innerHTML='';
   document.getElementById('drill-adsets-container').innerHTML=`

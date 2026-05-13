@@ -228,6 +228,28 @@ app.get('/api/notificacoes', requireAuth, notifHandler);
 app.post('/api/notificacoes/:id/marcar-lida', requireAuth, marcarLida);
 app.post('/api/notificacoes/marcar-todas-lidas', requireAuth, marcarTodasLidas);
 
+// ── UTMs ativas (últimos 7 dias) ──────────────────────────────────────────────
+app.get('/api/utms', requireAuth, async (req, res) => {
+  const tipo = req.query.tipo;
+  const last7 = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+  const { data, error } = await supabase
+    .from('ads_consolidados')
+    .select('ad_utm, tipo')
+    .gte('data', last7)
+    .gt('valor_gasto', 0)
+    .not('ad_utm', 'is', null);
+  if (error) return res.status(500).json({ error: error.message });
+  const map = new Map();
+  for (const r of data || []) {
+    if (!r.ad_utm) continue;
+    if (!map.has(r.ad_utm)) map.set(r.ad_utm, { ad_utm: r.ad_utm, tipo: r.tipo || '' });
+  }
+  let utms = Array.from(map.values());
+  if (tipo) utms = utms.filter(u => u.tipo === tipo);
+  utms.sort((a, b) => a.ad_utm.localeCompare(b.ad_utm));
+  res.json(utms);
+});
+
 // ── Drilldown ─────────────────────────────────────────────────────────────────
 app.get('/api/drilldown/:utm', requireAuth, drilldownHandler);
 
