@@ -442,33 +442,70 @@
     /* ── DRILLDOWN MODAL ── */
     .modal-fs{position:fixed;inset:0;background:var(--bg);z-index:300;display:none;flex-direction:column;overflow:hidden}
     .modal-fs.on{display:flex}
-    .modal-fs-hd{display:flex;align-items:center;gap:1rem;padding:1rem 1.5rem;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
-    .modal-fs-hd h2{font-size:1.125rem;margin:0;flex:1}
-    .modal-fs-close{background:transparent;border:1px solid var(--border);border-radius:.5rem;padding:.35rem .875rem;cursor:pointer;font-size:.875rem;color:var(--fg)}
-    .modal-fs-body{flex:1;overflow-y:auto;padding:1.5rem}
-    .drill-summary-row{display:flex;gap:1.25rem;flex-wrap:wrap;font-size:.8125rem;color:var(--muted);margin-bottom:.25rem}
-    .drill-summary-row b{color:var(--fg)}
-    .adset-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:1rem 1.25rem;margin-bottom:1rem}
-    .adset-hd{display:flex;align-items:center;gap:.875rem;margin-bottom:.875rem;flex-wrap:wrap}
-    .adset-name{flex:1;font-weight:600;font-size:.9375rem}
-    .adset-camp-tag{font-size:.65rem;background:rgba(124,106,255,.12);color:#b8a8ff;padding:.15rem .45rem;border-radius:.25rem}
-    .adset-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:.875rem;padding:.75rem;background:rgba(255,255,255,.02);border-radius:.5rem;font-size:.8125rem}
-    .adset-metrics label{display:block;font-size:.58rem;color:var(--muted);text-transform:uppercase;margin-bottom:.2rem}
-    .adset-creatives{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:.75rem}
-    .creative-card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:.5rem;overflow:hidden}
-    .creative-card img{width:100%;aspect-ratio:1;object-fit:cover;background:#111}
-    .creative-info{padding:.5rem}
-    .creative-info strong{display:block;font-size:.68rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .cr-status{font-size:.58rem;padding:.1rem .35rem;border-radius:.2rem;display:inline-block;margin-top:.2rem}
-    .cr-status.ACTIVE{background:rgba(0,229,180,.12);color:#00e5b4}
-    .cr-status.PAUSED{background:rgba(255,255,255,.07);color:var(--muted)}
-    .toggle-btn{background:transparent;border:1px solid var(--border);border-radius:.375rem;padding:.25rem .6rem;font-size:.7rem;cursor:pointer;transition:all .15s;color:var(--muted)}
-    .toggle-btn.active-st{border-color:var(--ok);color:var(--ok)}
+    .modal-fs-hd{display:flex;align-items:flex-start;gap:1rem;padding:1.25rem 2rem;border-bottom:1px solid var(--border);flex-shrink:0}
+    .modal-fs-hd-left{flex:1;min-width:0}
+    .drill-utm-name{font-size:1.4rem;font-weight:700;color:var(--fg);margin-bottom:.5rem}
+    .drill-stats-row{display:flex;gap:1.25rem;flex-wrap:wrap;font-size:.8125rem;color:var(--muted);margin-bottom:.2rem}
+    .drill-stats-row b{color:var(--fg);font-family:'JetBrains Mono',monospace}
+    .drill-legend{font-size:.6875rem;color:var(--muted);margin-top:.25rem}
+    .modal-fs-close{background:transparent;border:1px solid var(--border);border-radius:.5rem;padding:.35rem .875rem;cursor:pointer;font-size:.875rem;color:var(--fg);flex-shrink:0}
+    .modal-fs-body{flex:1;overflow-y:auto;padding:1.25rem 2rem 2rem}
+    /* sort toolbar */
+    .drill-toolbar{display:flex;align-items:center;gap:.625rem;margin-bottom:1rem}
+    .drill-sort-sel{height:2.25rem;padding:0 .75rem;border-radius:var(--r);background:var(--sec);border:1px solid var(--border);color:var(--fg);font-family:inherit;font-size:.8125rem;cursor:pointer;outline:none}
+    /* adset card */
+    .adset-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:1.125rem 1.375rem;margin-bottom:.875rem}
+    .adset-card-hd{display:flex;justify-content:space-between;align-items:center;padding-bottom:.875rem;border-bottom:1px solid var(--border);margin-bottom:.875rem;gap:.75rem}
+    .adset-card-left{display:flex;flex-direction:column;gap:.2rem;min-width:0}
+    .adset-name{font-size:.9375rem;font-weight:600;color:var(--fg)}
+    .adset-camp-tag{font-size:.625rem;color:var(--muted)}
+    .adset-card-right{display:flex;align-items:center;gap:.875rem;flex-shrink:0}
+    .adset-budget-row{display:flex;align-items:center;gap:.625rem;font-size:.8125rem;color:var(--muted);padding-bottom:.875rem;border-bottom:1px solid var(--border);margin-bottom:.875rem;flex-wrap:wrap}
+    .adset-m6{display:grid;grid-template-columns:repeat(6,1fr);gap:.875rem}
+    @media(max-width:900px){.adset-m6{grid-template-columns:repeat(3,1fr)}}
+    .m6-cell{display:flex;flex-direction:column;gap:.2rem}
+    .m6-lbl{font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+    .m6-val{font-size:.9375rem;font-weight:600;font-family:'JetBrains Mono',monospace;color:var(--fg)}
+    .m6-val.ok{color:var(--ok)}
+    .m6-val.warn{color:var(--warn)}
+    .m6-val.bad{color:var(--bad)}
+    .adset-footer{display:flex;justify-content:flex-end;margin-top:.875rem;padding-top:.875rem;border-top:1px solid var(--border)}
+    .btn-ver-criativos{background:var(--sec);color:var(--fg);border:1px solid var(--border);padding:.5rem .875rem;border-radius:var(--r);cursor:pointer;font-size:.8125rem;display:inline-flex;align-items:center;gap:.5rem;font-family:inherit;transition:all .15s}
+    .btn-ver-criativos:hover{background:var(--accent);color:var(--acc-fg);border-color:var(--accent)}
+    /* iOS switch */
+    .ios-switch{position:relative;display:inline-block;width:44px;height:26px;flex-shrink:0}
+    .ios-switch input{opacity:0;width:0;height:0;position:absolute}
+    .ios-slider{position:absolute;cursor:pointer;inset:0;background:rgba(120,120,128,.32);transition:.25s;border-radius:26px}
+    .ios-slider::before{content:'';position:absolute;height:22px;width:22px;left:2px;bottom:2px;background:#fff;transition:.25s;border-radius:50%;box-shadow:0 2px 4px rgba(0,0,0,.3)}
+    .ios-switch input:checked+.ios-slider{background:#34c759}
+    .ios-switch input:checked+.ios-slider::before{transform:translateX(18px)}
+    .ios-switch input:disabled+.ios-slider{opacity:.5;cursor:not-allowed}
+    /* budget */
     .budget-wrap{display:flex;align-items:center;gap:.35rem}
-    .budget-input{background:var(--bg);border:1px solid var(--border);border-radius:.375rem;padding:.25rem .5rem;font-size:.8125rem;color:var(--fg);width:80px;text-align:right}
+    .budget-input{background:var(--bg);border:1px solid var(--border);border-radius:.375rem;padding:.25rem .5rem;font-size:.8125rem;color:var(--fg);width:90px;text-align:right;font-family:'JetBrains Mono',monospace}
     .budget-input:focus{outline:none;border-color:var(--c1)}
     .budget-save-btn{background:var(--c1);border:none;border-radius:.375rem;padding:.25rem .625rem;font-size:.68rem;color:#000;cursor:pointer;font-weight:700}
     .drill-no-meta{color:var(--muted);font-size:.8125rem;padding:1rem 0;font-style:italic}
+    /* skeleton */
+    .drill-skel{display:flex;flex-direction:column;gap:.875rem}
+    .drill-sk{border-radius:var(--rl);background:linear-gradient(90deg,var(--sec) 25%,oklch(0.22 0.005 260) 50%,var(--sec) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite}
+    /* criativos modal */
+    .modal-criativos{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:400;display:none;align-items:center;justify-content:center;padding:1rem}
+    .modal-criativos.on{display:flex}
+    .modal-criativos-inner{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);width:min(940px,96vw);max-height:85vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.6)}
+    .modal-criativos-hd{display:flex;align-items:center;padding:1rem 1.25rem;border-bottom:1px solid var(--border);gap:.75rem;flex-shrink:0}
+    .modal-criativos-title{flex:1;font-size:.9375rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .modal-criativos-body{flex:1;overflow-y:auto;padding:1.25rem}
+    .criativos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.875rem}
+    .cri-card{background:var(--sec);border:1px solid var(--border);border-radius:.75rem;overflow:hidden}
+    .cri-thumb{width:100%;aspect-ratio:1;background:rgba(255,255,255,.03);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.75rem;overflow:hidden}
+    .cri-thumb img{width:100%;height:100%;object-fit:cover}
+    .cri-body{padding:.625rem .75rem}
+    .cri-title-row{display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-bottom:.5rem}
+    .cri-name{font-size:.72rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+    .cri-m4{display:grid;grid-template-columns:1fr 1fr;gap:.375rem}
+    .cri-m4 label{display:block;font-size:.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.1rem}
+    .cri-m4 b{font-family:'JetBrains Mono',monospace;font-size:.75rem}
 
     /* ── HISTORICO ── */
     .timeline{list-style:none;padding:0;margin:0;position:relative}
@@ -998,12 +1035,37 @@
 <!-- MODAL DRILLDOWN -->
 <div class="modal-fs" id="modal-drilldown">
   <div class="modal-fs-hd">
-    <h2 id="drill-utm-title">UTM</h2>
-    <div class="drill-summary-row" id="drill-summary-row"></div>
+    <div class="modal-fs-hd-left">
+      <div class="drill-utm-name" id="drill-utm-title">UTM</div>
+      <div class="drill-stats-row" id="drill-summary-row"></div>
+      <div class="drill-legend" id="drill-legend"></div>
+    </div>
     <button class="modal-fs-close" onclick="closeDrilldown()">✕ Fechar</button>
   </div>
   <div class="modal-fs-body">
+    <div class="drill-toolbar">
+      <span style="font-size:.75rem;color:var(--muted)">Ordenar:</span>
+      <select class="drill-sort-sel" id="drill-sort" onchange="sortDrilldown()">
+        <option value="spend-desc">Gasto ↓</option>
+        <option value="results-desc">Resultados ↓</option>
+        <option value="cost-asc">Custo/Result. ↑</option>
+        <option value="cost-desc">Custo/Result. ↓</option>
+        <option value="ctr-desc">CTR ↓</option>
+        <option value="cpc-asc">CPC ↑</option>
+      </select>
+    </div>
     <div id="drill-adsets-container"></div>
+  </div>
+</div>
+
+<!-- MODAL CRIATIVOS -->
+<div class="modal-criativos" id="modal-criativos" onclick="if(event.target===this)closeCreativeModal()">
+  <div class="modal-criativos-inner">
+    <div class="modal-criativos-hd">
+      <span class="modal-criativos-title" id="modal-criativos-title">Criativos</span>
+      <button class="modal-fs-close" onclick="closeCreativeModal()">✕ Fechar</button>
+    </div>
+    <div class="modal-criativos-body" id="modal-criativos-body"></div>
   </div>
 </div>
 
@@ -2471,94 +2533,216 @@ function goToCampaigns(utm){
 }
 
 /* ═══ DRILLDOWN ═══ */
+let _drillData=null;
+let _adsetMap={};
+
 async function openDrilldown(utm){
   if(!utm)return;
+  _drillData=null;_adsetMap={};
   document.getElementById('modal-drilldown').classList.add('on');
   document.getElementById('drill-utm-title').textContent=utm;
-  document.getElementById('drill-summary-row').innerHTML='<span style="color:var(--muted)">Carregando…</span>';
-  document.getElementById('drill-adsets-container').innerHTML='';
+  document.getElementById('drill-summary-row').innerHTML='';
+  document.getElementById('drill-legend').innerHTML='';
+  document.getElementById('drill-adsets-container').innerHTML=`
+    <div class="drill-skel">
+      <div class="drill-sk" style="height:84px"></div>
+      <div class="drill-sk" style="height:160px;margin-top:.25rem"></div>
+      <div class="drill-sk" style="height:160px;margin-top:.25rem"></div>
+    </div>`;
   try{
     const since=document.getElementById('f-since').value;
     const until=document.getElementById('f-until').value;
     const r=await fetch(`/api/drilldown/${encodeURIComponent(utm)}?since=${since}&until=${until}`);
     if(!r.ok)throw new Error((await r.json()).error||r.statusText);
     const d=await r.json();
+    _drillData=d;
     renderDrilldown(d);
   }catch(e){
     document.getElementById('drill-adsets-container').innerHTML=`<p style="color:var(--bad)">${esc(e.message)}</p>`;
-    document.getElementById('drill-summary-row').innerHTML='';
   }
 }
 
 function closeDrilldown(){
   document.getElementById('modal-drilldown').classList.remove('on');
+  _drillData=null;_adsetMap={};
 }
+
+function corCusto(custo,rps){
+  if(!custo||custo===0)return'';
+  if(!rps||rps===0)return'';
+  if(custo<=rps)return'ok';
+  if(custo<=rps*1.5)return'warn';
+  return'bad';
+}
+
+function sortAdsetArr(arr,key){
+  return[...arr].sort((a,b)=>{
+    switch(key){
+      case'spend-desc':return(b.spend||0)-(a.spend||0);
+      case'results-desc':return(b.results||0)-(a.results||0);
+      case'cost-asc':return(a.cost_per_result||0)-(b.cost_per_result||0);
+      case'cost-desc':return(b.cost_per_result||0)-(a.cost_per_result||0);
+      case'ctr-desc':return(b.ctr||0)-(a.ctr||0);
+      case'cpc-asc':return(a.cpc||0)-(b.cpc||0);
+      default:return 0;
+    }
+  });
+}
+
+function sortDrilldown(){if(_drillData)renderDrillAdsets(_drillData.adsets,_drillData.utm,_drillData.total?.rps||0);}
 
 function renderDrilldown(d){
   const tot=d.total||{};
-  document.getElementById('drill-summary-row').innerHTML=`
-    <span>Invest. <b>${BRL(tot.spend)}</b></span>
-    <span>Faturamento <b>${BRL(tot.fat)}</b></span>
-    <span>Lucro <b style="color:${(tot.lucro||0)>=0?'var(--ok)':'var(--bad)'}">${BRL(tot.lucro)}</b></span>
-    <span>ROAS <b>${ROAS(tot.roas)}</b></span>
-    <span>CPC <b>${BRL(tot.cpc)}</b></span>`;
+  const rps=tot.rps||0;
+  const cpr=tot.results>0?tot.spend/tot.results:0;
+  if(d._cached)console.log(`[drilldown ${d.utm}] using 60s cache`);
+  if(d.debug)console.log(`[drilldown ${d.utm}] debug:`,d.debug);
 
-  const cont=document.getElementById('drill-adsets-container');
+  document.getElementById('drill-summary-row').innerHTML=
+    `<span>Invest. <b>${BRL(tot.spend)}</b></span>`+
+    `<span>Fat. <b>${BRL(tot.fat)}</b></span>`+
+    `<span>Lucro <b style="color:${(tot.lucro||0)>=0?'var(--ok)':'var(--bad)'}">${BRL(tot.lucro)}</b></span>`+
+    `<span>ROAS <b>${ROAS(tot.roas)}</b></span>`+
+    `<span>Resultados <b>${NUM(tot.results)}</b></span>`+
+    (cpr>0?`<span>Custo/Result. <b>${BRL(cpr)}</b></span>`:'')+
+    (rps>0?`<span>CPA Ideal <b>${BRL(rps)}</b></span>`:'');
+
+  if(rps>0){
+    document.getElementById('drill-legend').innerHTML=
+      `<span style="color:var(--ok)">●</span> Lucrativo &nbsp;`+
+      `<span style="color:var(--warn)">●</span> Limite &nbsp;`+
+      `<span style="color:var(--bad)">●</span> Prejuízo &nbsp;`+
+      `<small>(vs RPS ${BRL(rps)})</small>`;
+  }
+
   if(!d.adsets||!d.adsets.length){
-    cont.innerHTML='<p class="drill-no-meta">Nenhum adset encontrado via Meta API (verifique token e nome da UTM).<br>Dados locais mostrados no resumo acima.</p>';
+    document.getElementById('drill-adsets-container').innerHTML=
+      `<p class="drill-no-meta">Nenhum adset encontrado.<br>`+
+      `Pesquisamos ${d.debug?.contas_pesquisadas||0} conta(s) Meta buscando ads com "<b>${esc(d.utm)}</b>" no nome.<br>`+
+      `Banco: ${d.debug?.ads_no_banco||0} registros.</p>`;
     return;
   }
-  cont.innerHTML=d.adsets.map(a=>{
+  renderDrillAdsets(d.adsets,d.utm,rps);
+}
+
+function renderDrillAdsets(adsets,utm,rps){
+  const key=document.getElementById('drill-sort')?.value||'spend-desc';
+  const sorted=sortAdsetArr(adsets,key);
+  for(const a of sorted)_adsetMap[a.adset_id]=a;
+  document.getElementById('drill-adsets-container').innerHTML=sorted.map(a=>{
     const isActive=a.status==='ACTIVE';
-    const creativeHtml=(a.ads||[]).map(ad=>`
-      <div class="creative-card">
-        ${ad.creative?.thumbnail_url?`<img src="${esc(ad.creative.thumbnail_url)}" loading="lazy" alt=""/>`:
-          '<div style="aspect-ratio:1;background:#1a1a2e;display:flex;align-items:center;justify-content:center;color:#444;font-size:.7rem">sem prévia</div>'}
-        <div class="creative-info">
-          <strong title="${esc(ad.name)}">${esc(ad.name)}</strong>
-          <span class="cr-status ${esc(ad.status)}">${esc(ad.status)}</span>
-        </div>
-      </div>`).join('');
-    return `<div class="adset-card">
-      <div class="adset-hd">
-        <button class="toggle-btn ${isActive?'active-st':''}" onclick="toggleAdset('${esc(a.adset_id)}','${isActive?'PAUSED':'ACTIVE'}','${esc(d.utm||'')}','${esc(a.adset_name||'')}',this)">
-          ${isActive?'● ATIVO':'○ PAUSADO'}
-        </button>
-        <span class="adset-name">${esc(a.adset_name)}</span>
-        <span class="adset-camp-tag">${esc(a.campaign_name)}</span>
-      </div>
-      <div class="adset-metrics">
-        <div><label>Orçamento/dia</label>
-          <div class="budget-wrap">
-            <input class="budget-input" type="number" value="${a.daily_budget||''}" id="bud-${esc(a.adset_id)}" placeholder="—"/>
-            <button class="budget-save-btn" onclick="saveBudget('${esc(a.adset_id)}','${esc(d.utm||'')}','${esc(a.adset_name||'')}',${a.daily_budget||0})">✓</button>
-          </div>
-        </div>
-        <div><label>Gasto</label>${BRL(a.spend)}</div>
-        <div><label>Resultados</label>${NUM(a.results)}</div>
-        <div><label>CPC</label>${BRL(a.cpc)}</div>
-      </div>
-      ${creativeHtml?`<div class="adset-creatives">${creativeHtml}</div>`:''}
-    </div>`;
+    const costCls=corCusto(a.cost_per_result,rps);
+    const aidSafe=esc(a.adset_id);
+    const utmSafe=esc(utm);
+    const nameSafe=esc(a.adset_name);
+    return`<div class="adset-card">`+
+      `<div class="adset-card-hd">`+
+        `<div class="adset-card-left">`+
+          `<span class="adset-name">${esc(a.adset_name)}</span>`+
+          `<span class="adset-camp-tag">${esc(a.campaign_name)}${a.campaign_objective?' · '+esc(a.campaign_objective):''}</span>`+
+        `</div>`+
+        `<div class="adset-card-right">`+
+          `<label class="ios-switch" title="${isActive?'Pausar':'Ativar'} adset">`+
+            `<input type="checkbox" ${isActive?'checked':''} onchange="toggleAdset('${aidSafe}',this,'${utmSafe}','${nameSafe}')">`+
+            `<span class="ios-slider"></span>`+
+          `</label>`+
+        `</div>`+
+      `</div>`+
+      `<div class="adset-budget-row">`+
+        `<span>Orçamento/dia:</span>`+
+        `<div class="budget-wrap">`+
+          `<input class="budget-input" type="number" min="1" step="0.01" value="${a.daily_budget||''}" id="bud-${aidSafe}" placeholder="—"/>`+
+          `<button class="budget-save-btn" onclick="saveBudget('${aidSafe}','${utmSafe}','${nameSafe}',${a.daily_budget||0})">✓</button>`+
+        `</div>`+
+      `</div>`+
+      `<div class="adset-m6">`+
+        `<div class="m6-cell"><span class="m6-lbl">Gasto</span><span class="m6-val">${BRL(a.spend)}</span></div>`+
+        `<div class="m6-cell"><span class="m6-lbl">Resultados</span><span class="m6-val">${NUM(a.results)}</span></div>`+
+        `<div class="m6-cell"><span class="m6-lbl">Custo/Result.</span><span class="m6-val ${costCls}">${a.cost_per_result>0?BRL(a.cost_per_result):'—'}</span></div>`+
+        `<div class="m6-cell"><span class="m6-lbl">CPC</span><span class="m6-val">${BRL(a.cpc)}</span></div>`+
+        `<div class="m6-cell"><span class="m6-lbl">CTR</span><span class="m6-val">${a.ctr?loc(a.ctr,2)+'%':'—'}</span></div>`+
+        `<div class="m6-cell"><span class="m6-lbl">CPM</span><span class="m6-val">${BRL(a.cpm)}</span></div>`+
+      `</div>`+
+      (a.ads?.length?
+        `<div class="adset-footer">`+
+          `<button class="btn-ver-criativos" onclick="openCreativeModal('${aidSafe}',${rps})">`+
+            `👁 Ver Criativos (${a.ads.length})`+
+          `</button>`+
+        `</div>`
+      :'')+
+    `</div>`;
   }).join('');
 }
 
-async function toggleAdset(adsetId,newStatus,utm,adsetName,btn){
-  if(!confirm(`${newStatus==='ACTIVE'?'Ativar':'Pausar'} adset "${adsetName}"?`))return;
+function openCreativeModal(adsetId,rps){
+  const adset=_adsetMap[adsetId];
+  if(!adset)return;
+  document.getElementById('modal-criativos-title').textContent='Criativos — '+adset.adset_name;
+  document.getElementById('modal-criativos').classList.add('on');
+  const ads=adset.ads||[];
+  if(!ads.length){
+    document.getElementById('modal-criativos-body').innerHTML='<p class="drill-no-meta">Nenhum criativo encontrado.</p>';
+    return;
+  }
+  document.getElementById('modal-criativos-body').innerHTML=
+    `<div class="criativos-grid">`+
+    ads.map(ad=>{
+      const costCls=corCusto(ad.cost_per_result,rps);
+      const isActive=ad.effective_status==='ACTIVE';
+      return`<div class="cri-card">`+
+        `<div class="cri-thumb">${ad.thumbnail_url?`<img src="${esc(ad.thumbnail_url)}" loading="lazy" alt=""/>`:'sem prévia'}</div>`+
+        `<div class="cri-body">`+
+          `<div class="cri-title-row">`+
+            `<span class="cri-name" title="${esc(ad.ad_name)}">${esc(ad.ad_name)}</span>`+
+            `<label class="ios-switch" style="transform:scale(.8);transform-origin:right center">`+
+              `<input type="checkbox" ${isActive?'checked':''} onchange="toggleAd('${esc(ad.ad_id)}',this,'${esc(adsetId)}','${esc(ad.ad_name)}')">`+
+              `<span class="ios-slider"></span>`+
+            `</label>`+
+          `</div>`+
+          `<div class="cri-m4">`+
+            `<div><label>GASTO</label><b>${BRL(ad.spend)}</b></div>`+
+            `<div><label>RESULT.</label><b>${NUM(ad.results)}</b></div>`+
+            `<div><label>CUSTO/R.</label><b class="${costCls}">${ad.cost_per_result>0?BRL(ad.cost_per_result):'—'}</b></div>`+
+            `<div><label>CTR</label><b>${ad.ctr?loc(ad.ctr,2)+'%':'—'}</b></div>`+
+          `</div>`+
+        `</div>`+
+      `</div>`;
+    }).join('')+
+    `</div>`;
+}
+
+function closeCreativeModal(){document.getElementById('modal-criativos').classList.remove('on');}
+
+async function toggleAdset(adsetId,checkbox,utm,adsetName){
+  const newStatus=checkbox.checked?'ACTIVE':'PAUSED';
+  if(!confirm(`${newStatus==='ACTIVE'?'Ativar':'Pausar'} adset "${adsetName}"?`)){checkbox.checked=!checkbox.checked;return;}
+  checkbox.disabled=true;
   try{
     const r=await fetch(`/api/meta/adset/${adsetId}/toggle`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:newStatus,utm,adset_name:adsetName})});
     const d=await r.json();
     if(!r.ok)throw new Error(d.error||r.statusText);
     showToast('ok',`Adset ${newStatus==='ACTIVE'?'ativado':'pausado'}`);
-    btn.textContent=newStatus==='ACTIVE'?'● ATIVO':'○ PAUSADO';
-    btn.className='toggle-btn '+(newStatus==='ACTIVE'?'active-st':'');
-    btn.onclick=()=>toggleAdset(adsetId,newStatus==='ACTIVE'?'PAUSED':'ACTIVE',utm,adsetName,btn);
-  }catch(e){showToast('err','Erro: '+e.message);}
+    if(_adsetMap[adsetId])_adsetMap[adsetId].status=newStatus;
+  }catch(e){showToast('err','Erro: '+e.message);checkbox.checked=!checkbox.checked;}
+  finally{checkbox.disabled=false;}
+}
+
+async function toggleAd(adId,checkbox,adsetId,adName){
+  const newStatus=checkbox.checked?'ACTIVE':'PAUSED';
+  if(!confirm(`${newStatus==='ACTIVE'?'Ativar':'Pausar'} ad "${adName}"?`)){checkbox.checked=!checkbox.checked;return;}
+  checkbox.disabled=true;
+  try{
+    const r=await fetch(`/api/meta/ad/${adId}/toggle`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:newStatus,ad_name:adName})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||r.statusText);
+    showToast('ok',`Ad ${newStatus==='ACTIVE'?'ativado':'pausado'}`);
+  }catch(e){showToast('err','Erro: '+e.message);checkbox.checked=!checkbox.checked;}
+  finally{checkbox.disabled=false;}
 }
 
 async function saveBudget(adsetId,utm,adsetName,budgetAntes){
   const val=parseFloat(document.getElementById(`bud-${adsetId}`)?.value);
-  if(isNaN(val)||val<=0){alert('Orçamento inválido');return}
+  if(isNaN(val)||val<=0){alert('Orçamento inválido');return;}
   if(!confirm(`Alterar orçamento de "${adsetName}" para R$ ${val.toFixed(2)}/dia?`))return;
   try{
     const r=await fetch(`/api/meta/adset/${adsetId}/budget`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({daily_budget:val,utm,adset_name:adsetName,budget_antes:budgetAntes})});

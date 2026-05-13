@@ -4,6 +4,35 @@ const supabase = require('../../../lib/supabase');
 
 const META_BASE = 'https://graph.facebook.com/v19.0';
 
+// 60-second memory cache per utm:since:until
+const _cache = new Map();
+function getCached(k) {
+  const e = _cache.get(k);
+  if (!e) return null;
+  if (Date.now() - e.ts > 60000) { _cache.delete(k); return null; }
+  return e.data;
+}
+function setCache(k, d) { _cache.set(k, { ts: Date.now(), data: d }); }
+
+function resultActionType(objective) {
+  const m = {
+    OUTCOME_LEADS: 'lead', OUTCOME_SALES: 'purchase',
+    OUTCOME_TRAFFIC: 'link_click', OUTCOME_ENGAGEMENT: 'post_engagement',
+    OUTCOME_APP_PROMOTION: 'app_install', OUTCOME_AWARENESS: 'reach',
+    LEAD_GENERATION: 'lead', CONVERSIONS: 'purchase',
+    LINK_CLICKS: 'link_click', MESSAGES: 'onsite_conversion.messaging_conversation_started_7d',
+  };
+  return m[objective] || 'link_click';
+}
+
+function pickResult(actions, objective) {
+  if (!actions?.length) return null;
+  const pref = resultActionType(objective);
+  return actions.find(a => a.action_type === pref)
+      || actions.find(a => ['lead', 'purchase', 'link_click', 'landing_page_view'].includes(a.action_type))
+      || null;
+}
+
 async function handler(req, res) {
   try {
     const utm = req.params.utm;
@@ -11,11 +40,21 @@ async function handler(req, res) {
 
     const since = req.query.since || new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
     const until = req.query.until || new Date().toISOString().slice(0, 10);
+    const noCache = req.query.nocache === '1';
 
-    // Aggregate local DB metrics for this UTM
+    const cacheKey = `${utm}:${since}:${until}`;
+    if (!noCache) {
+      const hit = getCached(cacheKey);
+      if (hit) {
+        console.log(`[drilldown ${utm}] cache hit`);
+        return res.json({ ...hit, _cached: true });
+      }
+    }
+
+    // ── DB aggregate ────────────────────────────────────────────────────────
     const { data: rows } = await supabase
       .from('ads_consolidados')
-      .select('data,valor_gasto,faturamento_real,lucro,cliques,resultado,impressoes_gam,ecpm,rps,cpc,roas,orcamento_total')
+      .select('data,valor_gasto,faturamento_real,lucro,cliques,resultado,impressoes_gam,ecpm,rps,cpc,roas')
       .eq('ad_utm', utm)
       .gte('data', since)
       .lte('data', until);
@@ -33,28 +72,28 @@ async function handler(req, res) {
     total.roas = total.spend > 0 ? +(total.fat / total.spend).toFixed(4) : 0;
     total.cpc  = total.clicks > 0 ? +(total.spend / total.clicks).toFixed(4) : 0;
 
-    // Fetch active Meta accounts
-    const { data: accounts } = await supabase.from('meta_accounts').select('*').eq('ativo', true);
-    const adsetsMap = new Map(); // adset_id → adset object
+    const rpsArr = (rows || []).map(r => Number(r.rps || 0)).filter(v => v > 0);
+    total.rps = rpsArr.length ? rpsArr.reduce((s, v) => s + v, 0) / rpsArr.length : 0;
 
+    // ── Accounts ─────────────────────────────────────────────────────────────
+    const { data: accounts } = await supabase.from('meta_accounts').select('*').eq('ativo', true);
     console.log(`[drilldown ${utm}] contas: ${(accounts || []).length}`);
 
-    for (const account of accounts || []) {
-      try {
-        // Search ADs whose name contains the UTM slug (e.g. "01-amafb", "amafb")
-        const adRes = await axios.get(`${META_BASE}/${account.ad_account_id}/ads`, {
-          params: {
-            access_token: account.access_token,
-            fields: 'id,name,status,effective_status,adset_id,adset{id,name,status,daily_budget,campaign{id,name}},creative{id,thumbnail_url,name}',
-            filtering: JSON.stringify([{ field: 'name', operator: 'CONTAIN', value: utm }]),
-            limit: 200,
-          },
-          timeout: 20000,
-        });
+    // ── Parallel: fetch ads from all accounts ────────────────────────────────
+    const adsetsMap = new Map(); // adset_id → adset object
 
-        const ads = adRes.data?.data || [];
-        console.log(`[drilldown ${utm}] conta ${account.ad_account_id}: ${ads.length} ads encontrados`);
-
+    await Promise.allSettled((accounts || []).map(acc =>
+      axios.get(`${META_BASE}/${acc.ad_account_id}/ads`, {
+        params: {
+          access_token: acc.access_token,
+          fields: 'id,name,status,effective_status,adset_id,adset{id,name,status,daily_budget,campaign{id,name,objective}},creative{id,thumbnail_url,name}',
+          filtering: JSON.stringify([{ field: 'name', operator: 'CONTAIN', value: utm }]),
+          limit: 200,
+        },
+        timeout: 20000,
+      }).then(r => {
+        const ads = r.data?.data || [];
+        console.log(`[drilldown ${utm}] conta ${acc.ad_account_id}: ${ads.length} ads`);
         for (const ad of ads) {
           if (!ad.adset) continue;
           const aid = ad.adset.id;
@@ -63,10 +102,14 @@ async function handler(req, res) {
               adset_id: aid,
               adset_name: ad.adset.name,
               campaign_name: ad.adset.campaign?.name || '',
+              campaign_objective: ad.adset.campaign?.objective || '',
               status: ad.adset.status,
               daily_budget: ad.adset.daily_budget ? +(ad.adset.daily_budget / 100).toFixed(2) : null,
-              account_id: account.ad_account_id,
+              account_id: acc.ad_account_id,
+              _token: acc.access_token,
               ads: [],
+              spend: 0, clicks: 0, cpc: 0, ctr: 0, cpm: 0,
+              impressions: 0, results: 0, cost_per_result: 0,
             });
           }
           adsetsMap.get(aid).ads.push({
@@ -74,46 +117,82 @@ async function handler(req, res) {
             ad_name: ad.name,
             status: ad.status,
             effective_status: ad.effective_status,
-            creative_id: ad.creative?.id,
-            thumbnail_url: ad.creative?.thumbnail_url,
-            creative_name: ad.creative?.name,
+            thumbnail_url: ad.creative?.thumbnail_url || null,
+            creative_name: ad.creative?.name || null,
+            spend: 0, clicks: 0, ctr: 0, results: 0, cost_per_result: 0,
           });
         }
-      } catch (e) {
-        console.warn(`[drilldown] Meta API error for ${account.ad_account_id}:`, e.response?.data?.error?.message || e.message);
-      }
-    }
+      }).catch(e => {
+        console.warn(`[drilldown] ${acc.ad_account_id}:`, e.response?.data?.error?.message || e.message);
+      })
+    ));
 
     console.log(`[drilldown ${utm}] adsets encontrados: ${adsetsMap.size}`);
     if (adsetsMap.size === 0) {
-      console.log(`[drilldown ${utm}] PROBLEMA: nenhum ad com "${utm}" no nome encontrado em ${(accounts || []).length} contas`);
+      console.log(`[drilldown ${utm}] PROBLEMA: nenhum ad com "${utm}" no nome em ${(accounts || []).length} contas`);
     }
 
-    // Fetch insights for each adset (only from its own account)
-    for (const account of accounts || []) {
-      for (const [aid, adset] of adsetsMap) {
-        if (adset.account_id !== account.ad_account_id) continue;
-        try {
-          const insRes = await axios.get(`${META_BASE}/${aid}/insights`, {
+    // ── Parallel: fetch all insights (adset + ad level) ──────────────────────
+    const insightJobs = [];
+
+    for (const [aid, adset] of adsetsMap) {
+      const token = adset._token;
+      const obj = adset.campaign_objective;
+
+      insightJobs.push(
+        axios.get(`${META_BASE}/${aid}/insights`, {
+          params: {
+            access_token: token,
+            fields: 'spend,clicks,impressions,ctr,cpc,cpm,actions,cost_per_action_type',
+            date_preset: 'last_30d',
+          },
+          timeout: 12000,
+        }).then(r => {
+          const d = r.data?.data?.[0];
+          if (!d) return;
+          const ra = pickResult(d.actions, obj);
+          const cpa = d.cost_per_action_type?.find(c => c.action_type === resultActionType(obj));
+          adset.spend       = +d.spend || 0;
+          adset.clicks      = +d.clicks || 0;
+          adset.cpc         = +d.cpc || 0;
+          adset.ctr         = +d.ctr || 0;
+          adset.cpm         = +d.cpm || 0;
+          adset.impressions = +d.impressions || 0;
+          adset.results     = ra ? +ra.value : 0;
+          adset.cost_per_result = cpa ? +cpa.value : (adset.results > 0 ? adset.spend / adset.results : 0);
+        }).catch(() => {})
+      );
+
+      for (const ad of adset.ads) {
+        insightJobs.push(
+          axios.get(`${META_BASE}/${ad.ad_id}/insights`, {
             params: {
-              access_token: account.access_token,
-              fields: 'spend,clicks,actions,cpc,ctr',
+              access_token: token,
+              fields: 'spend,clicks,impressions,ctr,cpc,actions,cost_per_action_type',
               date_preset: 'last_30d',
             },
             timeout: 10000,
-          });
-          const d = insRes.data?.data?.[0] || {};
-          const results = (d.actions || []).find(a => a.action_type === 'lead' || a.action_type === 'purchase');
-          adset.spend   = +d.spend || 0;
-          adset.clicks  = +d.clicks || 0;
-          adset.cpc     = +d.cpc || 0;
-          adset.ctr     = +d.ctr || 0;
-          adset.results = results ? +results.value : 0;
-        } catch { /* skip insights if error */ }
+          }).then(r => {
+            const d = r.data?.data?.[0];
+            if (!d) return;
+            const ra = pickResult(d.actions, obj);
+            const cpa = d.cost_per_action_type?.find(c => c.action_type === resultActionType(obj));
+            ad.spend          = +d.spend || 0;
+            ad.clicks         = +d.clicks || 0;
+            ad.ctr            = +d.ctr || 0;
+            ad.results        = ra ? +ra.value : 0;
+            ad.cost_per_result = cpa ? +cpa.value : (ad.results > 0 ? ad.spend / ad.results : 0);
+          }).catch(() => {})
+        );
       }
     }
 
-    res.json({
+    await Promise.allSettled(insightJobs);
+
+    // Strip auth token before sending
+    for (const a of adsetsMap.values()) delete a._token;
+
+    const payload = {
       utm,
       total,
       adsets: Array.from(adsetsMap.values()),
@@ -122,7 +201,9 @@ async function handler(req, res) {
         adsets_encontrados: adsetsMap.size,
         contas_pesquisadas: (accounts || []).length,
       },
-    });
+    };
+    setCache(cacheKey, payload);
+    res.json(payload);
   } catch (err) {
     console.error('[drilldown]', err.message);
     res.status(500).json({ error: err.message });

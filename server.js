@@ -284,6 +284,29 @@ app.post('/api/meta/adset/:id/budget', requireAuth, async (req, res) => {
   res.status(400).json({ error: lastErr });
 });
 
+app.post('/api/meta/ad/:id/toggle', requireAuth, async (req, res) => {
+  const adId = req.params.id;
+  const { status, ad_name } = req.body || {};
+  if (!status || !['ACTIVE', 'PAUSED'].includes(status))
+    return res.status(400).json({ error: 'status deve ser ACTIVE ou PAUSED' });
+  const { data: accounts } = await supabase.from('meta_accounts').select('*').eq('ativo', true);
+  let lastErr = 'Nenhuma conta Meta ativa';
+  for (const account of accounts || []) {
+    try {
+      const r = await axios.post(`${META_BASE}/${adId}`,
+        { status },
+        { params: { access_token: account.access_token }, timeout: 15000 }
+      );
+      if (r.data?.success) {
+        return res.json({ ok: true });
+      }
+    } catch (e) {
+      lastErr = e.response?.data?.error?.message || e.message;
+    }
+  }
+  res.status(400).json({ error: lastErr });
+});
+
 // ── Sync ─────────────────────────────────────────────────────────────────────
 app.post('/api/sync/forcar', requireAuth, async (req, res) => {
   try {
