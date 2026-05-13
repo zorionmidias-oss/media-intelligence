@@ -552,4 +552,227 @@ function _extractUTMValue(kv, key) {
   return m ? m[1] : null;
 }
 
-module.exports = { fetchGAMReport, fetchGAMAdvertisers, discoverGAMNetworks, fetchGAMFunnelsByUTM, getUSDtoBRL };
+// ─── fetchGAMHourly ──────────────────────────────────────────────────────────
+async function fetchGAMHourly({ since, until, domain } = {}) {
+  const networkCode = NETWORK_CODE;
+  if (!networkCode) return [];
+  const dates = { since: since || defaultDateRange().since, until: until || defaultDateRange().until };
+
+  try {
+    const [token, rate] = await Promise.all([getAccessToken(), getUSDtoBRL()]);
+
+    const xml = wrapEnvelope(soapHeader(networkCode), `
+      <runReportJob xmlns="https://www.google.com/apis/ads/publisher/${GAM_VERSION}">
+        <reportJob>
+          <reportQuery>
+            <dimensions>AD_UNIT_NAME</dimensions>
+            <dimensions>HOUR</dimensions>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_CTR</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_CPC</columns>
+            <startDate>${dateToXML(dates.since)}</startDate>
+            <endDate>${dateToXML(dates.until)}</endDate>
+            <dateRangeType>CUSTOM_DATE</dateRangeType>
+          </reportQuery>
+        </reportJob>
+      </runReportJob>`);
+
+    const runResp = await soapCall(token, xml);
+    const jobId = extractTag(runResp, 'id');
+    if (!jobId) {
+      console.warn('[GAM hourly] no jobId — runResp:', runResp.slice(0, 800));
+      return [];
+    }
+
+    const rows = await pollAndDownload(token, networkCode, jobId);
+
+    // prefix filter for domain
+    const prefix = _domainPrefix(domain);
+
+    // hourMap: hora (0-23) → { impressoes, receita, cliques, ecpmWtSum, ecpmWt, ctrWtSum, ctrWt, cpcWtSum, cpcWt }
+    const hourMap = {};
+
+    for (const row of rows) {
+      const adUnit = row['Dimension.AD_UNIT_NAME'] || row['AD_UNIT_NAME'] || '';
+      if (prefix && !adUnit.toLowerCase().startsWith(prefix)) continue;
+
+      const horaRaw = row['Dimension.HOUR'] || row['HOUR'] || '0';
+      const hora = parseInt(horaRaw, 10);
+
+      const imp = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS'] || 0);
+      const revMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE'] || 0);
+      const receita = (revMicros / 1_000_000) * rate;
+      const ecpmMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM'] || 0);
+      const ctrRaw = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CTR'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_CTR'] || 0);
+      const cliques = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS'] || 0);
+      const cpcMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_CPC'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_CPC'] || 0);
+
+      if (!hourMap[hora]) hourMap[hora] = { impressoes: 0, receita: 0, cliques: 0, ecpmWtSum: 0, ecpmWt: 0, ctrWtSum: 0, ctrWt: 0, cpcWtSum: 0, cpcWt: 0 };
+      const h = hourMap[hora];
+      h.impressoes += imp;
+      h.receita += receita;
+      h.cliques += cliques;
+      if (imp > 0 && ecpmMicros > 0) { h.ecpmWtSum += (ecpmMicros / 1_000_000) * rate * imp; h.ecpmWt += imp; }
+      if (imp > 0) { h.ctrWtSum += ctrRaw * imp; h.ctrWt += imp; }
+      if (cliques > 0 && cpcMicros > 0) { h.cpcWtSum += (cpcMicros / 1_000_000) * rate * cliques; h.cpcWt += cliques; }
+    }
+
+    return Array.from({ length: 24 }, (_, hora) => {
+      const h = hourMap[hora];
+      if (!h) return { hora, impressoes: 0, receita: 0, ecpm: 0, ctr: 0, cliques: 0, cpc: 0 };
+      return {
+        hora,
+        impressoes: h.impressoes,
+        receita: +h.receita.toFixed(2),
+        ecpm: h.ecpmWt > 0 ? +(h.ecpmWtSum / h.ecpmWt).toFixed(4) : 0,
+        ctr: h.ctrWt > 0 ? +(h.ctrWtSum / h.ctrWt * 100).toFixed(4) : 0,
+        cliques: h.cliques,
+        cpc: h.cpcWt > 0 ? +(h.cpcWtSum / h.cpcWt).toFixed(4) : 0,
+      };
+    });
+  } catch (e) {
+    console.warn('[GAM fetchHourly]', e.message);
+    return [];
+  }
+}
+
+// ─── fetchGAMUtmCampaigns ────────────────────────────────────────────────────
+async function fetchGAMUtmCampaigns({ since, until, domain } = {}) {
+  const networkCode = NETWORK_CODE;
+  if (!networkCode) return [];
+  const dates = { since: since || defaultDateRange().since, until: until || defaultDateRange().until };
+
+  try {
+    const [token, rate] = await Promise.all([getAccessToken(), getUSDtoBRL()]);
+
+    const xml = wrapEnvelope(soapHeader(networkCode), `
+      <runReportJob xmlns="https://www.google.com/apis/ads/publisher/${GAM_VERSION}">
+        <reportJob>
+          <reportQuery>
+            <dimensions>CUSTOM_CRITERIA</dimensions>
+            <dimensions>AD_UNIT_NAME</dimensions>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_CTR</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_CPC</columns>
+            <startDate>${dateToXML(dates.since)}</startDate>
+            <endDate>${dateToXML(dates.until)}</endDate>
+            <dateRangeType>CUSTOM_DATE</dateRangeType>
+          </reportQuery>
+        </reportJob>
+      </runReportJob>`);
+
+    const runResp = await soapCall(token, xml);
+    const jobId = extractTag(runResp, 'id');
+    if (!jobId) {
+      console.warn('[GAM utmCampaigns] no jobId — runResp:', runResp.slice(0, 800));
+      return [];
+    }
+
+    const rows = await pollAndDownload(token, networkCode, jobId);
+    return _aggregateUtm(rows, 'utm_campaign', domain, rate);
+  } catch (e) {
+    console.warn('[GAM fetchUtmCampaigns]', e.message);
+    return [];
+  }
+}
+
+// ─── fetchGAMUtmSources ──────────────────────────────────────────────────────
+async function fetchGAMUtmSources({ since, until, domain } = {}) {
+  const networkCode = NETWORK_CODE;
+  if (!networkCode) return [];
+  const dates = { since: since || defaultDateRange().since, until: until || defaultDateRange().until };
+
+  try {
+    const [token, rate] = await Promise.all([getAccessToken(), getUSDtoBRL()]);
+
+    const xml = wrapEnvelope(soapHeader(networkCode), `
+      <runReportJob xmlns="https://www.google.com/apis/ads/publisher/${GAM_VERSION}">
+        <reportJob>
+          <reportQuery>
+            <dimensions>CUSTOM_CRITERIA</dimensions>
+            <dimensions>AD_UNIT_NAME</dimensions>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_CTR</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_CPC</columns>
+            <startDate>${dateToXML(dates.since)}</startDate>
+            <endDate>${dateToXML(dates.until)}</endDate>
+            <dateRangeType>CUSTOM_DATE</dateRangeType>
+          </reportQuery>
+        </reportJob>
+      </runReportJob>`);
+
+    const runResp = await soapCall(token, xml);
+    const jobId = extractTag(runResp, 'id');
+    if (!jobId) {
+      console.warn('[GAM utmSources] no jobId — runResp:', runResp.slice(0, 800));
+      return [];
+    }
+
+    const rows = await pollAndDownload(token, networkCode, jobId);
+    return _aggregateUtm(rows, 'utm_source', domain, rate);
+  } catch (e) {
+    console.warn('[GAM fetchUtmSources]', e.message);
+    return [];
+  }
+}
+
+// Shared aggregation helper for utm_campaign / utm_source
+function _aggregateUtm(rows, utmKey, domain, rate) {
+  const prefix = _domainPrefix(domain);
+  const map = {};
+
+  for (const row of rows) {
+    const adUnit = row['Dimension.AD_UNIT_NAME'] || row['AD_UNIT_NAME'] || '';
+    if (prefix && !adUnit.toLowerCase().startsWith(prefix)) continue;
+
+    const kv = row['Dimension.CUSTOM_CRITERIA'] || row['CUSTOM_CRITERIA'] || '';
+    const utm = _extractUTMValue(kv, utmKey);
+    if (!utm || utm.toLowerCase() === 'null') continue;
+
+    const imp = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS'] || 0);
+    const revMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE'] || 0);
+    const receita = (revMicros / 1_000_000) * rate;
+    const ecpmMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM'] || 0);
+    const ctrRaw = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CTR'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_CTR'] || 0);
+    const cliques = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS'] || 0);
+    const cpcMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_CPC'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_CPC'] || 0);
+
+    if (!map[utm]) map[utm] = { utm_campaign: utm, impressoes: 0, receita: 0, cliques: 0, ecpmWtSum: 0, ecpmWt: 0, ctrWtSum: 0, ctrWt: 0, cpcWtSum: 0, cpcWt: 0 };
+    const m = map[utm];
+    m.impressoes += imp;
+    m.receita += receita;
+    m.cliques += cliques;
+    if (imp > 0 && ecpmMicros > 0) { m.ecpmWtSum += (ecpmMicros / 1_000_000) * rate * imp; m.ecpmWt += imp; }
+    if (imp > 0) { m.ctrWtSum += ctrRaw * imp; m.ctrWt += imp; }
+    if (cliques > 0 && cpcMicros > 0) { m.cpcWtSum += (cpcMicros / 1_000_000) * rate * cliques; m.cpcWt += cliques; }
+  }
+
+  return Object.values(map)
+    .map(m => ({
+      utm_campaign: m.utm_campaign,
+      impressoes: m.impressoes,
+      receita: +m.receita.toFixed(2),
+      ecpm: m.ecpmWt > 0 ? +(m.ecpmWtSum / m.ecpmWt).toFixed(4) : 0,
+      ctr: m.ctrWt > 0 ? +(m.ctrWtSum / m.ctrWt * 100).toFixed(4) : 0,
+      cliques: m.cliques,
+      cpc: m.cpcWt > 0 ? +(m.cpcWtSum / m.cpcWt).toFixed(4) : 0,
+    }))
+    .sort((a, b) => b.receita - a.receita);
+}
+
+function _domainPrefix(domain) {
+  if (!domain || domain === 'all') return null;
+  // mku → 'mku_', eur → 'eur_', etc.
+  return domain.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 3) + '_';
+}
+
+module.exports = { fetchGAMReport, fetchGAMAdvertisers, discoverGAMNetworks, fetchGAMFunnelsByUTM, fetchGAMHourly, fetchGAMUtmCampaigns, fetchGAMUtmSources, getUSDtoBRL };

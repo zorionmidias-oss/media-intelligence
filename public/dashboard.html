@@ -255,6 +255,13 @@
     .utm-name{font-size:.8125rem;color:var(--fg);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 .5rem}
     .utm-rev{font-size:.8125rem;font-family:'JetBrains Mono',monospace;color:var(--c1);flex-shrink:0}
 
+    /* ── GAM TABS ── */
+    .gam-tabs{display:flex;gap:4px;margin:24px 0 0;border-bottom:1px solid var(--border)}
+    .gam-tab{background:transparent;border:none;color:var(--muted);padding:10px 18px;cursor:pointer;font-size:.8125rem;font-weight:500;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;white-space:nowrap}
+    .gam-tab:hover{color:var(--fg)}
+    .gam-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+    .gam-tab-content{margin-top:16px}
+
     /* ── AI ── */
     .ai-layout{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;height:calc(100vh - var(--th) - 3rem);min-height:480px}
     .ai-panel{display:flex;flex-direction:column;overflow:hidden}
@@ -879,11 +886,18 @@
           </div>
         </div>
 
-        <div>
-          <div class="sec-h">Blocos de Anúncio</div>
+        <!-- Abas GAM -->
+        <div class="gam-tabs">
+          <button class="gam-tab active" onclick="switchGamTab('blocos',this)">📦 Blocos de Anúncio</button>
+          <button class="gam-tab" onclick="switchGamTab('hora',this)">🕐 Report Hora</button>
+          <button class="gam-tab" onclick="switchGamTab('utm',this)">🎯 UTM Campaign</button>
+        </div>
+
+        <!-- Aba 1: Blocos -->
+        <div class="gam-tab-content" id="gam-tab-blocos">
           <div class="tbl-wrap">
             <div class="search-bar">
-              <input type="text" class="search-in" id="search-adunit" placeholder="🔍 Pesquisar bloco de anúncio…" oninput="filterTable('adunit-body',this.value)" />
+              <input type="text" class="search-in" id="search-adunit" placeholder="🔍 Pesquisar bloco de anúncio…" oninput="filtrarTabelaGAM('adunit-body',this.value)" />
             </div>
             <table id="adunit-table">
               <thead><tr><th>Ad Unit</th><th>Impressões</th><th>Receita</th><th>eCPM</th><th>Taxa Prog.</th></tr></thead>
@@ -892,15 +906,25 @@
           </div>
         </div>
 
-        <div>
-          <div class="sec-h">Principais Anunciantes</div>
+        <!-- Aba 2: Report Hora -->
+        <div class="gam-tab-content" id="gam-tab-hora" style="display:none">
+          <div class="tbl-wrap scroll">
+            <table id="hora-table">
+              <thead><tr><th>Hora</th><th>Impressões</th><th>Receita</th><th>eCPM</th><th>CTR</th><th>CPC</th><th>Cliques</th></tr></thead>
+              <tbody id="hora-tbody"><tr><td colspan="7" class="empty">Carregando…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Aba 3: UTM Campaign -->
+        <div class="gam-tab-content" id="gam-tab-utm" style="display:none">
           <div class="tbl-wrap scroll">
             <div class="search-bar">
-              <input type="text" class="search-in" id="search-adv" placeholder="🔍 Pesquisar anunciante…" oninput="filterTable('adv-body',this.value)" />
+              <input type="text" class="search-in" id="search-utm-camp" placeholder="🔍 Buscar UTM Campaign…" oninput="filtrarTabelaGAM('utm-tbody',this.value)" />
             </div>
-            <table id="adv-table">
-              <thead><tr><th>Anunciante</th><th>Receita total</th><th>Imp. Ad Exchange</th><th>eCPM médio</th><th>CPC Ad Exchange</th><th>CTR Total</th></tr></thead>
-              <tbody id="adv-body"><tr><td colspan="6" class="empty">—</td></tr></tbody>
+            <table id="utm-camp-table">
+              <thead><tr><th>UTM Campaign</th><th>Impressões</th><th>Receita</th><th>eCPM</th><th>CTR</th><th>CPC</th><th>Cliques</th></tr></thead>
+              <tbody id="utm-tbody"><tr><td colspan="7" class="empty">Carregando…</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -1394,7 +1418,7 @@ function renderAll(d){
   renderFunnels(d.topFunnels||[]);
   renderTopCamps(d.topCampaigns||[]);
   renderAdsets(d.adsets||[],k);
-  renderGAM(k,d.adUnits||[],d.topAdvertisers||[]);
+  renderGAM(k,d.adUnits||[]);
   renderUTMCards(d.utmCampaignTop3||[],d.utmSourceTop3||[]);
   renderNetworks(d.networks||[]);
   updateMetaProgress(d.metas_progresso||{},k);
@@ -1774,13 +1798,69 @@ function renderUTMCards(campaigns,sources){
 }
 
 /* ── GAM ── */
-function renderGAM(k,adUnits,advertisers){
-  animateTo(document.getElementById('g-ecpm'),+(k.ecpm)||0,BRL);
+function switchGamTab(tab,btn){
+  document.querySelectorAll('.gam-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.gam-tab-content').forEach(c=>c.style.display='none');
+  document.getElementById('gam-tab-'+tab).style.display='';
+}
 
-  // RPS from backend (corrected formula: adxImp/totalImp × eCPM / 100)
+function filtrarTabelaGAM(tbodyId,termo){
+  const t=termo.toLowerCase();
+  document.querySelectorAll('#'+tbodyId+' tr').forEach(tr=>{
+    tr.style.display=tr.textContent.toLowerCase().includes(t)?'':'none';
+  });
+}
+
+function renderHourlyTable(hourly){
+  const tbody=document.getElementById('hora-tbody');
+  if(!tbody)return;
+  tbody.innerHTML=(hourly||[]).map(h=>`<tr>
+    <td data-sort="${h.hora}"><strong>${String(h.hora).padStart(2,'0')}h</strong></td>
+    <td class="mo" data-sort="${h.impressoes}">${NUM(h.impressoes)}</td>
+    <td class="mo" data-sort="${h.receita}">${BRL(h.receita)}</td>
+    <td class="mo" data-sort="${h.ecpm}">${BRL(h.ecpm)}</td>
+    <td class="mo" data-sort="${h.ctr}">${(+(h.ctr)||0).toFixed(2)}%</td>
+    <td class="mo" data-sort="${h.cpc||0}">${BRL(h.cpc||0)}</td>
+    <td class="mo" data-sort="${h.cliques}">${h.cliques}</td>
+  </tr>`).join('')||'<tr><td colspan="7" class="empty">Sem dados de hora — verifique dimensão HOUR no GAM</td></tr>';
+  makeTableSortable('hora-table');
+}
+
+function renderUtmCampTable(utms){
+  const tbody=document.getElementById('utm-tbody');
+  if(!tbody)return;
+  tbody.innerHTML=(utms||[]).map(u=>`<tr>
+    <td><strong>${esc(u.utm_campaign)}</strong></td>
+    <td class="mo" data-sort="${u.impressoes}">${NUM(u.impressoes)}</td>
+    <td class="mo verde" data-sort="${u.receita}">${BRL(u.receita)}</td>
+    <td class="mo" data-sort="${u.ecpm}">${BRL(u.ecpm)}</td>
+    <td class="mo" data-sort="${u.ctr}">${(+(u.ctr)||0).toFixed(2)}%</td>
+    <td class="mo" data-sort="${u.cpc||0}">${BRL(u.cpc||0)}</td>
+    <td class="mo" data-sort="${u.cliques}">${u.cliques}</td>
+  </tr>`).join('')||'<tr><td colspan="7" class="empty">Sem dados de UTM Campaign — verifique se utm_campaign está nas URLs dos anúncios</td></tr>';
+  makeTableSortable('utm-camp-table');
+  applyDefaultSort('utm-camp-table',2);
+}
+
+function renderTopUtmSourceCard(sources){
+  const el=document.getElementById('utm-source-list');
+  if(!el)return;
+  if(!sources||!sources.length){
+    el.innerHTML='<div class="empty" style="padding:.75rem 0;font-size:.8125rem">utm_source não detectado nas URLs — adicione utm_source nos links dos anúncios</div>';
+    return;
+  }
+  el.innerHTML=sources.map((u,i)=>`<div class="utm-item">
+    <span class="utm-rank">${i+1}.</span>
+    <span class="utm-name" title="${esc(u.utm_campaign)}">${esc(u.utm_campaign)}</span>
+    <span class="utm-rev" style="color:var(--c2)">${BRL(u.receita)}</span>
+  </div>`).join('');
+}
+
+function renderGAM(k,adUnits){
+  animateTo(document.getElementById('g-ecpm'),+(k.ecpm)||0,BRL);
   animateTo(document.getElementById('g-rps'),+(k.rps)||0,BRL);
 
-  // PMR = faturamento / impressões × 1000
   const pmr=(+(k.impressions)||0)>0?((+(k.faturamento)||0)/(+(k.impressions)||1))*1000:0;
   animateTo(document.getElementById('g-pmr'),pmr,BRL);
 
@@ -1788,7 +1868,6 @@ function renderGAM(k,adUnits,advertisers){
   document.getElementById('g-cpc').textContent=(+(k.cpc)||0)>0?BRL(k.cpc):'—';
   document.getElementById('g-ctr').textContent=PCT(k.ctr);
 
-  // Ad Units table
   document.getElementById('adunit-body').innerHTML=adUnits.length
     ?adUnits.map(u=>`<tr>
         <td><div class="td-av"><div class="t-av">${esc((u.name||'?').charAt(0))}</div><span>${esc(u.name)}</span></div></td>
@@ -1799,22 +1878,8 @@ function renderGAM(k,adUnits,advertisers){
       </tr>`).join('')
     :'<tr><td colspan="5" class="empty">Sem dados GAM — verifique credenciais</td></tr>';
 
-  // Advertisers table (full columns)
-  document.getElementById('adv-body').innerHTML=advertisers.length
-    ?advertisers.map(a=>`<tr>
-        <td><div class="td-av"><div class="t-av">${esc((a.name||'?').charAt(0))}</div><span>${esc(a.name)}</span></div></td>
-        <td class="mo" data-sort="${a.revenue||0}">${BRL(a.revenue)}</td>
-        <td class="mo" data-sort="${a.impressions||0}">${NUM(a.impressions)}</td>
-        <td class="mo" data-sort="${a.ecpm||0}">${BRL(a.ecpm)}</td>
-        <td class="mo" data-sort="${a.cpc||0}">${BRL(a.cpc)}</td>
-        <td class="mo" data-sort="${a.ctr||0}">${PCT(a.ctr)}</td>
-      </tr>`).join('')
-    :'<tr><td colspan="6" class="empty">—</td></tr>';
-
   makeTableSortable('adunit-table');
   applyDefaultSort('adunit-table',2);
-  makeTableSortable('adv-table');
-  applyDefaultSort('adv-table',1);
 }
 
 /* ═══ AI ═══ */
@@ -1932,13 +1997,29 @@ async function loadGAMReport(){
   let q=`since=${since}&until=${until}`;
   if(domain&&domain!=='all')q+=`&domain=${encodeURIComponent(domain)}`;
   document.getElementById('adunit-body').innerHTML='<tr><td colspan="5" class="empty">Carregando…</td></tr>';
+  document.getElementById('hora-tbody').innerHTML='<tr><td colspan="7" class="empty">Carregando…</td></tr>';
+  document.getElementById('utm-tbody').innerHTML='<tr><td colspan="7" class="empty">Carregando…</td></tr>';
   try{
     const res=await fetch(`/api/reports-gam?${q}`);
     if(!res.ok)throw new Error((await res.json().catch(()=>({}))).error||res.statusText);
     const d=await res.json();
-    renderGAM(d.kpis||{},d.adUnits||[],d.advertisers||[]);
+    renderGAM(d.kpis||{},d.adUnits||[]);
+    renderHourlyTable(d.hourly||[]);
+    renderUtmCampTable(d.utmCampaigns||[]);
+    renderTopUtmSourceCard(d.topUtmSource||[]);
+    // UTM Campaign card top-3 (existing)
+    const top3camp=(d.utmCampaigns||[]).slice(0,3).map((u,i)=>`<div class="utm-item">
+      <span class="utm-rank">${i+1}.</span>
+      <span class="utm-name" title="${esc(u.utm_campaign)}">${esc(u.utm_campaign)}</span>
+      <span class="utm-rev" style="color:var(--c1)">${BRL(u.receita)}</span>
+    </div>`).join('');
+    const campListEl=document.getElementById('utm-campaign-list');
+    if(campListEl)campListEl.innerHTML=top3camp||'<div class="empty" style="padding:.75rem 0;font-size:.8125rem">Sem dados</div>';
+    if(top3camp||(d.topUtmSource||[]).length)document.getElementById('utm-cards').style.display='';
   }catch(e){
     document.getElementById('adunit-body').innerHTML=`<tr><td colspan="5" class="empty" style="color:var(--bad)">${esc(e.message)}</td></tr>`;
+    document.getElementById('hora-tbody').innerHTML=`<tr><td colspan="7" class="empty" style="color:var(--bad)">${esc(e.message)}</td></tr>`;
+    document.getElementById('utm-tbody').innerHTML=`<tr><td colspan="7" class="empty" style="color:var(--bad)">${esc(e.message)}</td></tr>`;
   }
 }
 

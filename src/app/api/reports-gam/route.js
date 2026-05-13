@@ -1,5 +1,6 @@
 'use strict';
 const supabase = require('../../../lib/supabase');
+const { fetchGAMHourly, fetchGAMUtmCampaigns, fetchGAMUtmSources } = require('../../../lib/gam');
 
 async function handler(req, res) {
   try {
@@ -28,7 +29,21 @@ async function handler(req, res) {
       .lte('data', dt);
     if (domainId) adsQ = adsQ.eq('dominio_id', domainId);
 
-    const [{ data: rows }, { data: adsRows }] = await Promise.all([gamQ, adsQ]);
+    const opts = { since: df, until: dt, domain: domain && domain !== 'all' ? domain : undefined };
+
+    const [
+      { data: rows },
+      { data: adsRows },
+      hourly,
+      utmCampaigns,
+      utmSources,
+    ] = await Promise.all([
+      gamQ,
+      adsQ,
+      fetchGAMHourly(opts),
+      fetchGAMUtmCampaigns(opts),
+      fetchGAMUtmSources(opts),
+    ]);
 
     let totImps = 0, totRev = 0, totClicks = 0;
     let _ecpmWtSum = 0, _ecpmWt = 0;
@@ -97,12 +112,14 @@ async function handler(req, res) {
         cpc: +cpc_gam.toFixed(4),
         ctr: +ctr_gam.toFixed(2),
         cliques_gam: _cliquesGamTotal,
-        // For renderGAM PMR formula: faturamento / impressions * 1000
         faturamento: +totRev.toFixed(2),
         impressions: totImps,
       },
       adUnits,
       advertisers: [],
+      hourly,
+      utmCampaigns,
+      topUtmSource: utmSources.slice(0, 3),
     });
   } catch (err) {
     console.error('[reports-gam]', err.message);
