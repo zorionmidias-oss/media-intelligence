@@ -568,6 +568,7 @@ async function fetchGAMHourly({ since, until, domain } = {}) {
             <dimensions>AD_UNIT_NAME</dimensions>
             <dimensions>HOUR</dimensions>
             <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_UNFILLED_IMPRESSIONS</columns>
             <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE</columns>
             <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM</columns>
             <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_CTR</columns>
@@ -610,9 +611,12 @@ async function fetchGAMHourly({ since, until, domain } = {}) {
       const cliques = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS'] || 0);
       const cpcMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_CPC'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_CPC'] || 0);
 
-      if (!hourMap[hora]) hourMap[hora] = { impressoes: 0, receita: 0, cliques: 0, ecpmWtSum: 0, ecpmWt: 0, ctrWtSum: 0, ctrWt: 0, cpcWtSum: 0, cpcWt: 0 };
+      const naoPreench = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_UNFILLED_IMPRESSIONS'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_UNFILLED_IMPRESSIONS'] || 0);
+
+      if (!hourMap[hora]) hourMap[hora] = { impressoes: 0, nao_preenchidas: 0, receita: 0, cliques: 0, ecpmWtSum: 0, ecpmWt: 0, ctrWtSum: 0, ctrWt: 0, cpcWtSum: 0, cpcWt: 0 };
       const h = hourMap[hora];
       h.impressoes += imp;
+      h.nao_preenchidas += naoPreench;
       h.receita += receita;
       h.cliques += cliques;
       if (imp > 0 && ecpmMicros > 0) { h.ecpmWtSum += (ecpmMicros / 1_000_000) * rate * imp; h.ecpmWt += imp; }
@@ -622,17 +626,18 @@ async function fetchGAMHourly({ since, until, domain } = {}) {
 
     return Array.from({ length: 24 }, (_, hora) => {
       const h = hourMap[hora];
-      if (!h) return { hora, impressoes: 0, receita: 0, ecpm: 0, ctr: 0, cliques: 0, cpc: 0 };
+      if (!h || (h.impressoes === 0 && h.nao_preenchidas === 0)) return null;
       return {
         hora,
         impressoes: h.impressoes,
+        nao_preenchidas: h.nao_preenchidas,
         receita: +h.receita.toFixed(2),
         ecpm: h.ecpmWt > 0 ? +(h.ecpmWtSum / h.ecpmWt).toFixed(4) : 0,
         ctr: h.ctrWt > 0 ? +(h.ctrWtSum / h.ctrWt * 100).toFixed(4) : 0,
         cliques: h.cliques,
         cpc: h.cpcWt > 0 ? +(h.cpcWtSum / h.cpcWt).toFixed(4) : 0,
       };
-    });
+    }).filter(Boolean);
   } catch (e) {
     console.warn('[GAM fetchHourly]', e.message);
     return [];

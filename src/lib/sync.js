@@ -178,6 +178,15 @@ async function syncAll(dateRange) {
       .select('id,nome,prefixo_campanha,codigo_pedido_gam')
       .eq('ativo', true);
 
+    // Load Meta accounts imposto map: ad_account_id → imposto_percentual
+    const { data: metaAccountsData } = await supabase
+      .from('meta_accounts')
+      .select('ad_account_id,imposto_percentual');
+    const impostoMap = {};
+    for (const acc of metaAccountsData || []) {
+      impostoMap[acc.ad_account_id] = Number(acc.imposto_percentual || 0);
+    }
+
     if (domErr) throw new Error(`dominios query: ${domErr.message}`);
 
     const domainByPrefix = {};
@@ -238,6 +247,7 @@ async function syncAll(dateRange) {
         date: adDate,
         campaignName: ad.campaign_name,
         conjuntoMeta: ad.adset_name || null,
+        accountId: ad._accountId || null,
         spend,
         clicks: Number(ad.clicks || 0),
         impressions: Number(ad.impressions || 0),
@@ -292,12 +302,17 @@ async function syncAll(dateRange) {
         console.log(`[DIRETO] date=${g.date} utm="${g.adUTM}" key="${utmKey}" noDireto="${utmKeyNoDireto}" GAMkeys=[${availKeys.join(',')}] matched="${matched}" fat=${faturamentoBruto.toFixed(4)} imp=${gam.impressions || 0}`);
       }
       const faturamentoReal = faturamentoBruto * 0.9;
-      const lucro = faturamentoReal - g.spend;
-      const roas = g.spend > 0 ? faturamentoReal / g.spend : 0;
+      // Aplicar imposto ao investimento Meta
+      const impostoPerc = g.accountId ? (impostoMap[g.accountId] || 0) : 0;
+      const fatorImposto = 1 + (impostoPerc / 100);
+      const valorGastoOriginal = g.spend;
+      const valorGastoComImposto = valorGastoOriginal * fatorImposto;
+      const lucro = faturamentoReal - valorGastoComImposto;
+      const roas = valorGastoComImposto > 0 ? faturamentoReal / valorGastoComImposto : 0;
       const impressoesGam = gam.impressions || 0;
       const rps = impressoesGam > 0 ? faturamentoReal / impressoesGam : 0;
       const ecpm = gam.ecpm || 0;
-      const custo = g.results > 0 ? g.spend / g.results : 0;
+      const custo = g.results > 0 ? valorGastoComImposto / g.results : 0;
       const cliquesGam = gam.cliques_gam || 0;
       const ctrGam = gam.ctr_gam || 0;
       const cpcGam = gam.cpc_gam || 0;
@@ -316,16 +331,20 @@ async function syncAll(dateRange) {
       }
 
       if (g.orcamentoTotal > 0) console.log(`[budget] date=${g.date} utm="${g.adUTM}" tipo=${g.tipo} orcamento=R$${(g.orcamentoTotal || 0).toFixed(2)}`);
+      const cpcComImposto = g.clicks > 0 ? valorGastoComImposto / g.clicks : 0;
       adsRows.push({
         data: g.date,
         dominio_id: g.domainId,
         ad_utm: g.adUTM,
         campanha_meta: g.campaignName,
         tipo: g.tipo,
-        valor_gasto: +g.spend.toFixed(2),
+        account_id: g.accountId || null,
+        valor_gasto_original: +valorGastoOriginal.toFixed(2),
+        valor_gasto: +valorGastoComImposto.toFixed(2),
+        imposto_aplicado: impostoPerc,
         custo_resultado: +custo.toFixed(2),
         resultado: g.results,
-        cpc: +g.cpc.toFixed(4),
+        cpc: +cpcComImposto.toFixed(4),
         ctr: +g.ctr.toFixed(2),
         cliques: g.clicks,
         impressoes_gam: impressoesGam,
@@ -336,6 +355,7 @@ async function syncAll(dateRange) {
         faturamento_real: +faturamentoReal.toFixed(2),
         lucro: +lucro.toFixed(2),
         roas: +roas.toFixed(4),
+        // fallback upsert ignores unknown cols via try/catch in the block below
         orcamento_total: +(g.orcamentoTotal || 0).toFixed(2),
         previsao_impressoes: prevImp,
         previsao_faturamento: +prevFat.toFixed(2),
@@ -354,12 +374,12 @@ async function syncAll(dateRange) {
         .from('ads_consolidados')
         .upsert(adsRows, { onConflict: 'data,dominio_id,ad_utm' });
       if (uErr && uErr.message.toLowerCase().includes('could not find')) {
-        // New GAM columns not yet migrated — retry without them
-        const fallback = adsRows.map(({ cpc_gam, ctr_gam, cliques_gam, ...rest }) => rest);
+        // New columns not yet migrated — retry without them
+        const fallback = adsRows.map(({ cpc_gam, ctr_gam, cliques_gam, account_id, valor_gasto_original, imposto_aplicado, ...rest }) => rest);
         ({ error: uErr } = await supabase
           .from('ads_consolidados')
           .upsert(fallback, { onConflict: 'data,dominio_id,ad_utm' }));
-        if (!uErr) console.warn('[sync] upserted without cpc_gam/ctr_gam/cliques_gam — run ALTER TABLE migration');
+        if (!uErr) console.warn('[sync] upserted without new columns — run ALTER TABLE migration');
       }
       if (uErr) console.error('[sync] upsert ads_consolidados:', uErr.message);
       rowsProcessed += adsRows.length;

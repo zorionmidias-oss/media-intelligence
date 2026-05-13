@@ -257,10 +257,25 @@
 
     /* ── GAM TABS ── */
     .gam-tabs{display:flex;gap:4px;margin:24px 0 0;border-bottom:1px solid var(--border)}
-    .gam-tab{background:transparent;border:none;color:var(--muted);padding:10px 18px;cursor:pointer;font-size:.8125rem;font-weight:500;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;white-space:nowrap}
+    .gam-tab{background:transparent;border:none;color:var(--muted);padding:10px 18px;cursor:pointer;font-size:.8125rem;font-weight:500;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;white-space:nowrap;display:flex;align-items:center;gap:6px}
     .gam-tab:hover{color:var(--fg)}
     .gam-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
     .gam-tab-content{margin-top:16px}
+
+    /* ── ATRASO GAM ── */
+    .atraso-badge{display:inline-block;background:#ff4d6a;color:white;font-size:.625rem;padding:1px 5px;border-radius:6px;font-weight:700;line-height:1.4}
+    .atraso-info{display:flex;align-items:center;gap:10px;padding:8px 14px;border-radius:10px;font-size:.8125rem}
+    .atraso-info.atualizado{background:rgba(0,229,180,0.1);border:1px solid rgba(0,229,180,0.3);color:#00e5b4}
+    .atraso-info.atrasado{background:rgba(255,184,48,0.1);border:1px solid rgba(255,184,48,0.3);color:#ffb830}
+    .atraso-info.muito-atrasado{background:rgba(255,77,106,0.1);border:1px solid rgba(255,77,106,0.3);color:#ff4d6a}
+    .atraso-icon{font-size:1.125rem}
+    .atraso-texto{display:flex;flex-direction:column;gap:1px}
+    .atraso-titulo{font-weight:600;font-size:.8125rem}
+    .atraso-sub{font-size:.6875rem;opacity:.8}
+    .hora-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:.5rem}
+
+    /* ── IMPOSTO BADGE ── */
+    .imposto-badge{background:rgba(255,184,48,0.15);color:#ffb830;padding:2px 7px;border-radius:4px;font-size:.625rem;font-weight:700;margin-left:6px}
 
     /* ── AI ── */
     .ai-layout{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;height:calc(100vh - var(--th) - 3rem);min-height:480px}
@@ -889,7 +904,7 @@
         <!-- Abas GAM -->
         <div class="gam-tabs">
           <button class="gam-tab active" onclick="switchGamTab('blocos',this)">📦 Blocos de Anúncio</button>
-          <button class="gam-tab" onclick="switchGamTab('hora',this)">🕐 Report Hora</button>
+          <button class="gam-tab" onclick="switchGamTab('hora',this)">🕐 Report Hora<span class="atraso-badge" id="atraso-tab-badge" style="display:none"></span></button>
           <button class="gam-tab" onclick="switchGamTab('utm',this)">🎯 UTM Campaign</button>
         </div>
 
@@ -908,10 +923,17 @@
 
         <!-- Aba 2: Report Hora -->
         <div class="gam-tab-content" id="gam-tab-hora" style="display:none">
+          <div class="hora-header">
+            <div>
+              <div style="font-size:.9375rem;font-weight:600;color:var(--fg)">Performance por Hora do Dia</div>
+              <div style="font-size:.75rem;color:var(--muted);margin-top:2px">Horário de Brasília · apenas horas com dados</div>
+            </div>
+            <div class="atraso-info" id="atraso-info"></div>
+          </div>
           <div class="tbl-wrap scroll">
             <table id="hora-table">
-              <thead><tr><th>Hora</th><th>Impressões</th><th>Receita</th><th>eCPM</th><th>CTR</th><th>CPC</th><th>Cliques</th></tr></thead>
-              <tbody id="hora-tbody"><tr><td colspan="7" class="empty">Carregando…</td></tr></tbody>
+              <thead><tr><th>Hora</th><th>Impressões</th><th>Não Preenchidas</th><th>Taxa Preench.</th><th>Receita</th><th>eCPM</th><th>CTR</th><th>CPC</th><th>Cliques</th></tr></thead>
+              <tbody id="hora-tbody"><tr><td colspan="9" class="empty">Carregando…</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -983,9 +1005,9 @@
         <div class="tbl-wrap scroll">
           <table id="contas-table">
             <thead><tr>
-              <th>Nome</th><th>Ad Account ID</th><th>Moeda</th><th>Status</th><th>Último Sync</th><th>Ações</th>
+              <th>Nome</th><th>Ad Account ID</th><th>Moeda</th><th>Imposto</th><th>Status</th><th>Último Sync</th><th>Ações</th>
             </tr></thead>
-            <tbody id="contas-body"><tr><td colspan="6" class="empty">Carregando…</td></tr></tbody>
+            <tbody id="contas-body"><tr><td colspan="7" class="empty">Carregando…</td></tr></tbody>
           </table>
           <div class="tbl-foot"><span style="font-size:.875rem;color:var(--muted)" id="contas-count">—</span></div>
         </div>
@@ -1075,6 +1097,31 @@
       <button class="btn btn-s" onclick="closeModal('modal-conta')">Cancelar</button>
       <button class="btn btn-s" onclick="testarConta()">Testar Conexão</button>
       <button class="btn btn-p" id="btn-salvar-conta" onclick="salvarConta()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IMPOSTO -->
+<div class="modal-bg" id="modal-imposto" onclick="if(event.target===this)closeModal('modal-imposto')">
+  <div class="modal" style="width:min(400px,95vw)">
+    <div class="modal-hd">
+      <span class="modal-title" id="modal-imposto-title">Imposto da conta</span>
+      <button class="modal-close" onclick="closeModal('modal-imposto')">✕</button>
+    </div>
+    <input type="hidden" id="imposto-conta-id" />
+    <div class="field">
+      <label>Percentual (%)</label>
+      <input type="number" step="0.01" min="0" max="100" id="imposto-pct" placeholder="ex: 12.5" />
+      <small>0% = sem imposto aplicado</small>
+    </div>
+    <div class="field">
+      <label>Descrição <span style="color:var(--muted)">(opcional)</span></label>
+      <input type="text" id="imposto-desc" placeholder="ex: IOF + taxa cartão internacional" />
+    </div>
+    <div id="imposto-aviso" style="display:none;margin:.5rem 0;padding:.625rem .875rem;background:rgba(255,184,48,0.1);border:1px solid rgba(255,184,48,0.3);border-radius:var(--r);font-size:.8125rem;color:#ffb830"></div>
+    <div class="modal-actions">
+      <button class="btn btn-s" onclick="closeModal('modal-imposto')">Cancelar</button>
+      <button class="btn btn-p" onclick="salvarImposto()">Salvar e Recalcular</button>
     </div>
   </div>
 </div>
@@ -1815,16 +1862,60 @@ function filtrarTabelaGAM(tbodyId,termo){
 function renderHourlyTable(hourly){
   const tbody=document.getElementById('hora-tbody');
   if(!tbody)return;
-  tbody.innerHTML=(hourly||[]).map(h=>`<tr>
-    <td data-sort="${h.hora}"><strong>${String(h.hora).padStart(2,'0')}h</strong></td>
-    <td class="mo" data-sort="${h.impressoes}">${NUM(h.impressoes)}</td>
-    <td class="mo" data-sort="${h.receita}">${BRL(h.receita)}</td>
-    <td class="mo" data-sort="${h.ecpm}">${BRL(h.ecpm)}</td>
-    <td class="mo" data-sort="${h.ctr}">${(+(h.ctr)||0).toFixed(2)}%</td>
-    <td class="mo" data-sort="${h.cpc||0}">${BRL(h.cpc||0)}</td>
-    <td class="mo" data-sort="${h.cliques}">${h.cliques}</td>
-  </tr>`).join('')||'<tr><td colspan="7" class="empty">Sem dados de hora — verifique dimensão HOUR no GAM</td></tr>';
+  // já vem filtrado pelo backend (só horas com dados), mas filtra também no frontend por segurança
+  const dados=(hourly||[]).filter(h=>(h.impressoes||0)>0||(h.nao_preenchidas||0)>0);
+  if(!dados.length){
+    tbody.innerHTML='<tr><td colspan="9" class="empty">Sem dados de hora — verifique dimensão HOUR no GAM</td></tr>';
+    return;
+  }
+  tbody.innerHTML=dados.map(h=>{
+    const total=(h.impressoes||0)+(h.nao_preenchidas||0);
+    const taxaPreench=total>0?((h.impressoes||0)/total*100):0;
+    return `<tr>
+      <td data-sort="${h.hora}"><strong>${String(h.hora).padStart(2,'0')}h</strong></td>
+      <td class="mo" data-sort="${h.impressoes}">${NUM(h.impressoes)}</td>
+      <td class="mo" data-sort="${h.nao_preenchidas||0}" style="color:var(--muted)">${NUM(h.nao_preenchidas||0)}</td>
+      <td class="mo" data-sort="${taxaPreench}">${taxaPreench.toFixed(1)}%</td>
+      <td class="mo" data-sort="${h.receita}">${BRL(h.receita)}</td>
+      <td class="mo" data-sort="${h.ecpm}">${BRL(h.ecpm)}</td>
+      <td class="mo" data-sort="${h.ctr}">${(+(h.ctr)||0).toFixed(2)}%</td>
+      <td class="mo" data-sort="${h.cpc||0}">${BRL(h.cpc||0)}</td>
+      <td class="mo" data-sort="${h.cliques}">${h.cliques}</td>
+    </tr>`;
+  }).join('');
   makeTableSortable('hora-table');
+}
+
+function renderAtrasoGAM(atrasoInfo){
+  const badge=document.getElementById('atraso-tab-badge');
+  const info=document.getElementById('atraso-info');
+  if(!atrasoInfo){if(badge)badge.style.display='none';return;}
+
+  if(atrasoInfo.motivo==='periodo_passado'){
+    if(badge)badge.style.display='none';
+    if(info){info.innerHTML='';info.className='atraso-info';}
+    return;
+  }
+
+  if(!atrasoInfo.tem_atraso){
+    if(badge)badge.style.display='none';
+    if(info){
+      info.className='atraso-info atualizado';
+      const ultima=atrasoInfo.ultima_hora_com_dados!=null?String(atrasoInfo.ultima_hora_com_dados).padStart(2,'0')+'h':'—';
+      info.innerHTML=`<span class="atraso-icon">✓</span><div class="atraso-texto"><span class="atraso-titulo">GAM atualizado</span><span class="atraso-sub">Última hora com dados: ${ultima}</span></div>`;
+    }
+    return;
+  }
+
+  const horas=atrasoInfo.horas_atraso;
+  const muitoAtrasado=horas>=3;
+  if(badge){badge.style.display='inline-block';badge.textContent=horas+'h';}
+  if(info){
+    info.className='atraso-info '+(muitoAtrasado?'muito-atrasado':'atrasado');
+    const ultima=atrasoInfo.ultima_hora_com_dados!=null?String(atrasoInfo.ultima_hora_com_dados).padStart(2,'0')+'h':'nenhuma';
+    const atual=String(atrasoInfo.hora_atual).padStart(2,'0')+'h';
+    info.innerHTML=`<span class="atraso-icon">${muitoAtrasado?'⚠️':'🕐'}</span><div class="atraso-texto"><span class="atraso-titulo">GAM com ${horas}h de atraso</span><span class="atraso-sub">Última: ${ultima} · Agora: ${atual}</span></div>`;
+  }
 }
 
 function renderUtmCampTable(utms){
@@ -1997,7 +2088,7 @@ async function loadGAMReport(){
   let q=`since=${since}&until=${until}`;
   if(domain&&domain!=='all')q+=`&domain=${encodeURIComponent(domain)}`;
   document.getElementById('adunit-body').innerHTML='<tr><td colspan="5" class="empty">Carregando…</td></tr>';
-  document.getElementById('hora-tbody').innerHTML='<tr><td colspan="7" class="empty">Carregando…</td></tr>';
+  document.getElementById('hora-tbody').innerHTML='<tr><td colspan="9" class="empty">Carregando…</td></tr>';
   document.getElementById('utm-tbody').innerHTML='<tr><td colspan="7" class="empty">Carregando…</td></tr>';
   try{
     const res=await fetch(`/api/reports-gam?${q}`);
@@ -2005,10 +2096,12 @@ async function loadGAMReport(){
     const d=await res.json();
     renderGAM(d.kpis||{},d.adUnits||[]);
     renderHourlyTable(d.hourly||[]);
+    renderAtrasoGAM(d.atraso_gam||null);
     renderUtmCampTable(d.utmCampaigns||[]);
     renderTopUtmSourceCard(d.topUtmSource||[]);
-    // UTM Campaign card top-3 (existing)
-    const top3camp=(d.utmCampaigns||[]).slice(0,3).map((u,i)=>`<div class="utm-item">
+    // UTM Campaign card top-3
+    const top3src=d.topUtmCampaign||(d.utmCampaigns||[]).slice(0,3);
+    const top3camp=top3src.map((u,i)=>`<div class="utm-item">
       <span class="utm-rank">${i+1}.</span>
       <span class="utm-name" title="${esc(u.utm_campaign)}">${esc(u.utm_campaign)}</span>
       <span class="utm-rev" style="color:var(--c1)">${BRL(u.receita)}</span>
@@ -2018,7 +2111,7 @@ async function loadGAMReport(){
     if(top3camp||(d.topUtmSource||[]).length)document.getElementById('utm-cards').style.display='';
   }catch(e){
     document.getElementById('adunit-body').innerHTML=`<tr><td colspan="5" class="empty" style="color:var(--bad)">${esc(e.message)}</td></tr>`;
-    document.getElementById('hora-tbody').innerHTML=`<tr><td colspan="7" class="empty" style="color:var(--bad)">${esc(e.message)}</td></tr>`;
+    document.getElementById('hora-tbody').innerHTML=`<tr><td colspan="9" class="empty" style="color:var(--bad)">${esc(e.message)}</td></tr>`;
     document.getElementById('utm-tbody').innerHTML=`<tr><td colspan="7" class="empty" style="color:var(--bad)">${esc(e.message)}</td></tr>`;
   }
 }
@@ -2348,16 +2441,21 @@ async function loadContas(){
     const contas=await res.json();
     const count=document.getElementById('contas-count');
     if(count)count.textContent=`${contas.length} conta(s)`;
-    if(!contas.length){tbody.innerHTML='<tr><td colspan="6" class="empty">Nenhuma conta cadastrada</td></tr>';return;}
+    if(!contas.length){tbody.innerHTML='<tr><td colspan="7" class="empty">Nenhuma conta cadastrada</td></tr>';return;}
     tbody.innerHTML=contas.map(c=>{
       const statusHtml = c.ativo
         ? `<span class="acct-status acct-ok">🟢 Ativo${c.ultimo_status?' · '+c.ultimo_status:''}</span>`
         : `<span class="acct-status acct-off">⏸️ Pausado</span>`;
       const sync = c.ultimo_sync ? new Date(c.ultimo_sync).toLocaleString('pt-BR') : '—';
+      const impPerc = Number(c.imposto_percentual||0);
+      const impostoHtml = impPerc > 0
+        ? `<span class="imposto-badge">+${impPerc.toLocaleString('pt-BR')}%</span>`
+        : `<span style="color:var(--muted);font-size:.75rem">0%</span>`;
       return `<tr>
         <td>${esc(c.nome)}</td>
         <td><code style="font-size:.75rem;color:var(--muted)">${esc(c.ad_account_id)}</code></td>
         <td>${esc(c.currency||'BRL')}</td>
+        <td style="white-space:nowrap">${impostoHtml} <button class="acct-btn" style="font-size:.6875rem;padding:1px 6px" onclick="abrirModalImposto(${c.id},'${esc(c.nome)}',${impPerc},'${esc(c.imposto_descricao||'')}')">✏️</button></td>
         <td>${statusHtml}${c.ultimo_erro?`<div style="font-size:.65rem;color:var(--bad);margin-top:.2rem">${esc(c.ultimo_erro.slice(0,80))}</div>`:''}</td>
         <td style="font-size:.75rem;color:var(--muted)">${sync}</td>
         <td><div class="acct-actions">
@@ -2466,6 +2564,35 @@ async function editarConta(id){
     _contaTestedOk=true;
     openModal('modal-conta');
   }catch(e){alert('Erro: '+e.message);}
+}
+
+function abrirModalImposto(id,nome,pct,desc){
+  document.getElementById('imposto-conta-id').value=id;
+  document.getElementById('modal-imposto-title').textContent='Imposto — '+nome;
+  document.getElementById('imposto-pct').value=pct||0;
+  document.getElementById('imposto-desc').value=desc||'';
+  const av=document.getElementById('imposto-aviso');
+  av.style.display='none';av.textContent='';
+  openModal('modal-imposto');
+  setTimeout(()=>document.getElementById('imposto-pct').focus(),50);
+}
+
+async function salvarImposto(){
+  const id=document.getElementById('imposto-conta-id').value;
+  const pct=parseFloat(document.getElementById('imposto-pct').value)||0;
+  const desc=document.getElementById('imposto-desc').value.trim();
+  const av=document.getElementById('imposto-aviso');
+  try{
+    const r=await fetch(`/api/contas/${id}/imposto`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({imposto_percentual:pct,imposto_descricao:desc||null})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||r.statusText);
+    av.style.display='block';
+    av.textContent='✅ Imposto salvo. Recalculando dados históricos em background…';
+    setTimeout(()=>{closeModal('modal-imposto');loadContas();},2000);
+  }catch(e){
+    av.style.display='block';
+    av.textContent='❌ '+e.message;
+  }
 }
 
 async function toggleContaAtivo(id,ativo){

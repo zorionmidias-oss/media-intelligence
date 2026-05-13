@@ -110,7 +110,7 @@ app.post('/api/contas', requireAuth, async (req, res) => {
 
 app.put('/api/contas/:id', requireAuth, async (req, res) => {
   const id = Number(req.params.id);
-  const allowed = ['nome', 'bm_id', 'ad_account_id', 'access_token', 'currency', 'ativo'];
+  const allowed = ['nome', 'bm_id', 'ad_account_id', 'access_token', 'currency', 'ativo', 'imposto_percentual', 'imposto_descricao'];
   const update = {};
   for (const k of allowed) if (req.body[k] !== undefined) update[k] = req.body[k];
   if (!Object.keys(update).length) return res.status(400).json({ error: 'Nada para atualizar' });
@@ -154,6 +154,101 @@ app.post('/api/contas/:id/testar', requireAuth, async (req, res) => {
     await supabase.from('meta_accounts').update({ ultimo_status: 'ERRO', ultimo_erro: msg }).eq('id', conta.id);
     res.status(400).json({ error: msg });
   }
+});
+
+// ── Imposto por conta Meta ───────────────────────────────────────────────────
+async function recalcularContaHistorico(account_id) {
+  const { data: conta } = await supabase
+    .from('meta_accounts')
+    .select('imposto_percentual')
+    .eq('ad_account_id', account_id)
+    .maybeSingle();
+
+  const fator = 1 + (Number(conta?.imposto_percentual || 0) / 100);
+  const impostoPerc = Number(conta?.imposto_percentual || 0);
+
+  let offset = 0;
+  const PAGE = 500;
+  let total = 0;
+
+  while (true) {
+    const { data: ads, error } = await supabase
+      .from('ads_consolidados')
+      .select('id,valor_gasto_original,valor_gasto,cliques,resultado,faturamento_real')
+      .eq('account_id', account_id)
+      .range(offset, offset + PAGE - 1);
+
+    if (error || !ads || ads.length === 0) break;
+
+    const updates = ads.map(ad => {
+      const original = ad.valor_gasto_original != null ? Number(ad.valor_gasto_original) : Number(ad.valor_gasto);
+      const novo = original * fator;
+      const cpc = Number(ad.cliques) > 0 ? novo / Number(ad.cliques) : 0;
+      const custo = Number(ad.resultado) > 0 ? novo / Number(ad.resultado) : 0;
+      const fat = Number(ad.faturamento_real) || 0;
+      return {
+        id: ad.id,
+        valor_gasto_original: original,
+        valor_gasto: +novo.toFixed(2),
+        cpc: +cpc.toFixed(4),
+        custo_resultado: +custo.toFixed(2),
+        lucro: +(fat - novo).toFixed(2),
+        roas: novo > 0 ? +(fat / novo).toFixed(4) : 0,
+        imposto_aplicado: impostoPerc,
+      };
+    });
+
+    for (const u of updates) {
+      await supabase.from('ads_consolidados').update(u).eq('id', u.id);
+    }
+    total += updates.length;
+    if (ads.length < PAGE) break;
+    offset += PAGE;
+  }
+
+  console.log(`[imposto] recalculado ${total} ads da conta ${account_id}`);
+  return total;
+}
+
+app.post('/api/contas/:id/imposto', requireAuth, async (req, res) => {
+  const id = Number(req.params.id);
+  const { imposto_percentual, imposto_descricao } = req.body || {};
+  if (imposto_percentual === undefined) return res.status(400).json({ error: 'imposto_percentual é obrigatório' });
+
+  const { data, error } = await supabase
+    .from('meta_accounts')
+    .update({ imposto_percentual: Number(imposto_percentual), imposto_descricao: imposto_descricao || null })
+    .eq('id', id)
+    .select('ad_account_id,imposto_percentual')
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  // Recalcular em background (não bloquear a resposta)
+  recalcularContaHistorico(data.ad_account_id).catch(e => console.error('[imposto recalc]', e.message));
+
+  res.json({ ok: true, imposto_percentual: data.imposto_percentual, recalculando: true });
+});
+
+app.post('/api/admin/recalcular-imposto', requireAuth, async (req, res) => {
+  const { account_id } = req.body || {};
+
+  if (account_id) {
+    recalcularContaHistorico(account_id).catch(e => console.error('[imposto recalc]', e.message));
+    return res.json({ ok: true, message: `Recalculando conta ${account_id}...` });
+  }
+
+  // Recalcular todas as contas com imposto > 0
+  const { data: contas } = await supabase
+    .from('meta_accounts')
+    .select('ad_account_id,imposto_percentual')
+    .gt('imposto_percentual', 0);
+
+  for (const c of contas || []) {
+    recalcularContaHistorico(c.ad_account_id).catch(e => console.error('[imposto recalc]', e.message));
+  }
+
+  res.json({ ok: true, message: `Recalculando ${(contas || []).length} conta(s)...` });
 });
 
 // ── Domínios ────────────────────────────────────────────────────────────────

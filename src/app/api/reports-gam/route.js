@@ -2,6 +2,34 @@
 const supabase = require('../../../lib/supabase');
 const { fetchGAMHourly, fetchGAMUtmCampaigns, fetchGAMUtmSources } = require('../../../lib/gam');
 
+function calcularAtrasoGAM(hourly, until) {
+  const agora = new Date();
+  const horaBR = new Date(agora.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+  const horaAtualBR = horaBR.getHours();
+  const dataAtualBR = horaBR.toISOString().slice(0, 10);
+
+  if (until !== dataAtualBR) {
+    return { tem_atraso: false, motivo: 'periodo_passado', mensagem: 'Período passado' };
+  }
+
+  const horasComDados = (hourly || []).filter(h => h.impressoes > 0).map(h => h.hora);
+
+  if (horasComDados.length === 0) {
+    return { tem_atraso: true, horas_atraso: horaAtualBR, ultima_hora_com_dados: null, hora_atual: horaAtualBR, mensagem: 'Nenhum dado disponível para hoje' };
+  }
+
+  const ultimaHora = Math.max(...horasComDados);
+  const atrasoCompensado = Math.max(0, horaAtualBR - ultimaHora - 1);
+
+  return {
+    tem_atraso: atrasoCompensado > 0,
+    horas_atraso: atrasoCompensado,
+    ultima_hora_com_dados: ultimaHora,
+    hora_atual: horaAtualBR,
+    mensagem: atrasoCompensado === 0 ? 'Atualizado' : `${atrasoCompensado}h de atraso`,
+  };
+}
+
 async function handler(req, res) {
   try {
     const { since, until, domain } = req.query;
@@ -119,7 +147,10 @@ async function handler(req, res) {
       advertisers: [],
       hourly,
       utmCampaigns,
+      utmSources,
+      topUtmCampaign: utmCampaigns.slice(0, 3),
       topUtmSource: utmSources.slice(0, 3),
+      atraso_gam: calcularAtrasoGAM(hourly, dt),
     });
   } catch (err) {
     console.error('[reports-gam]', err.message);
