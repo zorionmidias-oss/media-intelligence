@@ -2,7 +2,7 @@
 const axios = require('axios');
 const supabase = require('./supabase');
 const { getBMConfigs, updateBMStatus } = require('./meta');
-const { fetchGAMReport, fetchGAMFunnelsByUTM, getUSDtoBRL } = require('./gam');
+const { fetchGAMReport, fetchGAMFunnelsByUTM, getUSDtoBRL, getUSDtoBRLByDate } = require('./gam');
 const { extractDomainPrefix, extractAdUTM, extractTipo, groupAdsByUTM } = require('./parser');
 
 const BASE = 'https://graph.facebook.com/v19.0';
@@ -42,16 +42,26 @@ const OBJECTIVE_ACTION_MAP = {
   'OUTCOME_ENGAGEMENT': ['post_engagement'],
 };
 
-function getResultadoMeta(ad) {
+// BUG 2: Para campanhas BOT o objetivo é "Visualização de conteúdo" = landing_page_view.
+// Nunca somar landing_page_view + omni_landing_page_view (causa duplicação).
+function getResultadoMeta(ad, tipo) {
   const actions = ad.actions || [];
+
+  if (tipo === 'bot') {
+    const lpv = actions.find(a => a.action_type === 'landing_page_view');
+    if (lpv) return Number(lpv.value);
+    const omni = actions.find(a => a.action_type === 'omni_landing_page_view');
+    if (omni) return Number(omni.value);
+    return 0;
+  }
+
+  // Direto e demais: usa mapa de objetivo do Meta
   const objetivo = ad.objective || ad.optimization_goal;
-  // If objective is mapped, try those specific action types first
   const expected = OBJECTIVE_ACTION_MAP[objetivo] || ['link_click'];
   for (const type of expected) {
     const found = actions.find(a => a.action_type === type);
     if (found) return Number(found.value);
   }
-  // Fallback: total clicks from Meta insights (cost-per-click metric)
   return Number(ad.clicks || 0);
 }
 
@@ -178,13 +188,15 @@ async function syncAll(dateRange) {
       .select('id,nome,prefixo_campanha,codigo_pedido_gam')
       .eq('ativo', true);
 
-    // Load Meta accounts imposto map: ad_account_id → imposto_percentual
+    // BUG 1: Carregar imposto E moeda por conta Meta
     const { data: metaAccountsData } = await supabase
       .from('meta_accounts')
-      .select('ad_account_id,imposto_percentual');
+      .select('ad_account_id,imposto_percentual,moeda');
     const impostoMap = {};
+    const moedaMap = {};
     for (const acc of metaAccountsData || []) {
       impostoMap[acc.ad_account_id] = Number(acc.imposto_percentual || 0);
+      moedaMap[acc.ad_account_id] = acc.moeda || 'BRL';
     }
 
     if (domErr) throw new Error(`dominios query: ${domErr.message}`);
@@ -227,7 +239,23 @@ async function syncAll(dateRange) {
       const adDate = ad.date_start || until;
 
       const spend = Number(ad.spend || 0);
-      const resultado = getResultadoMeta(ad);
+      // BUG 2: tipo calculado ANTES de getResultadoMeta para usar a lógica correta por tipo
+      const tipo = extractTipo(ad.campaign_name);
+      const resultado = getResultadoMeta(ad, tipo);
+
+      // BUG 2 DEBUG: logar todos os ads de amafb do dia 16/05 para diagnóstico
+      if (adUTM.toLowerCase() === 'amafb' && adDate === '2026-05-16') {
+        console.log(`[DEBUG amafb 16/05]`);
+        console.log(`  ad_id:`, ad.ad_id || ad.id);
+        console.log(`  ad_name:`, ad.ad_name);
+        console.log(`  spend:`, ad.spend);
+        console.log(`  tipo:`, tipo);
+        console.log(`  objective:`, ad.objective || ad.optimization_goal);
+        console.log(`  actions:`, JSON.stringify(ad.actions, null, 2));
+        console.log(`  landing_page_view:`, ad.actions?.find(a => a.action_type === 'landing_page_view')?.value);
+        console.log(`  omni_landing_page_view:`, ad.actions?.find(a => a.action_type === 'omni_landing_page_view')?.value);
+        console.log(`  resultado_calculado:`, resultado);
+      }
 
       if (adUTM.toLowerCase() === 'zurifb') {
         console.log('[zurifb DEBUG]', {
@@ -243,7 +271,7 @@ async function syncAll(dateRange) {
       adsForGrouping.push({
         adUTM,
         domainId: domain.id,
-        tipo: extractTipo(ad.campaign_name),
+        tipo,
         date: adDate,
         campaignName: ad.campaign_name,
         conjuntoMeta: ad.adset_name || null,
@@ -302,11 +330,20 @@ async function syncAll(dateRange) {
         console.log(`[DIRETO] date=${g.date} utm="${g.adUTM}" key="${utmKey}" noDireto="${utmKeyNoDireto}" GAMkeys=[${availKeys.join(',')}] matched="${matched}" fat=${faturamentoBruto.toFixed(4)} imp=${gam.impressions || 0}`);
       }
       const faturamentoReal = faturamentoBruto * 0.9;
-      // Aplicar imposto ao investimento Meta
+
+      // BUG 1: Converter USD→BRL antes de aplicar imposto
+      const moeda = g.accountId ? (moedaMap[g.accountId] || 'BRL') : 'BRL';
+      let taxaAplicada = 1;
+      let valorEmBRL = g.spend;
+      if (moeda === 'USD') {
+        taxaAplicada = await getUSDtoBRLByDate(g.date);
+        valorEmBRL = g.spend * taxaAplicada;
+      }
+
       const impostoPerc = g.accountId ? (impostoMap[g.accountId] || 0) : 0;
       const fatorImposto = 1 + (impostoPerc / 100);
       const valorGastoOriginal = g.spend;
-      const valorGastoComImposto = valorGastoOriginal * fatorImposto;
+      const valorGastoComImposto = valorEmBRL * fatorImposto;
       const lucro = faturamentoReal - valorGastoComImposto;
       const roas = valorGastoComImposto > 0 ? faturamentoReal / valorGastoComImposto : 0;
       const impressoesGam = gam.impressions || 0;
@@ -339,7 +376,9 @@ async function syncAll(dateRange) {
         campanha_meta: g.campaignName,
         tipo: g.tipo,
         account_id: g.accountId || null,
-        valor_gasto_original: +valorGastoOriginal.toFixed(2),
+        moeda_original: moeda,
+        taxa_usd_aplicada: +taxaAplicada.toFixed(4),
+        valor_gasto_original: +valorGastoOriginal.toFixed(4),
         valor_gasto: +valorGastoComImposto.toFixed(2),
         imposto_aplicado: impostoPerc,
         custo_resultado: +custo.toFixed(2),
@@ -375,7 +414,7 @@ async function syncAll(dateRange) {
         .upsert(adsRows, { onConflict: 'data,dominio_id,ad_utm' });
       if (uErr && uErr.message.toLowerCase().includes('could not find')) {
         // New columns not yet migrated — retry without them
-        const fallback = adsRows.map(({ cpc_gam, ctr_gam, cliques_gam, account_id, valor_gasto_original, imposto_aplicado, ...rest }) => rest);
+        const fallback = adsRows.map(({ cpc_gam, ctr_gam, cliques_gam, account_id, valor_gasto_original, imposto_aplicado, moeda_original, taxa_usd_aplicada, ...rest }) => rest);
         ({ error: uErr } = await supabase
           .from('ads_consolidados')
           .upsert(fallback, { onConflict: 'data,dominio_id,ad_utm' }));

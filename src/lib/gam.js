@@ -4,6 +4,7 @@ const axios = require('axios');
 const zlib = require('zlib');
 const { promisify } = require('util');
 const gunzip = promisify(zlib.gunzip);
+const supabase = require('./supabase');
 
 const GAM_VERSION = 'v202505';
 const SOAP_ENDPOINT = `https://ads.google.com/apis/ads/publisher/${GAM_VERSION}/ReportService`;
@@ -19,6 +20,8 @@ let _cachedToken = null;
 let _tokenExpiry = 0;
 let _usdToBrl = null;
 let _usdToBrlExpiry = 0;
+// In-memory cache for historical rates (date → taxa)
+const _rateCache = {};
 
 async function getUSDtoBRL() {
   if (_usdToBrl && Date.now() < _usdToBrlExpiry) return _usdToBrl;
@@ -32,6 +35,40 @@ async function getUSDtoBRL() {
     _usdToBrlExpiry = Date.now() + 300 * 1000;
   }
   return _usdToBrl;
+}
+
+// BUG 5: Taxa histórica por data — usa cache DB (taxas_cambio) para dias passados.
+// A API gratuita só fornece taxa atual; ao primeiro acesso para uma data, salva a
+// taxa atual como referência fixa para aquele dia (sincronizações futuras reusam esse valor).
+async function getUSDtoBRLByDate(date) {
+  const dateStr = typeof date === 'string' ? date.slice(0, 10) : new Date(date).toISOString().slice(0, 10);
+
+  if (_rateCache[dateStr]) return _rateCache[dateStr];
+
+  try {
+    const { data: cached } = await supabase
+      .from('taxas_cambio')
+      .select('taxa')
+      .eq('data', dateStr)
+      .maybeSingle();
+
+    if (cached) {
+      _rateCache[dateStr] = Number(cached.taxa);
+      return _rateCache[dateStr];
+    }
+  } catch { /* tabela pode não existir ainda */ }
+
+  // Busca taxa atual e fixa para essa data
+  try {
+    const r = await axios.get('https://api.exchangerate-api.com/v4/latest/USD', { timeout: 10000 });
+    const taxa = r.data?.rates?.BRL || 6.0;
+    _rateCache[dateStr] = taxa;
+    await supabase.from('taxas_cambio').upsert({ data: dateStr, taxa }).catch(() => {});
+    return taxa;
+  } catch (e) {
+    console.error('[getUSDtoBRLByDate]', e.message);
+    return 6.0;
+  }
 }
 
 async function getAccessToken() {
@@ -553,7 +590,8 @@ function _extractUTMValue(kv, key) {
 }
 
 // ─── fetchGAMHourly ──────────────────────────────────────────────────────────
-async function fetchGAMHourly({ since, until, domain } = {}) {
+// adUnitPrefix: prefixo resolvido do DB (ex: 'mku_'). Substitui a heurística de domínio.
+async function fetchGAMHourly({ since, until, domain, adUnitPrefix } = {}) {
   const networkCode = NETWORK_CODE;
   if (!networkCode) return [];
   const dates = { since: since || defaultDateRange().since, until: until || defaultDateRange().until };
@@ -590,8 +628,8 @@ async function fetchGAMHourly({ since, until, domain } = {}) {
 
     const rows = await pollAndDownload(token, networkCode, jobId);
 
-    // prefix filter for domain
-    const prefix = _domainPrefix(domain);
+    // BUG 3: usa prefixo do DB se disponível; fallback para heurística de 3 chars
+    const prefix = adUnitPrefix != null ? adUnitPrefix : _domainPrefix(domain);
 
     // hourMap: hora (0-23) → { impressoes, receita, cliques, ecpmWtSum, ecpmWt, ctrWtSum, ctrWt, cpcWtSum, cpcWt }
     const hourMap = {};
@@ -645,7 +683,7 @@ async function fetchGAMHourly({ since, until, domain } = {}) {
 }
 
 // ─── fetchGAMUtmCampaigns ────────────────────────────────────────────────────
-async function fetchGAMUtmCampaigns({ since, until, domain } = {}) {
+async function fetchGAMUtmCampaigns({ since, until, domain, adUnitPrefix } = {}) {
   const networkCode = NETWORK_CODE;
   if (!networkCode) return [];
   const dates = { since: since || defaultDateRange().since, until: until || defaultDateRange().until };
@@ -680,7 +718,8 @@ async function fetchGAMUtmCampaigns({ since, until, domain } = {}) {
     }
 
     const rows = await pollAndDownload(token, networkCode, jobId);
-    return _aggregateUtm(rows, 'utm_campaign', domain, rate);
+    const resolvedPrefix = adUnitPrefix != null ? adUnitPrefix : _domainPrefix(domain);
+    return _aggregateUtm(rows, 'utm_campaign', resolvedPrefix, rate);
   } catch (e) {
     console.warn('[GAM fetchUtmCampaigns]', e.message);
     return [];
@@ -688,7 +727,7 @@ async function fetchGAMUtmCampaigns({ since, until, domain } = {}) {
 }
 
 // ─── fetchGAMUtmSources ──────────────────────────────────────────────────────
-async function fetchGAMUtmSources({ since, until, domain } = {}) {
+async function fetchGAMUtmSources({ since, until, domain, adUnitPrefix } = {}) {
   const networkCode = NETWORK_CODE;
   if (!networkCode) return [];
   const dates = { since: since || defaultDateRange().since, until: until || defaultDateRange().until };
@@ -723,16 +762,17 @@ async function fetchGAMUtmSources({ since, until, domain } = {}) {
     }
 
     const rows = await pollAndDownload(token, networkCode, jobId);
-    return _aggregateUtm(rows, 'utm_source', domain, rate);
+    const resolvedPrefix = adUnitPrefix != null ? adUnitPrefix : _domainPrefix(domain);
+    return _aggregateUtm(rows, 'utm_source', resolvedPrefix, rate);
   } catch (e) {
     console.warn('[GAM fetchUtmSources]', e.message);
     return [];
   }
 }
 
-// Shared aggregation helper for utm_campaign / utm_source
-function _aggregateUtm(rows, utmKey, domain, rate) {
-  const prefix = _domainPrefix(domain);
+// Shared aggregation helper for utm_campaign / utm_source.
+// prefix: already resolved (string like 'mku_' or null for no filter)
+function _aggregateUtm(rows, utmKey, prefix, rate) {
   const map = {};
 
   for (const row of rows) {
@@ -780,4 +820,4 @@ function _domainPrefix(domain) {
   return domain.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 3) + '_';
 }
 
-module.exports = { fetchGAMReport, fetchGAMAdvertisers, discoverGAMNetworks, fetchGAMFunnelsByUTM, fetchGAMHourly, fetchGAMUtmCampaigns, fetchGAMUtmSources, getUSDtoBRL };
+module.exports = { fetchGAMReport, fetchGAMAdvertisers, discoverGAMNetworks, fetchGAMFunnelsByUTM, fetchGAMHourly, fetchGAMUtmCampaigns, fetchGAMUtmSources, getUSDtoBRL, getUSDtoBRLByDate };

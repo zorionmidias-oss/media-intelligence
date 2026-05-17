@@ -264,6 +264,8 @@
 
     /* ── ATRASO GAM ── */
     .atraso-badge{display:inline-block;background:#ff4d6a;color:white;font-size:.625rem;padding:1px 5px;border-radius:6px;font-weight:700;line-height:1.4}
+    .row-total{background:rgba(0,229,180,0.08)!important;border-top:2px solid var(--accent)!important;font-weight:600}
+    .row-total td{padding:14px 12px!important}
     .atraso-info{display:flex;align-items:center;gap:10px;padding:8px 14px;border-radius:10px;font-size:.8125rem}
     .atraso-info.atualizado{background:rgba(0,229,180,0.1);border:1px solid rgba(0,229,180,0.3);color:#00e5b4}
     .atraso-info.atrasado{background:rgba(255,184,48,0.1);border:1px solid rgba(255,184,48,0.3);color:#ffb830}
@@ -1357,6 +1359,9 @@ function sortTable(tableId,colIdx,headerEl){
     tbody.appendChild(main);
     if(sub)tbody.appendChild(sub);
   });
+  // Manter linha de totais sempre no final
+  const totalRow=tbody.querySelector('.row-total');
+  if(totalRow)tbody.appendChild(totalRow);
 }
 
 function applyDefaultSort(tableId,colIdx){
@@ -1883,6 +1888,31 @@ function renderHourlyTable(hourly){
       <td class="mo" data-sort="${h.cliques}">${h.cliques}</td>
     </tr>`;
   }).join('');
+  // BUG 4: Linha TOTAL / MÉDIA ponderada por impressões
+  {
+    const tot=dados.reduce((a,h)=>({
+      imp:a.imp+(h.impressoes||0),naoP:a.naoP+(h.nao_preenchidas||0),
+      rec:a.rec+(h.receita||0),cliq:a.cliq+(h.cliques||0),
+      ecpmS:a.ecpmS+(h.ecpm||0)*(h.impressoes||0),
+      ctrS:a.ctrS+(h.ctr||0)*(h.impressoes||0),
+      cpcS:a.cpcS+(h.cpc||0)*(h.cliques||0),
+    }),{imp:0,naoP:0,rec:0,cliq:0,ecpmS:0,ctrS:0,cpcS:0});
+    const ecpmM=tot.imp>0?tot.ecpmS/tot.imp:0;
+    const ctrM=tot.imp>0?tot.ctrS/tot.imp:0;
+    const cpcM=tot.cliq>0?tot.cpcS/tot.cliq:0;
+    const taxaT=(tot.imp+tot.naoP)>0?tot.imp/(tot.imp+tot.naoP)*100:0;
+    tbody.innerHTML+=`<tr class="row-total">
+      <td><strong>TOTAL / MÉDIA</strong></td>
+      <td class="mo"><strong>${NUM(tot.imp)}</strong></td>
+      <td class="mo" style="color:var(--muted)"><strong>${NUM(tot.naoP)}</strong></td>
+      <td class="mo"><strong>${taxaT.toFixed(1)}%</strong></td>
+      <td class="mo"><strong>${BRL(tot.rec)}</strong></td>
+      <td class="mo"><strong>${BRL(ecpmM)}</strong></td>
+      <td class="mo"><strong>${ctrM.toFixed(2)}%</strong></td>
+      <td class="mo"><strong>${BRL(cpcM)}</strong></td>
+      <td class="mo"><strong>${tot.cliq.toLocaleString('pt-BR')}</strong></td>
+    </tr>`;
+  }
   makeTableSortable('hora-table');
 }
 
@@ -1921,7 +1951,8 @@ function renderAtrasoGAM(atrasoInfo){
 function renderUtmCampTable(utms){
   const tbody=document.getElementById('utm-tbody');
   if(!tbody)return;
-  tbody.innerHTML=(utms||[]).map(u=>`<tr>
+  const arr=utms||[];
+  tbody.innerHTML=arr.map(u=>`<tr>
     <td><strong>${esc(u.utm_campaign)}</strong></td>
     <td class="mo" data-sort="${u.impressoes}">${NUM(u.impressoes)}</td>
     <td class="mo verde" data-sort="${u.receita}">${BRL(u.receita)}</td>
@@ -1930,6 +1961,28 @@ function renderUtmCampTable(utms){
     <td class="mo" data-sort="${u.cpc||0}">${BRL(u.cpc||0)}</td>
     <td class="mo" data-sort="${u.cliques}">${u.cliques}</td>
   </tr>`).join('')||'<tr><td colspan="7" class="empty">Sem dados de UTM Campaign — verifique se utm_campaign está nas URLs dos anúncios</td></tr>';
+  // BUG 4: Linha TOTAL / MÉDIA ponderada
+  if(arr.length>0){
+    const tot=arr.reduce((a,u)=>({
+      imp:a.imp+(u.impressoes||0),rec:a.rec+(u.receita||0),
+      cliq:a.cliq+(u.cliques||0),
+      ecpmS:a.ecpmS+(u.ecpm||0)*(u.impressoes||0),
+      ctrS:a.ctrS+(u.ctr||0)*(u.impressoes||0),
+      cpcS:a.cpcS+(u.cpc||0)*(u.cliques||0),
+    }),{imp:0,rec:0,cliq:0,ecpmS:0,ctrS:0,cpcS:0});
+    const ecpmM=tot.imp>0?tot.ecpmS/tot.imp:0;
+    const ctrM=tot.imp>0?tot.ctrS/tot.imp:0;
+    const cpcM=tot.cliq>0?tot.cpcS/tot.cliq:0;
+    tbody.innerHTML+=`<tr class="row-total">
+      <td><strong>TOTAL / MÉDIA</strong></td>
+      <td class="mo"><strong>${NUM(tot.imp)}</strong></td>
+      <td class="mo verde"><strong>${BRL(tot.rec)}</strong></td>
+      <td class="mo"><strong>${BRL(ecpmM)}</strong></td>
+      <td class="mo"><strong>${ctrM.toFixed(2)}%</strong></td>
+      <td class="mo"><strong>${BRL(cpcM)}</strong></td>
+      <td class="mo"><strong>${tot.cliq.toLocaleString('pt-BR')}</strong></td>
+    </tr>`;
+  }
   makeTableSortable('utm-camp-table');
   applyDefaultSort('utm-camp-table',2);
 }
@@ -1959,7 +2012,8 @@ function renderGAM(k,adUnits){
   document.getElementById('g-cpc').textContent=(+(k.cpc)||0)>0?BRL(k.cpc):'—';
   document.getElementById('g-ctr').textContent=PCT(k.ctr);
 
-  document.getElementById('adunit-body').innerHTML=adUnits.length
+  const adunitEl=document.getElementById('adunit-body');
+  adunitEl.innerHTML=adUnits.length
     ?adUnits.map(u=>`<tr>
         <td><div class="td-av"><div class="t-av">${esc((u.name||'?').charAt(0))}</div><span>${esc(u.name)}</span></div></td>
         <td class="mo" data-sort="${u.impressions||0}">${NUM(u.impressions)}</td>
@@ -1968,7 +2022,23 @@ function renderGAM(k,adUnits){
         <td class="mo" data-sort="${u.taxaProgramatica||0}">${PCT(u.taxaProgramatica)}</td>
       </tr>`).join('')
     :'<tr><td colspan="5" class="empty">Sem dados GAM — verifique credenciais</td></tr>';
-
+  // BUG 4: Linha TOTAL / MÉDIA ponderada por impressões
+  if(adUnits.length>0){
+    const tot=adUnits.reduce((a,u)=>({
+      imp:a.imp+(u.impressions||0),rev:a.rev+(u.revenue||0),
+      ecpmS:a.ecpmS+(u.ecpm||0)*(u.impressions||0),
+      taxaS:a.taxaS+(u.taxaProgramatica||0)*(u.impressions||0),
+    }),{imp:0,rev:0,ecpmS:0,taxaS:0});
+    const ecpmM=tot.imp>0?tot.ecpmS/tot.imp:0;
+    const taxaM=tot.imp>0?tot.taxaS/tot.imp:0;
+    adunitEl.innerHTML+=`<tr class="row-total">
+      <td><strong>TOTAL / MÉDIA</strong></td>
+      <td class="mo"><strong>${NUM(tot.imp)}</strong></td>
+      <td class="mo"><strong>${BRL(tot.rev)}</strong></td>
+      <td class="mo"><strong>${BRL(ecpmM)}</strong></td>
+      <td class="mo"><strong>${taxaM.toFixed(1)}%</strong></td>
+    </tr>`;
+  }
   makeTableSortable('adunit-table');
   applyDefaultSort('adunit-table',2);
 }

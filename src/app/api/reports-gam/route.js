@@ -37,10 +37,19 @@ async function handler(req, res) {
     const df = since || new Date(now.getTime() - 30 * 86400000).toISOString().slice(0, 10);
     const dt = until || now.toISOString().slice(0, 10);
 
+    // BUG 3: Resolver domainId + prefixo_ad_unit do banco para filtro correto no GAM
     let domainId = null;
+    let adUnitPrefix = null;
     if (domain && domain !== 'all') {
-      const { data: d } = await supabase.from('dominios').select('id').eq('nome', domain).maybeSingle();
+      const { data: d } = await supabase
+        .from('dominios')
+        .select('id,prefixo_ad_unit')
+        .eq('nome', domain)
+        .maybeSingle();
       domainId = d?.id || null;
+      // Usa prefixo do DB; fallback: heurística de 3 chars do nome do domínio
+      adUnitPrefix = d?.prefixo_ad_unit ||
+        (domain.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 3) + '_');
     }
 
     let gamQ = supabase
@@ -57,7 +66,7 @@ async function handler(req, res) {
       .lte('data', dt);
     if (domainId) adsQ = adsQ.eq('dominio_id', domainId);
 
-    const opts = { since: df, until: dt, domain: domain && domain !== 'all' ? domain : undefined };
+    const opts = { since: df, until: dt, adUnitPrefix: adUnitPrefix || undefined };
 
     const [
       { data: rows },
