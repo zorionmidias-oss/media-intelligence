@@ -42,16 +42,20 @@ const OBJECTIVE_ACTION_MAP = {
   'OUTCOME_ENGAGEMENT': ['post_engagement'],
 };
 
-// BUG 2: Para campanhas BOT o objetivo é "Visualização de conteúdo" = landing_page_view.
-// Nunca somar landing_page_view + omni_landing_page_view (causa duplicação).
+// BUG 2: Para campanhas BOT o objetivo é "Visualização de conteúdo" = view_content na API.
+// NÃO é landing_page_view (que não existe nessas campanhas).
+// view_content, omni_view_content e offsite_conversion.fb_pixel_view_content têm o mesmo valor
+// — usar somente o primeiro encontrado, NUNCA somar.
 function getResultadoMeta(ad, tipo) {
   const actions = ad.actions || [];
 
   if (tipo === 'bot') {
-    const lpv = actions.find(a => a.action_type === 'landing_page_view');
-    if (lpv) return Number(lpv.value);
-    const omni = actions.find(a => a.action_type === 'omni_landing_page_view');
-    if (omni) return Number(omni.value);
+    const vc = actions.find(a => a.action_type === 'view_content');
+    if (vc) return Number(vc.value);
+    const ovc = actions.find(a => a.action_type === 'omni_view_content');
+    if (ovc) return Number(ovc.value);
+    const fpvc = actions.find(a => a.action_type === 'offsite_conversion.fb_pixel_view_content');
+    if (fpvc) return Number(fpvc.value);
     return 0;
   }
 
