@@ -199,8 +199,12 @@ async function syncAll(dateRange) {
     const impostoMap = {};
     const moedaMap = {};
     for (const acc of metaAccountsData || []) {
-      impostoMap[acc.ad_account_id] = Number(acc.imposto_percentual || 0);
-      moedaMap[acc.ad_account_id] = acc.moeda || 'BRL';
+      // Normalize to act_ prefix — fetchMetaAdsForSync always stores _accountId as act_XXXX
+      const rawId = String(acc.ad_account_id || '');
+      const key = rawId.startsWith('act_') ? rawId : `act_${rawId}`;
+      impostoMap[key] = Number(acc.imposto_percentual || 0);
+      moedaMap[key] = acc.moeda || 'BRL';
+      console.log(`[sync] metaAccount key="${key}" moeda="${acc.moeda || 'BRL'}" imposto=${acc.imposto_percentual || 0}%`);
     }
 
     if (domErr) throw new Error(`dominios query: ${domErr.message}`);
@@ -335,13 +339,15 @@ async function syncAll(dateRange) {
       }
       const faturamentoReal = faturamentoBruto * 0.9;
 
-      // BUG 1: Converter USD→BRL antes de aplicar imposto
       const moeda = g.accountId ? (moedaMap[g.accountId] || 'BRL') : 'BRL';
       let taxaAplicada = 1;
       let valorEmBRL = g.spend;
       if (moeda === 'USD') {
         taxaAplicada = await getUSDtoBRLByDate(g.date);
         valorEmBRL = g.spend * taxaAplicada;
+      }
+      if (g.adUTM.toLowerCase() === 'aishafb') {
+        console.log(`[sync aishafb] accountId="${g.accountId}" moeda="${moeda}" spend=${g.spend} taxa=${taxaAplicada} valorBRL=${valorEmBRL.toFixed(4)}`);
       }
 
       const impostoPerc = g.accountId ? (impostoMap[g.accountId] || 0) : 0;
