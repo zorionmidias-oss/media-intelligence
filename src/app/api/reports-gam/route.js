@@ -37,19 +37,24 @@ async function handler(req, res) {
     const df = since || new Date(now.getTime() - 30 * 86400000).toISOString().slice(0, 10);
     const dt = until || now.toISOString().slice(0, 10);
 
-    // BUG 3: Resolver domainId + prefixo_ad_unit do banco para filtro correto no GAM
     let domainId = null;
     let adUnitPrefix = null;
     if (domain && domain !== 'all') {
-      const { data: d } = await supabase
-        .from('dominios')
-        .select('id,prefixo_ad_unit')
-        .eq('nome', domain)
-        .maybeSingle();
+      // Accept domain by numeric id OR by nome string
+      let dq = supabase.from('dominios').select('id,nome,prefixo_ad_unit,codigo_pedido_gam');
+      if (/^\d+$/.test(String(domain))) {
+        dq = dq.eq('id', Number(domain));
+      } else {
+        dq = dq.eq('nome', domain);
+      }
+      const { data: d } = await dq.maybeSingle();
       domainId = d?.id || null;
-      // Usa prefixo do DB; fallback: heurística de 3 chars do nome do domínio
-      adUnitPrefix = d?.prefixo_ad_unit ||
-        (domain.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 3) + '_');
+      // Derive prefix (same logic as sync.js): prefixo_ad_unit > codigo_pedido_gam > heuristic
+      const rawPrefix = d?.prefixo_ad_unit
+        || (d?.codigo_pedido_gam ? (d.codigo_pedido_gam.split('-')[0] + '_') : null)
+        || (String(domain).replace(/[^a-z0-9]/gi, '').slice(0, 3) + '_');
+      adUnitPrefix = rawPrefix.toLowerCase(); // must be lowercase — GAM units compared lowercased
+      console.log(`[reports-gam] domain="${domain}" id=${domainId} prefix="${adUnitPrefix}" src=${d?.prefixo_ad_unit?'db_field':d?.codigo_pedido_gam?'gam_code':'heuristic'}`);
     }
 
     let gamQ = supabase

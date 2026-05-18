@@ -1860,7 +1860,8 @@ function switchGamTab(tab,btn){
 function filtrarTabelaGAM(tbodyId,termo){
   const t=termo.toLowerCase();
   document.querySelectorAll('#'+tbodyId+' tr').forEach(tr=>{
-    tr.style.display=tr.textContent.toLowerCase().includes(t)?'':'none';
+    if(tr.classList.contains('row-total')){tr.style.display='';return;}
+    tr.style.display=(!t||tr.textContent.toLowerCase().includes(t))?'':'none';
   });
 }
 

@@ -1,6 +1,8 @@
 'use strict';
 const axios = require('axios');
 const supabase = require('../../../lib/supabase');
+const { getUSDtoBRLByDate } = require('../../../lib/gam');
+const { extractAdUTM } = require('../../../lib/parser');
 
 const META_BASE = 'https://graph.facebook.com/v19.0';
 
@@ -96,6 +98,9 @@ async function handler(req, res) {
         console.log(`[drilldown ${utm}] conta ${acc.ad_account_id}: ${ads.length} ads`);
         for (const ad of ads) {
           if (!ad.adset) continue;
+          // Bug C: CONTAIN filter from Meta API can match substrings (e.g. "ama" in "ADAMA")
+          // Re-validate with the same extractAdUTM normalization used by sync
+          if (extractAdUTM(ad.name) !== utm.toLowerCase()) continue;
           const aid = ad.adset.id;
           if (!adsetsMap.has(aid)) {
             adsetsMap.set(aid, {
@@ -188,6 +193,32 @@ async function handler(req, res) {
     }
 
     await Promise.allSettled(insightJobs);
+
+    // Bug A: convert USD→BRL for accounts with moeda='USD'
+    const accountCfgMap = {};
+    for (const acc of accounts || []) {
+      accountCfgMap[acc.ad_account_id] = {
+        moeda: acc.moeda || 'BRL',
+        imposto: Number(acc.imposto_percentual || 0),
+      };
+    }
+    let _usdRate = null;
+    for (const adset of adsetsMap.values()) {
+      const cfg = accountCfgMap[adset.account_id] || { moeda: 'BRL', imposto: 0 };
+      if (cfg.moeda !== 'USD') continue;
+      if (!_usdRate) _usdRate = await getUSDtoBRLByDate(until);
+      const fator = _usdRate * (1 + cfg.imposto / 100);
+      console.log(`[drilldown ${utm}] adset "${adset.adset_name}" conta=${adset.account_id} USD taxa=${_usdRate} fator=${fator.toFixed(4)}`);
+      adset.spend    = +(adset.spend * fator).toFixed(2);
+      adset.cpc      = adset.clicks > 0 ? +(adset.spend / adset.clicks).toFixed(4) : 0;
+      adset.cpm      = adset.impressions > 0 ? +(adset.spend / adset.impressions * 1000).toFixed(4) : 0;
+      adset.cost_per_result = adset.results > 0 ? +(adset.spend / adset.results).toFixed(2) : 0;
+      for (const ad of adset.ads || []) {
+        ad.spend = +(ad.spend * fator).toFixed(2);
+        ad.cpc   = ad.clicks > 0 ? +(ad.spend / ad.clicks).toFixed(4) : 0;
+        ad.cost_per_result = ad.results > 0 ? +(ad.spend / ad.results).toFixed(2) : 0;
+      }
+    }
 
     // Strip auth token before sending
     for (const a of adsetsMap.values()) delete a._token;
