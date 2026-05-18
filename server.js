@@ -13,6 +13,7 @@ const reportsGamHandler = require('./src/app/api/reports-gam/route');
 const metasHandler = require('./src/app/api/metas/route');
 const { handler: notifHandler, marcarLida, marcarTodasLidas } = require('./src/app/api/notificacoes/route');
 const drilldownHandler = require('./src/app/api/drilldown/route');
+const funilHandler     = require('./src/app/api/funil/route');
 const historicoHandler = require('./src/app/api/historico/route');
 const supabase = require('./src/lib/supabase');
 const { syncAll } = require('./src/lib/sync');
@@ -347,6 +348,9 @@ app.get('/api/utms', requireAuth, async (req, res) => {
 
 // ── Drilldown ─────────────────────────────────────────────────────────────────
 app.get('/api/drilldown/:utm', requireAuth, drilldownHandler);
+
+// ── Análise de Funil ──────────────────────────────────────────────────────────
+app.get('/api/funil', requireAuth, funilHandler);
 
 // ── Histórico ─────────────────────────────────────────────────────────────────
 app.get('/api/historico/:utm', requireAuth, historicoHandler);

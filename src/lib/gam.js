@@ -820,4 +820,97 @@ function _domainPrefix(domain) {
   return domain.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 3) + '_';
 }
 
-module.exports = { fetchGAMReport, fetchGAMAdvertisers, discoverGAMNetworks, fetchGAMFunnelsByUTM, fetchGAMHourly, fetchGAMUtmCampaigns, fetchGAMUtmSources, getUSDtoBRL, getUSDtoBRLByDate };
+// ─── fetchGAMBlocosFunil ─────────────────────────────────────────────────────
+// Returns funnel blocks aggregated from utm_medium key-value in GAM CUSTOM_CRITERIA.
+// Each utm_medium value is expected to be "blocX-botaoY-{utm}" — the utm suffix is stripped.
+async function fetchGAMBlocosFunil({ since, until, utm } = {}) {
+  const networkCode = NETWORK_CODE;
+  if (!networkCode) return [];
+  const dates = { since: since || defaultDateRange().since, until: until || defaultDateRange().until };
+
+  try {
+    const [token, rate] = await Promise.all([getAccessToken(), getUSDtoBRL()]);
+
+    const xml = wrapEnvelope(soapHeader(networkCode), `
+      <runReportJob xmlns="https://www.google.com/apis/ads/publisher/${GAM_VERSION}">
+        <reportJob>
+          <reportQuery>
+            <dimensions>CUSTOM_CRITERIA</dimensions>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_CTR</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS</columns>
+            <startDate>${dateToXML(dates.since)}</startDate>
+            <endDate>${dateToXML(dates.until)}</endDate>
+            <dateRangeType>CUSTOM_DATE</dateRangeType>
+          </reportQuery>
+        </reportJob>
+      </runReportJob>`);
+
+    const runResp = await soapCall(token, xml);
+    const jobId = extractTag(runResp, 'id');
+    if (!jobId) {
+      console.warn('[GAM blocosFunil] no jobId — runResp:', runResp.slice(0, 400));
+      return [];
+    }
+
+    const rows = await pollAndDownload(token, networkCode, jobId);
+    console.log(`[GAM blocosFunil] ${rows.length} linhas brutas, utm="${utm || 'all'}"`);
+
+    const utmLower = utm ? utm.toLowerCase() : null;
+    const suffix = utmLower ? `-${utmLower}` : null;
+    const map = {};
+
+    for (const row of rows) {
+      const kv = row['Dimension.CUSTOM_CRITERIA'] || row['CUSTOM_CRITERIA'] || '';
+      const medium = _extractUTMValue(kv, 'utm_medium');
+      if (!medium || medium.toLowerCase() === 'null') continue;
+
+      const mediumLower = medium.toLowerCase();
+
+      // If utm specified: only keep rows whose utm_medium ends with "-utm"
+      if (suffix && !mediumLower.endsWith(suffix)) continue;
+
+      // Strip the "-utm" suffix to get the bloco-botao name
+      const blocoBotao = suffix
+        ? mediumLower.slice(0, -suffix.length)
+        : mediumLower;
+
+      if (!blocoBotao) continue;
+
+      const imp = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS'] || 0);
+      const revMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE'] || 0);
+      const receita = (revMicros / 1_000_000) * rate;
+      const ecpmMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM'] || 0);
+      const ctrRaw = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CTR'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_CTR'] || 0);
+      const cliques = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS'] || 0);
+
+      if (!map[blocoBotao]) map[blocoBotao] = { bloco_botao: blocoBotao, impressoes: 0, cliques: 0, receita: 0, ecpmWtSum: 0, ecpmWt: 0, ctrWtSum: 0, ctrWt: 0 };
+      const m = map[blocoBotao];
+      m.impressoes += imp;
+      m.cliques += cliques;
+      m.receita += receita;
+      if (imp > 0 && ecpmMicros > 0) { m.ecpmWtSum += (ecpmMicros / 1_000_000) * rate * imp; m.ecpmWt += imp; }
+      if (imp > 0) { m.ctrWtSum += ctrRaw * imp; m.ctrWt += imp; }
+    }
+
+    const result = Object.values(map).map(m => ({
+      bloco_botao: m.bloco_botao,
+      impressoes: m.impressoes,
+      cliques: m.cliques,
+      receita: +m.receita.toFixed(2),
+      ecpm: m.ecpmWt > 0 ? +(m.ecpmWtSum / m.ecpmWt).toFixed(4) : 0,
+      ctr: m.ctrWt > 0 ? +(m.ctrWtSum / m.ctrWt * 100).toFixed(4) : 0,
+      rps: m.cliques > 0 ? +(m.receita / m.cliques).toFixed(4) : 0,
+    })).sort((a, b) => b.receita - a.receita);
+
+    console.log(`[GAM blocosFunil] ${result.length} blocos após filtro utm="${utmLower||'all'}"`);
+    return result;
+  } catch (e) {
+    console.warn('[GAM fetchBlocosFunil]', e.message);
+    return [];
+  }
+}
+
+module.exports = { fetchGAMReport, fetchGAMAdvertisers, discoverGAMNetworks, fetchGAMFunnelsByUTM, fetchGAMHourly, fetchGAMUtmCampaigns, fetchGAMUtmSources, fetchGAMBlocosFunil, getUSDtoBRL, getUSDtoBRLByDate };

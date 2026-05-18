@@ -569,10 +569,35 @@
     .act-btn:hover{opacity:1;background:rgba(255,255,255,.07)}
 
     /* ── FUNIL ── */
-    .funil-tabs-row{display:flex;gap:.5rem;margin-bottom:1.5rem}
-    .funil-tab-btn{padding:.5rem 1rem;border-radius:.5rem;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:.8125rem;transition:all .15s}
-    .funil-tab-btn.on{background:var(--card);color:var(--fg);border-color:var(--c1)}
-    .funil-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;gap:.75rem;color:var(--muted);text-align:center;font-size:.875rem}
+    .funil-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;gap:1rem;flex-wrap:wrap}
+    .funil-header h2{margin:0 0 .25rem;font-size:1.125rem;font-weight:700}
+    .funil-header .muted{margin:0;font-size:.8125rem;color:var(--muted)}
+    .funil-controls{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+    .funil-controls label{font-size:.8125rem;color:var(--muted)}
+    .funil-controls select{background:var(--card);color:var(--fg);border:1px solid var(--border);padding:.5rem .875rem;border-radius:.5rem;min-width:200px;font-size:.8125rem}
+    .funil-controls button{background:var(--c1);color:#fff;border:none;padding:.5rem 1rem;border-radius:.5rem;cursor:pointer;font-size:.8125rem;font-weight:600}
+    .funil-controls button:hover{opacity:.85}
+    .funil-inner-tabs{display:flex;gap:.25rem;margin-bottom:1.25rem;border-bottom:1px solid var(--border)}
+    .funil-itab{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);padding:.75rem 1.25rem;cursor:pointer;font-size:.8125rem;font-weight:500;display:flex;align-items:center;gap:.5rem;margin-bottom:-1px}
+    .funil-itab:hover{color:var(--fg)}
+    .funil-itab.on{color:var(--accent);border-bottom-color:var(--accent)}
+    .funil-itab:disabled{opacity:.4;cursor:not-allowed}
+    .badge-soon{background:rgba(124,106,255,.18);color:#b8a8ff;padding:1px 6px;border-radius:3px;font-size:.625rem;letter-spacing:.5px}
+    .funil-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:1.5rem}
+    @media(max-width:700px){.funil-cards{grid-template-columns:repeat(2,1fr)}}
+    .card-mini{background:var(--card);border:1px solid var(--border);border-radius:.625rem;padding:1rem}
+    .card-mini label{font-size:.625rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:.5rem}
+    .card-mini strong{font-size:1.375rem;font-weight:700;display:block;line-height:1.2}
+    .card-mini small{color:var(--muted);font-size:.6875rem;display:block;margin-top:.25rem}
+    .funil-tbl-wrap{background:var(--card);border:1px solid var(--border);border-radius:.75rem;padding:1rem}
+    .funil-tbl-wrap .search-in{width:100%;margin-bottom:.75rem}
+    .funil-table{width:100%;border-collapse:collapse}
+    .funil-table th{background:var(--sec);padding:.75rem;text-align:left;font-size:.6875rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+    .funil-table th:not(:first-child){text-align:right}
+    .funil-table td{padding:.75rem;border-bottom:1px solid var(--border);font-size:.8125rem}
+    .funil-table td:not(:first-child){text-align:right}
+    .funil-table tr:last-child td{border-bottom:none}
+    .funil-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:240px;gap:.5rem;color:var(--muted);font-size:.875rem;text-align:center}
   </style>
 </head>
 <body>
@@ -1019,14 +1044,62 @@
     <!-- ANÁLISE DE FUNIL -->
     <div id="tab-funil" class="tab-panel">
       <div class="sec">
-        <div class="chart-title" style="margin-bottom:.5rem">Análise de Funil</div>
-        <div class="funil-tabs-row">
-          <button class="funil-tab-btn on">Botões</button>
-          <button class="funil-tab-btn">Blocos de Mensagens</button>
+        <div class="funil-header">
+          <div>
+            <h2>Análise de Funil</h2>
+            <p class="muted">Performance por bloco de mensagem do funil</p>
+          </div>
+          <div class="funil-controls">
+            <label>UTM:</label>
+            <select id="funil-utm"><option value="">Selecione uma UTM…</option></select>
+            <button onclick="loadFunil()">↻ Atualizar</button>
+          </div>
         </div>
-        <div class="funil-placeholder">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-          <p>Em desenvolvimento — passe os detalhes da estrutura.</p>
+
+        <div class="funil-inner-tabs">
+          <button class="funil-itab on">📦 Blocos de Mensagens</button>
+          <button class="funil-itab" disabled>🔘 Botões <span class="badge-soon">Em breve</span></button>
+        </div>
+
+        <div class="funil-cards" id="funil-cards" style="display:none">
+          <div class="card-mini">
+            <label>Total Blocos</label>
+            <strong id="funil-total-blocos">0</strong>
+          </div>
+          <div class="card-mini">
+            <label>Bloco Top</label>
+            <strong id="funil-bloco-top">—</strong>
+            <small id="funil-bloco-top-val"></small>
+          </div>
+          <div class="card-mini">
+            <label>Total Impressões</label>
+            <strong id="funil-total-imp">0</strong>
+          </div>
+          <div class="card-mini">
+            <label>Total Receita</label>
+            <strong id="funil-total-rec">R$ 0,00</strong>
+          </div>
+        </div>
+
+        <div class="funil-tbl-wrap" id="funil-tbl-wrap" style="display:none">
+          <input class="search-in" id="funil-search" placeholder="🔍 Buscar bloco…" oninput="filtrarFunil(this.value)">
+          <table class="funil-table" id="funil-table">
+            <thead><tr>
+              <th>Bloco-Botão</th>
+              <th>Impressões</th>
+              <th>Cliques</th>
+              <th>CTR</th>
+              <th>Receita</th>
+              <th>eCPM</th>
+              <th>RPS</th>
+            </tr></thead>
+            <tbody id="funil-tbody"></tbody>
+          </table>
+        </div>
+
+        <div class="funil-empty" id="funil-empty">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          <p>Selecione uma UTM e clique em ↻ Atualizar</p>
         </div>
       </div>
     </div>
@@ -1408,7 +1481,7 @@ function nav(id,btn){
   if(id==='domains'){showOverlay('Carregando...');loadDominios().finally(hideOverlay);return;}
   if(id==='gam'){showOverlay('Carregando...');loadGAMReport().finally(hideOverlay);return;}
   if(id==='contas'){showOverlay('Carregando...');loadContas().finally(hideOverlay);}
-  if(id==='funil'){/* placeholder */}
+  if(id==='funil'){showOverlay('Carregando…');initFunilTab().finally(hideOverlay);}
 }
 
 /* ═══ DATES ═══ */
@@ -3182,6 +3255,99 @@ async function abrirHistorico(utm){
   setInterval(loadNotifCount,30000);
   window.addEventListener('resize',()=>{if(S.metrics?.trend)renderTrend(S.metrics.trend)});
 })();
+
+/* ═══ ANÁLISE DE FUNIL ═══ */
+let _funilLoaded=false;
+
+async function initFunilTab(){
+  if(_funilLoaded)return;
+  _funilLoaded=true;
+  try{
+    const r=await fetch('/api/utms');
+    if(!r.ok)throw new Error(r.statusText);
+    const utms=await r.json();
+    const sel=document.getElementById('funil-utm');
+    sel.innerHTML='<option value="">Selecione uma UTM…</option>'+
+      utms.map(u=>`<option value="${esc(u.ad_utm)}">${esc(u.ad_utm)}${u.tipo?' ('+esc(u.tipo)+')':''}</option>`).join('');
+  }catch(e){console.error('[funil] initFunilTab:',e.message);}
+}
+
+function filtrarFunil(termo){
+  const t=termo.toLowerCase();
+  document.querySelectorAll('#funil-tbody tr').forEach(tr=>{
+    if(tr.classList.contains('row-total')){tr.style.display='';return;}
+    tr.style.display=(!t||tr.textContent.toLowerCase().includes(t))?'':'none';
+  });
+}
+
+async function loadFunil(){
+  const utm=document.getElementById('funil-utm').value;
+  if(!utm){alert('Selecione uma UTM primeiro.');return;}
+  const since=document.getElementById('f-since').value;
+  const until=document.getElementById('f-until').value;
+
+  const emptyEl=document.getElementById('funil-empty');
+  const cardsEl=document.getElementById('funil-cards');
+  const tblEl=document.getElementById('funil-tbl-wrap');
+  emptyEl.style.display='flex';
+  emptyEl.innerHTML='<p>Carregando…</p>';
+  cardsEl.style.display='none';
+  tblEl.style.display='none';
+  document.getElementById('funil-search').value='';
+
+  try{
+    const q=new URLSearchParams({utm,since,until});
+    const r=await fetch(`/api/funil?${q}`);
+    if(!r.ok)throw new Error((await r.json().catch(()=>({}))).erro||r.statusText);
+    const d=await r.json();
+
+    if(!d.blocos||d.blocos.length===0){
+      emptyEl.innerHTML=`<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg><p>Sem dados de bloco para <strong>${esc(utm)}</strong> no período ${since} → ${until}.<br><small>Verifique se utm_medium está configurado nos anúncios.</small></p>`;
+      return;
+    }
+
+    emptyEl.style.display='none';
+    cardsEl.style.display='grid';
+    tblEl.style.display='block';
+
+    const top=d.blocos[0];
+    document.getElementById('funil-total-blocos').textContent=d.total_blocos;
+    document.getElementById('funil-bloco-top').textContent=top?.bloco_botao||'—';
+    document.getElementById('funil-bloco-top-val').textContent=top?`R$ ${BRL(top.receita)}`:'';
+    document.getElementById('funil-total-imp').textContent=NUM(d.totals.impressoes);
+    document.getElementById('funil-total-rec').textContent=`R$ ${BRL(d.totals.receita)}`;
+
+    const tbody=document.getElementById('funil-tbody');
+    tbody.innerHTML=d.blocos.map(b=>`<tr class="utm-row">
+      <td><strong>${esc(b.bloco_botao)}</strong></td>
+      <td class="mo" data-sort="${b.impressoes}">${NUM(b.impressoes)}</td>
+      <td class="mo" data-sort="${b.cliques}">${NUM(b.cliques)}</td>
+      <td class="mo" data-sort="${b.ctr}">${b.ctr.toFixed(2)}%</td>
+      <td class="mo verde" data-sort="${b.receita}">${BRL(b.receita)}</td>
+      <td class="mo" data-sort="${b.ecpm}">${BRL(b.ecpm)}</td>
+      <td class="mo" data-sort="${b.rps}">${BRL(b.rps)}</td>
+    </tr>`).join('');
+
+    const ti=d.totals.impressoes,tc=d.totals.cliques,tr2=d.totals.receita;
+    const ctrM=ti>0?(tc/ti)*100:0;
+    const ecpmM=ti>0?(tr2/ti)*1000:0;
+    const rpsM=tc>0?tr2/tc:0;
+    tbody.insertAdjacentHTML('beforeend',`<tr class="row-total">
+      <td><strong>TOTAL / MÉDIA</strong></td>
+      <td class="mo"><strong>${NUM(ti)}</strong></td>
+      <td class="mo"><strong>${NUM(tc)}</strong></td>
+      <td class="mo"><strong>${ctrM.toFixed(2)}%</strong></td>
+      <td class="mo verde"><strong>${BRL(tr2)}</strong></td>
+      <td class="mo"><strong>${BRL(ecpmM)}</strong></td>
+      <td class="mo"><strong>${BRL(rpsM)}</strong></td>
+    </tr>`);
+    makeTableSortable('funil-table');
+    applyDefaultSort('funil-table',4);
+  }catch(e){
+    emptyEl.style.display='flex';
+    emptyEl.innerHTML=`<p style="color:var(--bad)">Erro: ${esc(e.message)}</p>`;
+  }
+}
 </script>
 </body>
 </html>
