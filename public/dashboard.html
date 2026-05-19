@@ -598,6 +598,83 @@
     .funil-table td:not(:first-child){text-align:right}
     .funil-table tr:last-child td{border-bottom:none}
     .funil-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:240px;gap:.5rem;color:var(--muted);font-size:.875rem;text-align:center}
+
+    /* ── CRIAR CAMPANHA ── */
+    .cc-page-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;gap:1rem;flex-wrap:wrap}
+    .cc-page-header h2{margin:0 0 .25rem;font-size:1.125rem;font-weight:700}
+    .cc-page-header .muted{margin:0;font-size:.8125rem;color:var(--muted)}
+    .cc-page-header .hdr-actions{display:flex;gap:.5rem;flex-wrap:wrap}
+    .sub-tabs{display:flex;gap:.25rem;margin-bottom:1.5rem;border-bottom:1px solid var(--border)}
+    .sub-tab{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);padding:.75rem 1.25rem;cursor:pointer;font-size:.8125rem;font-weight:500;margin-bottom:-1px;transition:color .2s,border-color .2s}
+    .sub-tab:hover{color:var(--fg)}
+    .sub-tab.on{color:var(--accent);border-bottom-color:var(--accent)}
+    .templates-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem}
+    .template-card{background:var(--card);border:1px solid var(--border);border-radius:.75rem;padding:1.25rem;display:flex;flex-direction:column;gap:.875rem;transition:border-color .2s,box-shadow .2s;cursor:default}
+    .template-card:hover{border-color:var(--accent);box-shadow:0 0 0 1px color-mix(in oklch,var(--accent) 30%,transparent)}
+    .template-header{display:flex;align-items:flex-start;gap:.75rem}
+    .template-icon{width:2.5rem;height:2.5rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0}
+    .template-icon.bot{background:color-mix(in oklch,var(--c1) 15%,var(--card))}
+    .template-icon.direto{background:color-mix(in oklch,var(--c2) 15%,var(--card))}
+    .template-icon.conversao{background:color-mix(in oklch,var(--c3) 15%,var(--card))}
+    .template-meta h4{margin:0 0 .25rem;font-size:.875rem;font-weight:600;line-height:1.3}
+    .template-meta p{margin:0;font-size:.75rem;color:var(--muted);line-height:1.4}
+    .tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:.625rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+    .tag-bot{background:color-mix(in oklch,var(--c1) 18%,transparent);color:var(--c1)}
+    .tag-direto{background:color-mix(in oklch,var(--c2) 18%,transparent);color:var(--c2)}
+    .tag-conversao{background:color-mix(in oklch,var(--c3) 18%,transparent);color:oklch(0.7 0.18 55)}
+    .template-stats{display:flex;gap:1rem;font-size:.75rem;color:var(--muted)}
+    .template-stats span{display:flex;align-items:center;gap:.25rem}
+    .template-actions{display:flex;gap:.5rem;margin-top:auto}
+    .btn-usar-template{flex:1;background:var(--accent);color:var(--acc-fg);border:none;padding:.5rem .875rem;border-radius:.5rem;cursor:pointer;font-family:inherit;font-size:.8125rem;font-weight:600;transition:opacity .2s}
+    .btn-usar-template:hover{opacity:.85}
+    .btn-icon{background:transparent;border:1px solid var(--border);color:var(--muted);width:2.25rem;height:2.25rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:color .2s,border-color .2s;flex-shrink:0}
+    .btn-icon:hover{color:var(--fg);border-color:var(--accent)}
+    .btn-icon.del:hover{color:var(--bad);border-color:var(--bad)}
+    .templates-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:280px;gap:.75rem;color:var(--muted);font-size:.875rem;text-align:center}
+
+    /* ── WIZARD ── */
+    .wizard-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem}
+    .wizard-modal{background:var(--card);border:1px solid var(--border);border-radius:1rem;width:100%;max-width:680px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+    .wizard-hdr{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .wizard-hdr h3{margin:0;font-size:1rem;font-weight:700}
+    .wizard-close{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:1.25rem;line-height:1;padding:.25rem;border-radius:.25rem;transition:color .2s}
+    .wizard-close:hover{color:var(--fg)}
+    .wizard-steps-bar{display:flex;align-items:center;gap:0;padding:1rem 1.5rem;border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto}
+    .step-indicator{display:flex;align-items:center;gap:.5rem;flex-shrink:0}
+    .step-indicator .num{width:1.75rem;height:1.75rem;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:var(--muted);transition:all .2s}
+    .step-indicator .lbl{font-size:.75rem;color:var(--muted);white-space:nowrap;transition:color .2s}
+    .step-indicator.done .num{background:var(--accent);border-color:var(--accent);color:var(--acc-fg)}
+    .step-indicator.active .num{border-color:var(--accent);color:var(--accent)}
+    .step-indicator.active .lbl{color:var(--fg)}
+    .step-sep{flex:1;height:1px;background:var(--border);min-width:.75rem}
+    .wizard-body{flex:1;overflow-y:auto;padding:1.5rem}
+    .wizard-step{display:none}
+    .wizard-step.active{display:block}
+    .wizard-ftr{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;gap:.75rem}
+    .wz-lbl{font-size:.8125rem;color:var(--muted);font-weight:500;display:block;margin-bottom:.375rem}
+    .wz-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+    .wz-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem}
+    .wz-field{margin-bottom:1rem}
+    .wz-input,.wz-select,.wz-textarea{width:100%;background:var(--sec);border:1px solid var(--border);border-radius:.5rem;color:var(--fg);font-family:inherit;font-size:.8125rem;padding:.5rem .75rem;outline:none;transition:border-color .2s;height:2.375rem}
+    .wz-textarea{height:auto;resize:vertical;min-height:4rem}
+    .wz-input:focus,.wz-select:focus,.wz-textarea:focus{border-color:var(--accent)}
+    .wz-input.err,.wz-select.err{border-color:var(--bad)}
+    .wz-select option{background:var(--card)}
+    .wz-hint{font-size:.6875rem;color:var(--muted);margin-top:.25rem;display:block}
+    .wz-section-title{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:1.25rem 0 .75rem;border-bottom:1px solid var(--border);padding-bottom:.5rem}
+    .wz-preview-box{background:var(--sec);border:1px solid var(--border);border-radius:.5rem;padding:.875rem;font-family:'JetBrains Mono',monospace;font-size:.75rem;line-height:1.8;word-break:break-all;color:var(--accent)}
+    .btn-outline{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.5rem 1.25rem;border-radius:.5rem;cursor:pointer;font-family:inherit;font-size:.8125rem;font-weight:500;transition:all .2s}
+    .btn-outline:hover{border-color:var(--accent);color:var(--fg)}
+    .btn-primary{background:var(--accent);color:var(--acc-fg);border:none;padding:.5rem 1.5rem;border-radius:.5rem;cursor:pointer;font-family:inherit;font-size:.8125rem;font-weight:600;transition:opacity .2s}
+    .btn-primary:hover{opacity:.85}
+    .btn-primary:disabled{opacity:.5;cursor:not-allowed}
+    .interest-tags{display:flex;flex-wrap:wrap;gap:.375rem;min-height:2rem;margin-top:.5rem}
+    .i-tag{display:inline-flex;align-items:center;gap:.25rem;background:color-mix(in oklch,var(--accent) 15%,var(--sec));color:var(--accent);border-radius:20px;font-size:.6875rem;padding:3px 8px}
+    .i-tag button{background:none;border:none;color:inherit;cursor:pointer;font-size:.875rem;line-height:1;padding:0 0 0 2px}
+    .interest-results{background:var(--sec);border:1px solid var(--border);border-radius:.5rem;margin-top:.25rem;max-height:10rem;overflow-y:auto;display:none}
+    .interest-result-item{padding:.5rem .75rem;font-size:.8125rem;cursor:pointer;transition:background .15s;display:flex;justify-content:space-between;align-items:center;gap:.5rem}
+    .interest-result-item:hover{background:var(--card)}
+    .interest-result-item small{color:var(--muted);font-size:.6875rem}
   </style>
 </head>
 <body>
@@ -657,6 +734,11 @@
       <span class="nav-ind"></span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
       <span class="nav-lbl">Análise de Funil</span>
+    </button>
+    <button class="nav-btn" onclick="nav('criar-campanha',this)">
+      <span class="nav-ind"></span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg>
+      <span class="nav-lbl">Criar Campanha</span>
     </button>
   </nav>
     <button class="nav-btn" id="nav-contas" onclick="nav('contas',this)">
@@ -1104,6 +1186,259 @@
       </div>
     </div>
 
+    <!-- CRIAR CAMPANHA -->
+    <div id="tab-criar-campanha" class="tab-panel">
+      <div class="sec">
+        <div class="cc-page-header">
+          <div>
+            <h2>Templates de Campanha</h2>
+            <p class="muted">Crie e gerencie templates para lançar campanhas Meta rapidamente</p>
+          </div>
+          <div class="hdr-actions">
+            <button class="btn-outline" onclick="templatesSeed()" title="Inserir templates de exemplo">+ Seed</button>
+            <button class="btn-primary" onclick="abrirWizard(null)">+ Novo Template</button>
+          </div>
+        </div>
+
+        <div class="sub-tabs">
+          <button class="sub-tab on" onclick="filtrarTemplatesTipo('',this)">Todos</button>
+          <button class="sub-tab" onclick="filtrarTemplatesTipo('bot',this)">BOT</button>
+          <button class="sub-tab" onclick="filtrarTemplatesTipo('direto',this)">Direto</button>
+          <button class="sub-tab" onclick="filtrarTemplatesTipo('conversao',this)">Conversao</button>
+        </div>
+
+        <div class="templates-grid" id="templates-grid">
+          <div class="templates-empty" id="templates-empty" style="display:none">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg>
+            <p>Nenhum template encontrado. Crie um novo ou use o Seed.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ WIZARD MODAL ═══ -->
+<div class="wizard-overlay" id="wizard-overlay" style="display:none" onclick="if(event.target===this)fecharWizard()">
+  <div class="wizard-modal">
+    <div class="wizard-hdr">
+      <h3 id="wizard-title">Novo Template</h3>
+      <button class="wizard-close" onclick="fecharWizard()">×</button>
+    </div>
+    <div class="wizard-steps-bar" id="wizard-steps-bar">
+      <div class="step-indicator active" data-step="1"><div class="num">1</div><div class="lbl">Identificação</div></div>
+      <div class="step-sep"></div>
+      <div class="step-indicator" data-step="2"><div class="num">2</div><div class="lbl">Objetivo</div></div>
+      <div class="step-sep"></div>
+      <div class="step-indicator" data-step="3"><div class="num">3</div><div class="lbl">Nomenclatura</div></div>
+      <div class="step-sep"></div>
+      <div class="step-indicator" data-step="4"><div class="num">4</div><div class="lbl">Público</div></div>
+      <div class="step-sep"></div>
+      <div class="step-indicator" data-step="5"><div class="num">5</div><div class="lbl">Orçamento</div></div>
+    </div>
+    <div class="wizard-body">
+      <!-- STEP 1: Identificação -->
+      <div class="wizard-step active" id="wz-step-1">
+        <div class="wz-field">
+          <label class="wz-lbl">Nome do Template *</label>
+          <input class="wz-input" id="wz-nome" placeholder="Ex: BOT — Visualização de Conteúdo" maxlength="80">
+        </div>
+        <div class="wz-field">
+          <label class="wz-lbl">Descrição</label>
+          <textarea class="wz-textarea" id="wz-descricao" placeholder="Descreva o objetivo e quando usar este template…" rows="3"></textarea>
+        </div>
+        <div class="wz-row">
+          <div class="wz-field" style="margin:0">
+            <label class="wz-lbl">Tipo *</label>
+            <select class="wz-select" id="wz-tipo">
+              <option value="">Selecione…</option>
+              <option value="bot">BOT</option>
+              <option value="direto">Direto</option>
+              <option value="conversao">Conversao</option>
+            </select>
+          </div>
+          <div class="wz-field" style="margin:0">
+            <label class="wz-lbl">Conta Meta *</label>
+            <select class="wz-select" id="wz-account-id">
+              <option value="">Carregando…</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: Objetivo -->
+      <div class="wizard-step" id="wz-step-2">
+        <div class="wz-row">
+          <div class="wz-field" style="margin:0">
+            <label class="wz-lbl">Objetivo da Campanha *</label>
+            <select class="wz-select" id="wz-objetivo" onchange="wizardObjetivoChange()">
+              <option value="OUTCOME_TRAFFIC">Tráfego</option>
+              <option value="OUTCOME_AWARENESS">Reconhecimento</option>
+              <option value="OUTCOME_ENGAGEMENT">Engajamento</option>
+              <option value="OUTCOME_LEADS">Leads</option>
+              <option value="OUTCOME_SALES">Vendas</option>
+            </select>
+          </div>
+          <div class="wz-field" style="margin:0">
+            <label class="wz-lbl">Optimization Goal *</label>
+            <select class="wz-select" id="wz-optgoal">
+              <option value="LANDING_PAGE_VIEWS">Landing Page Views</option>
+              <option value="LINK_CLICKS">Link Clicks</option>
+              <option value="IMPRESSIONS">Impressions</option>
+              <option value="REACH">Reach</option>
+              <option value="OFFSITE_CONVERSIONS">Conversions</option>
+              <option value="LEAD_GENERATION">Lead Generation</option>
+            </select>
+          </div>
+        </div>
+        <div class="wz-row">
+          <div class="wz-field" style="margin:0">
+            <label class="wz-lbl">Billing Event</label>
+            <select class="wz-select" id="wz-billing">
+              <option value="IMPRESSIONS">Impressions (CPM)</option>
+              <option value="LINK_CLICKS">Link Clicks (CPC)</option>
+            </select>
+          </div>
+          <div class="wz-field" style="margin:0">
+            <label class="wz-lbl">Pixel (opcional)</label>
+            <select class="wz-select" id="wz-pixel">
+              <option value="">Sem pixel</option>
+            </select>
+          </div>
+        </div>
+        <div class="wz-field" id="wz-custom-event-wrap" style="display:none">
+          <label class="wz-lbl">Evento de Conversão</label>
+          <select class="wz-select" id="wz-custom-event">
+            <option value="PURCHASE">Purchase</option>
+            <option value="LEAD">Lead</option>
+            <option value="COMPLETE_REGISTRATION">Complete Registration</option>
+            <option value="ADD_TO_CART">Add to Cart</option>
+            <option value="INITIATE_CHECKOUT">Initiate Checkout</option>
+            <option value="VIEW_CONTENT">View Content</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- STEP 3: Nomenclatura -->
+      <div class="wizard-step" id="wz-step-3">
+        <p class="wz-hint" style="margin-bottom:1rem">Variáveis disponíveis: <code>{{utm_campaign}}</code> <code>{{utm_source}}</code> <code>{{dominio_curto}}</code> <code>{{numero}}</code> <code>{{link_destino}}</code> <code>{{bloco}}</code> <code>{{botao}}</code></p>
+        <div class="wz-field">
+          <label class="wz-lbl">Campanha *</label>
+          <input class="wz-input" id="wz-camp-pattern" placeholder="[{{dominio_curto}}] [{{utm_source}}] [{{utm_campaign}}]" oninput="previewNomenclatura()">
+        </div>
+        <div class="wz-field">
+          <label class="wz-lbl">Conjunto de Anúncio *</label>
+          <input class="wz-input" id="wz-adset-pattern" placeholder="[{{utm_source}}] [{{utm_campaign}}] V{{numero}}" oninput="previewNomenclatura()">
+        </div>
+        <div class="wz-field">
+          <label class="wz-lbl">Anúncio *</label>
+          <input class="wz-input" id="wz-ad-pattern" placeholder="{{numero}}-{{utm_campaign}}" oninput="previewNomenclatura()">
+        </div>
+        <div class="wz-field">
+          <label class="wz-lbl">URL com UTM (opcional)</label>
+          <input class="wz-input" id="wz-utm-url" placeholder="{{link_destino}}?utm_source={{utm_source}}&utm_campaign={{utm_campaign}}" oninput="previewNomenclatura()">
+        </div>
+        <div class="wz-field" id="wz-preview-wrap" style="display:none">
+          <label class="wz-lbl">Preview (utm_campaign=exemploUtm, numero=1)</label>
+          <div class="wz-preview-box" id="wz-preview-text"></div>
+        </div>
+      </div>
+
+      <!-- STEP 4: Público -->
+      <div class="wizard-step" id="wz-step-4">
+        <div class="wz-row">
+          <div class="wz-field" style="margin:0">
+            <label class="wz-lbl">País</label>
+            <select class="wz-select" id="wz-pais">
+              <option value="BR">Brasil (BR)</option>
+              <option value="US">Estados Unidos (US)</option>
+              <option value="PT">Portugal (PT)</option>
+            </select>
+          </div>
+          <div class="wz-field" style="margin:0">
+            <label class="wz-lbl">Gênero</label>
+            <select class="wz-select" id="wz-genero">
+              <option value="all">Todos</option>
+              <option value="male">Masculino</option>
+              <option value="female">Feminino</option>
+            </select>
+          </div>
+        </div>
+        <div class="wz-row">
+          <div class="wz-field" style="margin:0">
+            <label class="wz-lbl">Idade mínima</label>
+            <input class="wz-input" id="wz-idade-min" type="number" value="18" min="18" max="64">
+          </div>
+          <div class="wz-field" style="margin:0">
+            <label class="wz-lbl">Idade máxima</label>
+            <input class="wz-input" id="wz-idade-max" type="number" value="65" min="18" max="65">
+          </div>
+        </div>
+        <div class="wz-field">
+          <label class="wz-lbl">Audiência Salva (opcional)</label>
+          <select class="wz-select" id="wz-saved-audience">
+            <option value="">Nenhuma / Público aberto</option>
+          </select>
+        </div>
+        <div class="wz-field">
+          <label class="wz-lbl">Interesses (busca)</label>
+          <input class="wz-input" id="wz-interest-search" placeholder="Buscar interesses Meta…" oninput="buscarInteresses(this.value)">
+          <div class="interest-results" id="interest-results"></div>
+          <div class="interest-tags" id="interest-tags"></div>
+        </div>
+        <div class="wz-field">
+          <label class="wz-lbl">Placements</label>
+          <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.25rem" id="wz-placements">
+            <label style="display:flex;align-items:center;gap:.375rem;font-size:.8125rem;cursor:pointer"><input type="checkbox" value="fb-feed" checked> FB Feed</label>
+            <label style="display:flex;align-items:center;gap:.375rem;font-size:.8125rem;cursor:pointer"><input type="checkbox" value="fb-reels" checked> FB Reels</label>
+            <label style="display:flex;align-items:center;gap:.375rem;font-size:.8125rem;cursor:pointer"><input type="checkbox" value="ig-stream" checked> IG Feed</label>
+            <label style="display:flex;align-items:center;gap:.375rem;font-size:.8125rem;cursor:pointer"><input type="checkbox" value="ig-reels" checked> IG Reels</label>
+            <label style="display:flex;align-items:center;gap:.375rem;font-size:.8125rem;cursor:pointer"><input type="checkbox" value="fb-stories"> FB Stories</label>
+            <label style="display:flex;align-items:center;gap:.375rem;font-size:.8125rem;cursor:pointer"><input type="checkbox" value="ig-stories"> IG Stories</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 5: Orçamento -->
+      <div class="wizard-step" id="wz-step-5">
+        <div class="wz-row">
+          <div class="wz-field" style="margin:0">
+            <label class="wz-lbl">Orçamento Diário Padrão (R$) *</label>
+            <input class="wz-input" id="wz-orcamento" type="number" value="6" min="1" max="100000" step="0.01">
+          </div>
+          <div class="wz-field" style="margin:0">
+            <label class="wz-lbl">Bid Strategy</label>
+            <select class="wz-select" id="wz-bid-strategy" onchange="wizardBidChange()">
+              <option value="LOWEST_COST_WITHOUT_CAP">Menor custo (sem cap)</option>
+              <option value="LOWEST_COST_WITH_BID_CAP">Menor custo com cap</option>
+              <option value="COST_CAP">Meta de custo</option>
+            </select>
+          </div>
+        </div>
+        <div class="wz-field" id="wz-bid-amount-wrap" style="display:none">
+          <label class="wz-lbl">Bid Amount (R$)</label>
+          <input class="wz-input" id="wz-bid-amount" type="number" min="0.01" step="0.01" placeholder="0.00">
+        </div>
+        <div class="wz-field">
+          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.8125rem">
+            <input type="checkbox" id="wz-meia-noite" checked>
+            Agendar início à meia-noite
+          </label>
+          <span class="wz-hint">Quando ativo, a campanha começa às 00:00 do dia seguinte</span>
+        </div>
+
+        <div class="wz-section-title">Resumo do Template</div>
+        <div id="wz-resumo" style="font-size:.8125rem;line-height:1.8;color:var(--muted)"></div>
+      </div>
+    </div>
+    <div class="wizard-ftr">
+      <button class="btn-outline" id="wz-btn-back" onclick="wizardStep(window._wzStep-1)" style="display:none">← Voltar</button>
+      <div style="display:flex;gap:.5rem;margin-left:auto">
+        <button class="btn-outline" onclick="fecharWizard()">Cancelar</button>
+        <button class="btn-primary" id="wz-btn-next" onclick="wizardNext()">Próximo →</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1468,7 +1803,7 @@ function toggleSb(){
 }
 
 /* ═══ NAV ═══ */
-const TITLES={overview:'Overview',campaigns:'Campanhas',gam:'Reports GAM',ai:'Análise IA',domains:'Domínios',contas:'Contas Meta'};
+const TITLES={overview:'Overview',campaigns:'Campanhas',gam:'Reports GAM',ai:'Análise IA',domains:'Domínios',contas:'Contas Meta','criar-campanha':'Criar Campanha'};
 function nav(id,btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('on'));
@@ -1482,6 +1817,7 @@ function nav(id,btn){
   if(id==='gam'){showOverlay('Carregando...');loadGAMReport().finally(hideOverlay);return;}
   if(id==='contas'){showOverlay('Carregando...');loadContas().finally(hideOverlay);}
   if(id==='funil'){showOverlay('Carregando…');initFunilTab().finally(hideOverlay);}
+  if(id==='criar-campanha'){showOverlay('Carregando templates…');initCriarCampanha().finally(hideOverlay);}
 }
 
 /* ═══ DATES ═══ */
@@ -3346,6 +3682,451 @@ async function loadFunil(){
   }catch(e){
     emptyEl.style.display='flex';
     emptyEl.innerHTML=`<p style="color:var(--bad)">Erro: ${esc(e.message)}</p>`;
+  }
+}
+
+/* ═══ CRIAR CAMPANHA — TEMPLATES ═══ */
+let _templates=[];
+let _templatesTipoFiltro='';
+let _wzStep=1;
+let _wzEditId=null;
+let _wzInterests=[];
+let _interestDebounce=null;
+
+async function initCriarCampanha(){
+  await loadTemplates();
+  await carregarContasNoWizard();
+}
+
+async function loadTemplates(){
+  const grid=document.getElementById('templates-grid');
+  const empty=document.getElementById('templates-empty');
+  try{
+    const r=await fetch('/api/templates');
+    if(!r.ok)throw new Error((await r.json().catch(()=>({}))).erro||r.statusText);
+    _templates=await r.json();
+    renderTemplatesGrid();
+  }catch(e){
+    grid.innerHTML=`<p style="color:var(--bad);padding:1rem">Erro ao carregar: ${esc(e.message)}</p>`;
+  }
+}
+
+function renderTemplatesGrid(){
+  const grid=document.getElementById('templates-grid');
+  const empty=document.getElementById('templates-empty');
+  const lista=_templatesTipoFiltro?_templates.filter(t=>t.tipo===_templatesTipoFiltro):_templates;
+  if(!lista.length){
+    grid.innerHTML='';
+    grid.appendChild(empty);
+    empty.style.display='flex';
+    return;
+  }
+  grid.innerHTML=lista.map(t=>renderTemplateCard(t)).join('');
+}
+
+function renderTemplateCard(t){
+  const icons={bot:'📡',direto:'🚀',conversao:'💰'};
+  const icon=icons[t.tipo]||'📋';
+  const tagCls=`tag tag-${t.tipo}`;
+  const tagLbl=t.tipo.toUpperCase();
+  const usos=t.total_usos||0;
+  const orc=`R$ ${BRL(t.orcamento_diario_padrao||6)}`;
+  return `<div class="template-card">
+    <div class="template-header">
+      <div class="template-icon ${t.tipo}">${icon}</div>
+      <div class="template-meta">
+        <h4>${esc(t.nome)}</h4>
+        <p>${esc(t.descricao||'')}</p>
+      </div>
+    </div>
+    <div><span class="${tagCls}">${tagLbl}</span></div>
+    <div class="template-stats">
+      <span title="Usos">🔁 ${usos} uso${usos!==1?'s':''}</span>
+      <span title="Orçamento padrão">💵 ${orc}/dia</span>
+      <span title="Estratégia">${t.bid_strategy==='LOWEST_COST_WITHOUT_CAP'?'Menor custo':'Com cap'}</span>
+    </div>
+    <div class="template-actions">
+      <button class="btn-usar-template" onclick="usarTemplate(${t.id})">Usar Template</button>
+      <button class="btn-icon" onclick="abrirWizard(${t.id})" title="Editar">✏️</button>
+      <button class="btn-icon" onclick="duplicarTemplate(${t.id})" title="Duplicar">📋</button>
+      <button class="btn-icon del" onclick="excluirTemplate(${t.id},'${esc(t.nome).replace(/'/g,"\\'")}')" title="Excluir">🗑️</button>
+    </div>
+  </div>`;
+}
+
+function filtrarTemplatesTipo(tipo,btn){
+  _templatesTipoFiltro=tipo;
+  document.querySelectorAll('.sub-tab').forEach(b=>b.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+  renderTemplatesGrid();
+}
+
+async function carregarContasNoWizard(){
+  const sel=document.getElementById('wz-account-id');
+  if(!sel)return;
+  try{
+    const r=await fetch('/api/contas');
+    const contas=await r.json();
+    sel.innerHTML=contas.map(c=>`<option value="${esc(c.ad_account_id)}">${esc(c.nome)} (${esc(c.ad_account_id)})</option>`).join('');
+    if(contas.length===0)sel.innerHTML='<option value="">Nenhuma conta cadastrada</option>';
+  }catch(e){
+    sel.innerHTML='<option value="">Erro ao carregar contas</option>';
+  }
+}
+
+function abrirWizard(id=null){
+  _wzEditId=id;
+  _wzStep=1;
+  _wzInterests=[];
+  document.getElementById('wz-btn-back').style.display='none';
+  document.getElementById('wz-btn-next').textContent='Próximo →';
+  document.getElementById('wizard-title').textContent=id?'Editar Template':'Novo Template';
+  // Reset form
+  ['wz-nome','wz-descricao','wz-camp-pattern','wz-adset-pattern','wz-ad-pattern','wz-utm-url'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.value='';
+  });
+  document.getElementById('wz-tipo').value='';
+  document.getElementById('wz-objetivo').value='OUTCOME_TRAFFIC';
+  document.getElementById('wz-optgoal').value='LANDING_PAGE_VIEWS';
+  document.getElementById('wz-billing').value='IMPRESSIONS';
+  document.getElementById('wz-pixel').value='';
+  document.getElementById('wz-custom-event').value='PURCHASE';
+  document.getElementById('wz-custom-event-wrap').style.display='none';
+  document.getElementById('wz-pais').value='BR';
+  document.getElementById('wz-genero').value='all';
+  document.getElementById('wz-idade-min').value='18';
+  document.getElementById('wz-idade-max').value='65';
+  document.getElementById('wz-saved-audience').innerHTML='<option value="">Nenhuma / Público aberto</option>';
+  document.getElementById('interest-tags').innerHTML='';
+  document.getElementById('interest-results').style.display='none';
+  document.getElementById('wz-interest-search').value='';
+  document.getElementById('wz-orcamento').value='6';
+  document.getElementById('wz-bid-strategy').value='LOWEST_COST_WITHOUT_CAP';
+  document.getElementById('wz-bid-amount-wrap').style.display='none';
+  document.getElementById('wz-meia-noite').checked=true;
+  document.getElementById('wz-preview-wrap').style.display='none';
+  // Reset placements
+  document.querySelectorAll('#wz-placements input[type=checkbox]').forEach(cb=>{
+    cb.checked=['fb-feed','fb-reels','ig-stream','ig-reels'].includes(cb.value);
+  });
+
+  if(id){
+    const t=_templates.find(x=>x.id===id);
+    if(t) preencherWizardComTemplate(t);
+  }
+
+  wizardStep(1);
+  document.getElementById('wizard-overlay').style.display='flex';
+}
+
+function preencherWizardComTemplate(t){
+  document.getElementById('wz-nome').value=t.nome||'';
+  document.getElementById('wz-descricao').value=t.descricao||'';
+  document.getElementById('wz-tipo').value=t.tipo||'';
+  const accSel=document.getElementById('wz-account-id');
+  if(accSel)Array.from(accSel.options).forEach(o=>{if(o.value===t.account_id)o.selected=true;});
+  document.getElementById('wz-objetivo').value=t.objetivo||'OUTCOME_TRAFFIC';
+  document.getElementById('wz-optgoal').value=t.optimization_goal||'LANDING_PAGE_VIEWS';
+  document.getElementById('wz-billing').value=t.billing_event||'IMPRESSIONS';
+  if(t.pixel_id){document.getElementById('wz-pixel').innerHTML=`<option value="${esc(t.pixel_id)}" selected>${esc(t.pixel_id)}</option>`;};
+  if(t.custom_event_type){document.getElementById('wz-custom-event').value=t.custom_event_type;document.getElementById('wz-custom-event-wrap').style.display='block';}
+  document.getElementById('wz-camp-pattern').value=t.campaign_name_pattern||'';
+  document.getElementById('wz-adset-pattern').value=t.adset_name_pattern||'';
+  document.getElementById('wz-ad-pattern').value=t.ad_name_pattern||'';
+  document.getElementById('wz-utm-url').value=t.utm_pattern_url||'';
+  const pub=t.publico||{};
+  if(pub.paises?.[0])document.getElementById('wz-pais').value=pub.paises[0];
+  if(pub.genero)document.getElementById('wz-genero').value=pub.genero;
+  if(pub.idade_min)document.getElementById('wz-idade-min').value=pub.idade_min;
+  if(pub.idade_max)document.getElementById('wz-idade-max').value=pub.idade_max;
+  if(pub.interesses){_wzInterests=[...pub.interesses];renderInterestTags();}
+  document.getElementById('wz-orcamento').value=t.orcamento_diario_padrao||6;
+  document.getElementById('wz-bid-strategy').value=t.bid_strategy||'LOWEST_COST_WITHOUT_CAP';
+  if(t.bid_amount){document.getElementById('wz-bid-amount').value=t.bid_amount;document.getElementById('wz-bid-amount-wrap').style.display='block';}
+  document.getElementById('wz-meia-noite').checked=t.agendar_meia_noite!==false;
+  const pl=t.placements||{};
+  document.querySelectorAll('#wz-placements input[type=checkbox]').forEach(cb=>{
+    const[net,slot]=cb.value.split('-');
+    const netMap={fb:'facebook',ig:'instagram'};
+    cb.checked=(pl[netMap[net]]||[]).includes(slot==='stream'?'stream':slot);
+  });
+  previewNomenclatura();
+}
+
+function fecharWizard(){
+  document.getElementById('wizard-overlay').style.display='none';
+}
+
+function wizardStep(n){
+  _wzStep=n;
+  document.querySelectorAll('.wizard-step').forEach((el,i)=>el.classList.toggle('active',i===n-1));
+  document.querySelectorAll('.step-indicator').forEach(el=>{
+    const s=Number(el.dataset.step);
+    el.classList.remove('done','active');
+    if(s<n)el.classList.add('done');
+    else if(s===n)el.classList.add('active');
+  });
+  document.getElementById('wz-btn-back').style.display=n>1?'':'none';
+  document.getElementById('wz-btn-next').textContent=n===5?(_wzEditId?'Salvar':'Criar Template'):'Próximo →';
+
+  if(n===2){
+    const accId=document.getElementById('wz-account-id').value;
+    if(accId){
+      carregarPixels(accId);
+      carregarSavedAudiences(accId);
+    }
+  }
+  if(n===5) renderResumoWizard();
+}
+
+function wizardNext(){
+  if(_wzStep===5){salvarTemplate();return;}
+  if(!wizardValidarStep(_wzStep))return;
+  wizardStep(_wzStep+1);
+}
+
+function wizardValidarStep(step){
+  let ok=true;
+  if(step===1){
+    const nome=document.getElementById('wz-nome').value.trim();
+    const tipo=document.getElementById('wz-tipo').value;
+    const acc=document.getElementById('wz-account-id').value;
+    if(nome.length<3){alert('Nome deve ter ao menos 3 caracteres.');ok=false;}
+    else if(!tipo){alert('Selecione o tipo do template.');ok=false;}
+    else if(!acc){alert('Selecione a conta Meta.');ok=false;}
+  }
+  if(step===3){
+    const camp=document.getElementById('wz-camp-pattern').value.trim();
+    const adset=document.getElementById('wz-adset-pattern').value.trim();
+    const ad=document.getElementById('wz-ad-pattern').value.trim();
+    if(!camp||!adset||!ad){alert('Preencha os 3 padrões de nomenclatura.');ok=false;}
+    else if(!camp.includes('{{utm_campaign}}')){alert('campaign_name_pattern deve conter {{utm_campaign}}.');ok=false;}
+  }
+  return ok;
+}
+
+function wizardObjetivoChange(){
+  const obj=document.getElementById('wz-objetivo').value;
+  const isConv=obj==='OUTCOME_SALES'||obj==='OUTCOME_LEADS';
+  document.getElementById('wz-custom-event-wrap').style.display=isConv?'block':'none';
+  if(obj==='OUTCOME_TRAFFIC')document.getElementById('wz-optgoal').value='LANDING_PAGE_VIEWS';
+  else if(obj==='OUTCOME_SALES')document.getElementById('wz-optgoal').value='OFFSITE_CONVERSIONS';
+  else if(obj==='OUTCOME_LEADS')document.getElementById('wz-optgoal').value='LEAD_GENERATION';
+}
+
+function wizardBidChange(){
+  const v=document.getElementById('wz-bid-strategy').value;
+  document.getElementById('wz-bid-amount-wrap').style.display=(v!=='LOWEST_COST_WITHOUT_CAP')?'block':'none';
+}
+
+function previewNomenclatura(){
+  const camp=document.getElementById('wz-camp-pattern').value;
+  const adset=document.getElementById('wz-adset-pattern').value;
+  const ad=document.getElementById('wz-ad-pattern').value;
+  const url=document.getElementById('wz-utm-url').value;
+  const wrap=document.getElementById('wz-preview-wrap');
+  if(!camp&&!adset&&!ad){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  const repl=s=>s
+    .replace(/\{\{utm_campaign\}\}/g,'exemploUtm')
+    .replace(/\{\{utm_source\}\}/g,'FB')
+    .replace(/\{\{dominio_curto\}\}/g,'MEU')
+    .replace(/\{\{numero\}\}/g,'1')
+    .replace(/\{\{link_destino\}\}/g,'https://meu-site.com')
+    .replace(/\{\{bloco\}\}/g,'1')
+    .replace(/\{\{botao\}\}/g,'1');
+  const lines=[];
+  if(camp)lines.push(`Campanha: ${repl(camp)}`);
+  if(adset)lines.push(`Conjunto: ${repl(adset)}`);
+  if(ad)lines.push(`Anúncio:  ${repl(ad)}`);
+  if(url)lines.push(`URL:      ${repl(url)}`);
+  document.getElementById('wz-preview-text').textContent=lines.join('\n');
+}
+
+function renderResumoWizard(){
+  const get=id=>document.getElementById(id)?.value||'';
+  const checked=id=>document.getElementById(id)?.checked;
+  document.getElementById('wz-resumo').innerHTML=`
+    <b>Nome:</b> ${esc(get('wz-nome'))}<br>
+    <b>Tipo:</b> ${esc(get('wz-tipo'))}<br>
+    <b>Conta:</b> ${esc(get('wz-account-id'))}<br>
+    <b>Objetivo:</b> ${esc(get('wz-objetivo'))} / ${esc(get('wz-optgoal'))}<br>
+    <b>Campanha:</b> ${esc(get('wz-camp-pattern'))}<br>
+    <b>Conjunto:</b> ${esc(get('wz-adset-pattern'))}<br>
+    <b>Anúncio:</b> ${esc(get('wz-ad-pattern'))}<br>
+    <b>Orçamento:</b> R$ ${esc(get('wz-orcamento'))}/dia<br>
+    <b>Bid Strategy:</b> ${esc(get('wz-bid-strategy'))}<br>
+    <b>Meia-noite:</b> ${checked('wz-meia-noite')?'Sim':'Não'}
+  `;
+}
+
+function buildPublico(){
+  const paises=[document.getElementById('wz-pais').value||'BR'];
+  const genero=document.getElementById('wz-genero').value||'all';
+  const idade_min=Number(document.getElementById('wz-idade-min').value)||18;
+  const idade_max=Number(document.getElementById('wz-idade-max').value)||65;
+  const saved=document.getElementById('wz-saved-audience').value;
+  const pub={tipo:'custom',paises,genero,idade_min,idade_max};
+  if(saved)pub.saved_audience_id=saved;
+  if(_wzInterests.length)pub.interesses=_wzInterests;
+  return pub;
+}
+
+function buildPlacements(){
+  const pl={facebook:[],instagram:[]};
+  document.querySelectorAll('#wz-placements input[type=checkbox]:checked').forEach(cb=>{
+    const[net,slot]=cb.value.split('-');
+    if(net==='fb')pl.facebook.push(slot);
+    else pl.instagram.push(slot==='stream'?'stream':slot);
+  });
+  return pl;
+}
+
+async function salvarTemplate(){
+  const btn=document.getElementById('wz-btn-next');
+  btn.disabled=true;
+  btn.textContent='Salvando…';
+
+  const body={
+    nome:document.getElementById('wz-nome').value.trim(),
+    descricao:document.getElementById('wz-descricao').value.trim()||null,
+    tipo:document.getElementById('wz-tipo').value,
+    account_id:document.getElementById('wz-account-id').value,
+    objetivo:document.getElementById('wz-objetivo').value,
+    optimization_goal:document.getElementById('wz-optgoal').value,
+    billing_event:document.getElementById('wz-billing').value,
+    pixel_id:document.getElementById('wz-pixel').value||null,
+    custom_event_type:document.getElementById('wz-custom-event-wrap').style.display!=='none'?document.getElementById('wz-custom-event').value:null,
+    campaign_name_pattern:document.getElementById('wz-camp-pattern').value.trim(),
+    adset_name_pattern:document.getElementById('wz-adset-pattern').value.trim(),
+    ad_name_pattern:document.getElementById('wz-ad-pattern').value.trim(),
+    utm_pattern_url:document.getElementById('wz-utm-url').value.trim()||null,
+    orcamento_diario_padrao:Number(document.getElementById('wz-orcamento').value)||6,
+    bid_strategy:document.getElementById('wz-bid-strategy').value,
+    bid_amount:document.getElementById('wz-bid-amount-wrap').style.display!=='none'?Number(document.getElementById('wz-bid-amount').value)||null:null,
+    agendar_meia_noite:document.getElementById('wz-meia-noite').checked,
+    publico:buildPublico(),
+    placements:buildPlacements(),
+  };
+
+  try{
+    const url=_wzEditId?`/api/templates/${_wzEditId}`:'/api/templates';
+    const method=_wzEditId?'PUT':'POST';
+    const r=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.erro||r.statusText);
+    fecharWizard();
+    await loadTemplates();
+    alert(_wzEditId?`Template "${d.nome}" atualizado!`:`Template "${d.nome}" criado com sucesso!`);
+  }catch(e){
+    alert(`Erro: ${e.message}`);
+  }finally{
+    btn.disabled=false;
+    btn.textContent=_wzEditId?'Salvar':'Criar Template';
+  }
+}
+
+async function duplicarTemplate(id){
+  try{
+    const r=await fetch(`/api/templates/${id}/duplicar`,{method:'POST'});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.erro||r.statusText);
+    await loadTemplates();
+    alert(`Template duplicado: "${d.nome}"`);
+  }catch(e){
+    alert(`Erro: ${e.message}`);
+  }
+}
+
+async function excluirTemplate(id,nome){
+  if(!confirm(`Excluir o template "${nome}"? Esta ação não pode ser desfeita.`))return;
+  try{
+    const r=await fetch(`/api/templates/${id}`,{method:'DELETE'});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.erro||r.statusText);
+    await loadTemplates();
+  }catch(e){
+    alert(`Erro: ${e.message}`);
+  }
+}
+
+function usarTemplate(id){
+  const t=_templates.find(x=>x.id===id);
+  if(!t)return;
+  alert(`Template "${t.nome}" selecionado.\n(Fase 2: lançamento real de campanhas via API Meta)`);
+}
+
+async function carregarPixels(accountId){
+  const sel=document.getElementById('wz-pixel');
+  if(!sel||!accountId)return;
+  try{
+    const r=await fetch(`/api/meta-resources/pixels?account_id=${encodeURIComponent(accountId)}`);
+    const pixels=await r.json();
+    const cur=sel.value;
+    sel.innerHTML='<option value="">Sem pixel</option>'+pixels.map(p=>`<option value="${esc(p.id)}"${p.id===cur?' selected':''}>${esc(p.name)} (${esc(p.id)})</option>`).join('');
+  }catch(e){
+    // silently ignore — pixel optional
+  }
+}
+
+async function carregarSavedAudiences(accountId){
+  const sel=document.getElementById('wz-saved-audience');
+  if(!sel||!accountId)return;
+  try{
+    const r=await fetch(`/api/meta-resources/saved-audiences?account_id=${encodeURIComponent(accountId)}`);
+    const auds=await r.json();
+    const cur=sel.value;
+    sel.innerHTML='<option value="">Nenhuma / Público aberto</option>'+auds.map(a=>`<option value="${esc(a.id)}"${a.id===cur?' selected':''}>${esc(a.name)}${a.approximate_count?` (~${NUM(a.approximate_count)})`:''})</option>`).join('');
+  }catch(e){
+    // silently ignore
+  }
+}
+
+async function buscarInteresses(q){
+  clearTimeout(_interestDebounce);
+  const res=document.getElementById('interest-results');
+  if(!q||q.length<2){res.style.display='none';return;}
+  _interestDebounce=setTimeout(async()=>{
+    try{
+      const r=await fetch(`/api/meta-resources/interest-search?q=${encodeURIComponent(q)}`);
+      const items=await r.json();
+      if(!items.length){res.style.display='none';return;}
+      res.innerHTML=items.map(i=>`<div class="interest-result-item" onclick="addInteresse(${JSON.stringify(i)})">
+        <span>${esc(i.name)}</span>
+        <small>${i.audience_size?NUM(i.audience_size)+' pessoas':''}</small>
+      </div>`).join('');
+      res.style.display='block';
+    }catch(e){res.style.display='none';}
+  },350);
+}
+
+function addInteresse(interest){
+  if(!_wzInterests.find(i=>i.id===interest.id))_wzInterests.push(interest);
+  renderInterestTags();
+  document.getElementById('interest-results').style.display='none';
+  document.getElementById('wz-interest-search').value='';
+}
+
+function removeInteresse(id){
+  _wzInterests=_wzInterests.filter(i=>i.id!==id);
+  renderInterestTags();
+}
+
+function renderInterestTags(){
+  document.getElementById('interest-tags').innerHTML=_wzInterests.map(i=>`<span class="i-tag">${esc(i.name)}<button onclick="removeInteresse('${i.id}')">×</button></span>`).join('');
+}
+
+async function templatesSeed(){
+  if(!confirm('Inserir 3 templates de exemplo? Será ignorado se já existirem.'))return;
+  try{
+    const r=await fetch('/api/templates/seed',{method:'POST'});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.erro||r.statusText);
+    alert(`Seed OK: ${d.criados} template(s) criado(s).`);
+    await loadTemplates();
+  }catch(e){
+    alert(`Erro no seed: ${e.message}`);
   }
 }
 </script>

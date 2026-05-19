@@ -15,6 +15,8 @@ const { handler: notifHandler, marcarLida, marcarTodasLidas } = require('./src/a
 const drilldownHandler = require('./src/app/api/drilldown/route');
 const funilHandler     = require('./src/app/api/funil/route');
 const historicoHandler = require('./src/app/api/historico/route');
+const { handler: templatesHandler, seedHandler: templatesSeedHandler } = require('./src/app/api/templates/route');
+const metaResourcesHandler = require('./src/app/api/meta-resources/route');
 const supabase = require('./src/lib/supabase');
 const { syncAll } = require('./src/lib/sync');
 const { startScheduler } = require('./src/lib/scheduler');
@@ -351,6 +353,21 @@ app.get('/api/drilldown/:utm', requireAuth, drilldownHandler);
 
 // ── Análise de Funil ──────────────────────────────────────────────────────────
 app.get('/api/funil', requireAuth, funilHandler);
+
+// ── Campaign Templates ────────────────────────────────────────────────────────
+app.get('/api/templates', requireAuth, (req, res) => templatesHandler(req, res));
+app.post('/api/templates/seed', requireAuth, templatesSeedHandler);
+app.get('/api/templates/:id', requireAuth, (req, res) => templatesHandler(req, res));
+app.post('/api/templates/:id/duplicar', requireAuth, (req, res) => {
+  req.params.action = 'duplicar';
+  templatesHandler(req, res);
+});
+app.post('/api/templates', requireAuth, (req, res) => templatesHandler(req, res));
+app.put('/api/templates/:id', requireAuth, (req, res) => templatesHandler(req, res));
+app.delete('/api/templates/:id', requireAuth, (req, res) => templatesHandler(req, res));
+
+// ── Meta Resources (proxy com cache 1h) ──────────────────────────────────────
+app.get('/api/meta-resources/:resource', requireAuth, metaResourcesHandler);
 
 // ── Histórico ─────────────────────────────────────────────────────────────────
 app.get('/api/historico/:utm', requireAuth, historicoHandler);
