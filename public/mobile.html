@@ -12,21 +12,16 @@
   <title>2Junior's</title>
   <style>
     :root{
-      --bg:oklch(0.09 0.005 260);
-      --card:oklch(0.12 0.005 260);
-      --sec:oklch(0.18 0.005 260);
-      --border:oklch(0.22 0.005 260);
-      --fg:oklch(0.95 0 0);
-      --muted:oklch(0.65 0 0);
-      --accent:oklch(0.7 0.18 145);
-      --c1:oklch(0.7 0.18 220);
-      --c2:oklch(0.7 0.18 145);
-      --c3:oklch(0.75 0.18 55);
-      --ok:oklch(0.7 0.18 145);
-      --warn:oklch(0.75 0.18 55);
-      --bad:oklch(0.65 0.2 25);
-      --safe-top:env(safe-area-inset-top,0px);
-      --safe-bot:env(safe-area-inset-bottom,0px);
+      --bg:#0A0A0F;--card:#14141A;--sec:#1C1C24;--sec-strong:#25252E;
+      --border:#2A2A35;--border-strong:#3A3A48;
+      --fg:#F5F5F7;--fg-soft:#D1D1D6;--muted:#86868B;--muted-light:#6E6E73;
+      --accent:#00E5B4;--accent-fg:#000000;
+      --success:#00E5B4;--success-soft:rgba(0,229,180,.12);
+      --warning:#FFB830;--warning-soft:rgba(255,184,48,.12);
+      --danger:#FF4D6A;--danger-soft:rgba(255,77,106,.12);
+      --c1:#00E5B4;--c2:#7C6AFF;--c3:#FFB830;
+      --ok:var(--success);--warn:var(--warning);--bad:var(--danger);
+      --safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px);
     }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
     html,body{height:100%;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;overscroll-behavior:none}
@@ -100,13 +95,20 @@
     .bnav-btn svg{width:22px;height:22px}
 
     /* toast */
-    .toast{position:fixed;bottom:calc(var(--safe-bot) + 5rem);left:50%;transform:translateX(-50%) translateY(1rem);background:#1e2028;border:1px solid var(--border);color:var(--fg);padding:.5rem 1.25rem;border-radius:2rem;font-size:.8rem;opacity:0;transition:opacity .25s,transform .25s;z-index:60;white-space:nowrap}
+    .toast{position:fixed;bottom:calc(var(--safe-bot) + 5rem);left:50%;transform:translateX(-50%) translateY(1rem);background:var(--card);border:1px solid var(--border);color:var(--fg);padding:.5rem 1.25rem;border-radius:2rem;font-size:.8rem;opacity:0;transition:opacity .25s,transform .25s;z-index:60;white-space:nowrap}
     .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
     /* light theme */
     :root[data-theme="light"]{
-      --bg:#f5f6fa;--card:#ffffff;--sec:#eef0f6;--border:#d0d4e0;
-      --fg:#1a1d2e;--muted:#6b7280;--accent:oklch(0.5 0.18 145);
+      --bg:#F5F5F7;--card:#FFFFFF;--sec:#FAFAFA;--sec-strong:#EEEEF1;
+      --border:#E5E5EA;--border-strong:#D1D1D6;
+      --fg:#1D1D1F;--fg-soft:#424245;--muted:#86868B;--muted-light:#AEAEB2;
+      --accent:#007AFF;--accent-fg:#FFFFFF;
+      --success:#34C759;--success-soft:#E8F8EC;
+      --warning:#FF9500;--warning-soft:#FFF4E5;
+      --danger:#FF3B30;--danger-soft:#FFE9E8;
+      --c1:#007AFF;--c2:#34C759;--c3:#FF9500;
+      --ok:var(--success);--warn:var(--warning);--bad:var(--danger);
     }
     body{transition:background .25s ease,color .25s ease}
   </style>
