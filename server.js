@@ -10,6 +10,7 @@ const insightsHandler = require('./src/app/api/insights/route');
 const dashboardHandler = require('./src/app/api/dashboard/route');
 const overviewHandler = require('./src/app/api/overview/route');
 const reportsGamHandler = require('./src/app/api/reports-gam/route');
+const gamStatusHandler  = require('./src/app/api/gam-status/route');
 const metasHandler = require('./src/app/api/metas/route');
 const { handler: notifHandler, marcarLida, marcarTodasLidas } = require('./src/app/api/notificacoes/route');
 const drilldownHandler = require('./src/app/api/drilldown/route');
@@ -81,6 +82,7 @@ app.post('/api/insights', requireAuth, insightsHandler);
 app.get('/api/overview', requireAuth, overviewHandler);
 app.get('/api/dashboard', requireAuth, dashboardHandler);
 app.get('/api/reports-gam', requireAuth, reportsGamHandler);
+app.get('/api/gam-status', requireAuth, gamStatusHandler);
 
 // ── Contas Meta ──────────────────────────────────────────────────────────────
 app.get('/api/contas', requireAuth, async (_req, res) => {

@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#0e0f16"/>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,700;1,900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,700;1,900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <script src="/lib/chart.umd.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -39,8 +39,11 @@
       --sw:260px;--th:64px;--r:.5rem;--rl:.75rem;
     }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    *{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Inter","Helvetica Neue",system-ui,sans-serif!important}
+    .logo,.brand-title{font-family:'Playfair Display',Georgia,serif!important}
+    code,pre,.ad-unit-name,.mono,.token-mask{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace!important}
     html,body{height:100%;overflow:hidden}
-    body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Inter","Helvetica Neue",system-ui,sans-serif;background:var(--bg);color:var(--fg);display:flex;line-height:1.5;letter-spacing:-.01em;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+    body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Inter","Helvetica Neue",system-ui,sans-serif;background:var(--bg);color:var(--fg);display:flex;line-height:1.5;letter-spacing:-.01em;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
 
     @keyframes fsu{from{opacity:0;transform:translateY(1rem)}to{opacity:1;transform:translateY(0)}}
     @keyframes pls{0%,100%{opacity:1}50%{opacity:.35}}
@@ -114,6 +117,9 @@
     .delay-badge.ol{color:var(--bad);border-color:color-mix(in oklch,var(--bad) 30%,transparent)}
     .d-dot{width:6px;height:6px;border-radius:50%;background:currentColor;animation:pls 2s infinite}
     .fx-badge{display:none;font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;font-size:.7rem;color:var(--muted);white-space:nowrap;height:2rem;padding:0 .75rem;border-radius:var(--r);background:var(--sec);border:1px solid var(--border);align-items:center}
+    .gam-delay{display:none;align-items:center;gap:4px;padding:0 .75rem;height:2rem;border-radius:var(--r);font-size:.7rem;font-weight:500;white-space:nowrap;border:1px solid}
+    .gam-delay.atrasado{background:var(--warning-soft);color:var(--warning);border-color:var(--warning)}
+    .gam-delay.muito-atrasado{background:var(--danger-soft);color:var(--danger);border-color:var(--danger)}
     .ico-btn{position:relative;width:2.25rem;height:2.25rem;border-radius:var(--r);border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);transition:color .2s,background .2s}
     .ico-btn:hover{color:var(--fg);background:var(--sec)}
     .notif-dot{position:absolute;top:.375rem;right:.375rem;width:.5rem;height:.5rem;border-radius:50%;background:var(--accent);animation:pls 2s infinite}
@@ -403,17 +409,12 @@
     .test-result.err{background:color-mix(in oklch,var(--bad) 10%,transparent);color:var(--bad);display:block}
 
     /* ── LOADING OVERLAY ── */
-    .loading-overlay{position:fixed;inset:0;background:rgba(10,10,15,0.95);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;backdrop-filter:blur(12px)}
-    .loading-container{position:relative;width:200px;height:200px;display:flex;align-items:center;justify-content:center}
-    .loading-spinner{position:absolute;width:100%;height:100%;animation:lo-rotate 3s linear infinite}
-    .loading-ring{animation:lo-dash 2s ease-in-out infinite}
-    .loading-logo{font-family:'Playfair Display','Georgia',serif;font-weight:900;font-style:italic;font-size:90px;color:white;text-shadow:0 0 30px rgba(255,255,255,0.5);animation:lo-glow 2s ease-in-out infinite;position:relative;line-height:1}
-    .loading-logo .apostrofo{font-size:32px;position:absolute;top:10px;right:-22px;color:rgba(255,255,255,0.7)}
-    .loading-text{margin-top:40px;color:rgba(255,255,255,0.8);font-size:12px;letter-spacing:4px;text-transform:uppercase;animation:lo-pulse 1.8s ease-in-out infinite}
-    @keyframes lo-rotate{100%{transform:rotate(360deg)}}
-    @keyframes lo-dash{0%{stroke-dashoffset:565}50%{stroke-dashoffset:141}100%{stroke-dashoffset:565;transform:rotate(360deg)}}
-    @keyframes lo-glow{0%,100%{text-shadow:0 0 20px rgba(255,255,255,0.4),0 0 40px rgba(255,255,255,0.2)}50%{text-shadow:0 0 30px rgba(255,255,255,0.8),0 0 60px rgba(255,255,255,0.4)}}
-    @keyframes lo-pulse{0%,100%{opacity:0.6}50%{opacity:1}}
+    .loading-overlay{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .3s}
+    .loading-overlay.hide{opacity:0;pointer-events:none}
+    .loading-content{display:flex;flex-direction:column;align-items:center;gap:24px;color:var(--accent)}
+    .loading-path-2{stroke-dasharray:300;stroke-dashoffset:300;animation:draw-2 1.5s ease-in-out infinite}
+    @keyframes draw-2{0%{stroke-dashoffset:300;opacity:.3}50%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:-300;opacity:.3}}
+    .loading-text{color:var(--muted)!important;font-size:13px!important;letter-spacing:.1em!important;text-transform:uppercase!important;animation:pls 1.8s ease-in-out infinite}
 
     /* ── SORTABLE HEADERS ── */
     thead th.sortable{cursor:pointer;user-select:none}
@@ -763,27 +764,21 @@
 <body>
 
 <!-- ═══ LOADING OVERLAY ═══ -->
-<div id="loading-overlay" class="loading-overlay" style="display:none">
-  <div class="loading-container">
-    <svg class="loading-spinner" viewBox="0 0 200 200">
-      <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
-      <circle cx="100" cy="100" r="90" fill="none" stroke="white" stroke-width="2"
-              stroke-linecap="round" stroke-dasharray="565" stroke-dashoffset="565"
-              class="loading-ring"/>
+<div id="loading-overlay" class="loading-overlay">
+  <div class="loading-content">
+    <svg width="120" height="120" viewBox="0 0 120 120">
+      <path class="loading-path-2"
+        d="M 30,40 C 30,20 50,15 65,20 C 80,25 85,40 80,55 C 75,70 50,80 30,95 L 90,95"
+        fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="92" y="35" font-family="Playfair Display,serif" font-size="20" fill="currentColor" font-style="italic">'s</text>
     </svg>
-    <div class="loading-logo">2<span class="apostrofo">'s</span></div>
+    <p class="loading-text" id="loading-text">Carregando...</p>
   </div>
-  <div class="loading-text" id="loading-text">Carregando...</div>
 </div>
 
 <!-- ═══ SIDEBAR ═══ -->
 <aside class="sb" id="sb">
   <div class="sb-logo">
-    <div class="sb-logo-icon">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/>
-      </svg>
-    </div>
     <span class="logo">2Junior's</span>
   </div>
   <nav class="sb-nav">
@@ -889,6 +884,7 @@
         <span id="sync-txt">sync —</span>
       </div>
       <div class="fx-badge" id="fx-badge">US$ 1 = R$ <span id="fx-rate">—</span></div>
+      <span class="gam-delay" id="gam-delay-global"></span>
       <div class="delay-badge" id="delay-badge" style="display:none">
         <span class="d-dot" id="delay-dot"></span>
         <svg id="delay-spin-ico" class="spin-ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
@@ -993,36 +989,22 @@
           </div>
         </section>
 
-        <div class="g-ch anim" style="animation-delay:150ms">
-          <div class="card chart-card">
-            <div class="chart-hd">
-              <div><div class="chart-title">Performance por Dia</div><div class="chart-sub">Barras: valores R$ · Linha: eCPM / ROAS (eixo direito)</div></div>
-            </div>
-            <div class="chart-toggles" id="chart-toggles">
-              <button class="ctog on" data-serie="fat" onclick="toggleSerie(this)">Faturamento</button>
-              <button class="ctog on" data-serie="inv" onclick="toggleSerie(this)">Investimento</button>
-              <button class="ctog on" data-serie="ecpm" onclick="toggleSerie(this)">eCPM</button>
-              <button class="ctog" data-serie="roas" onclick="toggleSerie(this)">ROAS</button>
-            </div>
-            <div style="position:relative;height:280px">
-              <canvas id="trend-canvas"></canvas>
+        <div class="card chart-card anim" style="animation-delay:150ms">
+          <div class="chart-hd">
+            <div>
+              <div class="chart-title">Performance por Dia</div>
+              <div class="chart-sub">Últimos 30 dias · Independente do filtro · Barras: R$ · Linha: eCPM / ROAS</div>
             </div>
           </div>
-          <div class="card pipe-card anim" style="animation-delay:250ms">
-            <div style="margin-bottom:1.25rem"><div class="chart-title">Top 4 Funis</div><div class="chart-sub">Distribuição por objetivo</div></div>
-            <div class="pipe-stages" id="funnel-stages"><div class="empty">Carregando…</div></div>
-            <div class="pipe-foot">
-              <span class="pipe-foot-lbl">Total Investido</span>
-              <span class="pipe-foot-val" id="funnel-total">—</span>
-            </div>
+          <div class="chart-toggles" id="chart-toggles">
+            <button class="ctog on" data-serie="fat" onclick="toggleSerie(this)">Faturamento</button>
+            <button class="ctog on" data-serie="inv" onclick="toggleSerie(this)">Investimento</button>
+            <button class="ctog on" data-serie="ecpm" onclick="toggleSerie(this)">eCPM</button>
+            <button class="ctog" data-serie="roas" onclick="toggleSerie(this)">ROAS</button>
           </div>
-        </div>
-
-        <div class="card anim" style="animation-delay:300ms">
-          <div class="deals-hd">
-            <div><div class="deals-title">Top Campanhas</div><div class="deals-sub">Por ROI no período — clique para filtrar</div></div>
+          <div style="position:relative;height:280px">
+            <canvas id="trend-canvas"></canvas>
           </div>
-          <div class="deal-list" id="top-camp-list"><div class="empty">Carregando…</div></div>
         </div>
       </div>
     </div>
@@ -1087,6 +1069,9 @@
     <!-- REPORTS GAM -->
     <div id="tab-gam" class="tab-panel">
       <div class="sec">
+        <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:.5rem;min-height:1.2rem">
+          <span id="gam-fresh-badge" style="display:none;font-size:.7rem;color:var(--success);font-weight:500"></span>
+        </div>
         <div class="g6">
           <div class="card card-hv gam-c anim" style="animation-delay:0ms"><div class="gam-l">eCPM</div><div class="gam-v" id="g-ecpm">—</div></div>
           <div class="card card-hv gam-c anim" style="animation-delay:80ms"><div class="gam-l">RPS</div><div class="gam-v" id="g-rps">—</div></div>
@@ -1757,11 +1742,11 @@ function showOverlay(msg='Carregando...'){
   if(!ol)return;
   const t=document.getElementById('loading-text');
   if(t)t.textContent=msg;
-  ol.style.display='flex';
+  ol.classList.remove('hide');
 }
 function hideOverlay(){
   const ol=document.getElementById('loading-overlay');
-  if(ol)ol.style.display='none';
+  if(ol)ol.classList.add('hide');
 }
 
 /* ═══ REFRESH / FORCE SYNC ═══ */
@@ -2072,14 +2057,27 @@ function renderAll(d){
   renderKPIs(k);
   renderPrevisao(d.previsao||null);
   renderDelay(k);
-  renderTrend(d.trend||[]);
-  renderFunnels(d.topFunnels||[]);
-  renderTopCamps(d.topCampaigns||[]);
   renderAdsets(d.adsets||[],k);
   renderGAM(k,d.adUnits||[]);
   renderUTMCards(d.utmCampaignTop3||[],d.utmSourceTop3||[]);
   renderNetworks(d.networks||[]);
   updateMetaProgress(d.metas_progresso||{},k);
+}
+
+/* ── TREND CHART — FIXED 30 DAYS ── */
+let _trendFixed30=[];
+async function loadTrendFixed(){
+  try{
+    const hoje=new Date();
+    const s=new Date(hoje);s.setDate(s.getDate()-29);
+    const since=s.toISOString().slice(0,10);
+    const until=hoje.toISOString().slice(0,10);
+    const res=await fetch(`/api/overview?since=${since}&until=${until}`);
+    if(!res.ok)return;
+    const d=await res.json();
+    _trendFixed30=d.trend||[];
+    renderTrend(_trendFixed30);
+  }catch(e){console.warn('[trend30]',e);}
 }
 
 /* ── NETWORKS ── */
@@ -2174,7 +2172,7 @@ function renderDelay(k){
 let _trendChart=null;
 function _cssVar(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
 const CHART_COLORS={
-  dark:{fat:'#00E5B4',inv:'#FF4D6A',ecpm:'#7C6AFF',roas:'#FFB830'},
+  dark:{fat:'#00FFA3',inv:'#FF3358',ecpm:'#A78BFA',roas:'#FFB830'},
   light:{fat:'#00A862',inv:'#E5384B',ecpm:'#5856D6',roas:'#FF9500'},
 };
 function getChartColor(serie){
@@ -2569,25 +2567,16 @@ function renderAtrasoGAM(atrasoInfo){
 
 async function loadGamDelayGlobal(){
   try{
-    const today=document.getElementById('f-since').value||new Date().toISOString().slice(0,10);
-    const res=await fetch(`/api/reports-gam?since=${today}&until=${today}`);
-    if(!res.ok)return;
-    const d=await res.json();
-    const a=d.atraso_gam;
-    if(!a||a.motivo==='periodo_passado')return;
-    const b=document.getElementById('delay-badge');
-    if(!b)return;
-    b.style.display='inline-flex';
-    const dot=document.getElementById('delay-dot');
-    if(dot)dot.style.display='inline-block';
-    if(!a.tem_atraso){
-      document.getElementById('delay-txt').textContent='GAM ao vivo';
-      b.className='delay-badge fr';
-    }else{
-      const h=a.horas_atraso||0;
-      document.getElementById('delay-txt').textContent=`GAM ${h}h atraso`;
-      b.className='delay-badge '+(h<3?'st':'ol');
-    }
+    const r=await fetch('/api/gam-status');
+    if(!r.ok)return;
+    const a=await r.json();
+    const el=document.getElementById('gam-delay-global');
+    if(!el)return;
+    if(!a.tem_atraso){el.style.display='none';return;}
+    el.style.display='inline-flex';
+    el.textContent=`🕐 ${a.horas_atraso}h de atraso`;
+    el.className=`gam-delay ${a.horas_atraso>=3?'muito-atrasado':'atrasado'}`;
+    el.title=`Última hora com dados: ${a.ultima_hora_com_dados??'—'}h · Agora: ${a.hora_atual}h`;
   }catch(_){}
 }
 
@@ -2794,6 +2783,27 @@ async function populateDomainSelect(){
 }
 
 /* ═══ REPORTS GAM ═══ */
+function _renderGAMData(d){
+  renderGAM(d.kpis||{},d.adUnits||[]);
+  renderHourlyTable(d.hourly||[]);
+  renderAtrasoGAM(d.atraso_gam||null);
+  renderUtmCampTable(d.utmCampaigns||[]);
+  renderTopUtmSourceCard(d.topUtmSource||[]);
+  const top3src=d.topUtmCampaign||(d.utmCampaigns||[]).slice(0,3);
+  const top3camp=top3src.map((u,i)=>`<div class="utm-item">
+    <span class="utm-rank">${i+1}.</span>
+    <span class="utm-name" title="${esc(u.utm_campaign)}">${esc(u.utm_campaign)}</span>
+    <span class="utm-rev" style="color:var(--c1)">${BRL(u.receita)}</span>
+  </div>`).join('');
+  const campListEl=document.getElementById('utm-campaign-list');
+  if(campListEl)campListEl.innerHTML=top3camp||'<div class="empty" style="padding:.75rem 0;font-size:.8125rem">Sem dados</div>';
+  if(top3camp||(d.topUtmSource||[]).length)document.getElementById('utm-cards').style.display='';
+  if(d.fromCache===false){
+    const badge=document.getElementById('gam-fresh-badge');
+    if(badge){const hm=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});badge.textContent=`✓ atualizado às ${hm}`;badge.style.display='inline';}
+  }
+}
+
 async function loadGAMReport(){
   const since=document.getElementById('f-since').value;
   const until=document.getElementById('f-until').value;
@@ -2803,30 +2813,25 @@ async function loadGAMReport(){
   document.getElementById('adunit-body').innerHTML='<tr><td colspan="5" class="empty">Carregando…</td></tr>';
   document.getElementById('hora-tbody').innerHTML='<tr><td colspan="9" class="empty">Carregando…</td></tr>';
   document.getElementById('utm-tbody').innerHTML='<tr><td colspan="7" class="empty">Carregando…</td></tr>';
+  const freshBadge=document.getElementById('gam-fresh-badge');
+  if(freshBadge)freshBadge.style.display='none';
   try{
-    const res=await fetch(`/api/reports-gam?${q}`);
+    // 1. Load cached (fast ~200ms)
+    const res=await fetch(`/api/reports-gam?${q}&cached=true`);
     if(!res.ok)throw new Error((await res.json().catch(()=>({}))).error||res.statusText);
     const d=await res.json();
-    renderGAM(d.kpis||{},d.adUnits||[]);
-    renderHourlyTable(d.hourly||[]);
-    renderAtrasoGAM(d.atraso_gam||null);
-    renderUtmCampTable(d.utmCampaigns||[]);
-    renderTopUtmSourceCard(d.topUtmSource||[]);
-    // UTM Campaign card top-3
-    const top3src=d.topUtmCampaign||(d.utmCampaigns||[]).slice(0,3);
-    const top3camp=top3src.map((u,i)=>`<div class="utm-item">
-      <span class="utm-rank">${i+1}.</span>
-      <span class="utm-name" title="${esc(u.utm_campaign)}">${esc(u.utm_campaign)}</span>
-      <span class="utm-rev" style="color:var(--c1)">${BRL(u.receita)}</span>
-    </div>`).join('');
-    const campListEl=document.getElementById('utm-campaign-list');
-    if(campListEl)campListEl.innerHTML=top3camp||'<div class="empty" style="padding:.75rem 0;font-size:.8125rem">Sem dados</div>';
-    if(top3camp||(d.topUtmSource||[]).length)document.getElementById('utm-cards').style.display='';
+    _renderGAMData(d);
   }catch(e){
     document.getElementById('adunit-body').innerHTML=`<tr><td colspan="5" class="empty" style="color:var(--bad)">${esc(e.message)}</td></tr>`;
     document.getElementById('hora-tbody').innerHTML=`<tr><td colspan="9" class="empty" style="color:var(--bad)">${esc(e.message)}</td></tr>`;
     document.getElementById('utm-tbody').innerHTML=`<tr><td colspan="7" class="empty" style="color:var(--bad)">${esc(e.message)}</td></tr>`;
   }
+  // 2. Refresh from live GAM in background
+  const q2=q+'&cached=false';
+  fetch(`/api/reports-gam?${q2}`)
+    .then(r=>r.json())
+    .then(fresh=>{if(fresh&&!fresh.error)_renderGAMData({...fresh,fromCache:false});})
+    .catch(e=>console.warn('[gam fresh]',e));
 }
 
 /* ═══ CAMPANHAS DB ═══ */
@@ -3848,7 +3853,8 @@ async function abrirHistorico(utm){
   setInterval(loadNotifCount,30000);
   loadGamDelayGlobal();
   setInterval(loadGamDelayGlobal,5*60*1000);
-  window.addEventListener('resize',()=>{if(S.metrics?.trend)renderTrend(S.metrics.trend)});
+  loadTrendFixed();
+  window.addEventListener('resize',()=>{if(_trendFixed30.length)renderTrend(_trendFixed30)});
 })();
 
 /* ═══ ANÁLISE DE FUNIL ═══ */

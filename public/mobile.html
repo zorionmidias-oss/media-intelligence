@@ -10,6 +10,9 @@
   <link rel="manifest" href="/manifest.json"/>
   <link rel="apple-touch-icon" href="/icon-192.png"/>
   <title>2Junior's</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root{
       --bg:#0A0A0F;--card:#14141A;--sec:#1C1C24;--sec-strong:#25252E;
@@ -24,7 +27,8 @@
       --safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px);
     }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-    html,body{height:100%;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;overscroll-behavior:none}
+    *{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Inter","Helvetica Neue",system-ui,sans-serif!important}
+    html,body{height:100%;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Inter","Helvetica Neue",system-ui,sans-serif;font-size:15px;overscroll-behavior:none;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
     body{display:flex;flex-direction:column;overflow:hidden}
 
     /* header */
@@ -84,6 +88,15 @@
     .overlay.on{display:flex}
     .spin{width:2rem;height:2rem;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* loading overlay */
+    .loading-overlay{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .3s}
+    .loading-overlay.hide{opacity:0;pointer-events:none}
+    .loading-content{display:flex;flex-direction:column;align-items:center;gap:20px;color:var(--accent)}
+    .loading-path-2{stroke-dasharray:300;stroke-dashoffset:300;animation:draw-2 1.5s ease-in-out infinite}
+    @keyframes draw-2{0%{stroke-dashoffset:300;opacity:.3}50%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:-300;opacity:.3}}
+    .loading-text-m{color:var(--muted);font-size:12px;letter-spacing:.1em;text-transform:uppercase;animation:mpls 1.8s ease-in-out infinite}
+    @keyframes mpls{0%,100%{opacity:.6}50%{opacity:1}}
 
     /* empty state */
     .empty{text-align:center;color:var(--muted);padding:2rem 1rem;font-size:.875rem}
@@ -152,12 +165,6 @@
     <div class="kpi-card"><div class="kpi-label">ROI</div><div class="kpi-val" id="kpi-roi">—</div></div>
   </div>
 
-  <!-- Top funnels -->
-  <div class="section-title">Top Funis</div>
-  <div class="funnel-list" id="funnel-list">
-    <div class="empty">Carregando…</div>
-  </div>
-
   <!-- Campaigns -->
   <div class="section-title">Campanhas</div>
   <div class="tbl-wrap">
@@ -180,6 +187,17 @@
   </button>
 </nav>
 
+<div id="loading-overlay" class="loading-overlay">
+  <div class="loading-content">
+    <svg width="100" height="100" viewBox="0 0 120 120">
+      <path class="loading-path-2"
+        d="M 30,40 C 30,20 50,15 65,20 C 80,25 85,40 80,55 C 75,70 50,80 30,95 L 90,95"
+        fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="92" y="35" font-family="serif" font-size="20" fill="currentColor" font-style="italic">'s</text>
+    </svg>
+    <p class="loading-text-m">Carregando...</p>
+  </div>
+</div>
 <div class="overlay" id="overlay"><div class="spin"></div></div>
 <div class="toast" id="toast"></div>
 
@@ -198,6 +216,8 @@ function esc(s){ const d=document.createElement('div');d.textContent=s||'';retur
 
 function showOverlay(){ document.getElementById('overlay').classList.add('on'); }
 function hideOverlay(){ document.getElementById('overlay').classList.remove('on'); }
+function hidePageLoading(){ document.getElementById('loading-overlay')?.classList.add('hide'); }
+window.addEventListener('load',()=>setTimeout(hidePageLoading,400));
 
 function showToast(msg){
   const t=document.getElementById('toast');
@@ -243,6 +263,7 @@ async function loadData(){
     if(!r.ok)throw new Error(r.statusText);
     const d=await r.json();
     renderAll(d);
+    hidePageLoading();
   }catch(e){console.error('[mobile]',e);showToast('Erro ao carregar dados');}
   finally{S.busy=false;hideOverlay();}
 }
@@ -285,7 +306,6 @@ function renderAll(d){
   const lCard=document.getElementById('kpi-lucro-card');
   if(lCard)lCard.classList.toggle('neg',lucro<0);
 
-  renderFunnels(d.topFunnels||[]);
   renderCamps(d.topCampaigns||[]);
 }
 

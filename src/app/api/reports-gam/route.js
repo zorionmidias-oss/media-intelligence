@@ -30,9 +30,126 @@ function calcularAtrasoGAM(hourly, until) {
   };
 }
 
+async function saveToCache(hourly, utmCampaigns, utmSources, df, dt, prefix) {
+  const pfx = prefix || '';
+  const now = new Date().toISOString();
+
+  // Save hourly (aggregate by hour across all dates in range)
+  if (hourly && hourly.length > 0) {
+    const horaRows = hourly.map(h => ({
+      data: dt, // single date for today queries; multi-day callers pass since=until=today
+      hora: h.hora,
+      impressoes: h.impressoes || 0,
+      nao_preenchidas: h.nao_preenchidas || 0,
+      receita: h.receita || 0,
+      ecpm: h.ecpm || 0,
+      ctr: h.ctr || 0,
+      cliques: h.cliques || 0,
+      cpc: h.cpc || 0,
+      prefixo_ad_unit: pfx,
+      updated_at: now,
+    }));
+    await supabase.from('report_hora')
+      .upsert(horaRows, { onConflict: 'data,hora,prefixo_ad_unit' })
+      .catch(e => console.warn('[reports-gam] hora upsert:', e.message));
+  }
+
+  // Save UTM campaigns
+  if (utmCampaigns && utmCampaigns.length > 0) {
+    const rows = utmCampaigns.map(u => ({
+      data: dt,
+      utm_campaign: u.utm_campaign,
+      impressoes: u.impressoes || 0,
+      receita: u.receita || 0,
+      ecpm: u.ecpm || 0,
+      ctr: u.ctr || 0,
+      cliques: u.cliques || 0,
+      cpc: u.cpc || 0,
+      prefixo_ad_unit: pfx,
+      updated_at: now,
+    }));
+    await supabase.from('report_utm_campaign')
+      .upsert(rows, { onConflict: 'data,utm_campaign,prefixo_ad_unit' })
+      .catch(e => console.warn('[reports-gam] utm_campaign upsert:', e.message));
+  }
+
+  // Save UTM sources
+  if (utmSources && utmSources.length > 0) {
+    const rows = utmSources.map(u => ({
+      data: dt,
+      utm_source: u.utm_source,
+      impressoes: u.impressoes || 0,
+      receita: u.receita || 0,
+      ecpm: u.ecpm || 0,
+      cliques: u.cliques || 0,
+      prefixo_ad_unit: pfx,
+      updated_at: now,
+    }));
+    await supabase.from('report_utm_source')
+      .upsert(rows, { onConflict: 'data,utm_source,prefixo_ad_unit' })
+      .catch(e => console.warn('[reports-gam] utm_source upsert:', e.message));
+  }
+}
+
+async function loadFromCache(df, dt, pfx) {
+  const prefix = pfx || '';
+
+  const [horaRes, campRes, srcRes] = await Promise.all([
+    supabase.from('report_hora')
+      .select('hora,impressoes,nao_preenchidas,receita,ecpm,ctr,cliques,cpc')
+      .gte('data', df).lte('data', dt)
+      .eq('prefixo_ad_unit', prefix)
+      .order('hora'),
+    supabase.from('report_utm_campaign')
+      .select('utm_campaign,impressoes,receita,ecpm,ctr,cliques,cpc')
+      .gte('data', df).lte('data', dt)
+      .eq('prefixo_ad_unit', prefix)
+      .order('receita', { ascending: false }),
+    supabase.from('report_utm_source')
+      .select('utm_source,impressoes,receita,ecpm,cliques')
+      .gte('data', df).lte('data', dt)
+      .eq('prefixo_ad_unit', prefix)
+      .order('receita', { ascending: false }),
+  ]);
+
+  const hourly = (horaRes.data || []).map(h => ({
+    hora: h.hora,
+    impressoes: +h.impressoes,
+    nao_preenchidas: +h.nao_preenchidas,
+    receita: +h.receita,
+    ecpm: +h.ecpm,
+    ctr: +h.ctr,
+    cliques: +h.cliques,
+    cpc: +h.cpc,
+  })).filter(h => h.impressoes > 0 || h.nao_preenchidas > 0);
+
+  const utmCampaigns = (campRes.data || []).map(u => ({
+    utm_campaign: u.utm_campaign,
+    impressoes: +u.impressoes,
+    receita: +u.receita,
+    ecpm: +u.ecpm,
+    ctr: +u.ctr,
+    cliques: +u.cliques,
+    cpc: +u.cpc,
+  }));
+
+  const utmSources = (srcRes.data || []).map(u => ({
+    utm_source: u.utm_source,
+    impressoes: +u.impressoes,
+    receita: +u.receita,
+    ecpm: +u.ecpm,
+    cliques: +u.cliques,
+  }));
+
+  return { hourly, utmCampaigns, utmSources, fromCache: true };
+}
+
 async function handler(req, res) {
   try {
     const { since, until, domain } = req.query;
+    // ?cached=false forces live GAM API call; default is cached
+    const useCached = req.query.cached !== 'false';
+
     const now = new Date();
     const df = since || new Date(now.getTime() - 30 * 86400000).toISOString().slice(0, 10);
     const dt = until || now.toISOString().slice(0, 10);
@@ -40,7 +157,6 @@ async function handler(req, res) {
     let domainId = null;
     let adUnitPrefix = null;
     if (domain && domain !== 'all') {
-      // Accept domain by numeric id OR by nome string
       let dq = supabase.from('dominios').select('id,nome,prefixo_ad_unit,codigo_pedido_gam');
       if (/^\d+$/.test(String(domain))) {
         dq = dq.eq('id', Number(domain));
@@ -49,12 +165,10 @@ async function handler(req, res) {
       }
       const { data: d } = await dq.maybeSingle();
       domainId = d?.id || null;
-      // Derive prefix (same logic as sync.js): prefixo_ad_unit > codigo_pedido_gam > heuristic
       const rawPrefix = d?.prefixo_ad_unit
         || (d?.codigo_pedido_gam ? (d.codigo_pedido_gam.split('-')[0] + '_') : null)
         || (String(domain).replace(/[^a-z0-9]/gi, '').slice(0, 3) + '_');
-      adUnitPrefix = rawPrefix.toLowerCase(); // must be lowercase — GAM units compared lowercased
-      console.log(`[reports-gam] domain="${domain}" id=${domainId} prefix="${adUnitPrefix}" src=${d?.prefixo_ad_unit?'db_field':d?.codigo_pedido_gam?'gam_code':'heuristic'}`);
+      adUnitPrefix = rawPrefix.toLowerCase();
     }
 
     let gamQ = supabase
@@ -72,20 +186,31 @@ async function handler(req, res) {
     if (domainId) adsQ = adsQ.eq('dominio_id', domainId);
 
     const opts = { since: df, until: dt, adUnitPrefix: adUnitPrefix || undefined };
+    const pfx = adUnitPrefix || '';
 
-    const [
-      { data: rows },
-      { data: adsRows },
-      hourly,
-      utmCampaigns,
-      utmSources,
-    ] = await Promise.all([
-      gamQ,
-      adsQ,
-      fetchGAMHourly(opts),
-      fetchGAMUtmCampaigns(opts),
-      fetchGAMUtmSources(opts),
-    ]);
+    let hourly, utmCampaigns, utmSources, fromCache = false;
+
+    if (useCached) {
+      // Try cache first
+      const cached = await loadFromCache(df, dt, pfx);
+      hourly = cached.hourly;
+      utmCampaigns = cached.utmCampaigns;
+      utmSources = cached.utmSources;
+      fromCache = true;
+    } else {
+      // Live GAM API calls
+      [hourly, utmCampaigns, utmSources] = await Promise.all([
+        fetchGAMHourly(opts),
+        fetchGAMUtmCampaigns(opts),
+        fetchGAMUtmSources(opts),
+      ]);
+      // Save to cache in background
+      saveToCache(hourly, utmCampaigns, utmSources, df, dt, pfx).catch(e =>
+        console.warn('[reports-gam] saveToCache error:', e.message)
+      );
+    }
+
+    const [{ data: rows }, { data: adsRows }] = await Promise.all([gamQ, adsQ]);
 
     let totImps = 0, totRev = 0, totClicks = 0;
     let _ecpmWtSum = 0, _ecpmWt = 0;
@@ -146,6 +271,7 @@ async function handler(req, res) {
     })).sort((a, b) => b.impressions - a.impressions);
 
     res.json({
+      fromCache,
       kpis: {
         ecpm: +ecpm.toFixed(2),
         rps: +rps.toFixed(4),
