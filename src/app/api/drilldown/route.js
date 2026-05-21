@@ -149,7 +149,7 @@ async function handler(req, res) {
           params: {
             access_token: token,
             fields: 'spend,clicks,impressions,ctr,cpc,cpm,actions,cost_per_action_type',
-            date_preset: 'last_30d',
+            time_range: JSON.stringify({ since, until }),
           },
           timeout: 12000,
         }).then(r => {
@@ -174,7 +174,7 @@ async function handler(req, res) {
             params: {
               access_token: token,
               fields: 'spend,clicks,impressions,ctr,cpc,actions,cost_per_action_type',
-              date_preset: 'last_30d',
+              time_range: JSON.stringify({ since, until }),
             },
             timeout: 10000,
           }).then(r => {
@@ -195,10 +195,11 @@ async function handler(req, res) {
     await Promise.allSettled(insightJobs);
 
     // Bug A: convert USD→BRL for accounts with moeda='USD'
+    // acc.moeda existe após a migration; acc.currency é a coluna legada — checar ambas
     const accountCfgMap = {};
     for (const acc of accounts || []) {
       accountCfgMap[acc.ad_account_id] = {
-        moeda: acc.moeda || 'BRL',
+        moeda: acc.moeda || acc.currency || 'BRL',
         imposto: Number(acc.imposto_percentual || 0),
       };
     }

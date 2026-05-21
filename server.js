@@ -452,7 +452,19 @@ app.post('/api/meta/ad/:id/toggle', requireAuth, async (req, res) => {
 // ── Sync ─────────────────────────────────────────────────────────────────────
 app.post('/api/sync/forcar', requireAuth, async (req, res) => {
   try {
-    const result = await syncAll(req.body?.dateRange || undefined);
+    const dateRange = req.body?.dateRange || undefined;
+    // BUG 3: sync manual sempre sobrescreve — limpar manually_fixed antes de sincronizar
+    if (dateRange?.since && dateRange?.until) {
+      const { error: clrErr } = await supabase
+        .from('ads_consolidados')
+        .update({ manually_fixed: false })
+        .gte('data', dateRange.since)
+        .lte('data', dateRange.until)
+        .eq('manually_fixed', true);
+      if (clrErr) console.warn('[sync/forcar] clear manually_fixed:', clrErr.message);
+      else console.log(`[sync/forcar] manually_fixed limpo para ${dateRange.since}→${dateRange.until}`);
+    }
+    const result = await syncAll(dateRange);
     res.json(result);
   } catch (e) {
     res.status(500).json({ error: e.message });

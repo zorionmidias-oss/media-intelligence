@@ -30,8 +30,9 @@ function calcularAtrasoGAM(hourly, until) {
   };
 }
 
-async function saveToCache(hourly, utmCampaigns, utmSources, df, dt, prefix) {
+async function saveToCache(hourly, utmCampaigns, utmSources, df, dt, prefix, domainId) {
   const pfx = prefix || '';
+  const did = domainId ?? 0; // 0 = global (sem filtro de domínio)
   const now = new Date().toISOString();
 
   // Save hourly (aggregate by hour across all dates in range)
@@ -47,10 +48,11 @@ async function saveToCache(hourly, utmCampaigns, utmSources, df, dt, prefix) {
       cliques: h.cliques || 0,
       cpc: h.cpc || 0,
       prefixo_ad_unit: pfx,
+      dominio_id: did,
       updated_at: now,
     }));
     await supabase.from('report_hora')
-      .upsert(horaRows, { onConflict: 'data,hora,prefixo_ad_unit' })
+      .upsert(horaRows, { onConflict: 'data,hora,dominio_id' })
       .catch(e => console.warn('[reports-gam] hora upsert:', e.message));
   }
 
@@ -66,10 +68,11 @@ async function saveToCache(hourly, utmCampaigns, utmSources, df, dt, prefix) {
       cliques: u.cliques || 0,
       cpc: u.cpc || 0,
       prefixo_ad_unit: pfx,
+      dominio_id: did,
       updated_at: now,
     }));
     await supabase.from('report_utm_campaign')
-      .upsert(rows, { onConflict: 'data,utm_campaign,prefixo_ad_unit' })
+      .upsert(rows, { onConflict: 'data,utm_campaign,dominio_id' })
       .catch(e => console.warn('[reports-gam] utm_campaign upsert:', e.message));
   }
 
@@ -91,25 +94,28 @@ async function saveToCache(hourly, utmCampaigns, utmSources, df, dt, prefix) {
   }
 }
 
-async function loadFromCache(df, dt, pfx) {
-  const prefix = pfx || '';
+async function loadFromCache(df, dt, pfx, domainId) {
+  const did = domainId ?? 0; // 0 = global
+
+  // report_utm_source ainda usa prefixo_ad_unit — só filtra se pfx não-vazio
+  let srcQ = supabase.from('report_utm_source')
+    .select('utm_source,impressoes,receita,ecpm,cliques')
+    .gte('data', df).lte('data', dt)
+    .order('receita', { ascending: false });
+  if (pfx) srcQ = srcQ.eq('prefixo_ad_unit', pfx);
 
   const [horaRes, campRes, srcRes] = await Promise.all([
     supabase.from('report_hora')
       .select('hora,impressoes,nao_preenchidas,receita,ecpm,ctr,cliques,cpc')
       .gte('data', df).lte('data', dt)
-      .eq('prefixo_ad_unit', prefix)
+      .eq('dominio_id', did)
       .order('hora'),
     supabase.from('report_utm_campaign')
       .select('utm_campaign,impressoes,receita,ecpm,ctr,cliques,cpc')
       .gte('data', df).lte('data', dt)
-      .eq('prefixo_ad_unit', prefix)
+      .eq('dominio_id', did)
       .order('receita', { ascending: false }),
-    supabase.from('report_utm_source')
-      .select('utm_source,impressoes,receita,ecpm,cliques')
-      .gte('data', df).lte('data', dt)
-      .eq('prefixo_ad_unit', prefix)
-      .order('receita', { ascending: false }),
+    srcQ,
   ]);
 
   const hourly = (horaRes.data || []).map(h => ({
@@ -191,26 +197,30 @@ async function handler(req, res) {
     let hourly, utmCampaigns, utmSources, fromCache = false;
 
     if (useCached) {
-      // Try cache first
-      const cached = await loadFromCache(df, dt, pfx);
-      hourly = cached.hourly;
+      const cached = await loadFromCache(df, dt, pfx, domainId);
+      hourly       = cached.hourly;
       utmCampaigns = cached.utmCampaigns;
-      utmSources = cached.utmSources;
-      fromCache = true;
-    } else {
-      // Live GAM API calls
+      utmSources   = cached.utmSources;
+      // Só considera cache válido se trouxe dados reais
+      fromCache = cached.hourly.length > 0 || cached.utmCampaigns.length > 0;
+    }
+
+    // Fallback ao vivo: cache vazio OU ?cached=false forçado
+    if (!fromCache) {
+      console.log('[reports-gam] cache vazio ou forced — buscando GAM ao vivo');
       [hourly, utmCampaigns, utmSources] = await Promise.all([
         fetchGAMHourly(opts),
         fetchGAMUtmCampaigns(opts),
         fetchGAMUtmSources(opts),
       ]);
-      // Save to cache in background
-      saveToCache(hourly, utmCampaigns, utmSources, df, dt, pfx).catch(e =>
+      // Salvar no cache em background
+      saveToCache(hourly, utmCampaigns, utmSources, df, dt, pfx, domainId).catch(e =>
         console.warn('[reports-gam] saveToCache error:', e.message)
       );
     }
 
     const [{ data: rows }, { data: adsRows }] = await Promise.all([gamQ, adsQ]);
+    console.log(`[GAM filter] dominio_id=${domainId ?? 0}, blocos=${rows?.length ?? 0}, horas=${(hourly || []).length}, utms=${(utmCampaigns || []).length}`);
 
     let totImps = 0, totRev = 0, totClicks = 0;
     let _ecpmWtSum = 0, _ecpmWt = 0;

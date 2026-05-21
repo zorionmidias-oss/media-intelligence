@@ -35,9 +35,11 @@ const OBJECTIVE_ACTION_MAP = {
   'LEAD_GENERATION':    ['lead'],
   'OUTCOME_SALES':      ['purchase', 'omni_purchase'],
   'CONVERSIONS':        ['offsite_conversion.fb_pixel_purchase', 'purchase'],
-  'OUTCOME_TRAFFIC':    ['link_click'],
-  'LINK_CLICKS':        ['link_click'],
-  'PAGE_VIEW':          ['landing_page_view'],
+  // BUG 5: landing_page_view e omni_landing_page_view são o mesmo evento (alias).
+  // Usar APENAS o primeiro encontrado — nunca somar. Ordem garante fallback sem duplicar.
+  'OUTCOME_TRAFFIC':    ['landing_page_view', 'omni_landing_page_view', 'link_click'],
+  'LINK_CLICKS':        ['landing_page_view', 'omni_landing_page_view', 'link_click'],
+  'PAGE_VIEW':          ['landing_page_view', 'omni_landing_page_view'],
   'OUTCOME_AWARENESS':  ['impressions'],
   'OUTCOME_ENGAGEMENT': ['post_engagement'],
 };
@@ -322,7 +324,7 @@ async function syncAll(dateRange) {
     }
 
     // ── Build ads_consolidados upsert rows ────────
-    const adsRows = [];
+    let adsRows = [];
     for (const g of grouped) {
       const dayGam = gamByDay[g.date] || {};
       const utmKey = g.adUTM.toLowerCase();
@@ -416,6 +418,23 @@ async function syncAll(dateRange) {
         cliques_gam: cliquesGam,
         updated_at: new Date().toISOString(),
       });
+    }
+
+    if (adsRows.length > 0) {
+      // BUG 3: pular datas que foram corrigidas manualmente
+      const datas = [...new Set(adsRows.map(r => r.data))];
+      const { data: fixedRows } = await supabase
+        .from('ads_consolidados')
+        .select('data')
+        .in('data', datas)
+        .eq('manually_fixed', true)
+        .catch(() => ({ data: [] }));
+      const fixedSet = new Set((fixedRows || []).map(r => r.data));
+      if (fixedSet.size > 0) {
+        const antes = adsRows.length;
+        adsRows = adsRows.filter(r => !fixedSet.has(r.data));
+        console.log(`[cron] ${fixedSet.size} data(s) com manually_fixed=true, pulando ${antes - adsRows.length} linhas: ${[...fixedSet].join(', ')}`);
+      }
     }
 
     if (adsRows.length > 0) {
