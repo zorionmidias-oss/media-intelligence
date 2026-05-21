@@ -2,7 +2,7 @@
 const axios = require('axios');
 const supabase = require('./supabase');
 const { getBMConfigs, updateBMStatus } = require('./meta');
-const { fetchGAMReport, fetchGAMFunnelsByUTM, getUSDtoBRL, getUSDtoBRLByDate } = require('./gam');
+const { fetchGAMReport, fetchGAMFunnelsByUTM, getUSDtoBRL, getUSDtoBRLByDate, fetchGAMHourly, fetchGAMUtmCampaigns, fetchGAMUtmSources } = require('./gam');
 const { extractDomainPrefix, extractAdUTM, extractTipo, groupAdsByUTM } = require('./parser');
 
 const BASE = 'https://graph.facebook.com/v19.0';
@@ -191,7 +191,7 @@ async function syncAll(dateRange) {
     // Load active domains from Supabase
     const { data: dominios, error: domErr } = await supabase
       .from('dominios')
-      .select('id,nome,prefixo_campanha,codigo_pedido_gam')
+      .select('id,nome,prefixo_campanha,codigo_pedido_gam,prefixo_ad_unit')
       .eq('ativo', true);
 
     // BUG 1: Carregar imposto E moeda por conta Meta
@@ -507,6 +507,80 @@ async function syncAll(dateRange) {
           rowsProcessed += blocosRows.length;
         }
       }
+    }
+
+    // ── Popular cache de Reports GAM em background ──
+    try {
+      const [hourly, utmCampaigns, utmSources] = await Promise.all([
+        fetchGAMHourly({ since: until, until }).catch(e => { console.warn('[sync] GAM hourly cache:', e.message); return []; }),
+        fetchGAMUtmCampaigns({ since: until, until }).catch(e => { console.warn('[sync] GAM utm cache:', e.message); return []; }),
+        fetchGAMUtmSources({ since: until, until }).catch(e => { console.warn('[sync] GAM src cache:', e.message); return []; }),
+      ]);
+
+      const now = new Date().toISOString();
+      const pfx = dominios?.[0]?.prefixo_ad_unit || '';
+
+      if (hourly.length > 0) {
+        await supabase.from('report_hora')
+          .upsert(
+            hourly.map(h => ({
+              data: until,
+              hora: h.hora,
+              impressoes: h.impressoes || 0,
+              nao_preenchidas: h.nao_preenchidas || 0,
+              receita: h.receita || 0,
+              ecpm: h.ecpm || 0,
+              ctr: h.ctr || 0,
+              cliques: h.cliques || 0,
+              cpc: h.cpc || 0,
+              prefixo_ad_unit: pfx,
+              updated_at: now,
+            })),
+            { onConflict: 'data,hora,prefixo_ad_unit' }
+          ).catch(e => console.warn('[sync] upsert report_hora:', e.message));
+        console.log(`[sync] cache GAM: ${hourly.length} horas salvas`);
+      }
+
+      if (utmCampaigns.length > 0) {
+        await supabase.from('report_utm_campaign')
+          .upsert(
+            utmCampaigns.map(u => ({
+              data: until,
+              utm_campaign: u.utm_campaign,
+              impressoes: u.impressoes || 0,
+              receita: u.receita || 0,
+              ecpm: u.ecpm || 0,
+              ctr: u.ctr || 0,
+              cliques: u.cliques || 0,
+              cpc: u.cpc || 0,
+              prefixo_ad_unit: pfx,
+              updated_at: now,
+            })),
+            { onConflict: 'data,utm_campaign,prefixo_ad_unit' }
+          ).catch(e => console.warn('[sync] upsert report_utm_campaign:', e.message));
+        console.log(`[sync] cache GAM: ${utmCampaigns.length} UTMs salvas`);
+      }
+
+      if (utmSources.length > 0) {
+        await supabase.from('report_utm_source')
+          .upsert(
+            utmSources.map(u => ({
+              data: until,
+              utm_source: u.utm_source || u.utm_campaign,
+              impressoes: u.impressoes || 0,
+              receita: u.receita || 0,
+              ecpm: u.ecpm || 0,
+              cliques: u.cliques || 0,
+              prefixo_ad_unit: pfx,
+              updated_at: now,
+            })),
+            { onConflict: 'data,utm_source,prefixo_ad_unit' }
+          ).catch(e => console.warn('[sync] upsert report_utm_source:', e.message));
+        console.log(`[sync] cache GAM: ${utmSources.length} sources salvas`);
+      }
+    } catch (e) {
+      console.warn('[sync] GAM cache background:', e.message);
+      // Não deixar falhar o sync principal por causa do cache
     }
 
     // ── Log success ───────────────────────────────
