@@ -14,7 +14,8 @@ const gamStatusHandler  = require('./src/app/api/gam-status/route');
 const metasHandler = require('./src/app/api/metas/route');
 const { handler: notifHandler, marcarLida, marcarTodasLidas } = require('./src/app/api/notificacoes/route');
 const drilldownHandler = require('./src/app/api/drilldown/route');
-const funilHandler     = require('./src/app/api/funil/route');
+const funilHandler       = require('./src/app/api/funil/route');
+const funilBotoesHandler = require('./src/app/api/funil-botoes/route');
 const historicoHandler = require('./src/app/api/historico/route');
 const { handler: templatesHandler, seedHandler: templatesSeedHandler } = require('./src/app/api/templates/route');
 const metaResourcesHandler = require('./src/app/api/meta-resources/route');
@@ -355,6 +356,7 @@ app.get('/api/drilldown/:utm', requireAuth, drilldownHandler);
 
 // ── Análise de Funil ──────────────────────────────────────────────────────────
 app.get('/api/funil', requireAuth, funilHandler);
+app.get('/api/funil-botoes', requireAuth, funilBotoesHandler);
 
 // ── Campaign Templates ────────────────────────────────────────────────────────
 app.get('/api/templates', requireAuth, (req, res) => templatesHandler(req, res));

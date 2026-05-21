@@ -113,6 +113,11 @@
     @keyframes box4{0%{transform:translate(200%,0)}50%{transform:translate(200%,100%)}100%{transform:translate(100%,100%)}}
     @supports not (background:color-mix(in srgb,red,blue)){.box>.face.face-right{--background:var(--accent);opacity:.65}.box>.face.face-top{--background:var(--accent);opacity:.35}.box>.face.face-back{--background:var(--accent);opacity:.50}}
 
+    /* GAM delay mobile */
+    .gam-delay-m{display:none;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:600;white-space:nowrap;border:1px solid}
+    .gam-delay-m.atrasado{background:var(--warning-soft);color:var(--warning);border-color:var(--warning)}
+    .gam-delay-m.muito-atrasado{background:var(--danger-soft);color:var(--danger);border-color:var(--danger)}
+
     /* empty state */
     .empty{text-align:center;color:var(--muted);padding:2rem 1rem;font-size:.875rem}
 
@@ -146,6 +151,7 @@
 <!-- Header -->
 <header class="hdr">
   <div class="hdr-title"><span>2</span>Junior's</div>
+  <span class="gam-delay-m" id="gam-delay-mobile" style="display:none"></span>
   <div class="hdr-r">
     <button class="ico-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="Alternar tema">
       <svg id="theme-icon-dark" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -251,6 +257,22 @@ function esc(s){ const d=document.createElement('div');d.textContent=s||'';retur
 
 function showOverlay(){ document.getElementById('overlay').classList.add('on'); }
 function hideOverlay(){ document.getElementById('overlay').classList.remove('on'); }
+async function loadGamDelayMobile(){
+  try{
+    const r=await fetch('/api/gam-status');
+    if(!r.ok)return;
+    const a=await r.json();
+    const el=document.getElementById('gam-delay-mobile');
+    if(!el)return;
+    if(!a||!a.tem_atraso){el.style.display='none';return;}
+    el.style.display='inline-flex';
+    el.textContent=`🕐 ${a.horas_atraso}h`;
+    el.className=`gam-delay-m ${a.horas_atraso>=3?'muito-atrasado':'atrasado'}`;
+  }catch(e){console.error('[gam-delay-mobile]',e);}
+}
+loadGamDelayMobile();
+setInterval(loadGamDelayMobile,5*60*1000);
+
 window.showLoading=function(msg='Carregando...'){
   const ol=document.getElementById('loading-overlay');
   if(!ol)return;

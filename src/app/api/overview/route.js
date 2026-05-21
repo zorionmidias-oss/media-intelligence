@@ -38,6 +38,13 @@ async function handler(req, res) {
       domainId = d?.id || null;
     }
 
+    // Previous period for comparison
+    const dias = Math.round((new Date(dt) - new Date(df)) / 86400000) + 1;
+    const prevUntilDate = new Date(df); prevUntilDate.setDate(prevUntilDate.getDate() - 1);
+    const prevSinceDate = new Date(df); prevSinceDate.setDate(prevSinceDate.getDate() - dias);
+    const prevDf = prevSinceDate.toISOString().slice(0, 10);
+    const prevDt = prevUntilDate.toISOString().slice(0, 10);
+
     let adsQ = supabase
       .from('ads_consolidados')
       .select('data,ad_utm,campanha_meta,tipo,dominio_id,valor_gasto,faturamento_real,lucro,cliques,impressoes_gam,resultado,cpc,ctr,ecpm,rps,viewability,orcamento_total,previsao_faturamento_real,previsao_lucro,dominios(nome)')
@@ -51,7 +58,13 @@ async function handler(req, res) {
       .gte('data', df).lte('data', dt);
     if (domainId) gamQ = gamQ.eq('dominio_id', domainId);
 
-    const [{ data: ads, error: adsErr }, { data: gam }] = await Promise.all([adsQ, gamQ]);
+    let prevAdsQ = supabase
+      .from('ads_consolidados')
+      .select('ad_utm,valor_gasto,faturamento_real')
+      .gte('data', prevDf).lte('data', prevDt);
+    if (domainId) prevAdsQ = prevAdsQ.eq('dominio_id', domainId);
+
+    const [{ data: ads, error: adsErr }, { data: gam }, { data: prevAds }] = await Promise.all([adsQ, gamQ, prevAdsQ]);
     if (adsErr) return res.status(500).json({ error: adsErr.message });
 
     // ─── Aggregate ads_consolidados (Meta spend + UTM attribution) ───
@@ -212,6 +225,37 @@ async function handler(req, res) {
 
     const roi = totSpend > 0 ? +((totLucro / totSpend) * 100).toFixed(2) : 0;
 
+    // ─── Previous period comparison ──────────────────────────────────────────
+    const prevUtmMap = {};
+    for (const r of prevAds || []) {
+      const k = r.ad_utm;
+      if (!prevUtmMap[k]) prevUtmMap[k] = { spend: 0, fat: 0 };
+      prevUtmMap[k].spend += Number(r.valor_gasto || 0);
+      prevUtmMap[k].fat   += Number(r.faturamento_real || 0);
+    }
+    const prevTotSpend = Object.values(prevUtmMap).reduce((s, v) => s + v.spend, 0);
+    const prevTotFat   = Object.values(prevUtmMap).reduce((s, v) => s + v.fat,   0);
+    const prevTotLucro = prevTotFat - prevTotSpend;
+    const prevRoi      = prevTotSpend > 0 ? (prevTotLucro / prevTotSpend) * 100 : 0;
+    const varPct = (atual, ant) => {
+      if (!ant || ant === 0) return null;
+      return +((atual - ant) / Math.abs(ant) * 100).toFixed(1);
+    };
+    const comparacao = {
+      periodo_anterior: { since: prevDf, until: prevDt },
+      faturamento:  { atual: +totFat.toFixed(2),    anterior: +prevTotFat.toFixed(2),    variacao: varPct(totFat,    prevTotFat) },
+      investimento: { atual: +totSpend.toFixed(2),  anterior: +prevTotSpend.toFixed(2),  variacao: varPct(totSpend,  prevTotSpend) },
+      lucro:        { atual: +totLucro.toFixed(2),  anterior: +prevTotLucro.toFixed(2),  variacao: varPct(totLucro,  prevTotLucro) },
+      roi:          { atual: roi,                   anterior: +prevRoi.toFixed(2),        variacao: prevRoi !== 0 ? +(roi - prevRoi).toFixed(1) : null },
+      porUtm: Object.fromEntries(allUTMs.map(u => {
+        const p = prevUtmMap[u.ad_utm] || { spend: 0, fat: 0 };
+        return [u.ad_utm, {
+          faturamento:  { anterior: +p.fat.toFixed(2),   variacao: varPct(u.faturado, p.fat) },
+          investimento: { anterior: +p.spend.toFixed(2), variacao: varPct(u.spend,    p.spend) },
+        }];
+      })),
+    };
+
     // Previsão: query direta para hoje (respeita filtro de domínio; null se hoje não está no range)
     const todayStr = new Date().toISOString().slice(0, 10);
     let previsao = null;
@@ -295,6 +339,7 @@ async function handler(req, res) {
       networks: [],
       previsao,
       metas_progresso: await getMetasProgresso(totFat, totSpend, totLucro, roi),
+      comparacao,
     });
   } catch (err) {
     console.error('[overview]', err.message);

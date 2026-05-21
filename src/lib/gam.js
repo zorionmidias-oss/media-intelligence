@@ -913,4 +913,116 @@ async function fetchGAMBlocosFunil({ since, until, utm } = {}) {
   }
 }
 
-module.exports = { fetchGAMReport, fetchGAMAdvertisers, discoverGAMNetworks, fetchGAMFunnelsByUTM, fetchGAMHourly, fetchGAMUtmCampaigns, fetchGAMUtmSources, fetchGAMBlocosFunil, getUSDtoBRL, getUSDtoBRLByDate };
+// ─── fetchGAMBotoesIndependente ──────────────────────────────────────────────
+// Parses utm_medium with pattern: origem_pagina_botao[_label] (e.g. site_p1_bt1_tinder)
+// Independent of utm_campaign — groups all utm_medium values from the period.
+async function fetchGAMBotoesIndependente({ since, until, filtroOrigem, filtroPagina } = {}) {
+  const networkCode = NETWORK_CODE;
+  if (!networkCode) return { botoes: [], total_botoes: 0, totals: { impressoes: 0, cliques: 0, receita: 0 }, origens_disponiveis: [], paginas_disponiveis: [] };
+  const dates = { since: since || defaultDateRange().since, until: until || defaultDateRange().until };
+
+  function parseUtmMedium(utmMedium) {
+    const partes = utmMedium.split('_');
+    if (partes.length < 3) return { raw: utmMedium, origem: 'outros', pagina: null, botao: null, label: null, pagina_botao: utmMedium, bateu_padrao: false };
+    const origem = partes[0];
+    const pagina = partes[1];
+    const botao  = partes[2];
+    const label  = partes.length > 3 ? partes.slice(3).join('_') : null;
+    const bateu_padrao = /^p\d+$/i.test(pagina) && /^bt\d+$/i.test(botao);
+    return { raw: utmMedium, origem, pagina, botao, label, pagina_botao: `${pagina}_${botao}`, bateu_padrao };
+  }
+
+  try {
+    const [token, rate] = await Promise.all([getAccessToken(), getUSDtoBRL()]);
+
+    const xml = wrapEnvelope(soapHeader(networkCode), `
+      <runReportJob xmlns="https://www.google.com/apis/ads/publisher/${GAM_VERSION}">
+        <reportJob>
+          <reportQuery>
+            <dimensions>CUSTOM_CRITERIA</dimensions>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_CTR</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS</columns>
+            <startDate>${dateToXML(dates.since)}</startDate>
+            <endDate>${dateToXML(dates.until)}</endDate>
+            <dateRangeType>CUSTOM_DATE</dateRangeType>
+          </reportQuery>
+        </reportJob>
+      </runReportJob>`);
+
+    const runResp = await soapCall(token, xml);
+    const jobId = extractTag(runResp, 'id');
+    if (!jobId) { console.warn('[GAM botoes] no jobId'); return { botoes: [], total_botoes: 0, totals: { impressoes: 0, cliques: 0, receita: 0 }, origens_disponiveis: [], paginas_disponiveis: [] }; }
+
+    const rows = await pollAndDownload(token, networkCode, jobId);
+    console.log(`[GAM botoes] ${rows.length} linhas brutas`);
+
+    const map = {};
+    const origensSet = new Set();
+    const paginasSet = new Set();
+
+    for (const row of rows) {
+      const kv = row['Dimension.CUSTOM_CRITERIA'] || row['CUSTOM_CRITERIA'] || '';
+      const medium = _extractUTMValue(kv, 'utm_medium');
+      if (!medium || medium.toLowerCase() === 'null') continue;
+
+      const parsed = parseUtmMedium(medium.toLowerCase());
+      const key = parsed.pagina_botao;
+
+      if (filtroOrigem && parsed.origem !== filtroOrigem) continue;
+      if (filtroPagina && parsed.pagina !== filtroPagina) continue;
+
+      origensSet.add(parsed.origem);
+      if (parsed.pagina) paginasSet.add(parsed.pagina);
+
+      const imp       = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS'] || 0);
+      const revMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE'] || 0);
+      const receita   = (revMicros / 1_000_000) * rate;
+      const ecpmMicros= Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM'] || 0);
+      const ctrRaw    = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CTR'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_CTR'] || 0);
+      const cliques   = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS'] || 0);
+
+      if (!map[key]) map[key] = { origem: parsed.origem, pagina: parsed.pagina, botao: parsed.botao, pagina_botao: key, impressoes: 0, cliques: 0, receita: 0, ecpmWtSum: 0, ecpmWt: 0, ctrWtSum: 0, ctrWt: 0, variantes_label: new Set() };
+      const m = map[key];
+      m.impressoes += imp;
+      m.cliques    += cliques;
+      m.receita    += receita;
+      if (imp > 0 && ecpmMicros > 0) { m.ecpmWtSum += (ecpmMicros / 1_000_000) * rate * imp; m.ecpmWt += imp; }
+      if (imp > 0) { m.ctrWtSum += ctrRaw * imp; m.ctrWt += imp; }
+      if (parsed.label) m.variantes_label.add(parsed.label);
+    }
+
+    const botoes = Object.values(map).map(m => ({
+      origem: m.origem,
+      pagina: m.pagina,
+      botao: m.botao,
+      pagina_botao: m.pagina_botao,
+      impressoes: m.impressoes,
+      cliques: m.cliques,
+      receita: +m.receita.toFixed(2),
+      ecpm: m.ecpmWt > 0 ? +(m.ecpmWtSum / m.ecpmWt).toFixed(4) : 0,
+      ctr: m.ctrWt > 0 ? +(m.ctrWtSum / m.ctrWt * 100).toFixed(4) : 0,
+      rps: m.cliques > 0 ? +(m.receita / m.cliques).toFixed(4) : 0,
+      variantes_label: [...m.variantes_label],
+    })).sort((a, b) => b.receita - a.receita);
+
+    const totals = botoes.reduce((acc, b) => ({ impressoes: acc.impressoes + b.impressoes, cliques: acc.cliques + b.cliques, receita: acc.receita + b.receita }), { impressoes: 0, cliques: 0, receita: 0 });
+    totals.receita = +totals.receita.toFixed(2);
+
+    console.log(`[GAM botoes] ${botoes.length} botões após agrupamento`);
+    return {
+      botoes,
+      total_botoes: botoes.length,
+      totals,
+      origens_disponiveis: [...origensSet].sort(),
+      paginas_disponiveis: [...paginasSet].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })),
+    };
+  } catch (e) {
+    console.warn('[GAM fetchBotoesIndependente]', e.message);
+    return { botoes: [], total_botoes: 0, totals: { impressoes: 0, cliques: 0, receita: 0 }, origens_disponiveis: [], paginas_disponiveis: [] };
+  }
+}
+
+module.exports = { fetchGAMReport, fetchGAMAdvertisers, discoverGAMNetworks, fetchGAMFunnelsByUTM, fetchGAMHourly, fetchGAMUtmCampaigns, fetchGAMUtmSources, fetchGAMBlocosFunil, fetchGAMBotoesIndependente, getUSDtoBRL, getUSDtoBRLByDate };

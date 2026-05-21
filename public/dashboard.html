@@ -452,11 +452,7 @@
     .meta-edit-btn:hover{opacity:1}
 
     /* ── NOTIFICATIONS ── */
-    .notif-bell-btn{background:transparent;border:none;cursor:pointer;position:relative;padding:.35rem;color:var(--muted);transition:color .15s;border-radius:.5rem}
-    .notif-bell-btn:hover{color:var(--fg);background:var(--sec)}
     .notif-badge{position:absolute;top:1px;right:1px;min-width:16px;height:16px;padding:0 3px;background:var(--danger);color:#fff;font-size:.55rem;font-weight:700;border-radius:8px;display:none;align-items:center;justify-content:center;line-height:1}
-    .notif-panel{position:fixed;top:60px;right:1rem;width:360px;max-height:520px;background:var(--card);border:1px solid var(--border);border-radius:var(--rl);z-index:200;display:none;flex-direction:column;box-shadow:var(--shadow-lg)}
-    .notif-panel.on{display:flex}
     .notif-ph{display:flex;align-items:center;justify-content:space-between;padding:.875rem 1rem;border-bottom:1px solid var(--border)}
     .notif-ph h3{font-size:.875rem;margin:0;font-weight:600}
     .notif-ph button{background:transparent;border:1px solid var(--border);border-radius:.375rem;padding:.2rem .6rem;font-size:.65rem;color:var(--muted);cursor:pointer}
@@ -504,18 +500,18 @@
     .drill-toolbar{display:flex;align-items:center;gap:.625rem;margin-bottom:1rem}
     .drill-sort-sel{height:2.25rem;padding:0 .75rem;border-radius:var(--r);background:var(--sec);border:1px solid var(--border);color:var(--fg);font-family:inherit;font-size:.8125rem;cursor:pointer;outline:none}
     /* adset card */
-    .adset-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:1.125rem 1.375rem;margin-bottom:.875rem}
-    .adset-card-hd{display:flex;justify-content:space-between;align-items:center;padding-bottom:.875rem;border-bottom:1px solid var(--border);margin-bottom:.875rem;gap:.75rem}
+    .adset-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:12px 16px;margin-bottom:8px}
+    .adset-card-hd{display:flex;justify-content:space-between;align-items:center;padding-bottom:.5rem;border-bottom:1px solid var(--border);margin-bottom:.5rem;gap:.75rem}
     .adset-card-left{display:flex;flex-direction:column;gap:.2rem;min-width:0}
-    .adset-name{font-size:.9375rem;font-weight:600;color:var(--fg)}
+    .adset-name{font-size:13px;font-weight:600;color:var(--fg)}
     .adset-camp-tag{font-size:.625rem;color:var(--muted)}
     .adset-card-right{display:flex;align-items:center;gap:.875rem;flex-shrink:0}
-    .adset-budget-row{display:flex;align-items:center;gap:.625rem;font-size:.8125rem;color:var(--muted);padding-bottom:.875rem;border-bottom:1px solid var(--border);margin-bottom:.875rem;flex-wrap:wrap}
-    .adset-m6{display:grid;grid-template-columns:repeat(6,1fr);gap:.875rem}
+    .adset-budget-row{display:flex;align-items:center;gap:.625rem;font-size:.8125rem;color:var(--muted);padding-bottom:.5rem;border-bottom:1px solid var(--border);margin-bottom:.5rem;flex-wrap:wrap}
+    .adset-m6{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:8px}
     @media(max-width:900px){.adset-m6{grid-template-columns:repeat(3,1fr)}}
     .m6-cell{display:flex;flex-direction:column;gap:.2rem}
-    .m6-lbl{font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-    .m6-val{font-size:.9375rem;font-weight:600;font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;color:var(--fg)}
+    .m6-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+    .m6-val{font-size:13px;font-weight:600;font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;color:var(--fg)}
     .m6-val.ok{color:var(--ok)}
     .m6-val.warn{color:var(--warn)}
     .m6-val.bad{color:var(--bad)}
@@ -721,7 +717,29 @@
       --acc-fg:var(--accent-fg);--sb:var(--card);--sb-b:var(--border);
     }
     body{transition:background .25s ease,color .25s ease}
-    .sb,.hdr,.card,.content,.notif-panel{transition:background .25s,border-color .25s}
+    .sb,.hdr,.card,.content{transition:background .25s,border-color .25s}
+
+    /* ── OLHO / HIDE VALUES ── */
+    .btn-toggle-eye{width:2.25rem;height:2.25rem;border-radius:.5rem;border:none;background:transparent;cursor:pointer;color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:1rem;transition:color .15s,background .15s}
+    .btn-toggle-eye:hover{color:var(--fg);background:var(--sec)}
+    body.values-hidden .hideable-value{filter:blur(7px);user-select:none;transition:filter .3s;cursor:pointer}
+    body.values-hidden .hideable-value:hover{filter:blur(0)}
+
+    /* ── VARIAÇÃO % ── */
+    .variacao{display:inline-flex;align-items:center;gap:2px;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;margin-left:6px;vertical-align:middle;line-height:1}
+    .variacao.var-up{background:var(--success-soft);color:var(--success)}
+    .variacao.var-down{background:var(--danger-soft);color:var(--danger)}
+
+    /* ── ABA BOTÕES ── */
+    .botoes-filtros{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-bottom:1rem}
+    .botoes-filtros label{font-size:.8125rem;color:var(--muted)}
+    .botoes-filtros select{background:var(--card);color:var(--fg);border:1px solid var(--border);padding:.5rem .875rem;border-radius:.5rem;min-width:140px;font-size:.8125rem}
+    .botoes-filtros button{background:var(--accent);color:var(--accent-fg);border:none;padding:.5rem 1rem;border-radius:.5rem;cursor:pointer;font-size:.8125rem;font-weight:600}
+    .botoes-filtros button:hover{opacity:.85}
+    .badge-origem{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:600;background:var(--accent-soft);color:var(--accent)}
+    .adset-filter{display:flex;align-items:center;gap:.5rem;font-size:.8125rem;color:var(--muted);margin-left:auto}
+    .adset-filter input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px;cursor:pointer}
+    .adset-filter label{cursor:pointer}
 
     /* ── DATE PICKER ── */
     .date-picker-wrapper{position:relative;display:inline-block}
@@ -905,7 +923,6 @@
           </div>
         </div>
         <select id="f-domain" style="min-width:140px"><option value="all">Todos os domínios</option></select>
-        <button class="btn btn-s" onclick="refreshAll()">↻ Atualizar</button>
         <button class="btn btn-p" id="btn-force" onclick="forceSync()">
           <svg id="force-spin-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:none"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
           ⟳ Forçar
@@ -926,10 +943,7 @@
         <svg id="delay-spin-ico" class="spin-ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
         <span id="delay-txt">GAM</span>
       </div>
-      <button class="ico-btn notif-bell-btn" id="notif-bell-btn" onclick="toggleNotifPanel()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-        <span class="notif-badge" id="notif-badge"></span>
-      </button>
+      <button class="btn-toggle-eye" id="toggle-eye" title="Ocultar/revelar valores">👁️</button>
       <button class="theme-toggle ico-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="Alternar tema">
         <svg id="theme-icon-dark" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         <svg id="theme-icon-light" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -946,7 +960,7 @@
         <div class="g4">
           <div class="card card-hv anim" style="animation-delay:0ms">
             <div class="kpi-top"><span class="kpi-lbl">Faturamento</span><div class="kpi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div></div>
-            <div class="kpi-bot"><span class="kpi-val" id="kpi-fat">—</span><div class="kpi-ch neu" id="kpi-fat-sub"></div></div>
+            <div class="kpi-bot"><span class="kpi-val" id="kpi-fat">—</span><span id="var-fat"></span><div class="kpi-ch neu" id="kpi-fat-sub"></div></div>
             <span class="usd-sub" id="kpi-fat-usd"></span>
             <div class="meta-progress" id="meta-prog-fat" style="display:none">
               <div class="meta-bar"><div class="meta-fill" id="meta-fill-fat" style="width:0%"></div></div>
@@ -956,7 +970,7 @@
           </div>
           <div class="card card-hv anim" style="animation-delay:100ms">
             <div class="kpi-top"><span class="kpi-lbl">Investimento</span><div class="kpi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 16s1-1 4-1 5 2 8 2 4-1 4-1V2s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="2" x2="2" y1="21" y2="16"/></svg></div></div>
-            <div class="kpi-bot"><span class="kpi-val" id="kpi-inv">—</span><div class="kpi-ch neu" id="kpi-inv-sub"></div></div>
+            <div class="kpi-bot"><span class="kpi-val" id="kpi-inv">—</span><span id="var-inv"></span><div class="kpi-ch neu" id="kpi-inv-sub"></div></div>
             <span class="usd-sub" id="kpi-inv-usd"></span>
             <div class="meta-progress" id="meta-prog-inv" style="display:none">
               <div class="meta-bar"><div class="meta-fill" id="meta-fill-inv" style="width:0%"></div></div>
@@ -966,7 +980,7 @@
           </div>
           <div class="card card-hv anim" style="animation-delay:200ms">
             <div class="kpi-top"><span class="kpi-lbl">Lucro</span><div class="kpi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div></div>
-            <div class="kpi-bot"><span class="kpi-val" id="kpi-lucro">—</span><div class="kpi-ch neu" id="kpi-lucro-sub"></div></div>
+            <div class="kpi-bot"><span class="kpi-val" id="kpi-lucro">—</span><span id="var-lucro"></span><div class="kpi-ch neu" id="kpi-lucro-sub"></div></div>
             <span class="usd-sub" id="kpi-lucro-usd"></span>
             <div class="meta-progress" id="meta-prog-lucro" style="display:none">
               <div class="meta-bar"><div class="meta-fill" id="meta-fill-lucro" style="width:0%"></div></div>
@@ -976,7 +990,7 @@
           </div>
           <div class="card card-hv anim" style="animation-delay:300ms">
             <div class="kpi-top"><span class="kpi-lbl">ROI</span><div class="kpi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div></div>
-            <div class="kpi-bot"><span class="kpi-val" id="kpi-roi">—</span><div class="kpi-ch neu" id="kpi-roi-sub"></div></div>
+            <div class="kpi-bot"><span class="kpi-val" id="kpi-roi">—</span><span id="var-roi"></span><div class="kpi-ch neu" id="kpi-roi-sub"></div></div>
             <div class="meta-progress" id="meta-prog-roas" style="display:none">
               <div class="meta-bar"><div class="meta-fill" id="meta-fill-roas" style="width:0%"></div></div>
               <div class="meta-lbl-row"><span class="meta-lbl-cur" id="meta-cur-roas">—</span><span>Meta: <span id="meta-tgt-roas" style="color:#aaa">—</span></span><button class="meta-edit-btn" onclick="openMetaModal('roas_diario')" title="Editar meta">✏</button></div>
@@ -1264,49 +1278,89 @@
         </div>
 
         <div class="funil-inner-tabs">
-          <button class="funil-itab on">📦 Blocos de Mensagens</button>
-          <button class="funil-itab" disabled>🔘 Botões <span class="badge-soon">Em breve</span></button>
+          <button class="funil-itab on" onclick="switchFunilTab('blocos',this)">📦 Blocos de Mensagens</button>
+          <button class="funil-itab" onclick="switchFunilTab('botoes',this)">🔘 Botões</button>
         </div>
 
-        <div class="funil-cards" id="funil-cards" style="display:none">
-          <div class="card-mini">
-            <label>Total Blocos</label>
-            <strong id="funil-total-blocos">0</strong>
+        <!-- SUB-ABA BLOCOS -->
+        <div id="sub-aba-blocos">
+          <div class="funil-cards" id="funil-cards" style="display:none">
+            <div class="card-mini">
+              <label>Total Blocos</label>
+              <strong id="funil-total-blocos">0</strong>
+            </div>
+            <div class="card-mini">
+              <label>Bloco Top</label>
+              <strong id="funil-bloco-top">—</strong>
+              <small id="funil-bloco-top-val"></small>
+            </div>
+            <div class="card-mini">
+              <label>Total Impressões</label>
+              <strong id="funil-total-imp">0</strong>
+            </div>
+            <div class="card-mini">
+              <label>Total Receita</label>
+              <strong id="funil-total-rec">R$ 0,00</strong>
+            </div>
           </div>
-          <div class="card-mini">
-            <label>Bloco Top</label>
-            <strong id="funil-bloco-top">—</strong>
-            <small id="funil-bloco-top-val"></small>
+          <div class="funil-tbl-wrap" id="funil-tbl-wrap" style="display:none">
+            <input class="search-in" id="funil-search" placeholder="🔍 Buscar bloco…" oninput="filtrarFunil(this.value)">
+            <table class="funil-table" id="funil-table">
+              <thead><tr>
+                <th>Bloco-Botão</th>
+                <th>Impressões</th>
+                <th>Cliques</th>
+                <th>CTR</th>
+                <th>Receita</th>
+                <th>eCPM</th>
+                <th>RPS</th>
+              </tr></thead>
+              <tbody id="funil-tbody"></tbody>
+            </table>
           </div>
-          <div class="card-mini">
-            <label>Total Impressões</label>
-            <strong id="funil-total-imp">0</strong>
-          </div>
-          <div class="card-mini">
-            <label>Total Receita</label>
-            <strong id="funil-total-rec">R$ 0,00</strong>
+          <div class="funil-empty" id="funil-empty">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            <p>Selecione uma UTM e clique em ↻ Atualizar</p>
           </div>
         </div>
 
-        <div class="funil-tbl-wrap" id="funil-tbl-wrap" style="display:none">
-          <input class="search-in" id="funil-search" placeholder="🔍 Buscar bloco…" oninput="filtrarFunil(this.value)">
-          <table class="funil-table" id="funil-table">
-            <thead><tr>
-              <th>Bloco-Botão</th>
-              <th>Impressões</th>
-              <th>Cliques</th>
-              <th>CTR</th>
-              <th>Receita</th>
-              <th>eCPM</th>
-              <th>RPS</th>
-            </tr></thead>
-            <tbody id="funil-tbody"></tbody>
-          </table>
-        </div>
-
-        <div class="funil-empty" id="funil-empty">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-          <p>Selecione uma UTM e clique em ↻ Atualizar</p>
+        <!-- SUB-ABA BOTÕES -->
+        <div id="sub-aba-botoes" style="display:none">
+          <div class="botoes-filtros">
+            <label>Origem:</label>
+            <select id="botoes-origem"><option value="">Todas</option></select>
+            <label>Página:</label>
+            <select id="botoes-pagina"><option value="">Todas</option></select>
+            <button onclick="loadFunilBotoes()">↻ Atualizar</button>
+          </div>
+          <div class="funil-cards" id="botoes-cards" style="display:none">
+            <div class="card-mini"><label>TOTAL BOTÕES</label><strong id="botoes-total">0</strong></div>
+            <div class="card-mini"><label>BOTÃO TOP</label><strong id="botoes-top">—</strong><small id="botoes-top-receita"></small></div>
+            <div class="card-mini"><label>IMPRESSÕES</label><strong id="botoes-imp">0</strong></div>
+            <div class="card-mini"><label>CLIQUES</label><strong id="botoes-cli">0</strong></div>
+            <div class="card-mini"><label>RECEITA TOTAL</label><strong id="botoes-rec">R$ 0,00</strong></div>
+          </div>
+          <div class="funil-tbl-wrap" id="botoes-tbl-wrap" style="display:none">
+            <input class="search-in" placeholder="🔍 Buscar botão…" oninput="filtrarTabela('botoes-tbody',this.value)">
+            <table class="funil-table">
+              <thead><tr>
+                <th>Origem</th>
+                <th>Página</th>
+                <th>Botão</th>
+                <th>Impressões</th>
+                <th>Cliques</th>
+                <th>CTR</th>
+                <th>Receita</th>
+                <th>eCPM</th>
+                <th>RPS</th>
+              </tr></thead>
+              <tbody id="botoes-tbody"></tbody>
+            </table>
+          </div>
+          <div class="funil-empty" id="botoes-empty">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            <p>Clique em ↻ Atualizar para carregar dados de botões</p>
+          </div>
         </div>
       </div>
     </div>
@@ -1567,15 +1621,6 @@
   </div>
 </div>
 
-<!-- ═══ NOTIF PANEL ═══ -->
-<aside class="notif-panel" id="notif-panel">
-  <div class="notif-ph">
-    <h3>Notificações</h3>
-    <button onclick="marcarTodasLidasFE()">Marcar todas como lidas</button>
-  </div>
-  <div class="notif-body" id="notif-list"><div style="padding:1.5rem;color:var(--muted);font-size:.8125rem;text-align:center">Carregando…</div></div>
-</aside>
-
 <!-- ═══ TOAST ═══ -->
 <div class="toast-box" id="toast-box"><span id="toast-ico"></span><span id="toast-msg"></span></div>
 
@@ -1696,6 +1741,10 @@
         <option value="ctr-desc">CTR ↓</option>
         <option value="cpc-asc">CPC ↑</option>
       </select>
+      <div class="adset-filter">
+        <input type="checkbox" id="filter-ativos" checked onchange="filtrarAdsetsDrilldown()">
+        <label for="filter-ativos">Apenas ATIVOS</label>
+      </div>
     </div>
     <div id="drill-adsets-container"></div>
   </div>
@@ -2101,6 +2150,8 @@ function renderAll(d){
   renderUTMCards(d.utmCampaignTop3||[],d.utmSourceTop3||[]);
   renderNetworks(d.networks||[]);
   updateMetaProgress(d.metas_progresso||{},k);
+  if(d.comparacao)renderVariacoes(d.comparacao);
+  setTimeout(aplicarClasseHideable,200);
 }
 
 /* ── TREND CHART — FIXED 30 DAYS ── */
@@ -2202,8 +2253,9 @@ function renderPrevisao(p){
 function renderDelay(k){
   const h=+(k.delayHours)||0;
   const b=document.getElementById('delay-badge');
+  if(h===0){b.style.display='none';return;}
   b.style.display='inline-flex';
-  document.getElementById('delay-txt').textContent=h===0?'GAM ao vivo':`GAM ${h.toFixed(1)}h atraso`;
+  document.getElementById('delay-txt').textContent=`GAM ${h.toFixed(1)}h atraso`;
   b.className='delay-badge '+(h<=2?'fr':h<=6?'st':'ol');
 }
 
@@ -2977,8 +3029,8 @@ function renderCampTable(rows){
         <span style="font-family:monospace;font-size:.8rem">${esc(r.ad_utm)}</span>
       </div></td>
       <td>${domBadge}</td>
-      <td class="mo" data-sort="${r.valor_gasto||0}">${BRL(r.valor_gasto)}</td>
-      <td class="mo" style="color:var(--c2)" data-sort="${r.faturamento_real||0}">${r.faturamento_real>0?BRL(r.faturamento_real):'<span style="color:var(--muted)">—</span>'}</td>
+      <td class="mo" data-sort="${r.valor_gasto||0}">${BRL(r.valor_gasto)}<span class="uvar-inv" data-utm="${esc(r.ad_utm||'')}"></span></td>
+      <td class="mo" style="color:var(--c2)" data-sort="${r.faturamento_real||0}">${r.faturamento_real>0?BRL(r.faturamento_real)+'<span class="uvar-fat" data-utm="'+esc(r.ad_utm||'')+'"></span>':'<span style="color:var(--muted)">—</span>'}</td>
       <td class="mo" style="color:${lucroColor}" data-sort="${lucro}">${r.faturamento_real>0?BRL(lucro):'—'}</td>
       <td class="mo" style="color:${roasColor}" data-sort="${roas}">${r.faturamento_real>0?ROAS(roas):'—'}</td>
       <td class="mo" style="color:var(--warn)" data-sort="${r.cpc||0}">${r.cpc>0?BRL(r.cpc):'—'}</td>
@@ -3457,24 +3509,8 @@ async function saveMetaValue(){
   }catch(e){alert('Erro: '+e.message);}
 }
 
-/* ═══ NOTIFICATIONS ═══ */
-let _notifPanelOpen=false;
-
-function toggleNotifPanel(){
-  _notifPanelOpen=!_notifPanelOpen;
-  const panel=document.getElementById('notif-panel');
-  if(!panel)return;
-  panel.classList.toggle('on',_notifPanelOpen);
-  if(_notifPanelOpen)loadNotifPanel();
-}
-
+/* ═══ CLICK OUTSIDE (fecha dropdowns) ═══ */
 document.addEventListener('click',e=>{
-  const panel=document.getElementById('notif-panel');
-  const bell=document.getElementById('notif-bell-btn');
-  if(panel&&bell&&!panel.contains(e.target)&&!bell.contains(e.target)){
-    panel.classList.remove('on');
-    _notifPanelOpen=false;
-  }
   // close utm dropdown if click outside
   const dd=document.getElementById('utm-dropdown');
   const sel=document.getElementById('utm-selector');
@@ -3483,57 +3519,6 @@ document.addEventListener('click',e=>{
     sel.classList.remove('open');
   }
 });
-
-async function loadNotifCount(){
-  try{
-    const r=await fetch('/api/notificacoes?lidas=false&limit=50');
-    if(!r.ok)return;
-    const data=await r.json();
-    const count=(data||[]).length;
-    const badge=document.getElementById('notif-badge');
-    if(!badge)return;
-    if(count>0){badge.textContent=count>9?'9+':count;badge.style.display='flex';}
-    else{badge.style.display='none';}
-  }catch{/* silent */}
-}
-
-async function loadNotifPanel(){
-  const list=document.getElementById('notif-list');
-  if(!list)return;
-  try{
-    const r=await fetch('/api/notificacoes?limit=30');
-    if(!r.ok)throw new Error();
-    const data=await r.json();
-    if(!data.length){list.innerHTML='<div style="padding:1.5rem;color:var(--muted);font-size:.8125rem;text-align:center">Nenhuma notificação</div>';return;}
-    const ico={info:'ℹ️',warning:'⚠️',danger:'🚨',success:'✅'};
-    list.innerHTML=data.map(n=>`
-      <div class="notif-item${n.lida?'':' unread'}" onclick="marcarLidaFE(${n.id},this)">
-        <div class="notif-ico">${ico[n.severidade]||'🔔'}</div>
-        <div class="notif-txt">
-          <strong>${esc(n.titulo)}</strong>
-          <p>${esc(n.mensagem)}</p>
-          <small>${timeAgo(n.created_at)}${n.ad_utm?' · '+esc(n.ad_utm):''}</small>
-        </div>
-      </div>`).join('');
-  }catch{list.innerHTML='<div style="padding:1rem;color:var(--bad);font-size:.8125rem">Erro ao carregar</div>';}
-}
-
-async function marcarLidaFE(id,el){
-  try{
-    await fetch(`/api/notificacoes/${id}/marcar-lida`,{method:'POST'});
-    if(el)el.classList.remove('unread');
-    loadNotifCount();
-  }catch{}
-}
-
-async function marcarTodasLidasFE(){
-  try{
-    await fetch('/api/notificacoes/marcar-todas-lidas',{method:'POST'});
-    showToast('ok','Todas as notificações marcadas como lidas');
-    await loadNotifPanel();
-    loadNotifCount();
-  }catch(e){showToast('err','Erro: '+e.message);}
-}
 
 function timeAgo(iso){
   const ms=Date.now()-new Date(iso).getTime();
@@ -3717,9 +3702,16 @@ function renderDrilldown(d){
   renderDrillAdsets(d.adsets,d.utm,rps);
 }
 
+function filtrarAdsetsDrilldown(){
+  if(!window._drillAdsets||!window._drillUtm)return;
+  renderDrillAdsets(window._drillAdsets,window._drillUtm,window._drillRps||0);
+}
 function renderDrillAdsets(adsets,utm,rps){
+  window._drillAdsets=adsets;window._drillUtm=utm;window._drillRps=rps;
   const key=document.getElementById('drill-sort')?.value||'spend-desc';
-  const sorted=sortAdsetArr(adsets,key);
+  const apenasAtivos=document.getElementById('filter-ativos')?.checked!==false;
+  const filtered=apenasAtivos?adsets.filter(a=>a.status==='ACTIVE'):adsets;
+  const sorted=sortAdsetArr(filtered,key);
   for(const a of sorted)_adsetMap[a.adset_id]=a;
   document.getElementById('drill-adsets-container').innerHTML=sorted.map(a=>{
     const isActive=a.status==='ACTIVE';
@@ -3886,10 +3878,8 @@ async function abrirHistorico(utm){
   loadData().finally(hideOverlay);
   checkSyncStatus();
   checkPendingStatus();
-  loadNotifCount();
   setInterval(checkSyncStatus,60000);
   setInterval(checkPendingStatus,120000);
-  setInterval(loadNotifCount,30000);
   loadGamDelayGlobal();
   setInterval(loadGamDelayGlobal,5*60*1000);
   loadTrendFixed();
@@ -3910,6 +3900,114 @@ async function initFunilTab(){
     sel.innerHTML='<option value="">Selecione uma UTM…</option>'+
       utms.map(u=>`<option value="${esc(u.ad_utm)}">${esc(u.ad_utm)}${u.tipo?' ('+esc(u.tipo)+')':''}</option>`).join('');
   }catch(e){console.error('[funil] initFunilTab:',e.message);}
+}
+
+function switchFunilTab(tipo,btn){
+  document.querySelectorAll('.funil-itab').forEach(t=>t.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+  const isBlocos=tipo==='blocos';
+  document.getElementById('sub-aba-blocos').style.display=isBlocos?'block':'none';
+  document.getElementById('sub-aba-botoes').style.display=isBlocos?'none':'block';
+  const ctrl=document.querySelector('.funil-controls');
+  if(ctrl)ctrl.style.display=isBlocos?'flex':'none';
+  if(!isBlocos)initFunilBotoes();
+}
+
+let _botoesInitialized=false;
+async function initFunilBotoes(){
+  const since=document.getElementById('f-since').value||todayISO();
+  const until=document.getElementById('f-until').value||todayISO();
+  try{
+    const r=await fetch(`/api/funil-botoes?since=${since}&until=${until}`);
+    if(!r.ok)throw new Error((await r.json().catch(()=>({}))).erro||r.statusText);
+    const data=await r.json();
+    const selOrigem=document.getElementById('botoes-origem');
+    selOrigem.innerHTML='<option value="">Todas</option>'+
+      (data.origens_disponiveis||[]).map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('');
+    const selPagina=document.getElementById('botoes-pagina');
+    selPagina.innerHTML='<option value="">Todas</option>'+
+      (data.paginas_disponiveis||[]).map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join('');
+    renderBotoesData(data);
+    _botoesInitialized=true;
+  }catch(e){
+    console.error('[funil-botoes] init:',e.message);
+    document.getElementById('botoes-empty').innerHTML=`<p style="color:var(--bad)">Erro: ${esc(e.message)}</p>`;
+  }
+}
+
+async function loadFunilBotoes(){
+  const since=document.getElementById('f-since').value||todayISO();
+  const until=document.getElementById('f-until').value||todayISO();
+  const origem=document.getElementById('botoes-origem')?.value||'';
+  const pagina=document.getElementById('botoes-pagina')?.value||'';
+  const params=new URLSearchParams({since,until});
+  if(origem)params.set('origem',origem);
+  if(pagina)params.set('pagina',pagina);
+  try{
+    const r=await fetch(`/api/funil-botoes?${params}`);
+    if(!r.ok)throw new Error((await r.json().catch(()=>({}))).erro||r.statusText);
+    renderBotoesData(await r.json());
+  }catch(e){
+    document.getElementById('botoes-empty').style.display='flex';
+    document.getElementById('botoes-empty').innerHTML=`<p style="color:var(--bad)">Erro: ${esc(e.message)}</p>`;
+  }
+}
+
+function renderBotoesData(data){
+  const cardsEl=document.getElementById('botoes-cards');
+  const tblEl=document.getElementById('botoes-tbl-wrap');
+  const emptyEl=document.getElementById('botoes-empty');
+  if(!data.botoes||data.botoes.length===0){
+    if(cardsEl)cardsEl.style.display='none';
+    if(tblEl)tblEl.style.display='none';
+    if(emptyEl){emptyEl.style.display='flex';emptyEl.innerHTML='<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg><p>Sem dados de botão para o período</p>';}
+    return;
+  }
+  if(emptyEl)emptyEl.style.display='none';
+  if(cardsEl)cardsEl.style.display='grid';
+  if(tblEl)tblEl.style.display='block';
+  const setEl=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  setEl('botoes-total',data.total_botoes);
+  setEl('botoes-top',data.botoes[0]?.pagina_botao||'—');
+  setEl('botoes-top-receita',data.botoes[0]?`R$ ${BRL(data.botoes[0].receita)}`:'');
+  setEl('botoes-imp',(data.totals.impressoes||0).toLocaleString('pt-BR'));
+  setEl('botoes-cli',(data.totals.cliques||0).toLocaleString('pt-BR'));
+  setEl('botoes-rec',`R$ ${BRL(data.totals.receita)}`);
+  const tbody=document.getElementById('botoes-tbody');
+  if(!tbody)return;
+  tbody.innerHTML=data.botoes.map(b=>`<tr>
+    <td><span class="badge-origem">${esc(b.origem||'—')}</span></td>
+    <td>${esc(b.pagina||'—')}</td>
+    <td><strong>${esc(b.botao||'—')}</strong></td>
+    <td class="mo" data-sort="${b.impressoes}">${(b.impressoes||0).toLocaleString('pt-BR')}</td>
+    <td class="mo" data-sort="${b.cliques}">${(b.cliques||0).toLocaleString('pt-BR')}</td>
+    <td class="mo" data-sort="${b.ctr}">${(b.ctr||0).toFixed(2)}%</td>
+    <td class="mo verde" data-sort="${b.receita}">R$ ${BRL(b.receita)}</td>
+    <td class="mo" data-sort="${b.ecpm}">R$ ${BRL(b.ecpm)}</td>
+    <td class="mo" data-sort="${b.rps||0}">R$ ${BRL(b.rps||0)}</td>
+  </tr>`).join('');
+  const tI=data.totals.impressoes,tC=data.totals.cliques,tR=data.totals.receita;
+  const ctrM=tI>0?(tC/tI)*100:0;
+  const ecpmM=tI>0?(tR/tI)*1000:0;
+  const rpsM=tC>0?tR/tC:0;
+  tbody.insertAdjacentHTML('beforeend',`<tr class="row-total">
+    <td colspan="3"><strong>TOTAL / MÉDIA</strong></td>
+    <td class="mo"><strong>${(tI||0).toLocaleString('pt-BR')}</strong></td>
+    <td class="mo"><strong>${(tC||0).toLocaleString('pt-BR')}</strong></td>
+    <td class="mo"><strong>${ctrM.toFixed(2)}%</strong></td>
+    <td class="mo verde"><strong>R$ ${BRL(tR)}</strong></td>
+    <td class="mo"><strong>R$ ${BRL(ecpmM)}</strong></td>
+    <td class="mo"><strong>R$ ${BRL(rpsM)}</strong></td>
+  </tr>`);
+  makeTableSortable('botoes-tbody');
+}
+
+function filtrarTabela(tbodyId,termo){
+  const t=termo.toLowerCase();
+  document.querySelectorAll(`#${tbodyId} tr`).forEach(tr=>{
+    if(tr.classList.contains('row-total')){tr.style.display='';return;}
+    tr.style.display=(!t||tr.textContent.toLowerCase().includes(t))?'':'none';
+  });
 }
 
 function filtrarFunil(termo){
@@ -3986,6 +4084,63 @@ async function loadFunil(){
   }catch(e){
     emptyEl.style.display='flex';
     emptyEl.innerHTML=`<p style="color:var(--bad)">Erro: ${esc(e.message)}</p>`;
+  }
+}
+
+/* ═══ HELPERS ═══ */
+function todayISO(){return new Date().toISOString().slice(0,10);}
+
+/* ═══ OLHO — OCULTAR VALORES ═══ */
+function aplicarClasseHideable(){
+  document.querySelectorAll('td,.kpi-val,.stat-value,.m6-val,.kpi-ch').forEach(el=>{
+    const t=el.textContent||'';
+    if(t.includes('R$')||t.includes('$')||/^\s*[\d]+([.,]\d+)+\s*$/.test(t.trim())||t.includes('%')){
+      el.classList.add('hideable-value');
+    }
+  });
+}
+(function initEye(){
+  const btn=document.getElementById('toggle-eye');
+  if(!btn)return;
+  if(localStorage.getItem('valores-ocultos')==='1')document.body.classList.add('values-hidden');
+  btn.addEventListener('click',()=>{
+    document.body.classList.toggle('values-hidden');
+    const h=document.body.classList.contains('values-hidden');
+    btn.textContent=h?'🙈':'👁️';
+    localStorage.setItem('valores-ocultos',h?'1':'0');
+  });
+  if(localStorage.getItem('valores-ocultos')==='1')btn.textContent='🙈';
+})();
+
+/* ═══ VARIAÇÃO % ═══ */
+function renderVariacao(pct){
+  if(pct===null||pct===undefined||isNaN(pct)||!isFinite(pct))return'';
+  const sign=pct>=0?'+':'';
+  const cls=pct>=0?'var-up':'var-down';
+  const arrow=pct>=0?'↑':'↓';
+  return`<span class="variacao ${cls}">${arrow} ${sign}${pct.toFixed(1)}%</span>`;
+}
+function renderVariacoes(cmp){
+  const mapa={
+    'var-fat':cmp.faturamento?.variacao,
+    'var-inv':cmp.investimento?.variacao,
+    'var-lucro':cmp.lucro?.variacao,
+    'var-roi':cmp.roi?.variacao,
+  };
+  for(const[id,v]of Object.entries(mapa)){
+    const el=document.getElementById(id);
+    if(el)el.innerHTML=renderVariacao(v);
+  }
+  window._comparacao=cmp;
+  if(cmp.porUtm){
+    document.querySelectorAll('.uvar-fat[data-utm]').forEach(el=>{
+      const v=cmp.porUtm[el.dataset.utm]?.faturamento?.variacao;
+      el.innerHTML=renderVariacao(v);
+    });
+    document.querySelectorAll('.uvar-inv[data-utm]').forEach(el=>{
+      const v=cmp.porUtm[el.dataset.utm]?.investimento?.variacao;
+      el.innerHTML=renderVariacao(v);
+    });
   }
 }
 

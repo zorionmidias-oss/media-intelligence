@@ -226,7 +226,7 @@ async function handler(req, res) {
     const payload = {
       utm,
       total,
-      adsets: Array.from(adsetsMap.values()),
+      adsets: Array.from(adsetsMap.values()).sort((a, b) => b.spend - a.spend),
       debug: {
         ads_no_banco: (rows || []).length,
         adsets_encontrados: adsetsMap.size,
