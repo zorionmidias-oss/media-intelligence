@@ -144,8 +144,10 @@ async function handler(req, res) {
       adUnitMap[bk]._n++;
     }
 
-    // faturamento_real already stored net in ads_consolidados (0.9 applied in sync.js)
-    const totFat = Object.values(utmMap).reduce((s, u) => s + u.faturamento, 0);
+    // Faturamento real = receita bruta GAM total * 0.9
+    // blocos_anuncio.receita_total já está em BRL (convertido no sync)
+    const totFatBruto = (gam || []).reduce((s, r) => s + Number(r.receita_total || 0), 0);
+    const totFat = totFatBruto * 0.9;
     const totLucro = totFat - totSpend;
     const ecpm = _ecpmWt > 0 ? _ecpmWtSum / _ecpmWt : 0;
     const taxaProgramatica = _pmrWt > 0 ? _pmrWtSum / _pmrWt : 0;
@@ -311,6 +313,7 @@ async function handler(req, res) {
     res.json({
       kpis: {
         faturamento: +totFat.toFixed(2),
+        faturamento_bruto: +totFatBruto.toFixed(2),
         investimento: +totSpend.toFixed(2),
         lucro: +totLucro.toFixed(2),
         roi,
