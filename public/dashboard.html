@@ -2335,6 +2335,7 @@ function renderTrend(trend){
           callbacks:{
             title:items=>'📅 '+items[0].label,
             label:item=>{
+              if(document.body.classList.contains('values-hidden'))return ' ••••';
               const d=trend[item.dataIndex];
               const lbl=item.dataset?.label||'';
               if(lbl==='fat')return ` Faturamento: ${BRL(d.faturamento)}`;
@@ -2348,8 +2349,8 @@ function renderTrend(trend){
       },
       scales:{
         x:{grid:{color:gridColor},ticks:{color:tickColor,font}},
-        yL:{position:'left',grid:{color:gridColor},ticks:{color:tickColor,font,callback:v=>BRL(v)}},
-        yR:{position:'right',grid:{drawOnChartArea:false},ticks:{color:tickColor,font,callback:v=>loc(v,1)}},
+        yL:{position:'left',grid:{color:gridColor},ticks:{color:tickColor,font,callback:v=>document.body.classList.contains('values-hidden')?'••':BRL(v)}},
+        yR:{position:'right',grid:{drawOnChartArea:false},ticks:{color:tickColor,font,callback:v=>document.body.classList.contains('values-hidden')?'•':loc(v,1)}},
       },
     },
   });
@@ -4086,6 +4087,14 @@ function aplicarClasseHideable(){
     '#dom-table-body td',
     '#botoes-rec','#botoes-imp','#botoes-cli','#botoes-top-receita',
     '.card-mini strong',
+    // drilldown modal
+    '#drill-summary-row b','#drill-legend small',
+    // creative modal
+    '.cri-m4 b',
+    // funnel stages
+    '.stage-spend','.stage-roas','.stage-extra span','#funnel-total',
+    // topbar fx rate
+    '#fx-rate',
   ].join(',');
   document.querySelectorAll(SEL).forEach(el=>{
     const t=(el.textContent||'').trim();
@@ -4119,6 +4128,7 @@ let _hideDebounce=null;
     const hidden=document.body.classList.contains('values-hidden');
     setEyeState(hidden);
     localStorage.setItem('valores-ocultos',hidden?'1':'0');
+    if(window._trendChart)window._trendChart.update();
   });
 })();
 
