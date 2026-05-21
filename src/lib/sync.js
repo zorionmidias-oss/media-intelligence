@@ -423,13 +423,19 @@ async function syncAll(dateRange) {
     if (adsRows.length > 0) {
       // BUG 3: pular datas que foram corrigidas manualmente
       const datas = [...new Set(adsRows.map(r => r.data))];
-      const { data: fixedRows } = await supabase
-        .from('ads_consolidados')
-        .select('data')
-        .in('data', datas)
-        .eq('manually_fixed', true)
-        .catch(() => ({ data: [] }));
-      const fixedSet = new Set((fixedRows || []).map(r => r.data));
+      let fixedRows = [];
+      try {
+        const { data: fr } = await supabase
+          .from('ads_consolidados')
+          .select('data')
+          .in('data', datas)
+          .eq('manually_fixed', true);
+        fixedRows = fr || [];
+      } catch (e) {
+        console.warn('[sync] manually_fixed check failed:', e.message);
+        fixedRows = [];
+      }
+      const fixedSet = new Set(fixedRows.map(r => r.data));
       if (fixedSet.size > 0) {
         const antes = adsRows.length;
         adsRows = adsRows.filter(r => !fixedSet.has(r.data));
