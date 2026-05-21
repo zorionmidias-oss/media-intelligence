@@ -243,15 +243,15 @@ async function handler(req, res) {
     };
     const comparacao = {
       periodo_anterior: { since: prevDf, until: prevDt },
-      faturamento:  { atual: +totFat.toFixed(2),    anterior: +prevTotFat.toFixed(2),    variacao: varPct(totFat,    prevTotFat) },
-      investimento: { atual: +totSpend.toFixed(2),  anterior: +prevTotSpend.toFixed(2),  variacao: varPct(totSpend,  prevTotSpend) },
-      lucro:        { atual: +totLucro.toFixed(2),  anterior: +prevTotLucro.toFixed(2),  variacao: varPct(totLucro,  prevTotLucro) },
-      roi:          { atual: roi,                   anterior: +prevRoi.toFixed(2),        variacao: prevRoi !== 0 ? +(roi - prevRoi).toFixed(1) : null },
+      faturamento:  varPct(totFat,    prevTotFat),
+      investimento: varPct(totSpend,  prevTotSpend),
+      lucro:        varPct(totLucro,  prevTotLucro),
+      roi:          prevRoi !== 0 ? +(roi - prevRoi).toFixed(1) : null,
       porUtm: Object.fromEntries(allUTMs.map(u => {
         const p = prevUtmMap[u.ad_utm] || { spend: 0, fat: 0 };
         return [u.ad_utm, {
-          faturamento:  { anterior: +p.fat.toFixed(2),   variacao: varPct(u.faturado, p.fat) },
-          investimento: { anterior: +p.spend.toFixed(2), variacao: varPct(u.spend,    p.spend) },
+          faturamento:  varPct(u.faturado, p.fat),
+          investimento: varPct(u.spend,    p.spend),
         }];
       })),
     };

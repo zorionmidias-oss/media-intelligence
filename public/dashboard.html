@@ -741,6 +741,9 @@
     .adset-filter input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px;cursor:pointer}
     .adset-filter label{cursor:pointer}
 
+    /* ── COMPACT TABLE ROWS ── */
+    #camp-db-body td,#adunit-body td,#hora-tbody td,#utm-tbody td,#funil-tbody td,#botoes-tbody td,#dom-table-body td{padding:6px 10px!important;font-size:.75rem!important}
+
     /* ── DATE PICKER ── */
     .date-picker-wrapper{position:relative;display:inline-block}
     .date-picker-btn{background:var(--card);border:1px solid var(--border);color:var(--fg);padding:.4375rem .875rem;border-radius:var(--r);cursor:pointer;font-size:.8125rem;font-family:inherit;display:inline-flex;align-items:center;gap:.5rem;transition:border-color .2s,background .2s;white-space:nowrap;height:2.25rem}
@@ -923,6 +926,7 @@
           </div>
         </div>
         <select id="f-domain" style="min-width:140px"><option value="all">Todos os domínios</option></select>
+        <button class="btn btn-s" onclick="refreshAll()">↻ Atualizar</button>
         <button class="btn btn-p" id="btn-force" onclick="forceSync()">
           <svg id="force-spin-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:none"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
           ⟳ Forçar
@@ -933,9 +937,6 @@
       <button class="pend-badge" id="pend-badge" onclick="nav('domains',document.getElementById('nav-domains'))">
         ⚠ <span id="pend-count">0</span> domínio(s) novo(s)
       </button>
-      <div class="sync-badge" id="sync-badge" title="Última sincronização">
-        <span id="sync-txt">sync —</span>
-      </div>
       <div class="fx-badge" id="fx-badge">US$ 1 = R$ <span id="fx-rate">—</span></div>
       <span class="gam-delay" id="gam-delay-global"></span>
       <div class="delay-badge" id="delay-badge" style="display:none">
@@ -943,7 +944,10 @@
         <svg id="delay-spin-ico" class="spin-ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
         <span id="delay-txt">GAM</span>
       </div>
-      <button class="btn-toggle-eye" id="toggle-eye" title="Ocultar/revelar valores">👁️</button>
+      <button class="btn-toggle-eye" id="toggle-eye" title="Ocultar/revelar valores">
+        <svg class="icon-eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg class="icon-eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+      </button>
       <button class="theme-toggle ico-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="Alternar tema">
         <svg id="theme-icon-dark" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         <svg id="theme-icon-light" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -1327,10 +1331,6 @@
         <!-- SUB-ABA BOTÕES -->
         <div id="sub-aba-botoes" style="display:none">
           <div class="botoes-filtros">
-            <label>Origem:</label>
-            <select id="botoes-origem"><option value="">Todas</option></select>
-            <label>Página:</label>
-            <select id="botoes-pagina"><option value="">Todas</option></select>
             <button onclick="loadFunilBotoes()">↻ Atualizar</button>
           </div>
           <div class="funil-cards" id="botoes-cards" style="display:none">
@@ -3913,22 +3913,13 @@ function switchFunilTab(tipo,btn){
   if(!isBlocos)initFunilBotoes();
 }
 
-let _botoesInitialized=false;
 async function initFunilBotoes(){
   const since=document.getElementById('f-since').value||todayISO();
   const until=document.getElementById('f-until').value||todayISO();
   try{
     const r=await fetch(`/api/funil-botoes?since=${since}&until=${until}`);
     if(!r.ok)throw new Error((await r.json().catch(()=>({}))).erro||r.statusText);
-    const data=await r.json();
-    const selOrigem=document.getElementById('botoes-origem');
-    selOrigem.innerHTML='<option value="">Todas</option>'+
-      (data.origens_disponiveis||[]).map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('');
-    const selPagina=document.getElementById('botoes-pagina');
-    selPagina.innerHTML='<option value="">Todas</option>'+
-      (data.paginas_disponiveis||[]).map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join('');
-    renderBotoesData(data);
-    _botoesInitialized=true;
+    renderBotoesData(await r.json());
   }catch(e){
     console.error('[funil-botoes] init:',e.message);
     document.getElementById('botoes-empty').innerHTML=`<p style="color:var(--bad)">Erro: ${esc(e.message)}</p>`;
@@ -3938,13 +3929,8 @@ async function initFunilBotoes(){
 async function loadFunilBotoes(){
   const since=document.getElementById('f-since').value||todayISO();
   const until=document.getElementById('f-until').value||todayISO();
-  const origem=document.getElementById('botoes-origem')?.value||'';
-  const pagina=document.getElementById('botoes-pagina')?.value||'';
-  const params=new URLSearchParams({since,until});
-  if(origem)params.set('origem',origem);
-  if(pagina)params.set('pagina',pagina);
   try{
-    const r=await fetch(`/api/funil-botoes?${params}`);
+    const r=await fetch(`/api/funil-botoes?since=${since}&until=${until}`);
     if(!r.ok)throw new Error((await r.json().catch(()=>({}))).erro||r.statusText);
     renderBotoesData(await r.json());
   }catch(e){
@@ -4092,24 +4078,48 @@ function todayISO(){return new Date().toISOString().slice(0,10);}
 
 /* ═══ OLHO — OCULTAR VALORES ═══ */
 function aplicarClasseHideable(){
-  document.querySelectorAll('td,.kpi-val,.stat-value,.m6-val,.kpi-ch').forEach(el=>{
-    const t=el.textContent||'';
-    if(t.includes('R$')||t.includes('$')||/^\s*[\d]+([.,]\d+)+\s*$/.test(t.trim())||t.includes('%')){
+  const SEL=[
+    '.kpi-val','.kpi-ch','.ck-val','.ck-sub',
+    '.m6-val','.stat-value',
+    '#camp-db-body td','#adunit-body td','#hora-tbody td',
+    '#utm-tbody td','#funil-tbody td','#botoes-tbody td',
+    '#dom-table-body td',
+    '#botoes-rec','#botoes-imp','#botoes-cli','#botoes-top-receita',
+    '.card-mini strong',
+  ].join(',');
+  document.querySelectorAll(SEL).forEach(el=>{
+    const t=(el.textContent||'').trim();
+    if(t.includes('R$')||t.includes('%')||/\d+[.,]\d+/.test(t)){
       el.classList.add('hideable-value');
     }
   });
 }
+let _hideDebounce=null;
+(function(){
+  const obs=new MutationObserver(()=>{
+    clearTimeout(_hideDebounce);
+    _hideDebounce=setTimeout(aplicarClasseHideable,150);
+  });
+  obs.observe(document.body,{childList:true,subtree:true});
+})();
 (function initEye(){
   const btn=document.getElementById('toggle-eye');
   if(!btn)return;
-  if(localStorage.getItem('valores-ocultos')==='1')document.body.classList.add('values-hidden');
+  const eyeOpen=btn.querySelector('.icon-eye-open');
+  const eyeClosed=btn.querySelector('.icon-eye-closed');
+  function setEyeState(hidden){
+    if(eyeOpen)eyeOpen.style.display=hidden?'none':'block';
+    if(eyeClosed)eyeClosed.style.display=hidden?'block':'none';
+  }
+  const initHidden=localStorage.getItem('valores-ocultos')==='1';
+  if(initHidden)document.body.classList.add('values-hidden');
+  setEyeState(initHidden);
   btn.addEventListener('click',()=>{
     document.body.classList.toggle('values-hidden');
-    const h=document.body.classList.contains('values-hidden');
-    btn.textContent=h?'🙈':'👁️';
-    localStorage.setItem('valores-ocultos',h?'1':'0');
+    const hidden=document.body.classList.contains('values-hidden');
+    setEyeState(hidden);
+    localStorage.setItem('valores-ocultos',hidden?'1':'0');
   });
-  if(localStorage.getItem('valores-ocultos')==='1')btn.textContent='🙈';
 })();
 
 /* ═══ VARIAÇÃO % ═══ */
@@ -4122,10 +4132,10 @@ function renderVariacao(pct){
 }
 function renderVariacoes(cmp){
   const mapa={
-    'var-fat':cmp.faturamento?.variacao,
-    'var-inv':cmp.investimento?.variacao,
-    'var-lucro':cmp.lucro?.variacao,
-    'var-roi':cmp.roi?.variacao,
+    'var-fat':  cmp.faturamento,
+    'var-inv':  cmp.investimento,
+    'var-lucro':cmp.lucro,
+    'var-roi':  cmp.roi,
   };
   for(const[id,v]of Object.entries(mapa)){
     const el=document.getElementById(id);
@@ -4134,12 +4144,10 @@ function renderVariacoes(cmp){
   window._comparacao=cmp;
   if(cmp.porUtm){
     document.querySelectorAll('.uvar-fat[data-utm]').forEach(el=>{
-      const v=cmp.porUtm[el.dataset.utm]?.faturamento?.variacao;
-      el.innerHTML=renderVariacao(v);
+      el.innerHTML=renderVariacao(cmp.porUtm[el.dataset.utm]?.faturamento);
     });
     document.querySelectorAll('.uvar-inv[data-utm]').forEach(el=>{
-      const v=cmp.porUtm[el.dataset.utm]?.investimento?.variacao;
-      el.innerHTML=renderVariacao(v);
+      el.innerHTML=renderVariacao(cmp.porUtm[el.dataset.utm]?.investimento);
     });
   }
 }

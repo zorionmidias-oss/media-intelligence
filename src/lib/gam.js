@@ -969,6 +969,9 @@ async function fetchGAMBotoesIndependente({ since, until, filtroOrigem, filtroPa
       if (!medium || medium.toLowerCase() === 'null') continue;
 
       const parsed = parseUtmMedium(medium.toLowerCase());
+
+      if (parsed.origem !== 'site') continue;
+
       const key = parsed.pagina_botao;
 
       if (filtroOrigem && parsed.origem !== filtroOrigem) continue;
