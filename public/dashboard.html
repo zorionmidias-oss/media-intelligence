@@ -4681,6 +4681,9 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
 .bwz-copy-prev-btn:hover{border-color:var(--accent);color:var(--accent)}
 .bwz-char-cnt{text-align:right;font-size:.6875rem;color:var(--muted)}
 .bwz-utm-preview{background:var(--sec);border:1px solid var(--border);border-radius:.5rem;padding:.75rem;font-family:ui-monospace,SFMono-Regular,"SF Mono",monospace;font-size:.75rem;color:var(--accent);word-break:break-all;margin-top:.5rem;min-height:2.25rem;line-height:1.7}
+.bwz-age-num{width:4.5rem;text-align:center;padding:.3rem .4rem;margin-bottom:.375rem;font-size:.875rem}
+.bwz-add-copy-btn{background:none;border:1px dashed var(--border);color:var(--accent);padding:.4rem .875rem;border-radius:.5rem;cursor:pointer;font-size:.8125rem;margin-top:.375rem;transition:background .15s;}
+.bwz-add-copy-btn:hover{background:var(--sec);}
 .bwz-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem .75rem;font-size:.8125rem;background:var(--sec);border:1px solid var(--border);border-radius:.75rem;padding:1rem 1.25rem;margin-bottom:1.25rem;line-height:1.6}
 .bwz-summary-full{grid-column:1/-1}
 .bwz-prog-wrap{margin:1rem 0;display:none}
@@ -4871,11 +4874,13 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
      <label class="wz-lbl">Faixa etária</label>
      <div class="bwz-age-wrap">
       <div>
+       <input type="number" class="wz-input bwz-age-num" id="bwz-age-min-num" min="18" max="64" value="18" oninput="botWizAgeNumChange('min',this.value)">
        <div class="bwz-age-val" id="bwz-age-min-val">18</div>
        <div class="bwz-age-lbl">Mínima</div>
        <input type="range" class="bwz-range" id="bwz-age-min" min="18" max="64" value="18" oninput="botWizAgeChange()">
       </div>
       <div>
+       <input type="number" class="wz-input bwz-age-num" id="bwz-age-max-num" min="19" max="65" value="45" oninput="botWizAgeNumChange('max',this.value)">
        <div class="bwz-age-val" id="bwz-age-max-val">45</div>
        <div class="bwz-age-lbl">Máxima</div>
        <input type="range" class="bwz-range" id="bwz-age-max" min="19" max="65" value="45" oninput="botWizAgeChange()">
@@ -4958,37 +4963,30 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
      </div>
     </div>
 
-    <div class="wz-field">
-     <label class="wz-lbl">URL de destino *</label>
-     <input class="wz-input" id="bwz-link-url" type="url" placeholder="https://mkuker.com">
-    </div>
-
     <div class="bwz-copy-section">
 
      <div class="bwz-copy-group">
-      <span class="bwz-copy-group-title">Textos principais (5) — Meta otimiza qual exibir</span>
-      <div class="bwz-copy-field"><div class="bwz-copy-row"><textarea class="wz-input" id="bwz-text-1" rows="3" placeholder="Texto 1…" oninput="bwzCC(this,'bwz-tc-1')"></textarea></div><div class="bwz-char-cnt" id="bwz-tc-1">0 chars</div></div>
-      <div class="bwz-copy-field"><div class="bwz-copy-row"><textarea class="wz-input" id="bwz-text-2" rows="3" placeholder="Texto 2…" oninput="bwzCC(this,'bwz-tc-2')"></textarea><button class="bwz-copy-prev-btn" onclick="bwzCopyPrev('bwz-text','bwz-tc',2)">&#8593; copiar</button></div><div class="bwz-char-cnt" id="bwz-tc-2">0 chars</div></div>
-      <div class="bwz-copy-field"><div class="bwz-copy-row"><textarea class="wz-input" id="bwz-text-3" rows="3" placeholder="Texto 3…" oninput="bwzCC(this,'bwz-tc-3')"></textarea><button class="bwz-copy-prev-btn" onclick="bwzCopyPrev('bwz-text','bwz-tc',3)">&#8593; copiar</button></div><div class="bwz-char-cnt" id="bwz-tc-3">0 chars</div></div>
-      <div class="bwz-copy-field"><div class="bwz-copy-row"><textarea class="wz-input" id="bwz-text-4" rows="3" placeholder="Texto 4…" oninput="bwzCC(this,'bwz-tc-4')"></textarea><button class="bwz-copy-prev-btn" onclick="bwzCopyPrev('bwz-text','bwz-tc',4)">&#8593; copiar</button></div><div class="bwz-char-cnt" id="bwz-tc-4">0 chars</div></div>
-      <div class="bwz-copy-field"><div class="bwz-copy-row"><textarea class="wz-input" id="bwz-text-5" rows="3" placeholder="Texto 5…" oninput="bwzCC(this,'bwz-tc-5')"></textarea><button class="bwz-copy-prev-btn" onclick="bwzCopyPrev('bwz-text','bwz-tc',5)">&#8593; copiar</button></div><div class="bwz-char-cnt" id="bwz-tc-5">0 chars</div></div>
+      <span class="bwz-copy-group-title">Textos principais — Meta otimiza qual exibir (máx 5)</span>
+      <div id="bwz-texts-container">
+       <div class="bwz-copy-field"><div class="bwz-copy-row"><textarea class="wz-input" id="bwz-text-1" rows="3" placeholder="Texto 1…" oninput="bwzCC(this,'bwz-tc-1')"></textarea></div><div class="bwz-char-cnt" id="bwz-tc-1">0 chars</div></div>
+      </div>
+      <button class="bwz-add-copy-btn" id="bwz-add-text-btn" onclick="bwzAddCopyField('text')">+ Adicionar texto</button>
      </div>
 
      <div class="bwz-copy-group">
-      <span class="bwz-copy-group-title">Headlines (5)</span>
-      <div class="bwz-copy-field"><div class="bwz-copy-row"><input class="wz-input" id="bwz-hl-1" placeholder="Headline 1" oninput="bwzCC(this,'bwz-hc-1')"></div><div class="bwz-char-cnt" id="bwz-hc-1">0 chars</div></div>
-      <div class="bwz-copy-field"><div class="bwz-copy-row"><input class="wz-input" id="bwz-hl-2" placeholder="Headline 2" oninput="bwzCC(this,'bwz-hc-2')"><button class="bwz-copy-prev-btn" onclick="bwzCopyPrev('bwz-hl','bwz-hc',2)">&#8593; copiar</button></div><div class="bwz-char-cnt" id="bwz-hc-2">0 chars</div></div>
-      <div class="bwz-copy-field"><div class="bwz-copy-row"><input class="wz-input" id="bwz-hl-3" placeholder="Headline 3" oninput="bwzCC(this,'bwz-hc-3')"><button class="bwz-copy-prev-btn" onclick="bwzCopyPrev('bwz-hl','bwz-hc',3)">&#8593; copiar</button></div><div class="bwz-char-cnt" id="bwz-hc-3">0 chars</div></div>
-      <div class="bwz-copy-field"><div class="bwz-copy-row"><input class="wz-input" id="bwz-hl-4" placeholder="Headline 4" oninput="bwzCC(this,'bwz-hc-4')"><button class="bwz-copy-prev-btn" onclick="bwzCopyPrev('bwz-hl','bwz-hc',4)">&#8593; copiar</button></div><div class="bwz-char-cnt" id="bwz-hc-4">0 chars</div></div>
-      <div class="bwz-copy-field"><div class="bwz-copy-row"><input class="wz-input" id="bwz-hl-5" placeholder="Headline 5" oninput="bwzCC(this,'bwz-hc-5')"><button class="bwz-copy-prev-btn" onclick="bwzCopyPrev('bwz-hl','bwz-hc',5)">&#8593; copiar</button></div><div class="bwz-char-cnt" id="bwz-hc-5">0 chars</div></div>
+      <span class="bwz-copy-group-title">Headlines (máx 5)</span>
+      <div id="bwz-hls-container">
+       <div class="bwz-copy-field"><div class="bwz-copy-row"><input class="wz-input" id="bwz-hl-1" placeholder="Headline 1" oninput="bwzCC(this,'bwz-hc-1')"></div><div class="bwz-char-cnt" id="bwz-hc-1">0 chars</div></div>
+      </div>
+      <button class="bwz-add-copy-btn" id="bwz-add-hl-btn" onclick="bwzAddCopyField('hl')">+ Adicionar headline</button>
      </div>
 
      <div class="bwz-copy-group">
-      <span class="bwz-copy-group-title">Descrições (4)</span>
-      <div class="bwz-copy-field"><div class="bwz-copy-row"><input class="wz-input" id="bwz-desc-1" placeholder="Descrição 1" oninput="bwzCC(this,'bwz-dc-1')"></div><div class="bwz-char-cnt" id="bwz-dc-1">0 chars</div></div>
-      <div class="bwz-copy-field"><div class="bwz-copy-row"><input class="wz-input" id="bwz-desc-2" placeholder="Descrição 2" oninput="bwzCC(this,'bwz-dc-2')"><button class="bwz-copy-prev-btn" onclick="bwzCopyPrev('bwz-desc','bwz-dc',2)">&#8593; copiar</button></div><div class="bwz-char-cnt" id="bwz-dc-2">0 chars</div></div>
-      <div class="bwz-copy-field"><div class="bwz-copy-row"><input class="wz-input" id="bwz-desc-3" placeholder="Descrição 3" oninput="bwzCC(this,'bwz-dc-3')"><button class="bwz-copy-prev-btn" onclick="bwzCopyPrev('bwz-desc','bwz-dc',3)">&#8593; copiar</button></div><div class="bwz-char-cnt" id="bwz-dc-3">0 chars</div></div>
-      <div class="bwz-copy-field"><div class="bwz-copy-row"><input class="wz-input" id="bwz-desc-4" placeholder="Descrição 4" oninput="bwzCC(this,'bwz-dc-4')"><button class="bwz-copy-prev-btn" onclick="bwzCopyPrev('bwz-desc','bwz-dc',4)">&#8593; copiar</button></div><div class="bwz-char-cnt" id="bwz-dc-4">0 chars</div></div>
+      <span class="bwz-copy-group-title">Descrições (máx 4)</span>
+      <div id="bwz-descs-container">
+       <div class="bwz-copy-field"><div class="bwz-copy-row"><input class="wz-input" id="bwz-desc-1" placeholder="Descrição 1" oninput="bwzCC(this,'bwz-dc-1')"></div><div class="bwz-char-cnt" id="bwz-dc-1">0 chars</div></div>
+      </div>
+      <button class="bwz-add-copy-btn" id="bwz-add-desc-btn" onclick="bwzAddCopyField('desc')">+ Adicionar descrição</button>
      </div>
 
     </div>
@@ -4997,30 +4995,10 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
    <!-- ── STEP 6: Publicar ── -->
    <div class="bwz-step" id="bwz-step-6">
     <p class="bwz-step-title">Revisão e publicação</p>
-    <p class="bwz-step-sub">Confirme os dados, configure UTMs e crie os 18 ads.</p>
+    <p class="bwz-step-sub">Confirme os dados e crie os 18 ads.</p>
 
     <div class="bwz-summary-grid" id="bwz-summary">
      <div>Carregando resumo…</div>
-    </div>
-
-    <div class="wz-section-title">Gerador de UTM</div>
-    <div class="wz-row">
-     <div class="wz-field" style="margin:0">
-      <label class="wz-lbl">utm_source</label>
-      <input class="wz-input" id="bwz-utm-source" placeholder="ex: aishafb" oninput="bwzUtmPreview()">
-     </div>
-     <div class="wz-field" style="margin:0">
-      <label class="wz-lbl">utm_campaign</label>
-      <input class="wz-input" id="bwz-utm-campaign" placeholder="ex: rela-mai26" oninput="bwzUtmPreview()">
-     </div>
-    </div>
-    <div class="wz-field">
-     <label class="wz-lbl">utm_medium</label>
-     <input class="wz-input" id="bwz-utm-medium" placeholder="ex: bloco1-botao1-aishafb" oninput="bwzUtmPreview()">
-    </div>
-    <div class="wz-field">
-     <label class="wz-lbl">Preview do link</label>
-     <div class="bwz-utm-preview" id="bwz-utm-preview">?utm_source=…</div>
     </div>
 
     <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.5rem">
@@ -5065,7 +5043,7 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
 </div>
 
 <!-- ═══ CONFIRM MODAL ═══ -->
-<div id="bwz-confirm-overlay" class="modal-bg" onclick="if(event.target===this)this.classList.remove('on')">
+<div id="bwz-confirm-overlay" class="modal-bg" style="z-index:310" onclick="if(event.target===this)this.classList.remove('on')">
  <div class="modal" style="width:min(500px,95vw)">
   <div class="modal-hd">
    <span class="modal-title">Confirmar criação</span>
@@ -5102,8 +5080,6 @@ const BWZ = {
     pixel_id:'',conversion_event:'VIEW_CONTENT',
     daily_budget:7,start_time:'',end_time:null,
     age_min:18,age_max:45,gender:0,
-    link_url:'https://mkuker.com',
-    utm_source:'',utm_medium:'',utm_campaign:'',
   }
 };
 window._BWZ=BWZ;
@@ -5130,6 +5106,26 @@ window.bwzCopyPrev=function(prefix,cntPrefix,idx){
     if(cnt)cnt.textContent=`${to.value.length} chars`;
   }
 };
+window.bwzAddCopyField=function(type){
+  const cfgs={
+    text:{cid:'bwz-texts-container',pre:'bwz-text',cnt:'bwz-tc',max:5,textarea:true,bid:'bwz-add-text-btn',lbl:'Texto'},
+    hl:{cid:'bwz-hls-container',pre:'bwz-hl',cnt:'bwz-hc',max:5,textarea:false,bid:'bwz-add-hl-btn',lbl:'Headline'},
+    desc:{cid:'bwz-descs-container',pre:'bwz-desc',cnt:'bwz-dc',max:4,textarea:false,bid:'bwz-add-desc-btn',lbl:'Descrição'},
+  };
+  const cfg=cfgs[type];if(!cfg)return;
+  const c=document.getElementById(cfg.cid);
+  const idx=c.querySelectorAll('.bwz-copy-field').length+1;
+  if(idx>cfg.max){showToast('warn',`Máximo de ${cfg.max} ${cfg.lbl.toLowerCase()}s.`,2500);return;}
+  const inp=cfg.textarea
+    ?`<textarea class="wz-input" id="${cfg.pre}-${idx}" rows="3" placeholder="${cfg.lbl} ${idx}…" oninput="bwzCC(this,'${cfg.cnt}-${idx}')"></textarea>`
+    :`<input class="wz-input" id="${cfg.pre}-${idx}" placeholder="${cfg.lbl} ${idx}" oninput="bwzCC(this,'${cfg.cnt}-${idx}')">`;
+  const div=document.createElement('div');
+  div.className='bwz-copy-field';
+  div.innerHTML=`<div class="bwz-copy-row">${inp}<button class="bwz-copy-prev-btn" onclick="bwzCopyPrev('${cfg.pre}','${cfg.cnt}',${idx})">&#8593; copiar</button></div><div class="bwz-char-cnt" id="${cfg.cnt}-${idx}">0 chars</div>`;
+  c.appendChild(div);
+  if(idx>=cfg.max)document.getElementById(cfg.bid).style.display='none';
+  div.querySelector('textarea,input')?.focus();
+};
 
 /* ─── open / close ──────────────────────────────────────────────────────── */
 window.botWizOpen=function(){
@@ -5141,8 +5137,6 @@ window.botWizOpen=function(){
     pixel_id:'',conversion_event:'VIEW_CONTENT',
     daily_budget:7,start_time:'',end_time:null,
     age_min:18,age_max:45,gender:0,
-    link_url:'https://mkuker.com',
-    utm_source:'',utm_medium:'',utm_campaign:'',
   });
   BWZ.selInterests=[];BWZ.selCountries=[{code:'BR',name:'Brasil'}];
   BWZ.selLocales=[{id:6,name:'Português (Brasil)'}];BWZ.selCA=[];
@@ -5172,16 +5166,15 @@ window.botWizOpen=function(){
   document.getElementById('bwz-camp-name').value='';
   botWizSetBudgetType('ABO');
   document.getElementById('bwz-paused').checked=true;
-  // reset step 5 copies
-  [1,2,3,4,5].forEach(i=>{
-    ['bwz-text-','bwz-hl-'].forEach(p=>{
-      const el=document.getElementById(`${p}${i}`);
-      if(el){el.value='';const c=document.getElementById(`${p==='bwz-text-'?'bwz-tc':'bwz-hc'}-${i}`);if(c)c.textContent='0 chars';}
-    });
-  });
-  [1,2,3,4].forEach(i=>{
-    const el=document.getElementById(`bwz-desc-${i}`);
-    if(el){el.value='';const c=document.getElementById(`bwz-dc-${i}`);if(c)c.textContent='0 chars';}
+  // reset step 5 copies — remove extra dynamic fields, clear first field
+  [['bwz-texts-container','bwz-add-text-btn'],['bwz-hls-container','bwz-add-hl-btn'],['bwz-descs-container','bwz-add-desc-btn']].forEach(([cid,bid])=>{
+    const c=document.getElementById(cid);
+    if(!c)return;
+    while(c.children.length>1)c.removeChild(c.lastChild);
+    const inp=c.querySelector('textarea,input');
+    if(inp){inp.value='';const cc=c.querySelector('.bwz-char-cnt');if(cc)cc.textContent='0 chars';}
+    const btn=document.getElementById(bid);
+    if(btn)btn.style.display='';
   });
   // reset step 6
   document.getElementById('bwz-publish-state').style.display='none';
@@ -5266,8 +5259,6 @@ function botWizValidate(n){
     if(!t1){bwzErr('Informe pelo menos o Texto 1.');return false;}
     const h1=document.getElementById('bwz-hl-1').value.trim();
     if(!h1){bwzErr('Informe pelo menos a Headline 1.');return false;}
-    d.link_url=document.getElementById('bwz-link-url').value.trim();
-    if(!d.link_url||!d.link_url.startsWith('http')){bwzErr('URL de destino inválida (deve começar com http).');return false;}
     return true;
   }
   return true;
@@ -5342,7 +5333,7 @@ window.botWizSelectPage=function(id,name,token){
   BWZ.d.page_slug=bwzSlug(name);BWZ.d.page_suffix=bwzSuffix(name);
   const preview=document.getElementById('bwz-slug-preview');
   const names=document.getElementById('bwz-slug-names');
-  names.textContent=[1,2,3].map(i=>`${BWZ.d.page_suffix}-${i}`).join(', ');
+  names.textContent=BWZ.d.page_suffix;
   preview.style.display='flex';
 };
 
@@ -5353,7 +5344,7 @@ window.bwzPageManual=function(){
   BWZ.d.page_suffix=id.toLowerCase().slice(0,8)+'fb'||'pagefb';
   const preview=document.getElementById('bwz-slug-preview');
   const names=document.getElementById('bwz-slug-names');
-  names.textContent=[1,2,3].map(i=>`${BWZ.d.page_suffix}-${i}`).join(', ');
+  names.textContent=BWZ.d.page_suffix;
   preview.style.display=id?'flex':'none';
 };
 
@@ -5365,11 +5356,10 @@ window.bwzUpdateNamePreview=function(el,field){
     names.map(n=>`<div>${esc(n)}</div>`).join('');
   // auto-update campaign name if not manually edited
   if(!BWZ.d.campNameEdited){
-    const today=new Date();
-    const dd=String(today.getDate()).padStart(2,'0');
-    const mm=String(today.getMonth()+1).padStart(2,'0');
+    const d=BWZ.d;
+    const s=`${(d.sigla_pais||'').toUpperCase()}_${(d.tema||'').toUpperCase()}_${(d.idioma||'').toUpperCase()}_BOT_${d.numero||'0001'}`;
     const campEl=document.getElementById('bwz-camp-name');
-    if(campEl)campEl.value=`BOT | ${BWZ.d.page_slug||'PÁGINA'} | ${BWZ.d.sigla_pais||'BR'} | ${dd}/${mm}`;
+    if(campEl)campEl.value=`[MKUKER] [${s}] [${d.page_slug||'PÁGINA'}] CP01`;
   }
 };
 
@@ -5437,11 +5427,13 @@ async function botWizLoadStep4(){
   if(!BWZ.d.account_id)return;
   await Promise.all([bwzLoadCountries(),bwzLoadLocales(),bwzLoadCA()]);
   bwzRenderCountryTags();bwzRenderLocaleTags();bwzRenderCATags();bwzRenderInterestTags();
-  // restore sliders
+  // restore sliders + number inputs
   document.getElementById('bwz-age-min').value=BWZ.d.age_min;
   document.getElementById('bwz-age-max').value=BWZ.d.age_max;
   document.getElementById('bwz-age-min-val').textContent=BWZ.d.age_min;
   document.getElementById('bwz-age-max-val').textContent=BWZ.d.age_max>=65?'65+':BWZ.d.age_max;
+  document.getElementById('bwz-age-min-num').value=BWZ.d.age_min;
+  document.getElementById('bwz-age-max-num').value=BWZ.d.age_max;
   ['bwz-g-all','bwz-g-m','bwz-g-f'].forEach((id,i)=>
     document.getElementById(id).classList.toggle('on',BWZ.d.gender===i));
 }
@@ -5604,11 +5596,39 @@ function bwzRenderInterestTags(){
 window.botWizAgeChange=function(){
   let mn=parseInt(document.getElementById('bwz-age-min').value);
   let mx=parseInt(document.getElementById('bwz-age-max').value);
-  if(mn>=mx)mx=mn+1;
+  if(mn>=mx&&mx<65)mx=Math.min(mn+1,65);
   BWZ.d.age_min=mn;BWZ.d.age_max=mx;
   document.getElementById('bwz-age-min-val').textContent=mn;
   document.getElementById('bwz-age-max-val').textContent=mx>=65?'65+':mx;
   document.getElementById('bwz-age-max').value=mx;
+  document.getElementById('bwz-age-min-num').value=mn;
+  document.getElementById('bwz-age-max-num').value=mx;
+};
+window.botWizAgeNumChange=function(which,val){
+  let n=parseInt(val);if(isNaN(n))return;
+  if(which==='min'){
+    n=Math.min(Math.max(n,18),64);
+    BWZ.d.age_min=n;
+    document.getElementById('bwz-age-min').value=n;
+    document.getElementById('bwz-age-min-val').textContent=n;
+    if(n>=BWZ.d.age_max&&BWZ.d.age_max<65){
+      BWZ.d.age_max=Math.min(n+1,65);
+      document.getElementById('bwz-age-max').value=BWZ.d.age_max;
+      document.getElementById('bwz-age-max-num').value=BWZ.d.age_max;
+      document.getElementById('bwz-age-max-val').textContent=BWZ.d.age_max>=65?'65+':BWZ.d.age_max;
+    }
+  }else{
+    n=Math.min(Math.max(n,19),65);
+    BWZ.d.age_max=n;
+    document.getElementById('bwz-age-max').value=n;
+    document.getElementById('bwz-age-max-val').textContent=n>=65?'65+':n;
+    if(n<=BWZ.d.age_min){
+      BWZ.d.age_min=Math.max(n-1,18);
+      document.getElementById('bwz-age-min').value=BWZ.d.age_min;
+      document.getElementById('bwz-age-min-num').value=BWZ.d.age_min;
+      document.getElementById('bwz-age-min-val').textContent=BWZ.d.age_min;
+    }
+  }
 };
 
 window.botWizSetGender=function(v){
@@ -5675,38 +5695,12 @@ function botWizRenderStep6(){
     <div><b>Mídias:</b> ${filled} imagem${filled!==1?'s':''} carregadas</div>
     <div><b>Criativos por conjunto:</b> ${filled} (dynamic creative)</div>
     <div class="bwz-summary-full" style="color:var(--accent);font-weight:700">Total de ads: ${total} (${names.length} conjuntos × ${filled} criativos)</div>`;
-  // pre-fill utm_source
-  if(!d.utm_source&&d.page_suffix){
-    document.getElementById('bwz-utm-source').value=d.page_suffix;
-    d.utm_source=d.page_suffix;
-  }
-  bwzUtmPreview();
 }
-
-window.bwzUtmPreview=function(){
-  const s=document.getElementById('bwz-utm-source').value;
-  const m=document.getElementById('bwz-utm-medium').value;
-  const c=document.getElementById('bwz-utm-campaign').value;
-  BWZ.d.utm_source=s;BWZ.d.utm_medium=m;BWZ.d.utm_campaign=c;
-  const parts=[];
-  if(s)parts.push(`utm_source=${encodeURIComponent(s)}`);
-  if(m)parts.push(`utm_medium=${encodeURIComponent(m)}`);
-  if(c)parts.push(`utm_campaign=${encodeURIComponent(c)}`);
-  document.getElementById('bwz-utm-preview').textContent=parts.length?'?'+parts.join('&'):'?utm_source=…';
-};
 
 /* ─── payload builder ────────────────────────────────────────────────────── */
 function botWizBuildPayload(){
   const d=BWZ.d;
   const genders=d.gender===1?[1]:d.gender===2?[2]:[];
-  BWZ.d.utm_source=document.getElementById('bwz-utm-source')?.value||d.utm_source;
-  BWZ.d.utm_medium=document.getElementById('bwz-utm-medium')?.value||d.utm_medium;
-  BWZ.d.utm_campaign=document.getElementById('bwz-utm-campaign')?.value||d.utm_campaign;
-  const urlParts=[];
-  if(d.utm_source)urlParts.push(`utm_source=${encodeURIComponent(d.utm_source)}`);
-  if(d.utm_medium)urlParts.push(`utm_medium=${encodeURIComponent(d.utm_medium)}`);
-  if(d.utm_campaign)urlParts.push(`utm_campaign=${encodeURIComponent(d.utm_campaign)}`);
-  const urlTags=urlParts.join('&')||null;
 
   const adset_template={
     pixel_id:d.pixel_id,
@@ -5723,25 +5717,24 @@ function botWizBuildPayload(){
   if(BWZ.selInterests.length)adset_template.interests=BWZ.selInterests.map(i=>({id:i.id,name:i.name}));
   if(BWZ.selCA.length)adset_template.custom_audiences=BWZ.selCA.map(a=>({id:a.id}));
 
-  const creatives=BWZ.slots.filter(s=>s.hash).map((s,i)=>({
-    name:`${d.page_suffix}-${i+1}`,
+  const creatives=BWZ.slots.filter(s=>s.hash).map(s=>({
+    name:d.page_suffix,
     image_hash:s.hash,
   }));
 
-  const texts=[1,2,3,4,5].map(i=>(document.getElementById(`bwz-text-${i}`)?.value||'').trim()).filter(Boolean);
-  const headlines=[1,2,3,4,5].map(i=>(document.getElementById(`bwz-hl-${i}`)?.value||'').trim()).filter(Boolean);
-  const descriptions=[1,2,3,4].map(i=>(document.getElementById(`bwz-desc-${i}`)?.value||'').trim()).filter(Boolean);
+  const readContainer=(cid)=>[...document.getElementById(cid)?.querySelectorAll('textarea,input')||[]].map(el=>el.value.trim()).filter(Boolean);
+  const texts=readContainer('bwz-texts-container');
+  const headlines=readContainer('bwz-hls-container');
+  const descriptions=readContainer('bwz-descs-container');
 
   return{
     account_id:d.account_id,
-    campaign:{name:d.campaign_name,objective:'MESSAGES',status:d.paused?'PAUSED':'ACTIVE',budget_type:d.budget_type},
+    campaign:{name:d.campaign_name,objective:'OUTCOME_ENGAGEMENT',status:d.paused?'PAUSED':'ACTIVE',budget_type:d.budget_type},
     adset_template,
     adset_names:bwzAdsetNames(),
     creatives,
     copies:{texts,headlines,descriptions},
     page_id:d.page_id,
-    link_url:d.link_url,
-    url_tags:urlTags,
   };
 }
 

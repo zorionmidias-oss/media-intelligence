@@ -18,13 +18,20 @@ async function getToken(acctId) {
 // ── Payload builders ──────────────────────────────────────────────────────────
 
 function buildCampaignBody(campaign, status) {
-  return {
+  const body = {
     name: campaign.name,
-    objective: 'MESSAGES',
+    objective: 'OUTCOME_ENGAGEMENT',
     status: status || 'PAUSED',
     special_ad_categories: [],
     buying_type: 'AUCTION',
   };
+  if (campaign.budget_type === 'CBO') {
+    body.daily_budget = campaign.daily_budget || undefined;
+  } else {
+    // ABO: ad sets own the budget
+    body.is_adset_budget_sharing_enabled = false;
+  }
+  return body;
 }
 
 function buildAdsetBody(acctId, template, name, campaign_id) {
@@ -50,7 +57,7 @@ function buildAdsetBody(acctId, template, name, campaign_id) {
       pixel_id: template.pixel_id,
       custom_event_type: template.conversion_event || 'VIEW_CONTENT',
     },
-    destination_type: 'MESSENGER_INBOX',
+    destination_type: 'MESSENGER',
     optimization_goal: 'CONVERSATIONS',
     billing_event: 'IMPRESSIONS',
     bid_strategy: 'LOWEST_COST_WITHOUT_CAP',
@@ -187,10 +194,26 @@ async function criarHandler(req, res) {
   const rollback = async () => {
     if (!campaign_id) return;
     try {
-      await axios.delete(`${META_BASE}/${campaign_id}`, { params: { access_token: token }, timeout: 15000 });
+      await axios.post(`${META_BASE}/${campaign_id}`, { status: 'DELETED', access_token: token }, { timeout: 15000 });
       console.log(`[criar] rollback: campanha ${campaign_id} deletada`);
     } catch (e) {
-      console.error('[criar] rollback falhou:', e.message);
+      console.error('[criar] rollback falhou:', e.response?.data?.error?.message || e.message);
+    }
+  };
+
+  let currentStepName = 'init';
+
+  const metaPost = async (url, body, label) => {
+    currentStepName = label;
+    console.log(`[criar] → ${label}`, url, JSON.stringify(body).slice(0, 400));
+    try {
+      return await axios.post(url, body, { timeout: 20000 });
+    } catch (e) {
+      const status = e.response?.status;
+      const raw    = e.response?.data;
+      console.error(`[criar] ✗ ${label} | HTTP ${status} |`, JSON.stringify(raw));
+      const msg = raw?.error?.message || e.message;
+      throw Object.assign(new Error(msg), { stepName: label, httpStatus: status, metaError: raw?.error });
     }
   };
 
@@ -200,11 +223,8 @@ async function criarHandler(req, res) {
 
     // PASSO 1 — Campanha
     send('progress', { msg: 'Criando campanha…', step: step++, total });
-    const cpRes = await axios.post(
-      `${META_BASE}/${acctId}/campaigns`,
-      { ...buildCampaignBody(campaign, campaign.status || 'PAUSED'), access_token: token },
-      { timeout: 20000 }
-    );
+    const cpBody = { ...buildCampaignBody(campaign, campaign.status || 'PAUSED'), access_token: token };
+    const cpRes = await metaPost(`${META_BASE}/${acctId}/campaigns`, cpBody, 'Criar Campanha');
     campaign_id = cpRes.data?.id;
     if (!campaign_id) throw new Error('Meta não retornou campaign_id');
     send('progress', { msg: `Campanha criada (${campaign_id})`, step: step++, total });
@@ -214,12 +234,8 @@ async function criarHandler(req, res) {
       const name = adset_names[i];
       send('progress', { msg: `Criando conjunto ${i + 1} de ${adset_names.length}: ${name}`, step: step++, total });
 
-      const asBody = buildAdsetBody(acctId, adset_template, name, campaign_id);
-      const asRes  = await axios.post(
-        `${META_BASE}/${acctId}/adsets`,
-        { ...asBody, access_token: token },
-        { timeout: 20000 }
-      );
+      const asBody = { ...buildAdsetBody(acctId, adset_template, name, campaign_id), access_token: token };
+      const asRes  = await metaPost(`${META_BASE}/${acctId}/adsets`, asBody, `Conjunto V${i + 1}`);
       const adset_id = asRes.data?.id;
       if (!adset_id) throw new Error(`Meta não retornou adset_id para ${name}`);
       adset_ids.push(adset_id);
@@ -229,12 +245,8 @@ async function criarHandler(req, res) {
         const cr = creatives[j];
         send('progress', { msg: `Criando criativo ${cr.name} (conjunto ${i + 1}, criativo ${j + 1}/${creatives.length})`, step: step++, total });
 
-        const crBody = buildDynamicCreativeBody(cr, copies, page_id, link_url);
-        const crRes  = await axios.post(
-          `${META_BASE}/${acctId}/adcreatives`,
-          { ...crBody, access_token: token },
-          { timeout: 20000 }
-        );
+        const crBody = { ...buildDynamicCreativeBody(cr, copies, page_id, link_url), access_token: token };
+        const crRes  = await metaPost(`${META_BASE}/${acctId}/adcreatives`, crBody, `Criativo ${cr.name} V${i + 1}`);
         const creative_id = crRes.data?.id;
         if (!creative_id) throw new Error(`Meta não retornou creative_id para ${cr.name}`);
 
@@ -244,14 +256,11 @@ async function criarHandler(req, res) {
           creative: { creative_id },
           status: 'PAUSED',
           tracking_specs: [{ 'action.type': ['offsite_conversion'], fb_pixel: [adset_template.pixel_id] }],
+          access_token: token,
         };
         if (url_tags) adBody.url_tags = url_tags;
 
-        const adRes = await axios.post(
-          `${META_BASE}/${acctId}/ads`,
-          { ...adBody, access_token: token },
-          { timeout: 20000 }
-        );
+        const adRes = await metaPost(`${META_BASE}/${acctId}/ads`, adBody, `Ad ${cr.name} V${i + 1}`);
         const ad_id = adRes.data?.id;
         if (!ad_id) throw new Error(`Meta não retornou ad_id para ${cr.name}`);
         ad_ids.push(ad_id);
@@ -259,11 +268,13 @@ async function criarHandler(req, res) {
       }
     }
 
-    await supabase.from('historico_campanhas').insert({
-      account_id: acctId, campaign_id,
-      campaign_name: campaign.name,
-      status: 'success', erro: null, payload: req.body,
-    }).catch(e => console.error('[criar] log failed:', e.message));
+    try {
+      await supabase.from('historico_campanhas').insert({
+        account_id: acctId, campaign_id,
+        campaign_name: campaign.name,
+        status: 'success', erro: null, payload: req.body,
+      });
+    } catch (logErr) { console.error('[criar] log failed:', logErr.message); }
 
     const rawId = acctId.replace('act_', '');
     send('done', {
@@ -278,12 +289,20 @@ async function criarHandler(req, res) {
     const errMsg = e.response?.data?.error?.message || e.message;
     console.error('[criar] falhou:', errMsg);
     await rollback();
-    await supabase.from('historico_campanhas').insert({
-      account_id: acctId, campaign_id,
-      campaign_name: campaign?.name,
-      status: 'failed', erro: errMsg, payload: req.body,
-    }).catch(() => {});
-    send('error', { error: errMsg, campaign_id });
+    try {
+      await supabase.from('historico_campanhas').insert({
+        account_id: acctId, campaign_id,
+        campaign_name: campaign?.name,
+        status: 'failed', erro: errMsg, payload: req.body,
+      });
+    } catch (_) {}
+    send('error', {
+      error: errMsg,
+      campaign_id,
+      step_failed: e.stepName || currentStepName,
+      http_status: e.httpStatus || null,
+      meta_error: e.metaError || null,
+    });
   } finally {
     res.end();
   }
