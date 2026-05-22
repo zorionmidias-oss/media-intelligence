@@ -21,6 +21,8 @@ const { handler: templatesHandler, seedHandler: templatesSeedHandler } = require
 const metaResourcesHandler = require('./src/app/api/meta-resources/route');
 const uploadImageHandler   = require('./src/app/api/meta-resources/upload');
 const { dryRunHandler, criarHandler } = require('./src/app/api/campaigns/route');
+const convTemplatesHandler  = require('./src/app/api/conversation-templates/route');
+const adCopiesHandler       = require('./src/app/api/ad-copies-templates/route');
 const supabase = require('./src/lib/supabase');
 const { syncAll } = require('./src/lib/sync');
 const { startScheduler } = require('./src/lib/scheduler');
@@ -397,6 +399,16 @@ app.post('/api/meta-resources/upload-image', requireAuth, uploadImageHandler);
 // ── Campaigns (BOT wizard) ────────────────────────────────────────────────────
 app.post('/api/campaigns/dry-run', requireAuth, dryRunHandler);
 app.post('/api/campaigns/criar', requireAuth, criarHandler);
+
+// ── Conversation templates ────────────────────────────────────────────────────
+app.get('/api/conversation-templates',        requireAuth, convTemplatesHandler);
+app.post('/api/conversation-templates',       requireAuth, convTemplatesHandler);
+app.delete('/api/conversation-templates/:id', requireAuth, convTemplatesHandler);
+
+// ── Ad copies templates ───────────────────────────────────────────────────────
+app.get('/api/ad-copies-templates',        requireAuth, adCopiesHandler);
+app.post('/api/ad-copies-templates',       requireAuth, adCopiesHandler);
+app.delete('/api/ad-copies-templates/:id', requireAuth, adCopiesHandler);
 
 // ── Histórico ─────────────────────────────────────────────────────────────────
 app.get('/api/historico/:utm', requireAuth, historicoHandler);

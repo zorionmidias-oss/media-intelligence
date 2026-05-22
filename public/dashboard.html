@@ -4684,6 +4684,22 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
 .bwz-age-num{width:4.5rem;text-align:center;padding:.3rem .4rem;margin-bottom:.375rem;font-size:.875rem}
 .bwz-add-copy-btn{background:none;border:1px dashed var(--border);color:var(--accent);padding:.4rem .875rem;border-radius:.5rem;cursor:pointer;font-size:.8125rem;margin-top:.375rem;transition:background .15s;}
 .bwz-add-copy-btn:hover{background:var(--sec);}
+.bwz-collapsible{border:1px solid var(--border);border-radius:.75rem;margin-top:1.25rem;overflow:hidden}
+.bwz-collapsible-hd{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;cursor:pointer;font-size:.8125rem;font-weight:600;user-select:none;background:var(--sec)}
+.bwz-collapsible-hd:hover{background:var(--border)}
+.bwz-collapsible-chevron{transition:transform .2s;font-size:.625rem;color:var(--muted)}
+.bwz-collapsible-body{padding:1rem;border-top:1px solid var(--border);display:none}
+.bwz-collapsible.open .bwz-collapsible-body{display:block}
+.bwz-collapsible.open .bwz-collapsible-chevron{transform:rotate(180deg)}
+.bwz-conv-question{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem}
+.bwz-conv-question input{flex:1}
+.bwz-conv-del-btn{flex-shrink:0;background:none;border:1px solid var(--border);color:var(--muted);padding:.25rem .5rem;border-radius:.375rem;cursor:pointer;font-size:.75rem}
+.bwz-conv-del-btn:hover{border-color:var(--danger);color:var(--danger)}
+.bwz-toggle-switch{display:flex;align-items:center;gap:.5rem;font-size:.8125rem;cursor:pointer;margin:.5rem 0}
+.bwz-toggle-switch input[type=checkbox]{width:2rem;height:1.125rem;cursor:pointer}
+.bwz-copies-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem}
+.bwz-save-btn{background:none;border:1px solid var(--border);color:var(--fg);padding:.35rem .75rem;border-radius:.5rem;cursor:pointer;font-size:.8125rem;transition:background .15s}
+.bwz-save-btn:hover{background:var(--sec)}
 .bwz-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem .75rem;font-size:.8125rem;background:var(--sec);border:1px solid var(--border);border-radius:.75rem;padding:1rem 1.25rem;margin-bottom:1.25rem;line-height:1.6}
 .bwz-summary-full{grid-column:1/-1}
 .bwz-prog-wrap{margin:1rem 0;display:none}
@@ -4824,11 +4840,13 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
      <div class="wz-field" style="margin:0">
       <label class="wz-lbl">Evento de conversão</label>
       <select class="wz-select" id="bwz-event">
-       <option value="VIEW_CONTENT" selected>View Content</option>
+       <option value="CONTENT_VIEW" selected>Content View</option>
        <option value="PURCHASE">Purchase</option>
        <option value="LEAD">Lead</option>
        <option value="COMPLETE_REGISTRATION">Complete Registration</option>
        <option value="ADD_TO_CART">Add to Cart</option>
+       <option value="MESSAGING_CONVERSATION_STARTED_7D">Conversa iniciada (7d)</option>
+       <option value="OTHER">Other</option>
       </select>
      </div>
     </div>
@@ -4965,7 +4983,14 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
 
     <div class="bwz-copy-section">
 
-     <div class="bwz-copy-group">
+     <div class="bwz-copies-top">
+      <select class="wz-select" id="bwz-copies-load" style="flex:1;margin:0" onchange="bwzLoadCopiesTemplate(this.value)">
+       <option value="">Carregar copies salvas…</option>
+      </select>
+      <button class="bwz-save-btn" onclick="bwzSaveCopiesTemplate()" style="margin-left:.5rem">&#128190; Salvar copies</button>
+     </div>
+
+     <div class="bwz-copy-group" style="margin-top:.75rem">
       <span class="bwz-copy-group-title">Textos principais — Meta otimiza qual exibir (máx 5)</span>
       <div id="bwz-texts-container">
        <div class="bwz-copy-field"><div class="bwz-copy-row"><textarea class="wz-input" id="bwz-text-1" rows="3" placeholder="Texto 1…" oninput="bwzCC(this,'bwz-tc-1')"></textarea></div><div class="bwz-char-cnt" id="bwz-tc-1">0 chars</div></div>
@@ -4989,6 +5014,51 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
       <button class="bwz-add-copy-btn" id="bwz-add-desc-btn" onclick="bwzAddCopyField('desc')">+ Adicionar descrição</button>
      </div>
 
+    </div>
+
+    <!-- ── Configurador de conversa ── -->
+    <div class="bwz-collapsible" id="bwz-conv-collapsible">
+     <div class="bwz-collapsible-hd" onclick="bwzToggleConv()">
+      <span>&#128172; Configurador de conversa (Messenger)</span>
+      <span class="bwz-collapsible-chevron">&#9660;</span>
+     </div>
+     <div class="bwz-collapsible-body">
+
+      <div class="wz-field">
+       <label class="wz-lbl">Carregar modelo salvo</label>
+       <select class="wz-select" id="bwz-conv-load" onchange="bwzLoadConvTemplate(this.value)">
+        <option value="">Selecionar modelo…</option>
+       </select>
+      </div>
+
+      <div class="wz-field">
+       <label class="wz-lbl">Saudação</label>
+       <input class="wz-input" id="bwz-conv-saudacao" placeholder="Oi! Como podemos ajudar?">
+      </div>
+
+      <div class="wz-field">
+       <label class="wz-lbl">Ações do cliente — perguntas (máx 5)</label>
+       <div id="bwz-conv-questions"></div>
+       <button class="bwz-add-copy-btn" id="bwz-conv-add-q-btn" onclick="bwzAddConvQuestion()">+ Adicionar pergunta</button>
+      </div>
+
+      <div class="wz-field">
+       <label class="bwz-toggle-switch">
+        <input type="checkbox" id="bwz-conv-followup-toggle" onchange="bwzToggleFollowup(this.checked)">
+        Mensagem de acompanhamento
+       </label>
+       <textarea class="wz-input" id="bwz-conv-followup" rows="2" placeholder="Ex: Obrigado! Em breve entraremos em contato." style="display:none;margin-top:.375rem"></textarea>
+      </div>
+
+      <div class="wz-row" style="align-items:flex-end;gap:.5rem;margin-top:.5rem">
+       <div class="wz-field" style="margin:0;flex:1">
+        <label class="wz-lbl">Nome do modelo</label>
+        <input class="wz-input" id="bwz-conv-nome" placeholder="Ex: Bot Relacionamento BR">
+       </div>
+       <button class="bwz-save-btn" style="flex-shrink:0" onclick="bwzSaveConvTemplate()">&#128190; Salvar modelo</button>
+      </div>
+
+     </div>
     </div>
    </div>
 
@@ -5077,7 +5147,7 @@ const BWZ = {
     page_id:'',page_name:'',page_token:null,page_slug:'',page_suffix:'',
     sigla_pais:'BR',tema:'',idioma:'PT',numero:'0001',
     campaign_name:'',campNameEdited:false,budget_type:'ABO',paused:true,
-    pixel_id:'',conversion_event:'VIEW_CONTENT',
+    pixel_id:'',conversion_event:'CONTENT_VIEW',
     daily_budget:7,start_time:'',end_time:null,
     age_min:18,age_max:45,gender:0,
   }
@@ -5127,6 +5197,149 @@ window.bwzAddCopyField=function(type){
   div.querySelector('textarea,input')?.focus();
 };
 
+/* ─── copies templates ───────────────────────────────────────────────────── */
+async function bwzLoadCopiesTemplatesList(){
+  try{
+    const r=await fetch('/api/ad-copies-templates');
+    const data=await r.json();
+    const sel=document.getElementById('bwz-copies-load');
+    if(!sel)return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">Carregar copies salvas…</option>'+
+      data.map(t=>`<option value="${t.id}">${esc(t.nome)}</option>`).join('');
+    sel.value=cur;
+  }catch(_){}
+}
+window.bwzLoadCopiesTemplate=async function(id){
+  if(!id)return;
+  try{
+    const r=await fetch('/api/ad-copies-templates');
+    const list=await r.json();
+    const tpl=list.find(t=>String(t.id)===String(id));
+    if(!tpl)return;
+    const fillContainer=(cid,arr,isTextarea)=>{
+      const c=document.getElementById(cid);
+      if(!c)return;
+      while(c.children.length>1)c.removeChild(c.lastChild);
+      const first=c.querySelector('textarea,input');
+      if(first)first.value=arr[0]||'';
+      for(let i=1;i<arr.length;i++){
+        const type=isTextarea?'text':'hl';
+        const cfgMap={
+          'bwz-texts-container':'text','bwz-hls-container':'hl','bwz-descs-container':'desc'
+        };
+        bwzAddCopyField(cfgMap[cid]||'text');
+        const fields=c.querySelectorAll('textarea,input');
+        if(fields[i])fields[i].value=arr[i]||'';
+      }
+    };
+    fillContainer('bwz-texts-container',tpl.textos||[],true);
+    fillContainer('bwz-hls-container',tpl.headlines||[],false);
+    fillContainer('bwz-descs-container',tpl.descricoes||[],false);
+    showToast('ok',`Copies "${esc(tpl.nome)}" carregadas.`,2000);
+  }catch(e){showToast('err','Erro ao carregar copies: '+e.message,3000);}
+};
+window.bwzSaveCopiesTemplate=async function(){
+  const readC=(cid)=>[...document.getElementById(cid)?.querySelectorAll('textarea,input')||[]].map(el=>el.value.trim()).filter(Boolean);
+  const textos=readC('bwz-texts-container');
+  const headlines=readC('bwz-hls-container');
+  const descricoes=readC('bwz-descs-container');
+  if(!textos.length&&!headlines.length){showToast('err','Preencha pelo menos 1 texto ou headline.',3000);return;}
+  const nome=prompt('Nome para estas copies:');
+  if(!nome)return;
+  try{
+    const r=await fetch('/api/ad-copies-templates',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nome,textos,headlines,descricoes})});
+    if(!r.ok){const d=await r.json();throw new Error(d.error||r.status);}
+    await bwzLoadCopiesTemplatesList();
+    showToast('ok','Copies salvas!',2000);
+  }catch(e){showToast('err','Erro ao salvar: '+e.message,3000);}
+};
+
+/* ─── conversation templates ─────────────────────────────────────────────── */
+window.bwzToggleConv=function(){
+  document.getElementById('bwz-conv-collapsible').classList.toggle('open');
+};
+window.bwzToggleFollowup=function(checked){
+  document.getElementById('bwz-conv-followup').style.display=checked?'':'none';
+};
+async function bwzLoadConvTemplatesList(){
+  try{
+    const r=await fetch('/api/conversation-templates');
+    const data=await r.json();
+    BWZ.convTemplates=data;
+    const sel=document.getElementById('bwz-conv-load');
+    if(!sel)return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">Selecionar modelo…</option>'+
+      data.map(t=>`<option value="${t.id}">${esc(t.nome)}</option>`).join('');
+    sel.value=cur;
+  }catch(_){}
+}
+window.bwzLoadConvTemplate=function(id){
+  if(!id)return;
+  const tpl=(BWZ.convTemplates||[]).find(t=>String(t.id)===String(id));
+  if(!tpl)return;
+  document.getElementById('bwz-conv-saudacao').value=tpl.saudacao||'';
+  // reset questions
+  const qc=document.getElementById('bwz-conv-questions');
+  qc.innerHTML='';
+  BWZ._convQCount=0;
+  (tpl.perguntas||[]).forEach(q=>bwzAddConvQuestion(q));
+  const fol=tpl.acompanhamento||'';
+  document.getElementById('bwz-conv-followup-toggle').checked=!!fol;
+  document.getElementById('bwz-conv-followup').style.display=fol?'':'none';
+  document.getElementById('bwz-conv-followup').value=fol;
+  showToast('ok',`Modelo "${esc(tpl.nome)}" carregado.`,2000);
+};
+window.bwzAddConvQuestion=function(val){
+  const qc=document.getElementById('bwz-conv-questions');
+  if(!qc)return;
+  const count=qc.querySelectorAll('.bwz-conv-question').length;
+  if(count>=5){showToast('warn','Máximo de 5 perguntas.',2000);return;}
+  const idx=(BWZ._convQCount=(BWZ._convQCount||0)+1);
+  const div=document.createElement('div');div.className='bwz-conv-question';
+  div.innerHTML=`<input class="wz-input" id="bwz-conv-q-${idx}" maxlength="80" placeholder="Pergunta ${count+1} (máx 80 chars)" value="${esc(val||'')}"><span class="bwz-char-cnt" style="white-space:nowrap" id="bwz-conv-qc-${idx}">${(val||'').length}/80</span><button class="bwz-conv-del-btn" onclick="this.parentElement.remove();bwzSyncConvAddBtn()">&#215;</button>`;
+  div.querySelector('input').addEventListener('input',function(){document.getElementById('bwz-conv-qc-'+idx).textContent=this.value.length+'/80';});
+  qc.appendChild(div);
+  bwzSyncConvAddBtn();
+};
+window.bwzSyncConvAddBtn=function(){
+  const count=document.getElementById('bwz-conv-questions')?.querySelectorAll('.bwz-conv-question').length||0;
+  const btn=document.getElementById('bwz-conv-add-q-btn');
+  if(btn)btn.style.display=count>=5?'none':'';
+};
+window.bwzSaveConvTemplate=async function(){
+  const nome=document.getElementById('bwz-conv-nome').value.trim();
+  if(!nome){showToast('err','Informe o nome do modelo.',2500);return;}
+  const saudacao=document.getElementById('bwz-conv-saudacao').value.trim();
+  const perguntas=[...document.getElementById('bwz-conv-questions').querySelectorAll('input')].map(el=>el.value.trim()).filter(Boolean);
+  const followupOn=document.getElementById('bwz-conv-followup-toggle').checked;
+  const acompanhamento=followupOn?document.getElementById('bwz-conv-followup').value.trim():null;
+  try{
+    const r=await fetch('/api/conversation-templates',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nome,saudacao,perguntas,acompanhamento})});
+    if(!r.ok){const d=await r.json();throw new Error(d.error||r.status);}
+    await bwzLoadConvTemplatesList();
+    showToast('ok','Modelo salvo!',2000);
+    document.getElementById('bwz-conv-nome').value='';
+  }catch(e){showToast('err','Erro ao salvar: '+e.message,3000);}
+};
+function bwzGetConvPayload(){
+  const saudacao=document.getElementById('bwz-conv-saudacao')?.value?.trim()||'';
+  const perguntas=[...document.getElementById('bwz-conv-questions')?.querySelectorAll('input')||[]].map(el=>el.value.trim()).filter(Boolean);
+  const followupOn=document.getElementById('bwz-conv-followup-toggle')?.checked;
+  const acompanhamento=followupOn?document.getElementById('bwz-conv-followup')?.value?.trim()||'':null;
+  if(!saudacao&&!perguntas.length)return null;
+  return{
+    type:'VISUAL_EDITOR',version:2,
+    page_welcome_message:{
+      type:'SHOW_BLOCK',
+      greeting:[{language:'default',text:saudacao||'Olá! Como podemos ajudar?'}],
+      ice_breakers:perguntas.map(p=>({question:p})),
+      ...(acompanhamento?{follow_up_action:{type:'AUTOREPLY',message:acompanhamento}}:{}),
+    },
+  };
+}
+
 /* ─── open / close ──────────────────────────────────────────────────────── */
 window.botWizOpen=function(){
   Object.assign(BWZ.d,{
@@ -5134,7 +5347,7 @@ window.botWizOpen=function(){
     page_id:'',page_name:'',page_token:null,page_slug:'',page_suffix:'',
     sigla_pais:'BR',tema:'',idioma:'PT',numero:'0001',
     campaign_name:'',campNameEdited:false,budget_type:'ABO',paused:true,
-    pixel_id:'',conversion_event:'VIEW_CONTENT',
+    pixel_id:'',conversion_event:'CONTENT_VIEW',
     daily_budget:7,start_time:'',end_time:null,
     age_min:18,age_max:45,gender:0,
   });
@@ -5176,6 +5389,17 @@ window.botWizOpen=function(){
     const btn=document.getElementById(bid);
     if(btn)btn.style.display='';
   });
+  // reset conversation configurator
+  document.getElementById('bwz-conv-collapsible').classList.remove('open');
+  document.getElementById('bwz-conv-saudacao').value='';
+  document.getElementById('bwz-conv-questions').innerHTML='';
+  BWZ._convQCount=0;
+  document.getElementById('bwz-conv-followup-toggle').checked=false;
+  document.getElementById('bwz-conv-followup').style.display='none';
+  document.getElementById('bwz-conv-followup').value='';
+  document.getElementById('bwz-conv-nome').value='';
+  document.getElementById('bwz-conv-load').value='';
+  bwzSyncConvAddBtn();
   // reset step 6
   document.getElementById('bwz-publish-state').style.display='none';
   document.getElementById('bwz-publish-result').innerHTML='';
@@ -5185,6 +5409,8 @@ window.botWizOpen=function(){
   botWizStep(1);
   document.getElementById('bot-wiz-overlay').style.display='flex';
   botWizLoadAccounts();
+  bwzLoadCopiesTemplatesList();
+  bwzLoadConvTemplatesList();
 };
 
 window.botWizCancel=function(){
@@ -5691,7 +5917,7 @@ function botWizRenderStep6(){
     <div class="bwz-summary-full"><b>Campanha:</b> ${esc(d.campaign_name)}</div>
     <div class="bwz-summary-full"><b>Conjuntos:</b> ${esc(names[0])} … ${esc(names[5])}</div>
     <div><b>Orçamento:</b> ${fmt(d.daily_budget)}/dia × 6 = ${fmt(d.daily_budget*6)}/dia total</div>
-    <div><b>Início:</b> ${d.start_time?d.start_time.slice(0,10):'—'} às 00:00</div>
+    <div><b>Início:</b> ${d.start_time?(()=>{const[y,m,day]=d.start_time.slice(0,10).split('-');return`${day}/${m}/${y}`;})():'—'} às 00:00 (Brasília)</div>
     <div><b>Mídias:</b> ${filled} imagem${filled!==1?'s':''} carregadas</div>
     <div><b>Criativos por conjunto:</b> ${filled} (dynamic creative)</div>
     <div class="bwz-summary-full" style="color:var(--accent);font-weight:700">Total de ads: ${total} (${names.length} conjuntos × ${filled} criativos)</div>`;
@@ -5727,6 +5953,8 @@ function botWizBuildPayload(){
   const headlines=readContainer('bwz-hls-container');
   const descriptions=readContainer('bwz-descs-container');
 
+  const conv=bwzGetConvPayload();
+
   return{
     account_id:d.account_id,
     campaign:{name:d.campaign_name,objective:'OUTCOME_ENGAGEMENT',status:d.paused?'PAUSED':'ACTIVE',budget_type:d.budget_type},
@@ -5735,6 +5963,7 @@ function botWizBuildPayload(){
     creatives,
     copies:{texts,headlines,descriptions},
     page_id:d.page_id,
+    ...(conv?{conversation_config:conv}:{}),
   };
 }
 
@@ -5765,7 +5994,7 @@ window.botWizShowConfirm=function(){
       <b>Criativos por conjunto:</b> ${filled}<br>
       <b>Total de ads:</b> ${6*filled}<br>
       <b>Orçamento:</b> ${fmt(d.daily_budget)}/dia × 6 = ${fmt(d.daily_budget*6)}/dia<br>
-      <b>Início:</b> ${d.start_time.slice(0,10)} às 00:00
+      <b>Início:</b> ${(()=>{const[y,m,day]=d.start_time.slice(0,10).split('-');return`${day}/${m}/${y}`;})() } às 00:00 (Brasília)
     </div>`;
   document.getElementById('bwz-confirm-overlay').classList.add('on');
 };

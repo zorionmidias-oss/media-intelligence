@@ -55,7 +55,7 @@ function buildAdsetBody(acctId, template, name, campaign_id) {
     daily_budget: template.daily_budget,
     promoted_object: {
       pixel_id: template.pixel_id,
-      custom_event_type: template.conversion_event || 'VIEW_CONTENT',
+      custom_event_type: template.conversion_event || 'CONTENT_VIEW',
     },
     destination_type: 'MESSENGER',
     optimization_goal: 'CONVERSATIONS',
@@ -69,15 +69,14 @@ function buildAdsetBody(acctId, template, name, campaign_id) {
   return body;
 }
 
-function buildDynamicCreativeBody(creative, copies, page_id, link_url) {
-  return {
+function buildDynamicCreativeBody(creative, copies, page_id, conversation_config) {
+  const body = {
     name: creative.name,
     object_story_spec: {
       page_id,
       link_data: {
         message: copies.texts[0],
         name: copies.headlines[0],
-        link: link_url,
         image_hash: creative.image_hash,
         call_to_action: {
           type: 'SEND_MESSAGE',
@@ -88,18 +87,20 @@ function buildDynamicCreativeBody(creative, copies, page_id, link_url) {
     asset_feed_spec: {
       bodies:       copies.texts.map(text => ({ text })),
       titles:       copies.headlines.map(text => ({ text })),
-      descriptions: copies.descriptions.map(text => ({ text })),
+      descriptions: (copies.descriptions || []).map(text => ({ text })),
       images:       [{ hash: creative.image_hash }],
       call_to_action_types: ['MESSAGE_PAGE'],
       optimization_type: 'DEGREES_OF_FREEDOM',
     },
   };
+  if (conversation_config) body.object_story_spec.page_welcome_message = conversation_config;
+  return body;
 }
 
 // ── dry-run ───────────────────────────────────────────────────────────────────
 async function dryRunHandler(req, res) {
   try {
-    const { account_id, campaign, adset_template, adset_names, creatives, copies, page_id, link_url, url_tags } = req.body || {};
+    const { account_id, campaign, adset_template, adset_names, creatives, copies, page_id, conversation_config, url_tags } = req.body || {};
 
     if (!account_id || !campaign)
       return res.status(400).json({ error: 'account_id e campaign são obrigatórios' });
@@ -129,7 +130,7 @@ async function dryRunHandler(req, res) {
           step: steps.length + 1,
           description: `Criar Criativo ${cr.name} (conjunto ${i + 1})`,
           endpoint: `POST ${META_BASE}/${acctId}/adcreatives`,
-          body: buildDynamicCreativeBody(cr, cp, page_id || '<PAGE_ID>', link_url || '<LINK_URL>'),
+          body: buildDynamicCreativeBody(cr, cp, page_id || '<PAGE_ID>', conversation_config || null),
         });
         steps.push({
           step: steps.length + 1,
@@ -166,7 +167,7 @@ async function dryRunHandler(req, res) {
 
 // ── criar — SSE streaming ─────────────────────────────────────────────────────
 async function criarHandler(req, res) {
-  const { account_id, campaign, adset_template, adset_names, creatives, copies, page_id, link_url, url_tags } = req.body || {};
+  const { account_id, campaign, adset_template, adset_names, creatives, copies, page_id, conversation_config, url_tags } = req.body || {};
 
   if (!account_id || !campaign || !adset_template || !adset_names?.length || !creatives?.length || !copies)
     return res.status(400).json({ error: 'Payload incompleto: account_id, campaign, adset_template, adset_names, creatives e copies são obrigatórios' });
@@ -245,7 +246,7 @@ async function criarHandler(req, res) {
         const cr = creatives[j];
         send('progress', { msg: `Criando criativo ${cr.name} (conjunto ${i + 1}, criativo ${j + 1}/${creatives.length})`, step: step++, total });
 
-        const crBody = { ...buildDynamicCreativeBody(cr, copies, page_id, link_url), access_token: token };
+        const crBody = { ...buildDynamicCreativeBody(cr, copies, page_id, conversation_config || null), access_token: token };
         const crRes  = await metaPost(`${META_BASE}/${acctId}/adcreatives`, crBody, `Criativo ${cr.name} V${i + 1}`);
         const creative_id = crRes.data?.id;
         if (!creative_id) throw new Error(`Meta não retornou creative_id para ${cr.name}`);
