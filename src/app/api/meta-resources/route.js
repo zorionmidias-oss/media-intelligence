@@ -107,19 +107,74 @@ async function handler(req, res) {
 
     // ── A: pages ──────────────────────────────────────────────────────────────
     if (resource === 'pages') {
-      const { data, fromCache } = await getCachedOrFetch(acctId, 'pages', '', async () => {
+      // Check cache manually — only serve if has pages (not empty/error)
+      const { data: cached } = await supabase.from('meta_resources_cache')
+        .select('data').eq('account_id', acctId).eq('resource_type', 'pages')
+        .eq('query_hash', '').gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false }).limit(1).maybeSingle();
+      if (cached?.data?.pages?.length > 0) return res.json(cached.data);
+
+      let pages = [];
+      let lastError = null;
+      let lastDetail = null;
+
+      // Strategy 1: promote_pages (BM-linked pages)
+      try {
         const r = await axios.get(`${META_BASE}/${acctId}/promote_pages`, {
-          params: { fields: 'id,name,picture{url},category', limit: 100, access_token: token },
+          params: { fields: 'id,name,access_token,picture{url},fan_count', limit: 100, access_token: token },
           timeout: 15000,
         });
-        return (r.data?.data || []).map(p => ({
-          id: p.id,
-          name: p.name,
+        pages = (r.data?.data || []).map(p => ({
+          id: p.id, name: p.name,
           picture_url: p.picture?.data?.url || null,
-          category: p.category || null,
+          fan_count: p.fan_count || null,
+          access_token: p.access_token || null,
         }));
+        console.log(`[pages] promote_pages → ${pages.length} páginas para ${acctId}`);
+      } catch (e) {
+        const raw = e.response?.data?.error;
+        lastError = 'TOKEN_MISSING_PERMISSIONS';
+        lastDetail = raw?.message || e.message;
+        console.error(`[pages] promote_pages falhou ${acctId} | code:${raw?.code} | msg:`, lastDetail);
+      }
+
+      // Strategy 2: /me/accounts (user tokens)
+      if (pages.length === 0) {
+        try {
+          const r = await axios.get(`${META_BASE}/me/accounts`, {
+            params: { fields: 'id,name,access_token,picture,fan_count', limit: 100, access_token: token },
+            timeout: 15000,
+          });
+          const list = (r.data?.data || []).map(p => ({
+            id: p.id, name: p.name,
+            picture_url: p.picture?.data?.url || null,
+            fan_count: p.fan_count || null,
+            access_token: p.access_token || null,
+          }));
+          console.log(`[pages] /me/accounts → ${list.length} páginas`);
+          if (list.length > 0) { pages = list; lastError = null; lastDetail = null; }
+        } catch (e) {
+          const raw = e.response?.data?.error;
+          const detail2 = raw?.message || e.message;
+          lastDetail = lastDetail ? `${lastDetail} | /me/accounts: ${detail2}` : detail2;
+          console.error(`[pages] /me/accounts também falhou | code:${raw?.code} | msg:`, detail2);
+        }
+      }
+
+      if (pages.length > 0) {
+        const expires_at = new Date(Date.now() + 3600 * 1000).toISOString();
+        await supabase.from('meta_resources_cache').upsert({
+          account_id: acctId, resource_type: 'pages', query_hash: '',
+          data: { pages }, expires_at,
+        }, { onConflict: 'account_id,resource_type,query_hash' });
+        return res.json({ pages });
+      }
+
+      return res.json({
+        pages: [],
+        error: lastError || 'TOKEN_MISSING_PERMISSIONS',
+        detail: lastDetail || 'Token sem permissões pages_show_list/pages_read_engagement — renove o token',
       });
-      return res.json(data);
     }
 
     // ── B: pixels ─────────────────────────────────────────────────────────────
@@ -220,6 +275,53 @@ async function handler(req, res) {
         return r.data?.data?.[0] || {};
       });
       return res.json(data);
+    }
+
+    // ── K: conversation-templates (Messenger lead gen forms) ─────────────────
+    if (resource === 'conversation-templates') {
+      if (!page_id)
+        return res.status(400).json({ templates: [], error: 'page_id é obrigatório' });
+
+      const cacheKey = `ct:${page_id}`;
+      const { data: cached } = await supabase.from('meta_resources_cache')
+        .select('data').eq('account_id', acctId).eq('resource_type', 'conversation-templates')
+        .eq('query_hash', cacheKey).gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false }).limit(1).maybeSingle();
+      if (cached?.data) return res.json(cached.data);
+
+      // Try with page token first (if stored from pages cache), fall back to account token
+      let pageToken = token;
+      const { data: pagesCache } = await supabase.from('meta_resources_cache')
+        .select('data').eq('account_id', acctId).eq('resource_type', 'pages')
+        .eq('query_hash', '').gt('expires_at', new Date().toISOString())
+        .limit(1).maybeSingle();
+      const cachedPage = pagesCache?.data?.pages?.find(p => p.id === page_id);
+      if (cachedPage?.access_token) pageToken = cachedPage.access_token;
+
+      try {
+        const r = await axios.get(`${META_BASE}/${page_id}/messenger_lead_gen_forms`, {
+          params: { access_token: pageToken, limit: 50 },
+          timeout: 15000,
+        });
+        const templates = (r.data?.data || []).map(f => ({
+          id: f.id,
+          name: f.name || null,
+          greeting: f.greeting_type === 'NONE' ? null : (f.intro_message || null),
+          questions: (f.questions || []).map(q => q.label || q.key || ''),
+        }));
+        const result = { templates };
+        const expires_at = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+        await supabase.from('meta_resources_cache').upsert({
+          account_id: acctId, resource_type: 'conversation-templates', query_hash: cacheKey,
+          data: result, expires_at,
+        }, { onConflict: 'account_id,resource_type,query_hash' });
+        return res.json(result);
+      } catch (e) {
+        const raw = e.response?.data?.error;
+        const detail = raw?.message || e.message;
+        console.error(`[conversation-templates] falhou page_id=${page_id} | code:${raw?.code} |`, detail);
+        return res.json({ templates: [], error: 'FETCH_FAILED', detail });
+      }
     }
 
     res.status(404).json({ erro: `Recurso desconhecido: ${resource}`, items: [], cached: false });

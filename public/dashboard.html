@@ -1375,7 +1375,8 @@
           </div>
           <div class="hdr-actions">
             <button class="btn-outline" onclick="templatesSeed()" title="Inserir templates de exemplo">+ Seed</button>
-            <button class="btn-primary" onclick="abrirWizard(null)">+ Novo Template</button>
+            <button class="btn-outline" onclick="abrirWizard(null)">+ Novo Template</button>
+            <button class="btn-primary" onclick="botWizOpen()">&#129302; Criar Campanha BOT</button>
           </div>
         </div>
 
@@ -4606,6 +4607,1183 @@ async function templatesSeed(){
     alert(`Erro no seed: ${e.message}`);
   }
 }
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     BOT CAMPAIGN WIZARD — styles, HTML, JS
+═══════════════════════════════════════════════════════════════ -->
+<style>
+.bwz-step{display:none}.bwz-step.active{display:block}
+.bwz-indicator{display:flex;align-items:center;gap:.5rem;flex-shrink:0}
+.bwz-indicator .num{width:1.75rem;height:1.75rem;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:var(--muted);transition:all .2s}
+.bwz-indicator .lbl{font-size:.75rem;color:var(--muted);white-space:nowrap;transition:color .2s}
+.bwz-indicator.done .num{background:var(--accent);border-color:var(--accent);color:var(--acc-fg)}
+.bwz-indicator.active .num{border-color:var(--accent);color:var(--accent)}
+.bwz-indicator.active .lbl{color:var(--fg)}
+.bwz-step-title{font-size:1rem;font-weight:700;color:var(--fg);margin-bottom:.2rem}
+.bwz-step-sub{font-size:.8125rem;color:var(--muted);margin-bottom:1.25rem}
+.bwz-type-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-top:.5rem}
+.bwz-type-card{border:2px solid var(--border);border-radius:.75rem;padding:1rem .75rem;cursor:pointer;transition:all .2s;text-align:center;background:var(--sec)}
+.bwz-type-card:hover{border-color:var(--border-strong)}
+.bwz-type-card.on{border-color:var(--accent);background:color-mix(in oklch,var(--accent) 10%,var(--sec))}
+.bwz-type-icon{font-size:1.75rem;margin-bottom:.375rem}
+.bwz-type-name{font-size:.875rem;font-weight:600;color:var(--fg)}
+.bwz-type-desc{font-size:.6875rem;color:var(--muted);margin-top:.2rem;line-height:1.4}
+.bwz-acct-list{display:flex;flex-direction:column;gap:.375rem;margin-top:.375rem}
+.bwz-acct-row{display:flex;align-items:center;justify-content:space-between;padding:.625rem .875rem;border-radius:.625rem;border:2px solid var(--border);background:var(--sec);cursor:pointer;transition:all .15s;gap:.75rem}
+.bwz-acct-row:hover{border-color:var(--border-strong)}
+.bwz-acct-row.on{border-color:var(--accent);background:color-mix(in oklch,var(--accent) 8%,var(--sec))}
+.bwz-acct-info{display:flex;flex-direction:column;gap:.1rem;flex:1;min-width:0}
+.bwz-acct-name{font-size:.875rem;font-weight:500;color:var(--fg)}
+.bwz-acct-sub{font-size:.6875rem;color:var(--muted)}
+.bwz-token-ok,.bwz-token-bad{display:inline-flex;align-items:center;gap:.25rem;font-size:.6875rem;font-weight:700;padding:.2rem .5rem;border-radius:9999px;flex-shrink:0}
+.bwz-token-ok{background:var(--success-soft);color:var(--success)}
+.bwz-token-bad{background:var(--danger-soft);color:var(--danger)}
+.bwz-toggle-row{display:flex;gap:.5rem;margin-top:.375rem}
+.bwz-toggle-btn{flex:1;height:2.375rem;border-radius:.5rem;border:2px solid var(--border);background:var(--sec);color:var(--muted);font-family:inherit;font-size:.8125rem;font-weight:500;cursor:pointer;transition:all .15s}
+.bwz-toggle-btn.on{border-color:var(--accent);color:var(--accent);background:color-mix(in oklch,var(--accent) 10%,var(--sec))}
+.bwz-banner{display:flex;gap:.75rem;padding:.75rem 1rem;border-radius:.625rem;font-size:.8125rem;line-height:1.5;margin:.5rem 0}
+.bwz-banner.warn{background:var(--warning-soft);border:1px solid color-mix(in oklch,var(--warning) 35%,transparent)}
+.bwz-banner.err{background:var(--danger-soft);border:1px solid color-mix(in oklch,var(--danger) 35%,transparent)}
+.bwz-banner.info{background:var(--info-soft);border:1px solid color-mix(in oklch,var(--info) 35%,transparent)}
+.bwz-banner-ico{flex-shrink:0;margin-top:.1rem}
+.bwz-dropzone{border:2px dashed var(--border);border-radius:.75rem;padding:1.75rem;text-align:center;cursor:pointer;transition:all .2s}
+.bwz-dropzone:hover,.bwz-dropzone.over{border-color:var(--accent);background:color-mix(in oklch,var(--accent) 5%,transparent)}
+.bwz-dz-icon{font-size:2rem;color:var(--muted);margin-bottom:.5rem}
+.bwz-dz-txt{font-size:.8125rem;color:var(--muted)}
+.bwz-dz-hint{font-size:.6875rem;color:var(--muted-light);margin-top:.25rem}
+.bwz-upload-done{display:flex;align-items:center;gap:.875rem;padding:.875rem;background:var(--success-soft);border:1px solid var(--success);border-radius:.625rem;font-size:.8125rem}
+.bwz-thumb{width:72px;height:72px;border-radius:.5rem;object-fit:cover;border:1px solid var(--border);flex-shrink:0}
+.bwz-char-cnt{text-align:right;font-size:.6875rem;color:var(--muted);margin-top:.2rem}
+.bwz-utm-preview{background:var(--sec);border:1px solid var(--border);border-radius:.5rem;padding:.75rem;font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;font-size:.75rem;color:var(--accent);word-break:break-all;margin-top:.5rem;min-height:2.25rem;line-height:1.7}
+.bwz-tags{display:flex;flex-wrap:wrap;gap:.375rem;margin-top:.375rem;min-height:1.5rem}
+.bwz-tag{display:inline-flex;align-items:center;gap:.25rem;background:color-mix(in oklch,var(--c1) 12%,var(--sec));color:var(--c1);border-radius:20px;font-size:.6875rem;padding:3px 10px;font-weight:500}
+.bwz-tag button{background:none;border:none;color:inherit;cursor:pointer;font-size:.875rem;line-height:1;padding:0 0 0 2px}
+.bwz-sdrop{background:var(--card);border:1px solid var(--border);border-radius:.5rem;margin-top:.25rem;max-height:9rem;overflow-y:auto;display:none;box-shadow:var(--shadow-md)}
+.bwz-sdrop-item{padding:.5rem .75rem;font-size:.8125rem;cursor:pointer;transition:background .12s;display:flex;justify-content:space-between;align-items:center;gap:.5rem}
+.bwz-sdrop-item:hover{background:var(--sec)}
+.bwz-age-wrap{display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:center;margin-top:.375rem}
+.bwz-age-val{font-size:2rem;font-weight:700;color:var(--accent);font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;text-align:center}
+.bwz-age-lbl{font-size:.6875rem;color:var(--muted);text-align:center}
+input[type=range].bwz-range{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;background:var(--border);outline:none;cursor:pointer;margin-top:.5rem}
+input[type=range].bwz-range::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--accent);border:2px solid var(--card);box-shadow:0 1px 4px rgba(0,0,0,.4);cursor:grab}
+input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--accent);border:2px solid var(--card);cursor:grab;border:none}
+.bwz-conv-preview{background:var(--sec);border:1px solid var(--border);border-radius:.625rem;padding:.875rem 1rem;margin-top:.5rem;font-size:.8125rem;line-height:1.7}
+.bwz-cv-lbl{font-size:.625rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.25rem;display:block}
+.bwz-weekly{font-size:.6875rem;color:var(--muted);margin-top:.25rem}
+.bwz-sl-list{display:flex;flex-direction:column;gap:.875rem;padding:.5rem 0}
+.bwz-sl-item{display:flex;align-items:center;gap:.875rem;font-size:.875rem;color:var(--muted)}
+.bwz-sl-item.active{color:var(--fg)}
+.bwz-sl-item.done{color:var(--success)}
+.bwz-sl-item.error{color:var(--danger)}
+.bwz-sl-ico{width:1.75rem;height:1.75rem;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.8125rem;flex-shrink:0;background:transparent}
+.bwz-sl-item.active .bwz-sl-ico{border-color:var(--accent);border-right-color:transparent;animation:spin 1s linear infinite}
+.bwz-sl-item.done .bwz-sl-ico{background:var(--success);border-color:var(--success);color:#fff}
+.bwz-sl-item.error .bwz-sl-ico{background:var(--danger);border-color:var(--danger);color:#fff}
+.bwz-result-ok{background:var(--success-soft);border:1px solid var(--success);border-radius:.75rem;padding:1.5rem;text-align:center;margin-top:1rem}
+.bwz-result-err{background:var(--danger-soft);border:1px solid var(--danger);border-radius:.75rem;padding:1.5rem;text-align:center;margin-top:1rem}
+.bwz-json-modal{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);width:min(780px,95vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:var(--shadow-lg)}
+.bwz-json-pre{background:var(--bg);border:1px solid var(--border);border-radius:.5rem;padding:1rem;font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;font-size:.6875rem;line-height:1.7;white-space:pre;overflow:auto;max-height:55vh;color:var(--fg);tab-size:2}
+.bwz-inline-err{background:var(--danger-soft);border:1px solid color-mix(in oklch,var(--danger) 35%,transparent);border-radius:.5rem;padding:.625rem .875rem;font-size:.8125rem;color:var(--danger);margin-top:.5rem;display:none}
+.bwz-inline-err.on{display:block}
+</style>
+
+<!-- ═══ BOT WIZARD OVERLAY ═══ -->
+<div id="bot-wiz-overlay" class="wizard-overlay" style="display:none;z-index:250" onclick="if(event.target===this)botWizCancel()">
+ <div id="bot-wiz-modal" class="wizard-modal" style="max-width:740px">
+
+  <!-- Header -->
+  <div class="wizard-hdr">
+   <h3 id="bwz-title">&#129302; Criar Campanha BOT</h3>
+   <button class="wizard-close" onclick="botWizCancel()">&#215;</button>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="wizard-steps-bar" style="overflow-x:auto">
+   <div class="bwz-indicator active" data-step="1"><div class="num">1</div><div class="lbl">Conta</div></div>
+   <div class="step-sep"></div>
+   <div class="bwz-indicator" data-step="2"><div class="num">2</div><div class="lbl">Campanha</div></div>
+   <div class="step-sep"></div>
+   <div class="bwz-indicator" data-step="3"><div class="num">3</div><div class="lbl">Conjunto</div></div>
+   <div class="step-sep"></div>
+   <div class="bwz-indicator" data-step="4"><div class="num">4</div><div class="lbl">Público</div></div>
+   <div class="step-sep"></div>
+   <div class="bwz-indicator" data-step="5"><div class="num">5</div><div class="lbl">Criativo</div></div>
+   <div class="step-sep"></div>
+   <div class="bwz-indicator" data-step="6"><div class="num">6</div><div class="lbl">Publicar</div></div>
+  </div>
+
+  <!-- Body -->
+  <div class="wizard-body">
+
+   <!-- ── STEP 1: Conta + Tipo ── -->
+   <div class="bwz-step active" id="bwz-step-1">
+    <p class="bwz-step-title">Qual conta e tipo de campanha?</p>
+    <p class="bwz-step-sub">Selecione a conta Meta e o objetivo da campanha.</p>
+
+    <div class="wz-field">
+     <label class="wz-lbl">Conta Meta *</label>
+     <div id="bwz-acct-list" class="bwz-acct-list">
+      <div class="skeleton" style="height:3rem;border-radius:.625rem"></div>
+      <div class="skeleton" style="height:3rem;border-radius:.625rem"></div>
+      <div class="skeleton" style="height:3rem;border-radius:.625rem"></div>
+     </div>
+     <div id="bwz-no-token-warn" class="bwz-banner warn" style="display:none">
+      <span class="bwz-banner-ico">⚠️</span>
+      <div>A conta selecionada não tem token configurado. Adicione o token em <b>Contas Meta</b> antes de criar campanhas.</div>
+     </div>
+    </div>
+
+    <div class="wz-field">
+     <label class="wz-lbl">Tipo de campanha *</label>
+     <div class="bwz-type-grid">
+      <div class="bwz-type-card on" data-type="bot" onclick="botWizSelectType(this,'bot')">
+       <div class="bwz-type-icon">&#128172;</div>
+       <div class="bwz-type-name">BOT</div>
+       <div class="bwz-type-desc">Click-to-Messenger</div>
+      </div>
+      <div class="bwz-type-card" data-type="direto" onclick="botWizSelectType(this,'direto')">
+       <div class="bwz-type-icon">&#128279;</div>
+       <div class="bwz-type-name">Tráfego Direto</div>
+       <div class="bwz-type-desc">Cliques para URL</div>
+      </div>
+      <div class="bwz-type-card" data-type="conversao" onclick="botWizSelectType(this,'conversao')">
+       <div class="bwz-type-icon">&#127919;</div>
+       <div class="bwz-type-name">Conversão</div>
+       <div class="bwz-type-desc">Otimizar para evento</div>
+      </div>
+     </div>
+    </div>
+   </div>
+
+   <!-- ── STEP 2: Campanha ── -->
+   <div class="bwz-step" id="bwz-step-2">
+    <p class="bwz-step-title">Configurar campanha</p>
+    <p class="bwz-step-sub">Nome, tipo de orçamento e status inicial.</p>
+
+    <div class="wz-field">
+     <label class="wz-lbl">Nome da campanha *</label>
+     <div style="display:flex;gap:.5rem">
+      <input class="wz-input" id="bwz-camp-name" placeholder="Ex: BOT | aisha | Vendas | 22/05" style="flex:1">
+      <button class="btn-outline" onclick="botWizSuggestName()" style="height:2.375rem;white-space:nowrap">Sugerir</button>
+     </div>
+     <span class="wz-hint">Sugestão: BOT | [utm_source] | Vendas | DD/MM</span>
+    </div>
+
+    <div class="wz-field">
+     <label class="wz-lbl">Tipo de orçamento</label>
+     <div class="bwz-toggle-row">
+      <button class="bwz-toggle-btn" id="bwz-abo-btn" onclick="botWizSetBudgetType('ABO',this)">Por conjunto (ABO)</button>
+      <button class="bwz-toggle-btn" id="bwz-cbo-btn" onclick="botWizSetBudgetType('CBO',this)">Campanha (CBO)</button>
+     </div>
+     <span class="wz-hint">ABO = orçamento individual por conjunto. CBO = Meta distribui o orçamento.</span>
+    </div>
+
+    <div class="wz-field">
+     <label class="wz-lbl" style="display:flex;align-items:center;justify-content:space-between">
+      <span>Criar pausado</span>
+      <label class="ios-switch">
+       <input type="checkbox" id="bwz-paused" checked>
+       <span class="ios-slider"></span>
+      </label>
+     </label>
+     <span class="wz-hint">Recomendado: criar pausado e ativar após revisar.</span>
+    </div>
+   </div>
+
+   <!-- ── STEP 3: Conjunto de anúncios ── -->
+   <div class="bwz-step" id="bwz-step-3">
+    <p class="bwz-step-title">Conjunto de anúncios</p>
+    <p class="bwz-step-sub">Pixel, página, orçamento e período.</p>
+
+    <div class="wz-row">
+     <div class="wz-field" style="margin:0">
+      <label class="wz-lbl">Pixel *</label>
+      <select class="wz-select" id="bwz-pixel"><option value="">Carregando pixels…</option></select>
+     </div>
+     <div class="wz-field" style="margin:0">
+      <label class="wz-lbl">Evento de conversão *</label>
+      <select class="wz-select" id="bwz-event">
+       <option value="VIEW_CONTENT" selected>View Content</option>
+       <option value="PURCHASE">Purchase</option>
+       <option value="LEAD">Lead</option>
+       <option value="COMPLETE_REGISTRATION">Complete Registration</option>
+       <option value="ADD_TO_CART">Add to Cart</option>
+      </select>
+     </div>
+    </div>
+
+    <div class="wz-field" style="margin-top:1rem">
+     <label class="wz-lbl">Página do Facebook *</label>
+     <div id="bwz-page-wrap">
+      <select class="wz-select" id="bwz-page" onchange="botWizPageChanged()"><option value="">Carregando páginas…</option></select>
+     </div>
+     <div id="bwz-page-banner" class="bwz-banner warn" style="display:none">
+      <span class="bwz-banner-ico">⚠️</span>
+      <div>Token sem permissão <b>pages_show_list</b>. <a href="https://developers.facebook.com/tools/explorer/" target="_blank" style="color:var(--warning)">Renovar em developers.facebook.com</a>.<br>
+      <label class="wz-lbl" style="margin-top:.5rem;margin-bottom:.25rem">Inserir Page ID manualmente:</label>
+      <input class="wz-input" id="bwz-page-manual" placeholder="Ex: 123456789" style="margin-top:.375rem" oninput="botWizPageManualChanged()">
+      </div>
+     </div>
+     <div id="bwz-page-inline-err" class="bwz-inline-err"></div>
+    </div>
+
+    <div class="wz-row" style="margin-top:1rem">
+     <div class="wz-field" style="margin:0">
+      <label class="wz-lbl">Orçamento diário (R$) *</label>
+      <input class="wz-input" id="bwz-budget" type="number" value="7" min="1" step="0.01" oninput="botWizUpdateWeekly()">
+      <span class="bwz-weekly" id="bwz-weekly">≈ R$ 49,00 por semana</span>
+     </div>
+     <div class="wz-field" style="margin:0">
+      <label class="wz-lbl">Nome do conjunto</label>
+      <input class="wz-input" id="bwz-adset-name" placeholder="Ex: [aisha] | Brasil | 18-45">
+     </div>
+    </div>
+
+    <div class="wz-row" style="margin-top:1rem">
+     <div class="wz-field" style="margin:0">
+      <label class="wz-lbl">Data de início *</label>
+      <input class="wz-input" id="bwz-start-date" placeholder="Selecione a data" readonly>
+     </div>
+     <div class="wz-field" style="margin:0">
+      <label class="wz-lbl">Data de fim <span style="color:var(--muted)">(opcional)</span></label>
+      <input class="wz-input" id="bwz-end-date" placeholder="Sem data fim" readonly>
+     </div>
+    </div>
+   </div>
+
+   <!-- ── STEP 4: Público ── -->
+   <div class="bwz-step" id="bwz-step-4">
+    <p class="bwz-step-title">Definir público</p>
+    <p class="bwz-step-sub">Localização, faixa etária, gênero e segmentação.</p>
+
+    <div class="wz-field">
+     <label class="wz-lbl">Países *</label>
+     <input class="wz-input" id="bwz-country-search" placeholder="Buscar país… (ex: Brasil)" oninput="botWizFilterCountries(this.value)" autocomplete="off">
+     <div class="bwz-sdrop" id="bwz-country-drop"></div>
+     <div class="bwz-tags" id="bwz-country-tags"></div>
+    </div>
+
+    <div class="wz-field">
+     <label class="wz-lbl">Idioma</label>
+     <input class="wz-input" id="bwz-locale-search" placeholder="Buscar idioma… (ex: Português)" oninput="botWizFilterLocales(this.value)" autocomplete="off">
+     <div class="bwz-sdrop" id="bwz-locale-drop"></div>
+     <div class="bwz-tags" id="bwz-locale-tags"></div>
+    </div>
+
+    <div class="wz-field">
+     <label class="wz-lbl">Faixa etária</label>
+     <div class="bwz-age-wrap">
+      <div>
+       <div class="bwz-age-val" id="bwz-age-min-val">18</div>
+       <div class="bwz-age-lbl">Mínima</div>
+       <input type="range" class="bwz-range" id="bwz-age-min" min="18" max="64" value="18" oninput="botWizAgeChange()">
+      </div>
+      <div>
+       <div class="bwz-age-val" id="bwz-age-max-val">45</div>
+       <div class="bwz-age-lbl">Máxima</div>
+       <input type="range" class="bwz-range" id="bwz-age-max" min="19" max="65" value="45" oninput="botWizAgeChange()">
+      </div>
+     </div>
+    </div>
+
+    <div class="wz-field">
+     <label class="wz-lbl">Gênero</label>
+     <div class="bwz-toggle-row">
+      <button class="bwz-toggle-btn on" id="bwz-g-all" onclick="botWizSetGender(0)">Todos</button>
+      <button class="bwz-toggle-btn" id="bwz-g-m" onclick="botWizSetGender(1)">Masculino</button>
+      <button class="bwz-toggle-btn" id="bwz-g-f" onclick="botWizSetGender(2)">Feminino</button>
+     </div>
+    </div>
+
+    <div class="wz-field">
+     <label class="wz-lbl">Audiências Customizadas</label>
+     <input class="wz-input" id="bwz-ca-search" placeholder="Buscar audiência…" oninput="botWizFilterCA(this.value)" autocomplete="off">
+     <div class="bwz-sdrop" id="bwz-ca-drop"></div>
+     <div class="bwz-tags" id="bwz-ca-tags"></div>
+    </div>
+
+    <div class="wz-field">
+     <label class="wz-lbl">Interesses</label>
+     <input class="wz-input" id="bwz-interest-search" placeholder="Buscar interesses Meta… (min 2 chars)" oninput="botWizSearchInterests(this.value)" autocomplete="off">
+     <div class="bwz-sdrop" id="bwz-interest-drop"></div>
+     <div class="bwz-tags" id="bwz-interest-tags"></div>
+    </div>
+
+    <div class="wz-field">
+     <label class="wz-lbl">Público salvo <span style="color:var(--muted)">(opcional)</span></label>
+     <select class="wz-select" id="bwz-saved-aud"><option value="">Público aberto (nenhum)</option></select>
+    </div>
+   </div>
+
+   <!-- ── STEP 5: Criativo ── -->
+   <div class="bwz-step" id="bwz-step-5">
+    <p class="bwz-step-title">Criativo do anúncio</p>
+    <p class="bwz-step-sub">Imagem, texto e configuração do BOT.</p>
+
+    <div class="wz-field">
+     <label class="wz-lbl">Nome do anúncio *</label>
+     <input class="wz-input" id="bwz-ad-name" placeholder="Ex: BOT | aisha | img1">
+    </div>
+
+    <div class="wz-field">
+     <label class="wz-lbl">Imagem *</label>
+     <div id="bwz-dropzone" class="bwz-dropzone" onclick="document.getElementById('bwz-file-in').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="botWizHandleDrop(event)">
+      <div class="bwz-dz-icon">&#128444;</div>
+      <div class="bwz-dz-txt">Clique ou arraste uma imagem aqui</div>
+      <div class="bwz-dz-hint">JPG, PNG, GIF · máx 30 MB</div>
+     </div>
+     <input type="file" id="bwz-file-in" accept="image/*" style="display:none" onchange="botWizHandleFile(this.files[0])">
+     <div id="bwz-upload-done" class="bwz-upload-done" style="display:none"></div>
+     <div id="bwz-upload-err" class="bwz-inline-err"></div>
+    </div>
+
+    <div class="wz-field">
+     <label class="wz-lbl">Texto primário *</label>
+     <textarea class="wz-textarea wz-input" id="bwz-primary-text" placeholder="Texto do anúncio…" rows="4" oninput="botWizCharCount(this,'bwz-txt-cnt')" style="height:auto"></textarea>
+     <div class="bwz-char-cnt" id="bwz-txt-cnt">0 caracteres</div>
+    </div>
+
+    <div class="wz-row">
+     <div class="wz-field" style="margin:0">
+      <label class="wz-lbl">Headline *</label>
+      <input class="wz-input" id="bwz-headline" placeholder="Título do anúncio">
+     </div>
+     <div class="wz-field" style="margin:0">
+      <label class="wz-lbl">URL de destino *</label>
+      <input class="wz-input" id="bwz-link-url" placeholder="https://mkuker.com" type="url" oninput="botWizValidateUrl(this)">
+     </div>
+    </div>
+
+    <div class="wz-field" id="bwz-conv-template-wrap">
+     <label class="wz-lbl">Configurador de conversa (BOT)</label>
+     <select class="wz-select" id="bwz-conv-template" onchange="botWizConvTemplateChanged()">
+      <option value="">Carregando modelos…</option>
+     </select>
+     <div id="bwz-conv-preview" class="bwz-conv-preview" style="display:none"></div>
+     <div id="bwz-conv-none" class="bwz-banner info" style="display:none">
+      <span class="bwz-banner-ico">ℹ️</span>
+      <div>Nenhum modelo encontrado. Crie um em <a href="https://www.facebook.com/business/help/1564656373947786" target="_blank" style="color:var(--info)">Central de Negócios do Facebook →</a></div>
+     </div>
+    </div>
+   </div>
+
+   <!-- ── STEP 6: UTMs + Preview + Publicar ── -->
+   <div class="bwz-step" id="bwz-step-6">
+    <p class="bwz-step-title">UTMs, preview e publicação</p>
+    <p class="bwz-step-sub">Configure os parâmetros de rastreamento e revise antes de criar.</p>
+
+    <div class="wz-section-title">Gerador de UTM</div>
+    <div class="wz-row">
+     <div class="wz-field" style="margin:0">
+      <label class="wz-lbl">utm_source *</label>
+      <input class="wz-input" id="bwz-utm-source" placeholder="ex: aisha" oninput="botWizUpdateUtmPreview()">
+     </div>
+     <div class="wz-field" style="margin:0">
+      <label class="wz-lbl">utm_campaign</label>
+      <input class="wz-input" id="bwz-utm-campaign" placeholder="ex: vendas-mai26" oninput="botWizUpdateUtmPreview()">
+     </div>
+    </div>
+    <div class="wz-field">
+     <label class="wz-lbl">utm_medium</label>
+     <input class="wz-input" id="bwz-utm-medium" placeholder="ex: bloco1-botao1-aishafb" oninput="botWizUpdateUtmPreview()">
+    </div>
+    <div class="wz-field">
+     <label class="wz-lbl">Preview do link</label>
+     <div class="bwz-utm-preview" id="bwz-utm-preview">?utm_source=…</div>
+    </div>
+
+    <div class="wz-section-title" style="margin-top:1.5rem">Revisão e publicação</div>
+
+    <div id="bwz-summary" style="background:var(--sec);border:1px solid var(--border);border-radius:.75rem;padding:1.25rem;font-size:.875rem;line-height:2;margin-bottom:1.25rem"></div>
+
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+     <button class="btn-outline" onclick="botWizDryRun()" id="bwz-btn-dryrun">&#128269; Ver preview JSON</button>
+     <button class="btn-primary" onclick="botWizShowConfirm()" id="bwz-btn-publish" style="flex:1">&#128640; Criar campanha</button>
+    </div>
+
+    <!-- Loader de publicação (aparece no lugar dos botões) -->
+    <div id="bwz-publish-state" style="display:none;margin-top:1rem">
+     <div class="bwz-sl-list" id="bwz-sl-list">
+      <div class="bwz-sl-item pending" id="bwz-sl-1"><div class="bwz-sl-ico"></div><span>Criando campanha…</span></div>
+      <div class="bwz-sl-item pending" id="bwz-sl-2"><div class="bwz-sl-ico"></div><span>Criando conjunto de anúncios…</span></div>
+      <div class="bwz-sl-item pending" id="bwz-sl-3"><div class="bwz-sl-ico"></div><span>Enviando criativo…</span></div>
+      <div class="bwz-sl-item pending" id="bwz-sl-4"><div class="bwz-sl-ico"></div><span>Finalizando…</span></div>
+     </div>
+     <div id="bwz-publish-result"></div>
+    </div>
+   </div>
+
+  </div><!-- /wizard-body -->
+
+  <!-- Footer -->
+  <div class="wizard-ftr">
+   <button class="btn-outline" id="bwz-btn-back" onclick="botWizGoBack()" style="display:none">&#8592; Voltar</button>
+   <div style="display:flex;gap:.5rem;margin-left:auto">
+    <button class="btn-outline" onclick="botWizCancel()">Cancelar</button>
+    <button class="btn-primary" id="bwz-btn-next" onclick="botWizGoNext()">Continuar &#8594;</button>
+   </div>
+  </div>
+
+ </div><!-- /wizard-modal -->
+</div><!-- /bot-wiz-overlay -->
+
+<!-- ═══ JSON PREVIEW MODAL ═══ -->
+<div id="bwz-json-overlay" class="modal-bg" onclick="if(event.target===this)this.classList.remove('on')">
+ <div class="bwz-json-modal">
+  <div class="modal-hd" style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);flex-shrink:0">
+   <span class="modal-title">Preview JSON — Dry Run</span>
+   <button class="modal-close" onclick="document.getElementById('bwz-json-overlay').classList.remove('on')">&#215;</button>
+  </div>
+  <div class="bwz-json-body" style="flex:1;overflow:auto;padding:1.25rem">
+   <pre class="bwz-json-pre" id="bwz-json-pre">Carregando…</pre>
+  </div>
+  <div style="padding:1rem 1.25rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;flex-shrink:0">
+   <button class="btn-outline" onclick="document.getElementById('bwz-json-overlay').classList.remove('on')">Fechar preview</button>
+  </div>
+ </div>
+</div>
+
+<!-- ═══ CONFIRM MODAL ═══ -->
+<div id="bwz-confirm-overlay" class="modal-bg" onclick="if(event.target===this)this.classList.remove('on')">
+ <div class="modal" style="width:min(480px,95vw)">
+  <div class="modal-hd">
+   <span class="modal-title">Confirmar criação de campanha</span>
+   <button class="modal-close" onclick="document.getElementById('bwz-confirm-overlay').classList.remove('on')">&#215;</button>
+  </div>
+  <div id="bwz-confirm-body" style="font-size:.875rem;line-height:1.8;color:var(--fg)"></div>
+  <div class="modal-actions" style="margin-top:.5rem">
+   <button class="btn btn-s" onclick="document.getElementById('bwz-confirm-overlay').classList.remove('on')">Cancelar</button>
+   <button class="btn btn-p" onclick="botWizPublish()">Confirmar e criar</button>
+  </div>
+ </div>
+</div>
+
+<!-- ═══ BOT WIZARD JAVASCRIPT ═══ -->
+<script>
+(function(){
+'use strict';
+
+/* ─── state ─────────────────────────────────────────────────────────────── */
+const BWZ = {
+  step:1,
+  accounts:[],
+  pixels:[],
+  pages:[],
+  customAudiences:[],
+  savedAudiences:[],
+  convTemplates:[],
+  countries:[],
+  locales:[],
+  interestTimer:null,
+  fpStart:null,fpEnd:null,
+  selInterests:[],
+  selCountries:[{code:'BR',name:'Brasil'}],
+  selLocales:[{id:5,name:'Português (Brasil)'}],
+  selCA:[],
+  d:{
+    account_id:'',account_nome:'',account_moeda:'BRL',
+    campaign_type:'bot',
+    campaign_name:'',budget_type:'ABO',paused:true,
+    pixel_id:'',pixel_name:'',
+    conversion_event:'VIEW_CONTENT',
+    page_id:'',page_name:'',page_token:null,
+    daily_budget:7,
+    start_time:'',end_time:null,
+    adset_name:'',
+    age_min:18,age_max:45,gender:0,
+    saved_audience_id:null,
+    ad_name:'',image_hash:'',image_preview_url:null,
+    primary_text:'',headline:'',
+    link_url:'https://mkuker.com',
+    conv_template_id:null,conv_template_name:'',
+    utm_source:'',utm_medium:'',utm_campaign:'',
+  }
+};
+window._BWZ=BWZ;
+
+/* ─── open / close ──────────────────────────────────────────────────────── */
+window.botWizOpen=function(){
+  Object.assign(BWZ.d,{
+    account_id:'',account_nome:'',account_moeda:'BRL',
+    campaign_type:'bot',campaign_name:'',budget_type:'ABO',paused:true,
+    pixel_id:'',pixel_name:'',conversion_event:'VIEW_CONTENT',
+    page_id:'',page_name:'',page_token:null,daily_budget:7,
+    start_time:'',end_time:null,adset_name:'',
+    age_min:18,age_max:45,gender:0,saved_audience_id:null,
+    ad_name:'',image_hash:'',image_preview_url:null,
+    primary_text:'',headline:'',link_url:'https://mkuker.com',
+    conv_template_id:null,conv_template_name:'',
+    utm_source:'',utm_medium:'',utm_campaign:'',
+  });
+  BWZ.selInterests=[];BWZ.selCountries=[{code:'BR',name:'Brasil'}];
+  BWZ.selLocales=[{id:5,name:'Português (Brasil)'}];BWZ.selCA=[];
+  BWZ.pixels=[];BWZ.pages=[];BWZ.customAudiences=[];BWZ.savedAudiences=[];BWZ.convTemplates=[];
+
+  // Reset step-1 UI
+  document.querySelector('#bot-wiz-modal .bwz-type-card[data-type="bot"]').classList.add('on');
+  document.querySelectorAll('#bot-wiz-modal .bwz-type-card:not([data-type="bot"])').forEach(c=>c.classList.remove('on'));
+  // Reset step-2 UI
+  botWizSetBudgetType('ABO',null);
+  document.getElementById('bwz-paused').checked=true;
+  // Reset step-5 UI
+  document.getElementById('bwz-upload-done').style.display='none';
+  document.getElementById('bwz-upload-err').classList.remove('on');
+  document.getElementById('bwz-dropzone').style.display='';
+  // Reset step-6 loader
+  document.getElementById('bwz-publish-state').style.display='none';
+  document.getElementById('bwz-publish-result').innerHTML='';
+  ['bwz-sl-1','bwz-sl-2','bwz-sl-3','bwz-sl-4'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.className='bwz-sl-item pending';
+    el.querySelector('.bwz-sl-ico').textContent='';
+  });
+
+  botWizStep(1);
+  document.getElementById('bot-wiz-overlay').style.display='flex';
+  botWizLoadAccounts();
+};
+
+window.botWizCancel=function(){
+  if(!confirm('Cancelar criação de campanha? Os dados serão perdidos.'))return;
+  document.getElementById('bot-wiz-overlay').style.display='none';
+};
+
+/* ─── step navigation ───────────────────────────────────────────────────── */
+function botWizStep(n){
+  BWZ.step=n;
+  document.querySelectorAll('#bot-wiz-modal .bwz-step').forEach((el,i)=>el.classList.toggle('active',i===n-1));
+  document.querySelectorAll('#bot-wiz-modal .bwz-indicator').forEach(el=>{
+    const s=Number(el.dataset.step);
+    el.classList.remove('done','active');
+    if(s<n)el.classList.add('done');
+    else if(s===n)el.classList.add('active');
+  });
+  document.getElementById('bwz-btn-back').style.display=n>1?'':'none';
+  const nextBtn=document.getElementById('bwz-btn-next');
+  if(n===6){nextBtn.style.display='none';}
+  else{nextBtn.style.display='';nextBtn.textContent='Continuar →';}
+  if(n===3)botWizLoadStep3();
+  if(n===4)botWizLoadStep4();
+  if(n===5)botWizLoadStep5();
+  if(n===6)botWizRenderSummary();
+  // scroll to top
+  document.querySelector('#bot-wiz-modal .wizard-body').scrollTop=0;
+}
+window.botWizGoNext=function(){
+  if(!botWizValidate(BWZ.step))return;
+  botWizStep(BWZ.step+1);
+};
+window.botWizGoBack=function(){botWizStep(BWZ.step-1);};
+
+/* ─── validation ─────────────────────────────────────────────────────────── */
+function botWizValidate(n){
+  if(n===1){
+    if(!BWZ.d.account_id){bwzErr('Selecione uma conta Meta.');return false;}
+    return true;
+  }
+  if(n===2){
+    const name=document.getElementById('bwz-camp-name').value.trim();
+    if(!name){bwzErr('Informe o nome da campanha.');return false;}
+    BWZ.d.campaign_name=name;
+    return true;
+  }
+  if(n===3){
+    BWZ.d.pixel_id=document.getElementById('bwz-pixel').value;
+    BWZ.d.conversion_event=document.getElementById('bwz-event').value;
+    const pageEl=document.getElementById('bwz-page');
+    const manualEl=document.getElementById('bwz-page-manual');
+    BWZ.d.page_id=pageEl?.value||manualEl?.value?.trim()||'';
+    if(!BWZ.d.pixel_id){bwzErr('Selecione um pixel.');return false;}
+    if(!BWZ.d.page_id){bwzErr('Selecione ou informe o ID da página.');return false;}
+    const budget=parseFloat(document.getElementById('bwz-budget').value)||0;
+    if(budget<1){bwzErr('Orçamento mínimo é R$1,00.');return false;}
+    BWZ.d.daily_budget=budget;
+    if(!BWZ.d.start_time){bwzErr('Informe a data de início.');return false;}
+    BWZ.d.adset_name=document.getElementById('bwz-adset-name').value.trim()||`[${BWZ.d.page_name||'page'}] | Brasil | ${BWZ.d.age_min}-${BWZ.d.age_max}`;
+    return true;
+  }
+  if(n===4){
+    if(!BWZ.selCountries.length){bwzErr('Selecione pelo menos um país.');return false;}
+    if(BWZ.d.age_min>=BWZ.d.age_max){bwzErr('Idade mínima deve ser menor que a máxima.');return false;}
+    return true;
+  }
+  if(n===5){
+    BWZ.d.ad_name=document.getElementById('bwz-ad-name').value.trim();
+    if(!BWZ.d.ad_name){bwzErr('Informe o nome do anúncio.');return false;}
+    if(!BWZ.d.image_hash){bwzErr('Faça upload da imagem antes de continuar.');return false;}
+    BWZ.d.primary_text=document.getElementById('bwz-primary-text').value.trim();
+    BWZ.d.headline=document.getElementById('bwz-headline').value.trim();
+    BWZ.d.link_url=document.getElementById('bwz-link-url').value.trim();
+    if(!BWZ.d.primary_text){bwzErr('Informe o texto primário.');return false;}
+    if(!BWZ.d.headline){bwzErr('Informe a headline.');return false;}
+    if(!BWZ.d.link_url||!BWZ.d.link_url.startsWith('http')){bwzErr('URL de destino inválida (deve começar com http/https).');return false;}
+    return true;
+  }
+  return true;
+}
+
+function bwzErr(msg){showToast('err',msg,3500);}
+
+/* ─── step-1: accounts ───────────────────────────────────────────────────── */
+async function botWizLoadAccounts(){
+  const container=document.getElementById('bwz-acct-list');
+  try{
+    const r=await fetch('/api/meta-accounts');
+    const {accounts}=await r.json();
+    BWZ.accounts=accounts||[];
+    container.innerHTML=BWZ.accounts.map(a=>`
+      <div class="bwz-acct-row" data-id="${esc(a.id)}" onclick="botWizSelectAccount(this,'${esc(a.id)}','${esc(a.nome)}','${esc(a.moeda)}')">
+        <div class="bwz-acct-info">
+          <div class="bwz-acct-name">${esc(a.nome)}</div>
+          <div class="bwz-acct-sub">${esc(a.id)} · ${esc(a.moeda)}</div>
+        </div>
+        ${a.tem_token
+          ?'<span class="bwz-token-ok">✓ Token OK</span>'
+          :'<span class="bwz-token-bad">✗ Sem token</span>'}
+      </div>`).join('');
+  }catch(e){
+    container.innerHTML=`<div class="bwz-banner err"><span class="bwz-banner-ico">❌</span><div>Erro ao carregar contas: ${esc(e.message)}</div></div>`;
+  }
+}
+window.botWizSelectAccount=function(el,id,nome,moeda){
+  document.querySelectorAll('#bwz-acct-list .bwz-acct-row').forEach(r=>r.classList.remove('on'));
+  el.classList.add('on');
+  BWZ.d.account_id=id;BWZ.d.account_nome=nome;BWZ.d.account_moeda=moeda;
+  const acct=BWZ.accounts.find(a=>a.id===id);
+  const warn=document.getElementById('bwz-no-token-warn');
+  warn.style.display=(acct&&!acct.tem_token)?'flex':'none';
+  // reset downstream
+  BWZ.pixels=[];BWZ.pages=[];BWZ.customAudiences=[];BWZ.savedAudiences=[];BWZ.convTemplates=[];
+};
+
+window.botWizSelectType=function(el,type){
+  document.querySelectorAll('#bot-wiz-modal .bwz-type-card').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  BWZ.d.campaign_type=type;
+};
+
+/* ─── step-2 helpers ────────────────────────────────────────────────────── */
+window.botWizSuggestName=function(){
+  const src=document.getElementById('bwz-utm-source')?.value||BWZ.d.utm_source||'utm_source';
+  const today=new Date();
+  const dd=String(today.getDate()).padStart(2,'0');
+  const mm=String(today.getMonth()+1).padStart(2,'0');
+  const type=BWZ.d.campaign_type==='bot'?'BOT':BWZ.d.campaign_type==='direto'?'DIRETO':'CONV';
+  document.getElementById('bwz-camp-name').value=`${type} | ${src} | Vendas | ${dd}/${mm}`;
+};
+window.botWizSetBudgetType=function(type,btn){
+  BWZ.d.budget_type=type;
+  document.getElementById('bwz-abo-btn').classList.toggle('on',type==='ABO');
+  document.getElementById('bwz-cbo-btn').classList.toggle('on',type==='CBO');
+};
+
+/* ─── step-3: pixels + pages ────────────────────────────────────────────── */
+async function botWizLoadStep3(){
+  if(!BWZ.d.account_id)return;
+  // init flatpickr
+  if(!BWZ.fpStart){
+    BWZ.fpStart=flatpickr('#bwz-start-date',{
+      locale:'pt',minDate:'today',defaultDate:'today',dateFormat:'Y-m-d',
+      onChange([d]){BWZ.d.start_time=d?d.toISOString().replace(/\.\d{3}Z$/,'-03:00'):'';}
+    });
+    BWZ.d.start_time=new Date().toISOString().replace(/\.\d{3}Z$/,'-03:00');
+  }
+  if(!BWZ.fpEnd){
+    BWZ.fpEnd=flatpickr('#bwz-end-date',{
+      locale:'pt',dateFormat:'Y-m-d',
+      onChange([d]){BWZ.d.end_time=d?d.toISOString().replace(/\.\d{3}Z$/,'-03:00'):null;}
+    });
+  }
+  await Promise.all([botWizLoadPixels(),botWizLoadPages()]);
+}
+async function botWizLoadPixels(){
+  const sel=document.getElementById('bwz-pixel');
+  if(BWZ.pixels.length){return;}
+  sel.innerHTML='<option value="">Carregando…</option>';
+  try{
+    const r=await fetch(`/api/meta-resources/pixels?account_id=${encodeURIComponent(BWZ.d.account_id)}`);
+    BWZ.pixels=await r.json();
+    sel.innerHTML=BWZ.pixels.length
+      ?'<option value="">Selecione um pixel…</option>'+BWZ.pixels.map(p=>`<option value="${esc(p.id)}">${esc(p.name)} (${esc(p.id)})</option>`).join('')
+      :'<option value="">Nenhum pixel encontrado</option>';
+  }catch(e){sel.innerHTML=`<option value="">Erro: ${esc(e.message)}</option>`;}
+}
+async function botWizLoadPages(){
+  if(BWZ.pages.length)return;
+  const sel=document.getElementById('bwz-page');
+  const banner=document.getElementById('bwz-page-banner');
+  sel.innerHTML='<option value="">Carregando…</option>';
+  banner.style.display='none';
+  try{
+    const r=await fetch(`/api/meta-resources/pages?account_id=${encodeURIComponent(BWZ.d.account_id)}`);
+    const data=await r.json();
+    if(data.pages&&data.pages.length){
+      BWZ.pages=data.pages;
+      sel.innerHTML='<option value="">Selecione a página…</option>'+data.pages.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');
+      sel.style.display='';banner.style.display='none';
+    } else {
+      // Permission error — show banner with manual input
+      sel.style.display='none';
+      banner.style.display='flex';
+    }
+  }catch(e){
+    sel.style.display='none';banner.style.display='flex';
+    console.error('[bwz pages]',e.message);
+  }
+}
+window.botWizPageChanged=function(){
+  const sel=document.getElementById('bwz-page');
+  const id=sel.value;
+  BWZ.d.page_id=id;
+  const page=BWZ.pages.find(p=>p.id===id);
+  BWZ.d.page_name=page?.name||'';
+  BWZ.d.page_token=page?.access_token||null;
+};
+window.botWizPageManualChanged=function(){
+  BWZ.d.page_id=document.getElementById('bwz-page-manual').value.trim();
+  BWZ.d.page_name=BWZ.d.page_id;
+};
+window.botWizUpdateWeekly=function(){
+  const v=parseFloat(document.getElementById('bwz-budget').value)||0;
+  const fmt=n=>n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('bwz-weekly').textContent=`≈ R$ ${fmt(v*7)} por semana`;
+};
+
+/* ─── step-4: audience ──────────────────────────────────────────────────── */
+async function botWizLoadStep4(){
+  if(!BWZ.d.account_id)return;
+  await Promise.all([botWizLoadCountries(),botWizLoadLocales(),botWizLoadCA(),botWizLoadSavedAud()]);
+  botWizRenderCountryTags();botWizRenderLocaleTags();botWizRenderCATags();botWizRenderInterestTags();
+}
+async function botWizLoadCountries(){
+  if(BWZ.countries.length)return;
+  try{const r=await fetch('/api/meta-resources/countries');BWZ.countries=await r.json();}catch(e){}
+}
+async function botWizLoadLocales(){
+  if(BWZ.locales.length)return;
+  try{const r=await fetch('/api/meta-resources/locales');BWZ.locales=await r.json();}catch(e){}
+}
+async function botWizLoadCA(){
+  if(BWZ.customAudiences.length)return;
+  try{
+    const r=await fetch(`/api/meta-resources/custom-audiences?account_id=${encodeURIComponent(BWZ.d.account_id)}`);
+    BWZ.customAudiences=await r.json();
+  }catch(e){}
+}
+async function botWizLoadSavedAud(){
+  if(BWZ.savedAudiences.length)return;
+  const sel=document.getElementById('bwz-saved-aud');
+  try{
+    const r=await fetch(`/api/meta-resources/saved-audiences?account_id=${encodeURIComponent(BWZ.d.account_id)}`);
+    BWZ.savedAudiences=await r.json();
+    sel.innerHTML='<option value="">Público aberto (nenhum)</option>'+
+      BWZ.savedAudiences.map(a=>`<option value="${esc(a.id)}">${esc(a.name)}</option>`).join('');
+  }catch(e){sel.innerHTML='<option value="">Erro ao carregar</option>';}
+}
+
+// Countries search
+window.botWizFilterCountries=function(q){
+  const drop=document.getElementById('bwz-country-drop');
+  if(!q||q.length<1){drop.style.display='none';return;}
+  const ql=q.toLowerCase();
+  const matches=BWZ.countries.filter(c=>c.name.toLowerCase().includes(ql)||c.key.toLowerCase().includes(ql)).slice(0,12);
+  if(!matches.length){drop.style.display='none';return;}
+  drop.innerHTML=matches.map(c=>`<div class="bwz-sdrop-item" onclick="botWizAddCountry('${esc(c.key)}','${esc(c.name)}')">${esc(c.name)}</div>`).join('');
+  drop.style.display='block';
+};
+window.botWizAddCountry=function(code,name){
+  if(!BWZ.selCountries.find(c=>c.code===code))BWZ.selCountries.push({code,name});
+  botWizRenderCountryTags();
+  document.getElementById('bwz-country-search').value='';
+  document.getElementById('bwz-country-drop').style.display='none';
+};
+window.botWizRemoveCountry=function(code){
+  BWZ.selCountries=BWZ.selCountries.filter(c=>c.code!==code);botWizRenderCountryTags();
+};
+function botWizRenderCountryTags(){
+  document.getElementById('bwz-country-tags').innerHTML=BWZ.selCountries.map(c=>
+    `<span class="bwz-tag">${esc(c.name)}<button onclick="botWizRemoveCountry('${esc(c.code)}')">&#215;</button></span>`).join('');
+}
+
+// Locales search
+window.botWizFilterLocales=function(q){
+  const drop=document.getElementById('bwz-locale-drop');
+  if(!q||q.length<1){drop.style.display='none';return;}
+  const ql=q.toLowerCase();
+  const matches=BWZ.locales.filter(l=>l.name.toLowerCase().includes(ql)).slice(0,10);
+  if(!matches.length){drop.style.display='none';return;}
+  drop.innerHTML=matches.map(l=>`<div class="bwz-sdrop-item" onclick="botWizAddLocale(${l.key},'${esc(l.name)}')">${esc(l.name)}</div>`).join('');
+  drop.style.display='block';
+};
+window.botWizAddLocale=function(id,name){
+  if(!BWZ.selLocales.find(l=>l.id===id))BWZ.selLocales.push({id,name});
+  botWizRenderLocaleTags();
+  document.getElementById('bwz-locale-search').value='';
+  document.getElementById('bwz-locale-drop').style.display='none';
+};
+window.botWizRemoveLocale=function(id){
+  BWZ.selLocales=BWZ.selLocales.filter(l=>l.id!==id);botWizRenderLocaleTags();
+};
+function botWizRenderLocaleTags(){
+  document.getElementById('bwz-locale-tags').innerHTML=BWZ.selLocales.map(l=>
+    `<span class="bwz-tag">${esc(l.name)}<button onclick="botWizRemoveLocale(${l.id})">&#215;</button></span>`).join('');
+}
+
+// Custom audiences search
+window.botWizFilterCA=function(q){
+  const drop=document.getElementById('bwz-ca-drop');
+  const matches=q
+    ?BWZ.customAudiences.filter(a=>a.name.toLowerCase().includes(q.toLowerCase())).slice(0,10)
+    :BWZ.customAudiences.slice(0,10);
+  if(!matches.length){drop.style.display='none';return;}
+  drop.innerHTML=matches.map(a=>`<div class="bwz-sdrop-item" onclick="botWizAddCA('${esc(a.id)}','${esc(a.name)}')">${esc(a.name)}<small style="color:var(--muted)">${a.count?NUM(a.count)+' pessoas':''}</small></div>`).join('');
+  drop.style.display='block';
+};
+window.botWizAddCA=function(id,name){
+  if(!BWZ.selCA.find(a=>a.id===id))BWZ.selCA.push({id,name});
+  botWizRenderCATags();
+  document.getElementById('bwz-ca-search').value='';
+  document.getElementById('bwz-ca-drop').style.display='none';
+};
+window.botWizRemoveCA=function(id){
+  BWZ.selCA=BWZ.selCA.filter(a=>a.id!==id);botWizRenderCATags();
+};
+function botWizRenderCATags(){
+  document.getElementById('bwz-ca-tags').innerHTML=BWZ.selCA.map(a=>
+    `<span class="bwz-tag">${esc(a.name)}<button onclick="botWizRemoveCA('${esc(a.id)}')">&#215;</button></span>`).join('');
+}
+
+// Interests search
+window.botWizSearchInterests=function(q){
+  clearTimeout(BWZ.interestTimer);
+  const drop=document.getElementById('bwz-interest-drop');
+  if(!q||q.length<2){drop.style.display='none';return;}
+  BWZ.interestTimer=setTimeout(async()=>{
+    try{
+      const r=await fetch(`/api/meta-resources/interest-search?q=${encodeURIComponent(q)}&account_id=${encodeURIComponent(BWZ.d.account_id)}`);
+      const items=await r.json();
+      if(!items.length){drop.style.display='none';return;}
+      drop.innerHTML=items.map(i=>`<div class="bwz-sdrop-item" onclick="botWizAddInterest(${JSON.stringify(i).replace(/"/g,'&quot;')})">
+        ${esc(i.name)}<small style="color:var(--muted)">${i.audience_size?NUM(i.audience_size)+' pessoas':''}</small></div>`).join('');
+      drop.style.display='block';
+    }catch(e){drop.style.display='none';}
+  },300);
+};
+window.botWizAddInterest=function(i){
+  if(typeof i==='string')i=JSON.parse(i.replace(/&quot;/g,'"'));
+  if(!BWZ.selInterests.find(x=>x.id===i.id))BWZ.selInterests.push(i);
+  botWizRenderInterestTags();
+  document.getElementById('bwz-interest-search').value='';
+  document.getElementById('bwz-interest-drop').style.display='none';
+};
+window.botWizRemoveInterest=function(id){
+  BWZ.selInterests=BWZ.selInterests.filter(x=>x.id!==id);botWizRenderInterestTags();
+};
+function botWizRenderInterestTags(){
+  document.getElementById('bwz-interest-tags').innerHTML=BWZ.selInterests.map(i=>
+    `<span class="bwz-tag">${esc(i.name)}<button onclick="botWizRemoveInterest('${esc(i.id)}')">&#215;</button></span>`).join('');
+}
+
+// Age
+window.botWizAgeChange=function(){
+  let mn=parseInt(document.getElementById('bwz-age-min').value);
+  let mx=parseInt(document.getElementById('bwz-age-max').value);
+  if(mn>=mx)mx=mn+1;
+  BWZ.d.age_min=mn;BWZ.d.age_max=mx;
+  document.getElementById('bwz-age-min-val').textContent=mn;
+  document.getElementById('bwz-age-max-val').textContent=mx===65?'65+':mx;
+  document.getElementById('bwz-age-max').value=mx;
+};
+
+// Gender
+window.botWizSetGender=function(v){
+  BWZ.d.gender=v;
+  document.getElementById('bwz-g-all').classList.toggle('on',v===0);
+  document.getElementById('bwz-g-m').classList.toggle('on',v===1);
+  document.getElementById('bwz-g-f').classList.toggle('on',v===2);
+};
+
+/* ─── step-5: creative + upload ─────────────────────────────────────────── */
+async function botWizLoadStep5(){
+  if(!BWZ.d.account_id||!BWZ.d.page_id)return;
+  const sel=document.getElementById('bwz-conv-template');
+  sel.innerHTML='<option value="">Carregando…</option>';
+  try{
+    const r=await fetch(`/api/meta-resources/conversation-templates?account_id=${encodeURIComponent(BWZ.d.account_id)}&page_id=${encodeURIComponent(BWZ.d.page_id)}`);
+    const {templates,error}=await r.json();
+    BWZ.convTemplates=templates||[];
+    const noneDiv=document.getElementById('bwz-conv-none');
+    if(!BWZ.convTemplates.length){
+      sel.innerHTML='<option value="">Nenhum modelo</option>';
+      noneDiv.style.display='flex';
+    } else {
+      noneDiv.style.display='none';
+      sel.innerHTML='<option value="">Nenhum (sem configurador)</option>'+
+        BWZ.convTemplates.map(t=>`<option value="${esc(t.id)}">${esc(t.name||t.id)}</option>`).join('');
+    }
+  }catch(e){
+    sel.innerHTML='<option value="">Erro ao carregar</option>';
+  }
+}
+
+window.botWizHandleDrop=function(e){
+  e.preventDefault();
+  document.getElementById('bwz-dropzone').classList.remove('over');
+  const file=e.dataTransfer.files[0];
+  if(file)botWizHandleFile(file);
+};
+
+window.botWizHandleFile=async function(file){
+  if(!file)return;
+  const uploadErr=document.getElementById('bwz-upload-err');
+  const uploadDone=document.getElementById('bwz-upload-done');
+  const dz=document.getElementById('bwz-dropzone');
+  uploadErr.classList.remove('on');
+  uploadDone.style.display='none';
+  dz.innerHTML='<div class="bwz-dz-icon" style="animation:spin 1s linear infinite">&#9696;</div><div class="bwz-dz-txt">Enviando imagem…</div>';
+  const fd=new FormData();
+  fd.append('file',file);
+  fd.append('account_id',BWZ.d.account_id);
+  try{
+    const r=await fetch('/api/meta-resources/upload-image',{method:'POST',body:fd});
+    const data=await r.json();
+    if(!r.ok||data.error)throw new Error(data.detail||data.error||'Erro no upload');
+    BWZ.d.image_hash=data.hash;
+    BWZ.d.image_preview_url=data.url||null;
+    // Restore dropzone
+    dz.innerHTML='<div class="bwz-dz-icon">&#128444;</div><div class="bwz-dz-txt">Clique ou arraste para trocar a imagem</div>';
+    uploadDone.style.display='flex';
+    uploadDone.innerHTML=`${data.url?`<img class="bwz-thumb" src="${esc(data.url)}" alt="preview">`:'<span style="font-size:2rem">✅</span>'}
+      <div><div style="font-weight:600;color:var(--success);margin-bottom:.25rem">✓ Imagem enviada</div>
+      <div style="font-size:.6875rem;color:var(--muted);font-family:monospace">hash: ${esc(data.hash)}</div></div>`;
+  }catch(e){
+    dz.innerHTML='<div class="bwz-dz-icon">&#128444;</div><div class="bwz-dz-txt">Clique ou arraste uma imagem aqui</div><div class="bwz-dz-hint">JPG, PNG, GIF · máx 30 MB</div>';
+    uploadErr.textContent='❌ '+e.message;
+    uploadErr.classList.add('on');
+  }
+};
+
+window.botWizCharCount=function(el,cntId){
+  document.getElementById(cntId).textContent=`${el.value.length} caracteres`;
+};
+window.botWizValidateUrl=function(el){
+  const ok=!el.value||el.value.startsWith('http');
+  el.classList.toggle('err',!!el.value&&!ok);
+};
+window.botWizConvTemplateChanged=function(){
+  const sel=document.getElementById('bwz-conv-template');
+  const prev=document.getElementById('bwz-conv-preview');
+  BWZ.d.conv_template_id=sel.value||null;
+  const t=BWZ.convTemplates.find(x=>x.id===sel.value);
+  BWZ.d.conv_template_name=t?.name||'';
+  if(t){
+    prev.style.display='block';
+    prev.innerHTML=`<div class="bwz-cv-lbl">Saudação</div><div>${esc(t.greeting||'—')}</div>`+
+      (t.questions?.length?`<div class="bwz-cv-lbl" style="margin-top:.5rem">Perguntas</div>`+
+        t.questions.map((q,i)=>`<div>${i+1}. ${esc(q)}</div>`).join(''):'');
+  } else {prev.style.display='none';}
+};
+
+/* ─── step-6: UTMs + summary ─────────────────────────────────────────────── */
+window.botWizUpdateUtmPreview=function(){
+  const s=document.getElementById('bwz-utm-source').value;
+  const m=document.getElementById('bwz-utm-medium').value;
+  const c=document.getElementById('bwz-utm-campaign').value;
+  BWZ.d.utm_source=s;BWZ.d.utm_medium=m;BWZ.d.utm_campaign=c;
+  const parts=[];
+  if(s)parts.push(`utm_source=${encodeURIComponent(s)}`);
+  if(m)parts.push(`utm_medium=${encodeURIComponent(m)}`);
+  if(c)parts.push(`utm_campaign=${encodeURIComponent(c)}`);
+  document.getElementById('bwz-utm-preview').textContent=parts.length?'?'+parts.join('&'):'?utm_source=…';
+};
+
+function botWizRenderSummary(){
+  const d=BWZ.d;
+  const fmt=n=>`R$ ${(+n).toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+  const countries=BWZ.selCountries.map(c=>c.name).join(', ')||'—';
+  const gLabel=['Todos','Masculino','Feminino'][d.gender]||'Todos';
+  document.getElementById('bwz-summary').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem .75rem;font-size:.8125rem">
+      <div><b>Conta:</b> ${esc(d.account_nome)}</div>
+      <div><b>Campanha:</b> ${esc(d.campaign_name)}</div>
+      <div><b>Orçamento:</b> ${esc(d.budget_type)} · ${fmt(d.daily_budget)}/dia</div>
+      <div><b>Página ID:</b> ${esc(d.page_id)}</div>
+      <div><b>Pixel ID:</b> ${esc(d.pixel_id)}</div>
+      <div><b>Evento:</b> ${esc(d.conversion_event)}</div>
+      <div><b>Países:</b> ${esc(countries)}</div>
+      <div><b>Idade:</b> ${d.age_min}–${d.age_max===65?'65+':d.age_max}</div>
+      <div><b>Gênero:</b> ${gLabel}</div>
+      <div><b>Imagem:</b> ${d.image_hash?'✓ Upload OK':'⚠ Sem imagem'}</div>
+      <div style="grid-column:1/-1"><b>UTM:</b> ${esc('?utm_source='+d.utm_source+'&utm_medium='+d.utm_medium+'&utm_campaign='+d.utm_campaign)}</div>
+    </div>`;
+}
+
+/* ─── build payload ──────────────────────────────────────────────────────── */
+function botWizBuildPayload(){
+  const d=BWZ.d;
+  const genders=d.gender===1?[1]:d.gender===2?[2]:[];
+  const urlTags=[
+    d.utm_source?`utm_source=${d.utm_source}`:'',
+    d.utm_medium?`utm_medium=${d.utm_medium}`:'',
+    d.utm_campaign?`utm_campaign=${d.utm_campaign}`:'',
+  ].filter(Boolean).join('&');
+  return{
+    account_id:d.account_id,
+    campaign:{
+      name:d.campaign_name,
+      objective:'OUTCOME_ENGAGEMENT',
+      status:d.paused?'PAUSED':'ACTIVE',
+      budget_type:d.budget_type,
+    },
+    adset:{
+      name:d.adset_name||d.campaign_name,
+      page_id:d.page_id,
+      pixel_id:d.pixel_id,
+      conversion_event:d.conversion_event,
+      daily_budget:Math.round(d.daily_budget*100),
+      start_time:d.start_time,
+      end_time:d.end_time||null,
+      geo_locations:{countries:BWZ.selCountries.map(c=>c.code)},
+      locales:BWZ.selLocales.map(l=>l.id),
+      age_min:d.age_min,age_max:d.age_max,
+      genders,
+      interests:BWZ.selInterests.map(i=>({id:i.id,name:i.name})),
+      custom_audiences:BWZ.selCA.map(a=>({id:a.id})),
+      saved_audience_id:d.saved_audience_id||null,
+      messenger_destination:'MESSENGER',
+      optimization_goal:'CONVERSATIONS',
+      bid_strategy:'LOWEST_COST_WITHOUT_CAP',
+    },
+    ad:{
+      name:d.ad_name,
+      page_id:d.page_id,
+      image_hash:d.image_hash,
+      message:d.primary_text,
+      headline:d.headline,
+      link_url:d.link_url,
+      call_to_action:'SEND_MESSAGE',
+      conversation_template_id:d.conv_template_id||null,
+      utm_source:d.utm_source,
+      utm_medium:d.utm_medium,
+      utm_campaign:d.utm_campaign,
+      url_tags:urlTags,
+    }
+  };
+}
+
+/* ─── dry-run preview ────────────────────────────────────────────────────── */
+window.botWizDryRun=async function(){
+  // collect step-6 data
+  BWZ.d.utm_source=document.getElementById('bwz-utm-source').value;
+  BWZ.d.utm_medium=document.getElementById('bwz-utm-medium').value;
+  BWZ.d.utm_campaign=document.getElementById('bwz-utm-campaign').value;
+  const pre=document.getElementById('bwz-json-pre');
+  pre.textContent='Carregando…';
+  document.getElementById('bwz-json-overlay').classList.add('on');
+  try{
+    const r=await fetch('/api/campaigns/dry-run',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(botWizBuildPayload()),
+    });
+    const data=await r.json();
+    pre.textContent=JSON.stringify(data,null,2);
+  }catch(e){
+    pre.textContent='Erro: '+e.message;
+  }
+};
+
+/* ─── confirm + publish ──────────────────────────────────────────────────── */
+window.botWizShowConfirm=function(){
+  BWZ.d.utm_source=document.getElementById('bwz-utm-source').value;
+  BWZ.d.utm_medium=document.getElementById('bwz-utm-medium').value;
+  BWZ.d.utm_campaign=document.getElementById('bwz-utm-campaign').value;
+  const d=BWZ.d;
+  const fmt=n=>`R$ ${(+n).toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+  document.getElementById('bwz-confirm-body').innerHTML=`
+    <p>Criar campanha pausada na conta <b>${esc(d.account_nome)}</b>?</p>
+    <div style="background:var(--sec);border-radius:.5rem;padding:.75rem;margin-top:.75rem;font-size:.8125rem;line-height:2">
+      <b>Campanha:</b> ${esc(d.campaign_name)}<br>
+      <b>Orçamento:</b> ${fmt(d.daily_budget)}/dia (${esc(d.budget_type)})<br>
+      <b>Página ID:</b> ${esc(d.page_id)}<br>
+      <b>Pixel ID:</b> ${esc(d.pixel_id)}<br>
+      <b>Status:</b> ${d.paused?'PAUSADO (recomendado)':'ATIVO'}
+    </div>`;
+  document.getElementById('bwz-confirm-overlay').classList.add('on');
+};
+
+window.botWizPublish=async function(){
+  document.getElementById('bwz-confirm-overlay').classList.remove('on');
+  // hide action buttons, show loader
+  document.getElementById('bwz-btn-dryrun').style.display='none';
+  document.getElementById('bwz-btn-publish').style.display='none';
+  const publishState=document.getElementById('bwz-publish-state');
+  publishState.style.display='block';
+  // Simulate step progression (backend is atomic, we just animate)
+  function setSlState(id,state,icon){
+    const el=document.getElementById(id);
+    el.className='bwz-sl-item '+state;
+    el.querySelector('.bwz-sl-ico').textContent=state==='done'?'✓':state==='error'?'✗':'';
+  }
+  setSlState('bwz-sl-1','active','');
+  await new Promise(r=>setTimeout(r,400));
+  setSlState('bwz-sl-1','done','✓');setSlState('bwz-sl-2','active','');
+  await new Promise(r=>setTimeout(r,400));
+  setSlState('bwz-sl-2','done','✓');setSlState('bwz-sl-3','active','');
+  await new Promise(r=>setTimeout(r,300));
+  setSlState('bwz-sl-3','done','✓');setSlState('bwz-sl-4','active','');
+  try{
+    const r=await fetch('/api/campaigns/criar',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(botWizBuildPayload()),
+    });
+    const data=await r.json();
+    setSlState('bwz-sl-4',r.ok?'done':'error','');
+    const resultDiv=document.getElementById('bwz-publish-result');
+    if(r.ok&&data.success){
+      resultDiv.innerHTML=`<div class="bwz-result-ok">
+        <div style="font-size:1.5rem;margin-bottom:.5rem">&#127881;</div>
+        <div style="font-weight:700;font-size:1rem;color:var(--success);margin-bottom:.5rem">Campanha criada!</div>
+        <div style="font-size:.8125rem;margin-bottom:.75rem">Campaign: <code>${esc(data.campaign_id)}</code></div>
+        <a href="${esc(data.meta_url)}" target="_blank" class="btn-primary" style="display:inline-flex;align-items:center;gap:.5rem;text-decoration:none;padding:.5rem 1.25rem">
+          &#128279; Abrir no Ads Manager</a></div>`;
+    }else{
+      const errMsg=data.error||'Erro desconhecido';
+      resultDiv.innerHTML=`<div class="bwz-result-err">
+        <div style="font-size:1.25rem;margin-bottom:.5rem">&#10060;</div>
+        <div style="font-weight:700;color:var(--danger);margin-bottom:.5rem">Erro ao criar campanha</div>
+        <div style="font-size:.8125rem;color:var(--fg)">${esc(errMsg)}</div>
+        <button class="btn-outline" style="margin-top:.875rem" onclick="document.getElementById('bwz-btn-dryrun').style.display='';document.getElementById('bwz-btn-publish').style.display='';document.getElementById('bwz-publish-state').style.display='none'">Tentar novamente</button>
+        </div>`;
+    }
+  }catch(e){
+    setSlState('bwz-sl-4','error','✗');
+    document.getElementById('bwz-publish-result').innerHTML=`<div class="bwz-result-err">
+      <div style="font-weight:700;color:var(--danger)">Erro de rede</div>
+      <div style="font-size:.8125rem">${esc(e.message)}</div></div>`;
+  }
+};
+
+// Close search dropdowns when clicking outside
+document.addEventListener('click',function(e){
+  if(!e.target.closest('#bwz-country-search')&&!e.target.closest('#bwz-country-drop'))
+    document.getElementById('bwz-country-drop').style.display='none';
+  if(!e.target.closest('#bwz-locale-search')&&!e.target.closest('#bwz-locale-drop'))
+    document.getElementById('bwz-locale-drop').style.display='none';
+  if(!e.target.closest('#bwz-ca-search')&&!e.target.closest('#bwz-ca-drop'))
+    document.getElementById('bwz-ca-drop').style.display='none';
+  if(!e.target.closest('#bwz-interest-search')&&!e.target.closest('#bwz-interest-drop'))
+    document.getElementById('bwz-interest-drop').style.display='none';
+});
+
+// Init ABO button on page load
+document.addEventListener('DOMContentLoaded',function(){
+  document.getElementById('bwz-abo-btn').classList.add('on');
+});
+
+})();
 </script>
 </body>
 </html>

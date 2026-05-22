@@ -19,6 +19,8 @@ const funilBotoesHandler = require('./src/app/api/funil-botoes/route');
 const historicoHandler = require('./src/app/api/historico/route');
 const { handler: templatesHandler, seedHandler: templatesSeedHandler } = require('./src/app/api/templates/route');
 const metaResourcesHandler = require('./src/app/api/meta-resources/route');
+const uploadImageHandler   = require('./src/app/api/meta-resources/upload');
+const { dryRunHandler, criarHandler } = require('./src/app/api/campaigns/route');
 const supabase = require('./src/lib/supabase');
 const { syncAll } = require('./src/lib/sync');
 const { startScheduler } = require('./src/lib/scheduler');
@@ -370,8 +372,31 @@ app.post('/api/templates', requireAuth, (req, res) => templatesHandler(req, res)
 app.put('/api/templates/:id', requireAuth, (req, res) => templatesHandler(req, res));
 app.delete('/api/templates/:id', requireAuth, (req, res) => templatesHandler(req, res));
 
+// ── Meta Accounts (listagem para o wizard de campanhas) ───────────────────────
+app.get('/api/meta-accounts', requireAuth, async (_req, res) => {
+  const { data, error } = await supabase
+    .from('meta_accounts')
+    .select('id,ad_account_id,nome,currency,imposto_percentual,access_token')
+    .order('id');
+  if (error) return res.status(500).json({ error: error.message });
+  const accounts = (data || []).map(a => ({
+    id: `act_${a.ad_account_id.replace('act_', '')}`,
+    ad_account_id: a.ad_account_id.replace('act_', ''),
+    nome: a.nome,
+    moeda: a.currency || 'BRL',
+    imposto: Number(a.imposto_percentual || 0),
+    tem_token: !!(a.access_token),
+  }));
+  res.json({ accounts });
+});
+
 // ── Meta Resources (proxy com cache 1h) ──────────────────────────────────────
 app.get('/api/meta-resources/:resource', requireAuth, metaResourcesHandler);
+app.post('/api/meta-resources/upload-image', requireAuth, uploadImageHandler);
+
+// ── Campaigns (BOT wizard) ────────────────────────────────────────────────────
+app.post('/api/campaigns/dry-run', requireAuth, dryRunHandler);
+app.post('/api/campaigns/criar', requireAuth, criarHandler);
 
 // ── Histórico ─────────────────────────────────────────────────────────────────
 app.get('/api/historico/:utm', requireAuth, historicoHandler);
