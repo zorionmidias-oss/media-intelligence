@@ -6,7 +6,7 @@ const { fetchGAMReport, fetchGAMFunnelsByUTM, getUSDtoBRL, getUSDtoBRLByDate, fe
 const { extractDomainPrefix, extractAdUTM, extractTipo, groupAdsByUTM } = require('./parser');
 
 const BASE = 'https://graph.facebook.com/v19.0';
-const AD_FIELDS = 'ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name,spend,impressions,clicks,ctr,cpc,actions,objective,optimization_goal';
+const AD_FIELDS = 'ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name,spend,impressions,inline_link_clicks,outbound_clicks,clicks,ctr,cpc,actions,objective,optimization_goal';
 
 function today() {
   return new Date().toISOString().slice(0, 10);
@@ -287,7 +287,7 @@ async function syncAll(dateRange) {
         conjuntoMeta: ad.adset_name || null,
         accountId: ad._accountId || null,
         spend,
-        clicks: Number(ad.clicks || 0),
+        clicks: Number(ad.inline_link_clicks || 0),
         impressions: Number(ad.impressions || 0),
         results: resultado,
         cpc: Number(ad.cpc || 0),
@@ -446,13 +446,13 @@ async function syncAll(dateRange) {
     if (adsRows.length > 0) {
       let { error: uErr } = await supabase
         .from('ads_consolidados')
-        .upsert(adsRows, { onConflict: 'data,dominio_id,ad_utm' });
+        .upsert(adsRows, { onConflict: 'data,dominio_id,ad_utm,account_id' });
       if (uErr && uErr.message.toLowerCase().includes('could not find')) {
         // New columns not yet migrated — retry without them
         const fallback = adsRows.map(({ cpc_gam, ctr_gam, cliques_gam, account_id, valor_gasto_original, imposto_aplicado, moeda_original, taxa_usd_aplicada, ...rest }) => rest);
         ({ error: uErr } = await supabase
           .from('ads_consolidados')
-          .upsert(fallback, { onConflict: 'data,dominio_id,ad_utm' }));
+          .upsert(fallback, { onConflict: 'data,dominio_id,ad_utm,account_id' }));
         if (!uErr) console.warn('[sync] upserted without new columns — run ALTER TABLE migration');
       }
       if (uErr) console.error('[sync] upsert ads_consolidados:', uErr.message);

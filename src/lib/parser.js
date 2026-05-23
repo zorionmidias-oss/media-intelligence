@@ -30,7 +30,7 @@ function groupAdsByUTM(ads) {
 
   for (const ad of ads) {
     if (!ad.adUTM) continue;
-    const key = `${ad.date}|${ad.domainId}|${ad.adUTM}`;
+    const key = `${ad.date}|${ad.domainId}|${ad.adUTM}|${ad.accountId || ''}`;
 
     if (!groups[key]) {
       groups[key] = {
