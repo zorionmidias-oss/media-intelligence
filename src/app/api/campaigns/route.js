@@ -206,13 +206,20 @@ async function criarHandler(req, res) {
 
   const metaPost = async (url, body, label) => {
     currentStepName = label;
-    console.log(`[criar] → ${label}`, url, JSON.stringify(body).slice(0, 400));
+    const bodyWithoutToken = { ...body };
+    delete bodyWithoutToken.access_token;
+    console.log(`\n[criar] ━━ ${label} ━━`);
+    console.log(`[criar] URL: POST ${url}`);
+    console.log(`[criar] PAYLOAD: ${JSON.stringify(bodyWithoutToken, null, 2)}`);
     try {
-      return await axios.post(url, body, { timeout: 20000 });
+      const res = await axios.post(url, body, { timeout: 20000 });
+      console.log(`[criar] ✓ ${label} → id=${res.data?.id}`);
+      return res;
     } catch (e) {
       const status = e.response?.status;
       const raw    = e.response?.data;
-      console.error(`[criar] ✗ ${label} | HTTP ${status} |`, JSON.stringify(raw));
+      console.error(`[criar] ✗ ${label} | HTTP ${status}`);
+      console.error(`[criar] RESPONSE BODY: ${JSON.stringify(raw, null, 2)}`);
       const msg = raw?.error?.message || e.message;
       throw Object.assign(new Error(msg), { stepName: label, httpStatus: status, metaError: raw?.error });
     }
