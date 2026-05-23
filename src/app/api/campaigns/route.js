@@ -212,18 +212,21 @@ async function criarHandler(req, res) {
     currentStepName = label;
     const bodyWithoutToken = { ...body };
     delete bodyWithoutToken.access_token;
-    console.log(`\n[criar] ━━ ${label} ━━`);
-    console.log(`[criar] URL: POST ${url}`);
+    console.log(`\n[criar] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ${label}`);
+    console.log(`[criar] URL    : POST ${url}`);
     console.log(`[criar] PAYLOAD: ${JSON.stringify(bodyWithoutToken, null, 2)}`);
     try {
       const res = await axios.post(url, body, { timeout: 20000 });
-      console.log(`[criar] ✓ ${label} → id=${res.data?.id}`);
+      console.log(`[criar] ✓ OK   : HTTP ${res.status} → id=${res.data?.id}`);
       return res;
     } catch (e) {
-      const status = e.response?.status;
-      const raw    = e.response?.data;
-      console.error(`[criar] ✗ ${label} | HTTP ${status}`);
-      console.error(`[criar] RESPONSE BODY: ${JSON.stringify(raw, null, 2)}`);
+      const status  = e.response?.status ?? 'NO_RESPONSE';
+      const headers = e.response?.headers ?? {};
+      const raw     = e.response?.data;
+      console.error(`[criar] ✗ ERRO : HTTP ${status}`);
+      console.error(`[criar] HEADERS: ${JSON.stringify({ 'content-type': headers['content-type'], 'x-fb-req-id': headers['x-fb-req-id'] })}`);
+      console.error(`[criar] BODY   : ${JSON.stringify(raw, null, 2)}`);
+      console.error(`[criar] MSG    : ${e.message}`);
       const msg = raw?.error?.message || e.message;
       throw Object.assign(new Error(msg), { stepName: label, httpStatus: status, metaError: raw?.error });
     }
@@ -271,6 +274,11 @@ async function criarHandler(req, res) {
           access_token: token,
         };
         if (url_tags) adBody.url_tags = url_tags;
+
+        const adBodyLog = { ...adBody };
+        delete adBodyLog.access_token;
+        console.log(`\n[criar] >>> AD BODY EXATO (antes de enviar) <<<`);
+        console.log(JSON.stringify(adBodyLog, null, 2));
 
         const adRes = await metaPost(`${META_BASE}/${acctId}/ads`, adBody, `Ad ${cr.name} V${i + 1}`);
         const ad_id = adRes.data?.id;

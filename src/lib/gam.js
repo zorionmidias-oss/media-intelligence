@@ -25,15 +25,23 @@ const _rateCache = {};
 
 async function getUSDtoBRL() {
   if (_usdToBrl && Date.now() < _usdToBrlExpiry) return _usdToBrl;
+  let taxa = null;
   try {
-    const res = await axios.get('https://api.exchangerate-api.com/v4/latest/USD', { timeout: 10000 });
-    _usdToBrl = res.data?.rates?.BRL || 5.0;
-    _usdToBrlExpiry = Date.now() + 3600 * 1000;
-  } catch (e) {
-    console.warn('[USD→BRL]', e.message);
-    if (!_usdToBrl) _usdToBrl = 5.0;
-    _usdToBrlExpiry = Date.now() + 300 * 1000;
+    const r = await axios.get('https://economia.awesomeapi.com.br/json/last/USD-BRL', { timeout: 8000 });
+    const bid = Number(r.data?.USDBRL?.bid);
+    if (bid > 3 && bid < 12) taxa = bid;
+  } catch { /* fallback abaixo */ }
+  if (!taxa) {
+    try {
+      const r = await axios.get('https://api.exchangerate-api.com/v4/latest/USD', { timeout: 10000 });
+      taxa = Number(r.data?.rates?.BRL) || null;
+    } catch (e) {
+      console.warn('[USD→BRL]', e.message);
+    }
   }
+  if (!taxa || taxa < 3 || taxa > 12) taxa = _usdToBrl || 5.0;
+  _usdToBrl = taxa;
+  _usdToBrlExpiry = Date.now() + 3600 * 1000;
   return _usdToBrl;
 }
 
