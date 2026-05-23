@@ -4659,19 +4659,34 @@ async function templatesSeed(){
 input[type=range].bwz-range{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;background:var(--border);outline:none;cursor:pointer;margin-top:.5rem}
 input[type=range].bwz-range::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--accent);border:2px solid var(--card);box-shadow:0 1px 4px rgba(0,0,0,.4);cursor:grab}
 input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--accent);border:2px solid var(--card);cursor:grab;border:none}
-.bwz-slot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}
-.bwz-slot-group{margin-bottom:1.125rem}
-.bwz-slot-group-label{font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem}
-.bwz-slot{border:2px dashed var(--border);border-radius:.75rem;overflow:hidden;min-height:7rem;cursor:pointer;position:relative;transition:border-color .2s}
-.bwz-slot:hover,.bwz-slot.over{border-color:var(--accent);background:color-mix(in oklch,var(--accent) 5%,transparent)}
-.bwz-slot.done{border-style:solid;border-color:var(--success)}
-.bwz-slot-inner{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.875rem .5rem;height:100%;gap:.375rem}
-.bwz-slot-icon{font-size:1.5rem;color:var(--muted)}
-.bwz-slot-lbl{font-size:.75rem;color:var(--muted);text-align:center}
-.bwz-slot-preview{display:none;flex-direction:column;align-items:center;gap:.375rem;padding:.625rem;text-align:center}
-.bwz-slot-img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:.375rem}
-.bwz-slot-hash{font-size:.5625rem;font-family:monospace;color:var(--muted);word-break:break-all}
-.bwz-slot-err{font-size:.6875rem;color:var(--danger);text-align:center;padding:.25rem .5rem}
+.bwz-dropzone{border:2px dashed var(--border);border-radius:.875rem;padding:2.5rem 1.5rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--sec)}
+.bwz-dropzone:hover,.bwz-dropzone.over{border-color:var(--accent);background:color-mix(in oklch,var(--accent) 6%,transparent)}
+.bwz-dropzone-ico{font-size:2rem;margin-bottom:.5rem}
+.bwz-dropzone-lbl{font-size:.9375rem;font-weight:600;color:var(--fg)}
+.bwz-dropzone-sub{font-size:.8125rem;color:var(--muted);margin-top:.25rem}
+.bwz-drop-warn{font-size:.8125rem;padding:.5rem .875rem;border-radius:.5rem;margin-top:.625rem;display:none}
+.bwz-drop-warn.show{display:block}
+.bwz-drop-warn.info{background:color-mix(in oklch,var(--accent) 12%,transparent);color:var(--accent)}
+.bwz-drop-warn.warn{background:color-mix(in oklch,var(--warning,#f59e0b) 14%,transparent);color:#b45309}
+.bwz-drop-progress{margin-top:.75rem;display:none}
+.bwz-drop-progress.show{display:block}
+.bwz-drop-prog-lbl{font-size:.8125rem;color:var(--muted);margin-bottom:.375rem}
+.bwz-drop-prog-track{height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.bwz-drop-prog-bar{height:100%;background:var(--accent);border-radius:3px;transition:width .25s;width:0%}
+.bwz-drop-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:.5rem;margin-top:.875rem}
+@media(max-width:680px){.bwz-drop-grid{grid-template-columns:repeat(3,1fr)}}
+.bwz-drop-item{position:relative;border-radius:.5rem;overflow:hidden;aspect-ratio:1;background:var(--sec);border:2px solid var(--border);cursor:grab;user-select:none}
+.bwz-drop-item.loading{border-color:var(--accent)}
+.bwz-drop-item.done{border-color:var(--success,#22c55e)}
+.bwz-drop-item.error{border-color:var(--danger,#ef4444)}
+.bwz-drop-item.drag-over{outline:2px solid var(--accent);outline-offset:2px}
+.bwz-drop-item img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.bwz-drop-num{position:absolute;top:3px;left:3px;background:rgba(0,0,0,.65);color:#fff;font-size:.6rem;font-weight:700;padding:1px 4px;border-radius:3px;font-family:monospace;pointer-events:none}
+.bwz-drop-badge{position:absolute;bottom:3px;left:3px;background:var(--accent);color:#fff;font-size:.6rem;font-weight:700;padding:1px 5px;border-radius:3px;pointer-events:none}
+.bwz-drop-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.25rem;pointer-events:none}
+.bwz-drop-overlay.loading{background:rgba(0,0,0,.4)}
+.bwz-drop-overlay.error{background:rgba(0,0,0,.5)}
+.bwz-drop-retry{position:absolute;bottom:3px;right:3px;background:var(--danger,#ef4444);color:#fff;font-size:.6rem;padding:2px 5px;border-radius:3px;cursor:pointer;border:none;font-family:inherit}
 .bwz-copy-section{margin-top:1.25rem}
 .bwz-copy-group{margin-bottom:1rem}
 .bwz-copy-group-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.5rem;display:block}
@@ -4938,8 +4953,23 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
     <p class="bwz-step-sub">3 mídias + copies compartilhadas (dynamic creative) — Meta otimiza automaticamente.</p>
 
     <div class="wz-field">
-     <label class="wz-lbl">Mídias — 6 conjuntos × 3 imagens = 18 uploads *</label>
-     <div id="bwz-media-grid"></div>
+     <label class="wz-lbl">Mídias — até 18 imagens (mínimo 3) *</label>
+     <div class="bwz-dropzone" id="bwz-dropzone"
+       ondragover="event.preventDefault();this.classList.add('over')"
+       ondragleave="this.classList.remove('over')"
+       ondrop="bwzDropzoneDrop(event)"
+       onclick="document.getElementById('bwz-file-batch').click()">
+       <div class="bwz-dropzone-ico">&#128444;&#65039;</div>
+       <div class="bwz-dropzone-lbl">Solte 18 imagens aqui ou clique para selecionar</div>
+       <div class="bwz-dropzone-sub">JPEG · PNG · GIF &nbsp;·&nbsp; múltiplos arquivos</div>
+     </div>
+     <input type="file" id="bwz-file-batch" accept="image/*" multiple style="display:none" onchange="bwzBatchFiles(this.files);this.value=''">
+     <div class="bwz-drop-warn" id="bwz-drop-warn"></div>
+     <div class="bwz-drop-progress" id="bwz-drop-progress">
+       <div class="bwz-drop-prog-lbl" id="bwz-drop-prog-lbl">Enviando…</div>
+       <div class="bwz-drop-prog-track"><div class="bwz-drop-prog-bar" id="bwz-drop-prog-bar"></div></div>
+     </div>
+     <div class="bwz-drop-grid" id="bwz-drop-grid"></div>
     </div>
 
     <div class="bwz-copy-section">
@@ -5316,6 +5346,7 @@ window.botWizOpen=function(){
   BWZ.selLocales=[{id:6,name:'Português (Brasil)'}];BWZ.selCA=[];
   BWZ.pixels=[];BWZ.pages=[];BWZ.customAudiences=[];BWZ.countries=[];BWZ.locales=[];
   BWZ.mediaSlots=Array.from({length:6},()=>[{hash:null,preview_url:null},{hash:null,preview_url:null},{hash:null,preview_url:null}]);
+  BWZ._dropItems=[];
   BWZ.fpStart=null;BWZ.fpEnd=null;
 
   // reset UI
@@ -5434,8 +5465,9 @@ function botWizValidate(n){
     return true;
   }
   if(n===5){
-    const filled=BWZ.mediaSlots.flat().filter(s=>s.hash);
-    if(!filled.length){bwzErr('Faça upload de pelo menos 1 imagem.');return false;}
+    const uploaded=BWZ._dropItems.filter(it=>it.hash);
+    if(uploaded.length<3){bwzErr('Faça upload de pelo menos 3 imagens.');return false;}
+    if(BWZ._dropItems.some(it=>it.status==='loading')){bwzErr('Aguarde os uploads terminarem.');return false;}
     const t1=document.getElementById('bwz-text-1').value.trim();
     if(!t1){bwzErr('Informe pelo menos o Texto 1.');return false;}
     const h1=document.getElementById('bwz-hl-1').value.trim();
@@ -5819,81 +5851,166 @@ window.botWizSetGender=function(v){
   document.getElementById('bwz-g-f').classList.toggle('on',v===2);
 };
 
-/* ─── STEP 5: creative slots + copies ──────────────────────────────────── */
+/* ─── STEP 5: batch dropzone ─────────────────────────────────────────────── */
 window.bwzRenderMediaGrid=function(){
-  const grid=document.getElementById('bwz-media-grid');
-  if(!grid)return;
-  grid.innerHTML='';
-  for(let vi=0;vi<6;vi++){
-    const group=document.createElement('div');
-    group.className='bwz-slot-group';
-    group.innerHTML=`<div class="bwz-slot-group-label">Conjunto V${vi+1}</div><div class="bwz-slot-grid" id="bwz-vgroup-${vi}"></div>`;
-    grid.appendChild(group);
-    const row=document.getElementById(`bwz-vgroup-${vi}`);
-    for(let si=0;si<3;si++){
-      const key=`${vi}_${si}`;
-      row.innerHTML+=`
-        <div>
-          <div class="bwz-slot" id="bwz-slot-${key}"
-            ondragover="event.preventDefault();this.classList.add('over')"
-            ondragleave="this.classList.remove('over')"
-            ondrop="bwzSlotDrop(event,${vi},${si})"
-            onclick="document.getElementById('bwz-file-${key}').click()">
-            <div class="bwz-slot-inner" id="bwz-slot-inner-${key}">
-              <div class="bwz-slot-icon">&#128444;</div>
-              <div class="bwz-slot-lbl">Img ${si+1}</div>
-            </div>
-          </div>
-          <div class="bwz-slot-prev" id="bwz-slot-prev-${key}" style="display:none">
-            <img id="bwz-slot-img-${key}" src="" style="max-width:100%;border-radius:.375rem;display:none">
-            <div id="bwz-slot-hash-${key}" style="font-size:.65rem;color:var(--muted);margin-top:.25rem;word-break:break-all"></div>
-          </div>
-          <div id="bwz-slot-err-${key}" style="font-size:.7rem;color:var(--danger);margin-top:.2rem"></div>
-          <input type="file" id="bwz-file-${key}" accept="image/*" style="display:none" onchange="bwzSlotFile(${vi},${si},this.files[0])">
-        </div>`;
+  document.getElementById('bwz-drop-grid').innerHTML='';
+  const w=document.getElementById('bwz-drop-warn');
+  w.className='bwz-drop-warn';w.textContent='';
+  document.getElementById('bwz-drop-progress').className='bwz-drop-progress';
+  BWZ._dropItems=[];
+};
+
+window.bwzDropzoneDrop=function(e){
+  e.preventDefault();
+  document.getElementById('bwz-dropzone').classList.remove('over');
+  bwzBatchFiles(e.dataTransfer.files);
+};
+
+/* Distribui N itens em 6 grupos × max 3 slots com ciclo */
+function bwzSyncSlots(){
+  BWZ.mediaSlots=Array.from({length:6},()=>[
+    {hash:null,preview_url:null},{hash:null,preview_url:null},{hash:null,preview_url:null}
+  ]);
+  const items=BWZ._dropItems.filter(it=>it.hash);
+  const N=items.length;
+  if(!N)return;
+  const perGroup=Math.max(1,Math.ceil(N/6));
+  for(let g=0;g<6;g++){
+    for(let s=0;s<perGroup&&s<3;s++){
+      const idx=(g*perGroup+s)%N;
+      BWZ.mediaSlots[g][s]={hash:items[idx].hash,preview_url:items[idx].preview_url};
     }
   }
-};
+}
 
-window.bwzSlotDrop=function(e,vi,si){
-  e.preventDefault();
-  const key=`${vi}_${si}`;
-  document.getElementById(`bwz-slot-${key}`).classList.remove('over');
-  const file=e.dataTransfer.files[0];
-  if(file)bwzSlotFile(vi,si,file);
-};
+function bwzPrimaryGroup(i,N){
+  const perGroup=Math.max(1,Math.ceil(N/6));
+  return Math.floor(i/perGroup)%6;
+}
 
-window.bwzSlotFile=async function(vi,si,file){
-  if(!file)return;
-  const key=`${vi}_${si}`;
-  const slot=document.getElementById(`bwz-slot-${key}`);
-  const inner=document.getElementById(`bwz-slot-inner-${key}`);
-  const prev=document.getElementById(`bwz-slot-prev-${key}`);
-  const errEl=document.getElementById(`bwz-slot-err-${key}`);
-  prev.style.display='none';
-  errEl.textContent='';
-  inner.innerHTML='<div class="bwz-slot-icon" style="animation:spin 1s linear infinite">&#9711;</div><div class="bwz-slot-lbl">Enviando…</div>';
-  inner.style.display='flex';
+function bwzRenderDropGrid(){
+  const grid=document.getElementById('bwz-drop-grid');
+  const N=BWZ._dropItems.length;
+  grid.innerHTML='';
+  BWZ._dropItems.forEach((item,i)=>{
+    const g=bwzPrimaryGroup(i,N);
+    const el=document.createElement('div');
+    el.className='bwz-drop-item '+(item.status||'pending');
+    el.draggable=true;
+    el.dataset.idx=i;
+    el.innerHTML=`
+      ${item.preview_url?`<img src="${esc(item.preview_url)}" alt="">`:''}
+      <div class="bwz-drop-num">${i+1}</div>
+      <div class="bwz-drop-badge">V${g+1}</div>
+      <div class="bwz-drop-overlay ${item.status==='loading'?'loading':item.status==='error'?'error':''}">
+        ${item.status==='loading'?'<span style="animation:spin 1s linear infinite;display:inline-block">&#9711;</span>':
+          item.status==='done'?'<span style="color:#22c55e;text-shadow:0 1px 3px rgba(0,0,0,.5)">&#10003;</span>':
+          item.status==='error'?'<span style="color:#fca5a5">&#10060;</span>':''}
+      </div>
+      ${item.status==='error'?`<button class="bwz-drop-retry" onclick="bwzRetryItem(${i})">retry</button>`:''}
+    `;
+    el.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',String(i));el.style.opacity='.45';});
+    el.addEventListener('dragend',()=>{el.style.opacity='';});
+    el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('drag-over');});
+    el.addEventListener('dragleave',()=>el.classList.remove('drag-over'));
+    el.addEventListener('drop',e=>{
+      e.preventDefault();el.classList.remove('drag-over');
+      const from=parseInt(e.dataTransfer.getData('text/plain'));
+      const to=parseInt(el.dataset.idx);
+      if(from===to||isNaN(from)||isNaN(to))return;
+      const tmp=BWZ._dropItems[from];
+      BWZ._dropItems[from]=BWZ._dropItems[to];
+      BWZ._dropItems[to]=tmp;
+      bwzRenderDropGrid();
+      bwzSyncSlots();
+    });
+    grid.appendChild(el);
+  });
+}
+
+function bwzUpdateProgress(done,total){
+  document.getElementById('bwz-drop-prog-lbl').textContent=`Enviando… ${done} de ${total}`;
+  document.getElementById('bwz-drop-prog-bar').style.width=`${total?Math.round(done/total*100):0}%`;
+}
+
+window.bwzRetryItem=async function(i){
+  const item=BWZ._dropItems[i];
+  if(!item||!item.file)return;
+  item.status='loading';item.hash=null;item.preview_url=null;
+  bwzRenderDropGrid();
   const fd=new FormData();
-  fd.append('file',file);fd.append('account_id',BWZ.d.account_id);
+  fd.append('file',item.file);fd.append('account_id',BWZ.d.account_id);
   try{
     const r=await fetch('/api/meta-resources/upload-image',{method:'POST',body:fd});
     const data=await r.json();
     if(!r.ok||data.error)throw new Error(data.detail||data.error||'Erro no upload');
-    BWZ.mediaSlots[vi][si]={hash:data.hash,preview_url:data.url||null};
-    inner.innerHTML=`<div class="bwz-slot-icon">&#128247;</div><div class="bwz-slot-lbl" style="font-size:.7rem">Trocar</div>`;
-    slot.classList.add('done');
-    const img=document.getElementById(`bwz-slot-img-${key}`);
-    const hashEl=document.getElementById(`bwz-slot-hash-${key}`);
-    if(data.url){img.src=data.url;img.style.display='';}else{img.style.display='none';}
-    hashEl.textContent=`hash: ${data.hash.slice(0,14)}…`;
-    prev.style.display='flex';
+    item.hash=data.hash;item.preview_url=data.url||null;item.status='done';
   }catch(e){
-    BWZ.mediaSlots[vi][si]={hash:null,preview_url:null};
-    inner.innerHTML=`<div class="bwz-slot-icon">&#128444;</div><div class="bwz-slot-lbl">Img ${si+1}</div>`;
-    slot.classList.remove('done');
-    errEl.textContent='❌ '+e.message;
+    item.status='error';item.errMsg=e.message;
   }
+  bwzRenderDropGrid();
+  bwzSyncSlots();
+};
+
+window.bwzBatchFiles=async function(fileList){
+  const files=Array.from(fileList).filter(f=>f.type.startsWith('image/'));
+  if(!files.length)return;
+
+  const N=Math.min(files.length,18);
+  const used=files.slice(0,N);
+
+  const warnEl=document.getElementById('bwz-drop-warn');
+  if(files.length>18){
+    warnEl.textContent=`Apenas as primeiras 18 serão usadas (${files.length} selecionadas)`;
+    warnEl.className='bwz-drop-warn show warn';
+  }else if(N<18){
+    const perGroup=Math.max(1,Math.ceil(N/6));
+    warnEl.textContent=`${N} imagem${N!==1?'s':''} para 6 conjuntos — cada conjunto terá ${perGroup} criativo${perGroup!==1?'s':''}${N<6?' (distribuição cíclica)':''}`;
+    warnEl.className='bwz-drop-warn show info';
+  }else{
+    warnEl.className='bwz-drop-warn';warnEl.textContent='';
+  }
+
+  BWZ.mediaSlots=Array.from({length:6},()=>[
+    {hash:null,preview_url:null},{hash:null,preview_url:null},{hash:null,preview_url:null}
+  ]);
+
+  // Build preview URLs synchronously before upload
+  BWZ._dropItems=used.map((file,i)=>({file,i,hash:null,preview_url:null,status:'loading'}));
+  // Attach local preview URLs
+  await Promise.all(BWZ._dropItems.map(item=>new Promise(res=>{
+    const fr=new FileReader();
+    fr.onload=e=>{item.preview_url=e.target.result;res();};
+    fr.readAsDataURL(item.file);
+  })));
+
+  bwzRenderDropGrid();
+  const progEl=document.getElementById('bwz-drop-progress');
+  progEl.className='bwz-drop-progress show';
+  bwzUpdateProgress(0,N);
+
+  let done=0;
+  await Promise.all(BWZ._dropItems.map(async item=>{
+    const fd=new FormData();
+    fd.append('file',item.file);fd.append('account_id',BWZ.d.account_id);
+    try{
+      const r=await fetch('/api/meta-resources/upload-image',{method:'POST',body:fd});
+      const data=await r.json();
+      if(!r.ok||data.error)throw new Error(data.detail||data.error||'Erro no upload');
+      item.hash=data.hash;item.preview_url=data.url||item.preview_url;item.status='done';
+    }catch(e){
+      item.status='error';item.errMsg=e.message;
+    }
+    done++;
+    bwzUpdateProgress(done,N);
+    bwzRenderDropGrid();
+    bwzSyncSlots();
+  }));
+
+  setTimeout(()=>{
+    if(BWZ._dropItems.every(it=>it.status!=='loading'))
+      progEl.className='bwz-drop-progress';
+  },1500);
 };
 
 /* ─── STEP 6: summary + UTM + publish ──────────────────────────────────── */
