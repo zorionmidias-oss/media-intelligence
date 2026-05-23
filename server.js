@@ -37,6 +37,9 @@ const COOKIE_OPTS = { httpOnly: true, sameSite: 'strict', maxAge: 7 * 24 * 3600 
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 
+// ── Public HTML routes ────────────────────────────────────────────────────────
+app.get('/privacidade', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'privacidade.html')));
+
 // ── Protected HTML routes (before static) ────────────────────────────────────
 const MOBILE_UA = /Android|iPhone|iPad|iPod|Mobile/i;
 app.get('/', requireAuth, (req, res) => {

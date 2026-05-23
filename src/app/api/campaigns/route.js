@@ -61,7 +61,7 @@ function buildAdsetBody(acctId, template, name, campaign_id) {
     optimization_goal: 'CONVERSATIONS',
     billing_event: 'IMPRESSIONS',
     bid_strategy: 'LOWEST_COST_WITHOUT_CAP',
-    targeting,
+    targeting: { ...targeting, targeting_automation: { advantage_audience: 0 } },
     status: 'PAUSED',
     start_time: template.start_time,
   };
@@ -79,7 +79,7 @@ function buildDynamicCreativeBody(creative, copies, page_id, conversation_config
         name: copies.headlines[0],
         image_hash: creative.image_hash,
         call_to_action: {
-          type: 'SEND_MESSAGE',
+          type: 'MESSAGE_PAGE',
           value: { app_destination: 'MESSENGER' },
         },
       },
@@ -100,16 +100,15 @@ function buildDynamicCreativeBody(creative, copies, page_id, conversation_config
 // ── dry-run ───────────────────────────────────────────────────────────────────
 async function dryRunHandler(req, res) {
   try {
-    const { account_id, campaign, adset_template, adset_names, creatives, copies, page_id, conversation_config, url_tags } = req.body || {};
+    const { account_id, campaign, adset_template, adset_names, adset_creatives, copies, page_id, conversation_config, url_tags } = req.body || {};
 
     if (!account_id || !campaign)
       return res.status(400).json({ error: 'account_id e campaign são obrigatórios' });
 
     const acctId = normalizeActId(account_id);
-    const names = adset_names || ['<ADSET_NAME>'];
-    const crs   = creatives || [{ name: '<CREATIVE>', image_hash: '<HASH>' }];
-    const cp    = copies || { texts: ['<TEXT>'], headlines: ['<HEADLINE>'], descriptions: ['<DESC>'] };
-    const tpl   = adset_template || {};
+    const names  = adset_names || ['<ADSET_NAME>'];
+    const cp     = copies || { texts: ['<TEXT>'], headlines: ['<HEADLINE>'], descriptions: ['<DESC>'] };
+    const tpl    = adset_template || {};
 
     const steps = [{
       step: 1,
@@ -118,7 +117,11 @@ async function dryRunHandler(req, res) {
       body: buildCampaignBody(campaign, campaign.status || 'PAUSED'),
     }];
 
+    let totalAds = 0;
     names.forEach((name, i) => {
+      const crs = (adset_creatives && adset_creatives[i]?.length)
+        ? adset_creatives[i]
+        : [{ name: '<CREATIVE>', image_hash: '<HASH>' }];
       steps.push({
         step: steps.length + 1,
         description: `Criar Conjunto V${i + 1}: ${name}`,
@@ -145,6 +148,7 @@ async function dryRunHandler(req, res) {
             ...(url_tags ? { url_tags } : {}),
           },
         });
+        totalAds++;
       });
     });
 
@@ -154,8 +158,8 @@ async function dryRunHandler(req, res) {
       summary: {
         campaign: campaign.name,
         adsets: names.length,
-        creatives_per_adset: crs.length,
-        total_ads: names.length * crs.length,
+        total_ads: totalAds,
+        creatives_per_adset: (adset_creatives || []).map((v, i) => `V${i + 1}:${v.length}`).join(' '),
       },
       steps,
     });
@@ -167,10 +171,10 @@ async function dryRunHandler(req, res) {
 
 // ── criar — SSE streaming ─────────────────────────────────────────────────────
 async function criarHandler(req, res) {
-  const { account_id, campaign, adset_template, adset_names, creatives, copies, page_id, conversation_config, url_tags } = req.body || {};
+  const { account_id, campaign, adset_template, adset_names, adset_creatives, copies, page_id, conversation_config, url_tags } = req.body || {};
 
-  if (!account_id || !campaign || !adset_template || !adset_names?.length || !creatives?.length || !copies)
-    return res.status(400).json({ error: 'Payload incompleto: account_id, campaign, adset_template, adset_names, creatives e copies são obrigatórios' });
+  if (!account_id || !campaign || !adset_template || !adset_names?.length || !adset_creatives?.length || !copies)
+    return res.status(400).json({ error: 'Payload incompleto: account_id, campaign, adset_template, adset_names, adset_creatives e copies são obrigatórios' });
 
   const acctId = normalizeActId(account_id);
   const token  = await getToken(acctId);
@@ -226,32 +230,32 @@ async function criarHandler(req, res) {
   };
 
   try {
-    const total = 1 + adset_names.length * (1 + creatives.length * 2);
+    const totalSteps = 1 + adset_names.length + adset_creatives.reduce((s, v) => s + (v.length * 2), 0);
     let step = 0;
 
     // PASSO 1 — Campanha
-    send('progress', { msg: 'Criando campanha…', step: step++, total });
+    send('progress', { msg: 'Criando campanha…', step: step++, total: totalSteps });
     const cpBody = { ...buildCampaignBody(campaign, campaign.status || 'PAUSED'), access_token: token };
     const cpRes = await metaPost(`${META_BASE}/${acctId}/campaigns`, cpBody, 'Criar Campanha');
     campaign_id = cpRes.data?.id;
     if (!campaign_id) throw new Error('Meta não retornou campaign_id');
-    send('progress', { msg: `Campanha criada (${campaign_id})`, step: step++, total });
+    send('progress', { msg: `Campanha criada (${campaign_id})`, step: step++, total: totalSteps });
 
-    // PASSO 2-N — Conjuntos + Criativos
+    // PASSO 2-N — Conjuntos + Criativos por conjunto
     for (let i = 0; i < adset_names.length; i++) {
       const name = adset_names[i];
-      send('progress', { msg: `Criando conjunto ${i + 1} de ${adset_names.length}: ${name}`, step: step++, total });
+      const creatives = adset_creatives[i] || [];
+      send('progress', { msg: `Criando conjunto ${i + 1} de ${adset_names.length}: ${name}`, step: step++, total: totalSteps });
 
       const asBody = { ...buildAdsetBody(acctId, adset_template, name, campaign_id), access_token: token };
       const asRes  = await metaPost(`${META_BASE}/${acctId}/adsets`, asBody, `Conjunto V${i + 1}`);
       const adset_id = asRes.data?.id;
       if (!adset_id) throw new Error(`Meta não retornou adset_id para ${name}`);
       adset_ids.push(adset_id);
-      send('progress', { msg: `Conjunto V${i + 1} criado`, step: step++, total });
 
       for (let j = 0; j < creatives.length; j++) {
         const cr = creatives[j];
-        send('progress', { msg: `Criando criativo ${cr.name} (conjunto ${i + 1}, criativo ${j + 1}/${creatives.length})`, step: step++, total });
+        send('progress', { msg: `Criando criativo ${cr.name} (V${i + 1}, ${j + 1}/${creatives.length})`, step: step++, total: totalSteps });
 
         const crBody = { ...buildDynamicCreativeBody(cr, copies, page_id, conversation_config || null), access_token: token };
         const crRes  = await metaPost(`${META_BASE}/${acctId}/adcreatives`, crBody, `Criativo ${cr.name} V${i + 1}`);
@@ -272,7 +276,7 @@ async function criarHandler(req, res) {
         const ad_id = adRes.data?.id;
         if (!ad_id) throw new Error(`Meta não retornou ad_id para ${cr.name}`);
         ad_ids.push(ad_id);
-        send('progress', { msg: `Ad ${cr.name} criado (adset V${i + 1})`, step: step++, total });
+        send('progress', { msg: `Ad ${cr.name} criado (V${i + 1})`, step: step++, total: totalSteps });
       }
     }
 
