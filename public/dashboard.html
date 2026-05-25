@@ -5333,7 +5333,7 @@ function bwzGetConvPayload(){
     },
   };
 }
-function bwzSyncConv(){BWZ.d.conversation_config=bwzGetConvPayload();}
+function bwzSyncConv(){BWZ.d.conversation_config=bwzGetConvPayload();console.log('[bwzSyncConv]',JSON.stringify(BWZ.d.conversation_config));}
 (function(){
   const c=document.getElementById('bwz-conv-collapsible');
   if(c){c.addEventListener('input',bwzSyncConv);c.addEventListener('change',bwzSyncConv);}
@@ -5482,6 +5482,7 @@ function botWizValidate(n){
     if(!t1){bwzErr('Informe pelo menos o Texto 1.');return false;}
     const h1=document.getElementById('bwz-hl-1').value.trim();
     if(!h1){bwzErr('Informe pelo menos a Headline 1.');return false;}
+    bwzSyncConv();
     return true;
   }
   return true;
@@ -6090,6 +6091,7 @@ window.botWizDryRun=async function(){
   pre.textContent='Carregando…';
   document.getElementById('bwz-json-overlay').classList.add('on');
   try{
+    console.log('[dry-run] conversation_config:',JSON.stringify(BWZ.d.conversation_config));
     const r=await fetch('/api/campaigns/dry-run',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify(botWizBuildPayload()),
@@ -6128,6 +6130,7 @@ window.botWizPublish=async function(){
   progWrap.style.display='block';barFill.style.width='0%';msgEl.textContent='Iniciando…';resultDiv.innerHTML='';
 
   try{
+    console.log('[publish] conversation_config:',JSON.stringify(BWZ.d.conversation_config));
     const resp=await fetch('/api/campaigns/criar',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify(botWizBuildPayload()),

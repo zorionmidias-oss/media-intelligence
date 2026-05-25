@@ -341,6 +341,7 @@ async function criarHandler(req, res) {
 
         console.log(`[criar] conversation_config: ${conversation_config ? JSON.stringify(conversation_config) : 'null'}`);
         const crBody = { ...buildCreativeBody(cr, copies, page_id, conversation_config || null), access_token: token };
+        console.log(`[criar] adcreative payload: ${JSON.stringify({ ...crBody, access_token: '[REDACTED]' })}`);
         const crRes  = await metaPost(`${META_BASE}/${acctId}/adcreatives`, crBody, `Criativo ${cr.name} V${i + 1}`);
         const creative_id = crRes.data?.id;
         if (!creative_id) throw new Error(`Meta não retornou creative_id para ${cr.name}`);
