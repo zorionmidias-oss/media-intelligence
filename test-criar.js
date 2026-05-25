@@ -98,8 +98,17 @@ async function runForAccount({ acct, page_id, pixel, label }) {
     },
     adset_names     : [`V1-${label}`],
     adset_creatives : [[{ name: `C1-V1-${label}`, image_hash: hash }]],
-    copies          : { texts: ['Texto teste 1'], headlines: ['Headline teste'], descriptions: [] },
+    copies          : { texts: ['Texto teste 1'], headlines: ['Headline teste'], descriptions: ['Descrição de teste para verificar FIX 2'] },
     page_id,
+    conversation_config: {
+      type: 'VISUAL_EDITOR',
+      version: 2,
+      page_welcome_message: {
+        type: 'SHOW_BLOCK',
+        greeting: [{ language: 'default', text: 'Olá! Como podemos ajudar?' }],
+        ice_breakers: [{ question: 'Quero saber mais' }, { question: 'Falar com atendente' }],
+      },
+    },
   };
 
   console.log(`\n[test] start_time que o wizard enviaria: ${startTimeFromWizard}`);

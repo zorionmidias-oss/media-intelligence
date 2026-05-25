@@ -122,6 +122,7 @@ function buildCreativeBody(creative, copies, page_id, conversation_config) {
       link_data: {
         message: copies.texts[0],
         name: copies.headlines[0],
+        ...(copies.descriptions?.[0] ? { description: copies.descriptions[0] } : {}),
         image_hash: creative.image_hash,
         call_to_action: {
           type: 'MESSAGE_PAGE',
@@ -338,6 +339,7 @@ async function criarHandler(req, res) {
         const cr = creatives[j];
         send('progress', { msg: `Criando criativo ${cr.name} (V${i + 1}, ${j + 1}/${creatives.length})`, step: step++, total: totalSteps });
 
+        console.log(`[criar] conversation_config: ${conversation_config ? JSON.stringify(conversation_config) : 'null'}`);
         const crBody = { ...buildCreativeBody(cr, copies, page_id, conversation_config || null), access_token: token };
         const crRes  = await metaPost(`${META_BASE}/${acctId}/adcreatives`, crBody, `Criativo ${cr.name} V${i + 1}`);
         const creative_id = crRes.data?.id;
