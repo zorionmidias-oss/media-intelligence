@@ -11,8 +11,45 @@ function normalizeActId(v) {
 
 async function getAccountInfo(acctId) {
   const { data } = await supabase.from('meta_accounts')
-    .select('access_token, currency').eq('ad_account_id', acctId).maybeSingle();
+    .select('access_token, currency, timezone_name').eq('ad_account_id', acctId).maybeSingle();
   return data || null;
+}
+
+// ── Timezone helpers ──────────────────────────────────────────────────────────
+
+function tzOffsetStr(ianaTimezone, dateStr) {
+  const ref = new Date(dateStr + 'T12:00:00Z');
+  const parts = {};
+  new Intl.DateTimeFormat('en-US', {
+    timeZone: ianaTimezone,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false,
+  }).formatToParts(ref).forEach(p => { if (p.type !== 'literal') parts[p.type] = p.value; });
+  const h = parts.hour === '24' ? '00' : parts.hour;
+  const localAsUTC = new Date(`${parts.year}-${parts.month}-${parts.day}T${h}:${parts.minute}:${parts.second}Z`);
+  const offsetMin = Math.round((localAsUTC - ref) / 60000);
+  const sign = offsetMin >= 0 ? '+' : '-';
+  const abs = Math.abs(offsetMin);
+  return `${sign}${String(Math.floor(abs / 60)).padStart(2, '0')}:${String(abs % 60).padStart(2, '0')}`;
+}
+
+function buildStartTimeISO(dateStr, ianaTimezone) {
+  if (!dateStr) return undefined;
+  return `${dateStr}T00:00:00${tzOffsetStr(ianaTimezone, dateStr)}`;
+}
+
+async function resolveTimezone(acctId, token, cached) {
+  if (cached) return cached;
+  const r = await axios.get(`${META_BASE}/${acctId}`, {
+    params: { fields: 'timezone_name', access_token: token },
+    timeout: 10000,
+  });
+  const tz = r.data?.timezone_name;
+  if (!tz) throw new Error('Meta não retornou timezone_name para a conta');
+  console.log(`[criar] timezone fetched from Meta API: ${tz}`);
+  await supabase.from('meta_accounts').update({ timezone_name: tz }).eq('ad_account_id', acctId);
+  return tz;
 }
 
 async function getExchangeRate() {
@@ -183,6 +220,10 @@ async function criarHandler(req, res) {
   const token    = acctInfo.access_token;
   const currency = (acctInfo.currency || 'BRL').toUpperCase();
 
+  // Timezone: cache DB ou busca na Meta API
+  const timezone = await resolveTimezone(acctId, token, acctInfo.timezone_name);
+  console.log(`[criar] timezone: ${timezone}`);
+
   // Budget: wizard envia BRL centavos; converter para USD se conta for USD
   let dailyBudget = adset_template.daily_budget;
   if (currency === 'USD') {
@@ -194,7 +235,21 @@ async function criarHandler(req, res) {
     dailyBudget = Math.round(usdFloat * 100);
     console.log(`[criar] budget USD: R$${brlFloat} ÷ ${taxa} = $${usdFloat} → ${dailyBudget} cents`);
   }
-  const resolvedTemplate = { ...adset_template, daily_budget: dailyBudget };
+
+  // start_time / end_time: recalcular offset com timezone real da conta
+  const startDateStr = adset_template.start_time?.slice(0, 10);
+  const endDateStr   = adset_template.end_time?.slice(0, 10) || null;
+  const startTime    = buildStartTimeISO(startDateStr, timezone);
+  const endTime      = endDateStr ? buildStartTimeISO(endDateStr, timezone) : null;
+  console.log(`[criar] start_time → ${startTime}`);
+  if (endTime) console.log(`[criar] end_time   → ${endTime}`);
+
+  const resolvedTemplate = {
+    ...adset_template,
+    daily_budget: dailyBudget,
+    start_time: startTime,
+    end_time: endTime,
+  };
 
   // SSE setup
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
