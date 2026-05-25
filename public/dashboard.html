@@ -5141,6 +5141,7 @@ const BWZ = {
     pixel_id:'',conversion_event:'CONTENT_VIEW',
     daily_budget:7,start_time:'',end_time:null,
     age_min:18,age_max:45,gender:0,
+    conversation_config:null,
   }
 };
 window._BWZ=BWZ;
@@ -5281,6 +5282,7 @@ window.bwzLoadConvTemplate=function(id){
   document.getElementById('bwz-conv-followup').style.display=fol?'':'none';
   document.getElementById('bwz-conv-followup').value=fol;
   showToast('ok',`Modelo "${esc(tpl.nome)}" carregado.`,2000);
+  bwzSyncConv();
 };
 window.bwzAddConvQuestion=function(val){
   const qc=document.getElementById('bwz-conv-questions');
@@ -5289,10 +5291,11 @@ window.bwzAddConvQuestion=function(val){
   if(count>=5){showToast('warn','Máximo de 5 perguntas.',2000);return;}
   const idx=(BWZ._convQCount=(BWZ._convQCount||0)+1);
   const div=document.createElement('div');div.className='bwz-conv-question';
-  div.innerHTML=`<input class="wz-input" id="bwz-conv-q-${idx}" maxlength="80" placeholder="Pergunta ${count+1} (máx 80 chars)" value="${esc(val||'')}"><span class="bwz-char-cnt" style="white-space:nowrap" id="bwz-conv-qc-${idx}">${(val||'').length}/80</span><button class="bwz-conv-del-btn" onclick="this.parentElement.remove();bwzSyncConvAddBtn()">&#215;</button>`;
+  div.innerHTML=`<input class="wz-input" id="bwz-conv-q-${idx}" maxlength="80" placeholder="Pergunta ${count+1} (máx 80 chars)" value="${esc(val||'')}"><span class="bwz-char-cnt" style="white-space:nowrap" id="bwz-conv-qc-${idx}">${(val||'').length}/80</span><button class="bwz-conv-del-btn" onclick="this.parentElement.remove();bwzSyncConvAddBtn();bwzSyncConv()">&#215;</button>`;
   div.querySelector('input').addEventListener('input',function(){document.getElementById('bwz-conv-qc-'+idx).textContent=this.value.length+'/80';});
   qc.appendChild(div);
   bwzSyncConvAddBtn();
+  bwzSyncConv();
 };
 window.bwzSyncConvAddBtn=function(){
   const count=document.getElementById('bwz-conv-questions')?.querySelectorAll('.bwz-conv-question').length||0;
@@ -5330,6 +5333,11 @@ function bwzGetConvPayload(){
     },
   };
 }
+function bwzSyncConv(){BWZ.d.conversation_config=bwzGetConvPayload();}
+(function(){
+  const c=document.getElementById('bwz-conv-collapsible');
+  if(c){c.addEventListener('input',bwzSyncConv);c.addEventListener('change',bwzSyncConv);}
+})();
 
 /* ─── open / close ──────────────────────────────────────────────────────── */
 window.botWizOpen=function(){
@@ -5341,6 +5349,7 @@ window.botWizOpen=function(){
     pixel_id:'',conversion_event:'CONTENT_VIEW',
     daily_budget:7,start_time:'',end_time:null,
     age_min:18,age_max:45,gender:0,
+    conversation_config:null,
   });
   BWZ.selInterests=[];BWZ.selCountries=[{code:'BR',name:'Brasil'}];
   BWZ.selLocales=[{id:5,name:'Português (Brasil)'}];BWZ.selCA=[];
@@ -5386,6 +5395,7 @@ window.botWizOpen=function(){
   document.getElementById('bwz-conv-nome').value='';
   document.getElementById('bwz-conv-load').value='';
   bwzSyncConvAddBtn();
+  BWZ.d.conversation_config=null;
   // reset step 6
   document.getElementById('bwz-publish-state').style.display='none';
   document.getElementById('bwz-publish-result').innerHTML='';
@@ -6060,7 +6070,7 @@ function botWizBuildPayload(){
   const headlines=readContainer('bwz-hls-container');
   const descriptions=readContainer('bwz-descs-container');
 
-  const conv=bwzGetConvPayload();
+  const conv=d.conversation_config;
 
   return{
     account_id:d.account_id,
