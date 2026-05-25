@@ -36,8 +36,20 @@ async function handler(req, res) {
 
   const acctId = normalizeActId(account_id);
 
-  const { data: conta } = await supabase.from('meta_accounts')
-    .select('access_token').eq('ad_account_id', acctId).maybeSingle();
+  let conta;
+  try {
+    const { data, error } = await supabase.from('meta_accounts')
+      .select('access_token').eq('ad_account_id', acctId).maybeSingle();
+    if (error) {
+      console.error('[upload-image] supabase error:', acctId, error.message, error.code);
+      return res.status(500).json({ error: 'UPLOAD_FAILED', detail: 'Erro ao consultar conta Meta: ' + error.message });
+    }
+    conta = data;
+  } catch (e) {
+    console.error('[upload-image] supabase throw:', acctId, e.message);
+    return res.status(500).json({ error: 'UPLOAD_FAILED', detail: 'Falha na conexão com banco: ' + e.message });
+  }
+
   if (!conta?.access_token)
     return res.status(400).json({ error: 'UPLOAD_FAILED', detail: 'Conta Meta não encontrada ou sem token' });
 
@@ -56,8 +68,9 @@ async function handler(req, res) {
     const entry = Object.values(images)[0];
     return res.json({ hash: entry.hash, url: entry.url || null });
   } catch (e) {
+    const metaStatus = e.response?.status;
     const detail = e.response?.data?.error?.message || e.message;
-    console.error('[upload-image]', acctId, detail);
+    console.error('[upload-image] meta error:', acctId, metaStatus, detail);
     return res.status(500).json({ error: 'UPLOAD_FAILED', detail });
   }
 }
