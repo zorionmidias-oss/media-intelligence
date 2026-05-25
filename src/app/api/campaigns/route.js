@@ -34,7 +34,7 @@ function buildCampaignBody(campaign, status) {
   return body;
 }
 
-function buildAdsetBody(acctId, template, name, campaign_id) {
+function buildAdsetBody(acctId, template, name, campaign_id, page_id) {
   const targeting = {
     geo_locations: template.geo_locations || { countries: ['BR'] },
     age_min: template.age_min || 18,
@@ -56,6 +56,7 @@ function buildAdsetBody(acctId, template, name, campaign_id) {
     promoted_object: {
       pixel_id: template.pixel_id,
       custom_event_type: template.conversion_event || 'CONTENT_VIEW',
+      page_id: page_id || undefined,
     },
     destination_type: 'MESSENGER',
     optimization_goal: 'OFFSITE_CONVERSIONS',
@@ -118,7 +119,7 @@ async function dryRunHandler(req, res) {
         step: steps.length + 1,
         description: `Criar Conjunto V${i + 1}: ${name}`,
         endpoint: `POST ${META_BASE}/${acctId}/adsets`,
-        body: buildAdsetBody(acctId, tpl, name, '<CAMPAIGN_ID>'),
+        body: buildAdsetBody(acctId, tpl, name, '<CAMPAIGN_ID>', page_id),
       });
       crs.forEach(cr => {
         steps.push({
@@ -250,7 +251,7 @@ async function criarHandler(req, res) {
       const creatives = adset_creatives[i] || [];
       send('progress', { msg: `Criando conjunto ${i + 1} de ${adset_names.length}: ${name}`, step: step++, total: totalSteps });
 
-      const asBody = { ...buildAdsetBody(acctId, adset_template, name, campaign_id), access_token: token };
+      const asBody = { ...buildAdsetBody(acctId, adset_template, name, campaign_id, page_id), access_token: token };
       const asRes  = await metaPost(`${META_BASE}/${acctId}/adsets`, asBody, `Conjunto V${i + 1}`);
       const adset_id = asRes.data?.id;
       if (!adset_id) throw new Error(`Meta não retornou adset_id para ${name}`);
