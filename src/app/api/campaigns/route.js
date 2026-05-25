@@ -115,24 +115,44 @@ function buildAdsetBody(acctId, template, name, campaign_id, page_id) {
 }
 
 function buildCreativeBody(creative, copies, page_id, conversation_config) {
-  const body = {
-    name: creative.name,
-    object_story_spec: {
-      page_id,
-      link_data: {
-        message: copies.texts[0],
-        name: copies.headlines[0],
-        ...(copies.descriptions?.[0] ? { description: copies.descriptions[0] } : {}),
-        image_hash: creative.image_hash,
-        call_to_action: {
-          type: 'MESSAGE_PAGE',
-          value: { app_destination: 'MESSENGER' },
-        },
-      },
+  const link_data = {
+    message: copies.texts[0],
+    name: copies.headlines[0],
+    ...(copies.descriptions?.[0] ? { description: copies.descriptions[0] } : {}),
+    image_hash: creative.image_hash,
+    link: 'https://fb.com/messenger_doc/',
+    call_to_action: {
+      type: 'MESSAGE_PAGE',
+      value: { app_destination: 'MESSENGER' },
     },
   };
-  if (conversation_config) body.object_story_spec.page_welcome_message = conversation_config;
-  return body;
+  if (conversation_config) {
+    const pwm = conversation_config.page_welcome_message;
+    link_data.page_welcome_message = JSON.stringify({
+      type: 'VISUAL_EDITOR',
+      version: 2,
+      landing_screen_type: 'welcome_message',
+      media_type: 'text',
+      text_format: {
+        customer_action_type: 'ice_breakers',
+        message: {
+          text: pwm.greeting[0].text,
+          ice_breakers: pwm.ice_breakers.map(b => ({ title: b.question, response: null })),
+          quick_replies: [],
+        },
+      },
+      reengagement: {
+        text: 'Hi {{user_first_name}}! We wanted to follow up. Do you have any questions?',
+        include_products: false,
+      },
+      reengagement_disabled: false,
+      performance_booster_enabled: true,
+    });
+  }
+  return {
+    name: creative.name,
+    object_story_spec: { page_id, link_data },
+  };
 }
 
 // ── dry-run ───────────────────────────────────────────────────────────────────
@@ -210,6 +230,7 @@ async function dryRunHandler(req, res) {
 // ── criar — SSE streaming ─────────────────────────────────────────────────────
 async function criarHandler(req, res) {
   const { account_id, campaign, adset_template, adset_names, adset_creatives, copies, page_id, conversation_config, url_tags } = req.body || {};
+  console.log('[criar] conversation_config recebido:', JSON.stringify(req.body.conversation_config));
 
   if (!account_id || !campaign || !adset_template || !adset_names?.length || !adset_creatives?.length || !copies)
     return res.status(400).json({ error: 'Payload incompleto: account_id, campaign, adset_template, adset_names, adset_creatives e copies são obrigatórios' });
@@ -339,7 +360,7 @@ async function criarHandler(req, res) {
         const cr = creatives[j];
         send('progress', { msg: `Criando criativo ${cr.name} (V${i + 1}, ${j + 1}/${creatives.length})`, step: step++, total: totalSteps });
 
-        console.log(`[criar] conversation_config: ${conversation_config ? JSON.stringify(conversation_config) : 'null'}`);
+        console.log('[criar] conversation_config para criativo:', JSON.stringify(conversation_config));
         const crBody = { ...buildCreativeBody(cr, copies, page_id, conversation_config || null), access_token: token };
         console.log(`[criar] adcreative payload: ${JSON.stringify({ ...crBody, access_token: '[REDACTED]' })}`);
         const crRes  = await metaPost(`${META_BASE}/${acctId}/adcreatives`, crBody, `Criativo ${cr.name} V${i + 1}`);
