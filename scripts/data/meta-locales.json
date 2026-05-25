@@ -1,52 +1,332 @@
 [
-  {"id":6,   "code":"en_US","name":"Inglês (EUA)"},
-  {"id":24,  "code":"en_GB","name":"Inglês (Reino Unido)"},
-  {"id":7,   "code":"fr_FR","name":"Francês (França)"},
-  {"id":8,   "code":"de_DE","name":"Alemão (Alemanha)"},
-  {"id":18,  "code":"pt_PT","name":"Português (Portugal)"},
-  {"id":5,   "code":"pt_BR","name":"Português (Brasil)"},
-  {"id":11,  "code":"it_IT","name":"Italiano (Itália)"},
-  {"id":9,   "code":"es_ES","name":"Espanhol (Espanha)"},
-  {"id":10,  "code":"nl_NL","name":"Holandês (Países Baixos)"},
-  {"id":31,  "code":"sv_SE","name":"Sueco (Suécia)"},
-  {"id":50,  "code":"da_DK","name":"Dinamarquês (Dinamarca)"},
-  {"id":12,  "code":"nb_NO","name":"Norueguês (Noruega)"},
-  {"id":13,  "code":"fi_FI","name":"Finlandês (Finlândia)"},
-  {"id":14,  "code":"cs_CZ","name":"Tcheco (República Tcheca)"},
-  {"id":15,  "code":"pl_PL","name":"Polonês (Polônia)"},
-  {"id":67,  "code":"sk_SK","name":"Eslovaco (Eslováquia)"},
-  {"id":17,  "code":"ro_RO","name":"Romeno (Romênia)"},
-  {"id":20,  "code":"hu_HU","name":"Húngaro (Hungria)"},
-  {"id":21,  "code":"bg_BG","name":"Búlgaro (Bulgária)"},
-  {"id":22,  "code":"hr_HR","name":"Croata (Croácia)"},
-  {"id":65,  "code":"lt_LT","name":"Lituano (Lituânia)"},
-  {"id":68,  "code":"lv_LV","name":"Letão (Letônia)"},
-  {"id":23,  "code":"es_LA","name":"Espanhol (América Latina)"},
-  {"id":69,  "code":"et_EE","name":"Estoniano (Estônia)"},
-  {"id":70,  "code":"sl_SI","name":"Esloveno (Eslovênia)"},
-  {"id":27,  "code":"zh_TW","name":"Chinês Tradicional (Taiwan)"},
-  {"id":41,  "code":"zh_CN","name":"Chinês Simplificado (China)"},
-  {"id":28,  "code":"ja_JP","name":"Japonês (Japão)"},
-  {"id":29,  "code":"ko_KR","name":"Coreano (Coreia do Sul)"},
-  {"id":16,  "code":"ru_RU","name":"Russo (Rússia)"},
-  {"id":44,  "code":"ar_AR","name":"Árabe"},
-  {"id":33,  "code":"th_TH","name":"Tailandês (Tailândia)"},
-  {"id":30,  "code":"tr_TR","name":"Turco (Turquia)"},
-  {"id":25,  "code":"id_ID","name":"Indonésio (Indonésia)"},
-  {"id":35,  "code":"ms_MY","name":"Malaio (Malásia)"},
-  {"id":26,  "code":"el_GR","name":"Grego (Grécia)"},
-  {"id":37,  "code":"he_IL","name":"Hebraico (Israel)"},
-  {"id":38,  "code":"uk_UA","name":"Ucraniano (Ucrânia)"},
-  {"id":39,  "code":"hi_IN","name":"Hindi (Índia)"},
-  {"id":42,  "code":"vi_VN","name":"Vietnamita (Vietnã)"},
-  {"id":71,  "code":"sr_RS","name":"Sérvio (Sérvia)"},
-  {"id":72,  "code":"fa_IR","name":"Persa (Irã)"},
-  {"id":73,  "code":"ta_IN","name":"Tâmil (Índia)"},
-  {"id":74,  "code":"te_IN","name":"Telugu (Índia)"},
-  {"id":45,  "code":"bn_IN","name":"Bengali (Índia/Bangladesh)"},
-  {"id":75,  "code":"ur_PK","name":"Urdu (Paquistão)"},
-  {"id":76,  "code":"af_ZA","name":"Africâner (África do Sul)"},
-  {"id":77,  "code":"sw_KE","name":"Suaíli (Quênia)"},
-  {"id":49,  "code":"fr_CA","name":"Francês (Canadá)"},
-  {"id":51,  "code":"es_MX","name":"Espanhol (México)"}
+  {
+    "id": 2,
+    "code": "cs_CZ",
+    "name": "Tcheco"
+  },
+  {
+    "id": 4,
+    "code": "da_DK",
+    "name": "Dinamarquês"
+  },
+  {
+    "id": 5,
+    "code": "de_DE",
+    "name": "Alemão"
+  },
+  {
+    "id": 6,
+    "code": "en_US",
+    "name": "Inglês (EUA)"
+  },
+  {
+    "id": 7,
+    "code": "es_ES",
+    "name": "Espanhol (Espanha)"
+  },
+  {
+    "id": 8,
+    "code": "fi_FI",
+    "name": "Finlandês"
+  },
+  {
+    "id": 9,
+    "code": "fr_FR",
+    "name": "Francês (França)"
+  },
+  {
+    "id": 10,
+    "code": "it_IT",
+    "name": "Italiano"
+  },
+  {
+    "id": 11,
+    "code": "ja_JP",
+    "name": "Japonês"
+  },
+  {
+    "id": 12,
+    "code": "ko_KR",
+    "name": "Coreano"
+  },
+  {
+    "id": 13,
+    "code": "nb_NO",
+    "name": "Norueguês"
+  },
+  {
+    "id": 14,
+    "code": "nl_NL",
+    "name": "Holandês"
+  },
+  {
+    "id": 15,
+    "code": "pl_PL",
+    "name": "Polonês"
+  },
+  {
+    "id": 16,
+    "code": "pt_BR",
+    "name": "Português (Brasil)"
+  },
+  {
+    "id": 17,
+    "code": "ru_RU",
+    "name": "Russo"
+  },
+  {
+    "id": 18,
+    "code": "sv_SE",
+    "name": "Sueco"
+  },
+  {
+    "id": 19,
+    "code": "tr_TR",
+    "name": "Turco"
+  },
+  {
+    "id": 20,
+    "code": "zh_CN",
+    "name": "Chinês Simplificado (China)"
+  },
+  {
+    "id": 21,
+    "code": "zh_HK",
+    "name": "Chinês Tradicional (Hong Kong)"
+  },
+  {
+    "id": 22,
+    "code": "zh_TW",
+    "name": "Chinês Tradicional (Taiwan)"
+  },
+  {
+    "id": 23,
+    "code": "es_LA",
+    "name": "Espanhol (América Latina)"
+  },
+  {
+    "id": 24,
+    "code": "en_GB",
+    "name": "Inglês (Reino Unido)"
+  },
+  {
+    "id": 25,
+    "code": "id_ID",
+    "name": "Indonésio"
+  },
+  {
+    "id": 26,
+    "code": "fil_PH",
+    "name": "Filipino"
+  },
+  {
+    "id": 27,
+    "code": "vi_VN",
+    "name": "Vietnamita"
+  },
+  {
+    "id": 28,
+    "code": "ar_AR",
+    "name": "Árabe"
+  },
+  {
+    "id": 29,
+    "code": "he_IL",
+    "name": "Hebraico"
+  },
+  {
+    "id": 30,
+    "code": "hu_HU",
+    "name": "Húngaro"
+  },
+  {
+    "id": 31,
+    "code": "pt_PT",
+    "name": "Português (Portugal)"
+  },
+  {
+    "id": 32,
+    "code": "ro_RO",
+    "name": "Romeno"
+  },
+  {
+    "id": 33,
+    "code": "sk_SK",
+    "name": "Eslovaco"
+  },
+  {
+    "id": 34,
+    "code": "sl_SI",
+    "name": "Esloveno"
+  },
+  {
+    "id": 35,
+    "code": "th_TH",
+    "name": "Tailandês"
+  },
+  {
+    "id": 36,
+    "code": "af_ZA",
+    "name": "Africâner"
+  },
+  {
+    "id": 37,
+    "code": "bg_BG",
+    "name": "Búlgaro"
+  },
+  {
+    "id": 38,
+    "code": "hr_HR",
+    "name": "Croata"
+  },
+  {
+    "id": 39,
+    "code": "el_GR",
+    "name": "Grego"
+  },
+  {
+    "id": 40,
+    "code": "lt_LT",
+    "name": "Lituano"
+  },
+  {
+    "id": 41,
+    "code": "ms_MY",
+    "name": "Malaio"
+  },
+  {
+    "id": 42,
+    "code": "sr_RS",
+    "name": "Sérvio"
+  },
+  {
+    "id": 44,
+    "code": "fr_CA",
+    "name": "Francês (Canadá)"
+  },
+  {
+    "id": 45,
+    "code": "bn_IN",
+    "name": "Bengali"
+  },
+  {
+    "id": 48,
+    "code": "ta_IN",
+    "name": "Tâmil"
+  },
+  {
+    "id": 50,
+    "code": "ml_IN",
+    "name": "Malaiala"
+  },
+  {
+    "id": 52,
+    "code": "uk_UA",
+    "name": "Ucraniano"
+  },
+  {
+    "id": 53,
+    "code": "az_AZ",
+    "name": "Azerbaijano"
+  },
+  {
+    "id": 57,
+    "code": "eo",
+    "name": "Esperanto"
+  },
+  {
+    "id": 58,
+    "code": "et_EE",
+    "name": "Estoniano"
+  },
+  {
+    "id": 60,
+    "code": "fa_IR",
+    "name": "Persa"
+  },
+  {
+    "id": 62,
+    "code": "fo_FO",
+    "name": "Faroês"
+  },
+  {
+    "id": 63,
+    "code": "fy_NL",
+    "name": "Frísio"
+  },
+  {
+    "id": 68,
+    "code": "hy_AM",
+    "name": "Armênio"
+  },
+  {
+    "id": 70,
+    "code": "ja_KS",
+    "name": "Japonês (Kansai)"
+  },
+  {
+    "id": 71,
+    "code": "jv_ID",
+    "name": "Javanês"
+  },
+  {
+    "id": 72,
+    "code": "ka_GE",
+    "name": "Georgiano"
+  },
+  {
+    "id": 73,
+    "code": "kk_KZ",
+    "name": "Cazaque"
+  },
+  {
+    "id": 74,
+    "code": "km_KH",
+    "name": "Khmer"
+  },
+  {
+    "id": 78,
+    "code": "lv_LV",
+    "name": "Letão"
+  },
+  {
+    "id": 80,
+    "code": "mn_MN",
+    "name": "Mongol"
+  },
+  {
+    "id": 84,
+    "code": "nn_NO",
+    "name": "Norueguês (Nynorsk)"
+  },
+  {
+    "id": 87,
+    "code": "sq_AL",
+    "name": "Albanês"
+  },
+  {
+    "id": 89,
+    "code": "tg_TJ",
+    "name": "Tadjique"
+  },
+  {
+    "id": 90,
+    "code": "ur_PK",
+    "name": "Urdu"
+  },
+  {
+    "id": 1002,
+    "code": "es_ALL",
+    "name": "Espanhol (Todos)"
+  },
+  {
+    "id": 1003,
+    "code": "fr_ALL",
+    "name": "Francês (Todos)"
+  },
+  {
+    "id": 1005,
+    "code": "pt_ALL",
+    "name": "Português (Todos)"
+  }
 ]
