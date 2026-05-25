@@ -219,6 +219,14 @@ async function criarHandler(req, res) {
       console.error(`[criar] HEADERS: ${JSON.stringify({ 'content-type': headers['content-type'], 'x-fb-req-id': headers['x-fb-req-id'] })}`);
       console.error(`[criar] BODY   : ${JSON.stringify(raw, null, 2)}`);
       console.error(`[criar] MSG    : ${e.message}`);
+      if (raw?.error) {
+        const err = raw.error;
+        console.error(`[criar] META_CODE    : ${err.code}`);
+        console.error(`[criar] META_SUBCODE : ${err.error_subcode ?? '—'}`);
+        console.error(`[criar] META_TYPE    : ${err.type}`);
+        console.error(`[criar] META_USER_MSG: ${err.error_user_msg ?? '—'}`);
+        console.error(`[criar] META_TRACE   : ${err.fbtrace_id ?? '—'}`);
+      }
       const msg = raw?.error?.message || e.message;
       throw Object.assign(new Error(msg), { stepName: label, httpStatus: status, metaError: raw?.error });
     }
