@@ -6064,7 +6064,7 @@ function botWizBuildPayload(){
 
   return{
     account_id:d.account_id,
-    campaign:{name:d.campaign_name,objective:'OUTCOME_ENGAGEMENT',status:d.paused?'PAUSED':'ACTIVE',budget_type:d.budget_type},
+    campaign:{name:d.campaign_name,objective:'OUTCOME_SALES',status:d.paused?'PAUSED':'ACTIVE',budget_type:d.budget_type},
     adset_template,
     adset_names:bwzAdsetNames(),
     adset_creatives,
