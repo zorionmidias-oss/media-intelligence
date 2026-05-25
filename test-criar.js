@@ -7,7 +7,7 @@ const axios    = require('axios');
 const supabase = require('./src/lib/supabase');
 const { criarHandler } = require('./src/app/api/campaigns/route');
 
-const ACCT     = 'act_24292507563699876';
+const ACCT     = 'act_836584462796120';
 const PAGE_ID  = '1174586702396603';
 const PIXEL_ID = '2189268325230730';
 const META_BASE = 'https://graph.facebook.com/v19.0';

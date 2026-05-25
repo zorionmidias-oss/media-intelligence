@@ -57,6 +57,7 @@ function buildAdsetBody(acctId, template, name, campaign_id, page_id) {
       pixel_id: template.pixel_id,
       custom_event_type: template.conversion_event || 'CONTENT_VIEW',
       page_id: page_id || undefined,
+      smart_pse_enabled: false,
     },
     destination_type: 'MESSENGER',
     optimization_goal: 'OFFSITE_CONVERSIONS',
