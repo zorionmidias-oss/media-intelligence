@@ -9,10 +9,16 @@ function normalizeActId(v) {
   return s.startsWith('act_') ? s : `act_${s}`;
 }
 
-async function getToken(acctId) {
+async function getAccountInfo(acctId) {
   const { data } = await supabase.from('meta_accounts')
-    .select('access_token').eq('ad_account_id', acctId).maybeSingle();
-  return data?.access_token || null;
+    .select('access_token, currency').eq('ad_account_id', acctId).maybeSingle();
+  return data || null;
+}
+
+async function getExchangeRate() {
+  const { data } = await supabase.from('taxas_cambio')
+    .select('taxa, data').order('data', { ascending: false }).limit(1).maybeSingle();
+  return data ? parseFloat(data.taxa) : null;
 }
 
 // ── Payload builders ──────────────────────────────────────────────────────────
@@ -170,10 +176,25 @@ async function criarHandler(req, res) {
   if (!account_id || !campaign || !adset_template || !adset_names?.length || !adset_creatives?.length || !copies)
     return res.status(400).json({ error: 'Payload incompleto: account_id, campaign, adset_template, adset_names, adset_creatives e copies são obrigatórios' });
 
-  const acctId = normalizeActId(account_id);
-  const token  = await getToken(acctId);
-  if (!token)
+  const acctId   = normalizeActId(account_id);
+  const acctInfo = await getAccountInfo(acctId);
+  if (!acctInfo?.access_token)
     return res.status(400).json({ error: 'Conta Meta não encontrada ou sem token' });
+  const token    = acctInfo.access_token;
+  const currency = (acctInfo.currency || 'BRL').toUpperCase();
+
+  // Budget: wizard envia BRL centavos; converter para USD se conta for USD
+  let dailyBudget = adset_template.daily_budget;
+  if (currency === 'USD') {
+    const taxa = await getExchangeRate();
+    if (!taxa)
+      return res.status(500).json({ error: 'Taxa de câmbio USD/BRL não disponível — atualize taxas_cambio' });
+    const brlFloat = dailyBudget / 100;
+    const usdFloat = Math.round((brlFloat / taxa) * 100) / 100;
+    dailyBudget = Math.round(usdFloat * 100);
+    console.log(`[criar] budget USD: R$${brlFloat} ÷ ${taxa} = $${usdFloat} → ${dailyBudget} cents`);
+  }
+  const resolvedTemplate = { ...adset_template, daily_budget: dailyBudget };
 
   // SSE setup
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
@@ -252,7 +273,7 @@ async function criarHandler(req, res) {
       const creatives = adset_creatives[i] || [];
       send('progress', { msg: `Criando conjunto ${i + 1} de ${adset_names.length}: ${name}`, step: step++, total: totalSteps });
 
-      const asBody = { ...buildAdsetBody(acctId, adset_template, name, campaign_id, page_id), access_token: token };
+      const asBody = { ...buildAdsetBody(acctId, resolvedTemplate, name, campaign_id, page_id), access_token: token };
       const asRes  = await metaPost(`${META_BASE}/${acctId}/adsets`, asBody, `Conjunto V${i + 1}`);
       const adset_id = asRes.data?.id;
       if (!adset_id) throw new Error(`Meta não retornou adset_id para ${name}`);
@@ -272,7 +293,7 @@ async function criarHandler(req, res) {
           adset_id,
           creative: { creative_id },
           status: 'PAUSED',
-          tracking_specs: [{ 'action.type': ['offsite_conversion'], fb_pixel: [adset_template.pixel_id] }],
+          tracking_specs: [{ 'action.type': ['offsite_conversion'], fb_pixel: [resolvedTemplate.pixel_id] }],
           access_token: token,
         };
         if (url_tags) adBody.url_tags = url_tags;

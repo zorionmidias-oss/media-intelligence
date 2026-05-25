@@ -5325,7 +5325,7 @@ function bwzGetConvPayload(){
     page_welcome_message:{
       type:'SHOW_BLOCK',
       greeting:[{language:'default',text:saudacao||'Olá! Como podemos ajudar?'}],
-      ice_breakers:perguntas.map(p=>({question:p})),
+      ...(perguntas.length?{ice_breakers:perguntas.map(p=>({question:p}))}:{}),
       ...(acompanhamento?{follow_up_action:{type:'AUTOREPLY',message:acompanhamento}}:{}),
     },
   };
@@ -5343,7 +5343,7 @@ window.botWizOpen=function(){
     age_min:18,age_max:45,gender:0,
   });
   BWZ.selInterests=[];BWZ.selCountries=[{code:'BR',name:'Brasil'}];
-  BWZ.selLocales=[{id:6,name:'Português (Brasil)'}];BWZ.selCA=[];
+  BWZ.selLocales=[{id:5,name:'Português (Brasil)'}];BWZ.selCA=[];
   BWZ.pixels=[];BWZ.pages=[];BWZ.customAudiences=[];BWZ.countries=[];BWZ.locales=[];
   BWZ.mediaSlots=Array.from({length:6},()=>[{hash:null,preview_url:null},{hash:null,preview_url:null},{hash:null,preview_url:null}]);
   BWZ._dropItems=[];
