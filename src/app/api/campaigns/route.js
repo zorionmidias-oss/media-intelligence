@@ -20,7 +20,7 @@ async function getToken(acctId) {
 function buildCampaignBody(campaign, status) {
   const body = {
     name: campaign.name,
-    objective: 'OUTCOME_ENGAGEMENT',
+    objective: campaign.objective || 'OUTCOME_SALES',
     status: status || 'PAUSED',
     special_ad_categories: [],
     buying_type: 'AUCTION',
@@ -58,7 +58,7 @@ function buildAdsetBody(acctId, template, name, campaign_id) {
       custom_event_type: template.conversion_event || 'CONTENT_VIEW',
     },
     destination_type: 'MESSENGER',
-    optimization_goal: 'CONVERSATIONS',
+    optimization_goal: 'OFFSITE_CONVERSIONS',
     billing_event: 'IMPRESSIONS',
     bid_strategy: 'LOWEST_COST_WITHOUT_CAP',
     targeting: { ...targeting, targeting_automation: { advantage_audience: 0 } },
@@ -69,7 +69,7 @@ function buildAdsetBody(acctId, template, name, campaign_id) {
   return body;
 }
 
-function buildDynamicCreativeBody(creative, copies, page_id, conversation_config) {
+function buildCreativeBody(creative, copies, page_id, conversation_config) {
   const body = {
     name: creative.name,
     object_story_spec: {
@@ -83,14 +83,6 @@ function buildDynamicCreativeBody(creative, copies, page_id, conversation_config
           value: { app_destination: 'MESSENGER' },
         },
       },
-    },
-    asset_feed_spec: {
-      bodies:       copies.texts.map(text => ({ text })),
-      titles:       copies.headlines.map(text => ({ text })),
-      descriptions: (copies.descriptions || []).map(text => ({ text })),
-      images:       [{ hash: creative.image_hash }],
-      call_to_action_types: ['MESSAGE_PAGE'],
-      optimization_type: 'DEGREES_OF_FREEDOM',
     },
   };
   if (conversation_config) body.object_story_spec.page_welcome_message = conversation_config;
@@ -133,7 +125,7 @@ async function dryRunHandler(req, res) {
           step: steps.length + 1,
           description: `Criar Criativo ${cr.name} (conjunto ${i + 1})`,
           endpoint: `POST ${META_BASE}/${acctId}/adcreatives`,
-          body: buildDynamicCreativeBody(cr, cp, page_id || '<PAGE_ID>', conversation_config || null),
+          body: buildCreativeBody(cr, cp, page_id || '<PAGE_ID>', conversation_config || null),
         });
         steps.push({
           step: steps.length + 1,
@@ -260,7 +252,7 @@ async function criarHandler(req, res) {
         const cr = creatives[j];
         send('progress', { msg: `Criando criativo ${cr.name} (V${i + 1}, ${j + 1}/${creatives.length})`, step: step++, total: totalSteps });
 
-        const crBody = { ...buildDynamicCreativeBody(cr, copies, page_id, conversation_config || null), access_token: token };
+        const crBody = { ...buildCreativeBody(cr, copies, page_id, conversation_config || null), access_token: token };
         const crRes  = await metaPost(`${META_BASE}/${acctId}/adcreatives`, crBody, `Criativo ${cr.name} V${i + 1}`);
         const creative_id = crRes.data?.id;
         if (!creative_id) throw new Error(`Meta não retornou creative_id para ${cr.name}`);

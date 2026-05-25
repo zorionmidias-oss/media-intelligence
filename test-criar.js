@@ -56,7 +56,7 @@ async function runTest() {
 
   const payload = {
     account_id      : ACCT,
-    campaign        : { name: campName, objective: 'OUTCOME_ENGAGEMENT', status: 'PAUSED', budget_type: 'ABO' },
+    campaign        : { name: campName, objective: 'OUTCOME_SALES', status: 'PAUSED', budget_type: 'ABO' },
     adset_template  : {
       pixel_id        : PIXEL_ID,
       conversion_event: 'CONTENT_VIEW',
