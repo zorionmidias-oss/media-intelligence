@@ -6188,20 +6188,29 @@ async function botWizLoadAccounts(){
   }
 }
 
-window.botWizSelectAccount=async function(id,nome,moeda,temToken){
+window.botWizSelectAccount=function(id,nome,moeda,temToken){
   document.querySelectorAll('#bwz-acct-list .bwz-acct-row').forEach(r=>r.classList.remove('on'));
   document.querySelector(`#bwz-acct-list .bwz-acct-row[data-id="${id}"]`)?.classList.add('on');
   BWZ.d.account_id=id;BWZ.d.account_nome=nome;BWZ.d.account_moeda=moeda;
   BWZ.pixels=[];BWZ.pages=[];BWZ.customAudiences=[];
-  // reset page selection
+  // reset page data
   BWZ.d.page_id='';BWZ.d.page_name='';BWZ.d.page_token=null;BWZ.d.page_slug='';BWZ.d.page_suffix='';
+  // reset page UI immediately — não esperar o fetch
+  const sel=document.getElementById('bwz-page-select');
+  sel.innerHTML='<option value="">Carregando páginas...</option>';
+  sel.disabled=true;sel.style.display='';
+  document.getElementById('bwz-page-confirm').style.display='none';
+  document.getElementById('bwz-page-banner').style.display='none';
   document.getElementById('bwz-slug-preview').style.display='none';
-  // show page field and load pages
+  // show field and fetch
   document.getElementById('bwz-page-field').style.display='';
   botWizLoadPages();
 };
 
 async function botWizLoadPages(){
+  // guard: se o usuário trocou de conta antes da resposta, descarta
+  BWZ._pagesReq=(BWZ._pagesReq||0)+1;
+  const reqId=BWZ._pagesReq;
   const sel=document.getElementById('bwz-page-select');
   const confirm=document.getElementById('bwz-page-confirm');
   const banner=document.getElementById('bwz-page-banner');
@@ -6212,7 +6221,9 @@ async function botWizLoadPages(){
   BWZ.pages=[];
   try{
     const r=await fetch(`/api/meta-resources/pages?account_id=${encodeURIComponent(BWZ.d.account_id)}`);
+    if(BWZ._pagesReq!==reqId)return;
     const data=await r.json();
+    if(BWZ._pagesReq!==reqId)return;
     if(data.pages&&data.pages.length){
       BWZ.pages=data.pages;
       sel.innerHTML='<option value="">Selecione uma página...</option>'+
@@ -6228,6 +6239,7 @@ async function botWizLoadPages(){
       banner.style.display='flex';
     }
   }catch(e){
+    if(BWZ._pagesReq!==reqId)return;
     sel.style.display='none';banner.style.display='flex';
     console.error('[bwz pages]',e.message);
   }
