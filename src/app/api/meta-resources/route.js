@@ -160,7 +160,7 @@ async function handler(req, res) {
         : null;
 
       if (pages.length > 0) {
-        const expires_at = new Date(Date.now() + 3600 * 1000).toISOString();
+        const expires_at = new Date(Date.now() + 5 * 60 * 1000).toISOString();
         await supabase.from('meta_resources_cache').upsert({
           account_id: acctId, resource_type: 'pages', query_hash: '',
           data: { pages }, expires_at,
