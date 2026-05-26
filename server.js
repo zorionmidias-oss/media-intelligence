@@ -13,7 +13,8 @@ const reportsGamHandler = require('./src/app/api/reports-gam/route');
 const gamStatusHandler  = require('./src/app/api/gam-status/route');
 const metasHandler = require('./src/app/api/metas/route');
 const { handler: notifHandler, marcarLida, marcarTodasLidas } = require('./src/app/api/notificacoes/route');
-const drilldownHandler = require('./src/app/api/drilldown/route');
+const drilldownHandler   = require('./src/app/api/drilldown/route');
+const gerenciadorHandler = require('./src/app/api/gerenciador/route');
 const funilHandler       = require('./src/app/api/funil/route');
 const funilBotoesHandler = require('./src/app/api/funil-botoes/route');
 const historicoHandler = require('./src/app/api/historico/route');
@@ -360,6 +361,102 @@ app.get('/api/utms', requireAuth, async (req, res) => {
 
 // ── Drilldown ─────────────────────────────────────────────────────────────────
 app.get('/api/drilldown/:utm', requireAuth, drilldownHandler);
+
+// ── Gerenciador ───────────────────────────────────────────────────────────────
+app.get('/api/gerenciador', requireAuth, gerenciadorHandler);
+
+// Campaign-level Meta actions
+app.post('/api/meta/campaign/:id/toggle', requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const { status, account_id } = req.body || {};
+  if (!status || !['ACTIVE','PAUSED'].includes(status))
+    return res.status(400).json({ error: 'status deve ser ACTIVE ou PAUSED' });
+  const { data: accounts } = await supabase.from('meta_accounts').select('*').eq('ativo', true);
+  let lastErr = 'Nenhuma conta ativa';
+  for (const acc of accounts || []) {
+    try {
+      const r = await axios.post(`${META_BASE}/${id}`, { status }, { params: { access_token: acc.access_token }, timeout: 15000 });
+      if (r.data?.success) return res.json({ ok: true });
+    } catch(e) { lastErr = e.response?.data?.error?.message || e.message; }
+  }
+  res.status(400).json({ error: lastErr });
+});
+
+app.post('/api/meta/campaign/:id/budget', requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const { daily_budget } = req.body || {};
+  if (!daily_budget) return res.status(400).json({ error: 'daily_budget é obrigatório' });
+  const { data: accounts } = await supabase.from('meta_accounts').select('*').eq('ativo', true);
+  let lastErr = 'Nenhuma conta ativa';
+  for (const acc of accounts || []) {
+    try {
+      const r = await axios.post(`${META_BASE}/${id}`, { daily_budget: Math.round(+daily_budget * 100) }, { params: { access_token: acc.access_token }, timeout: 15000 });
+      if (r.data?.success) return res.json({ ok: true });
+    } catch(e) { lastErr = e.response?.data?.error?.message || e.message; }
+  }
+  res.status(400).json({ error: lastErr });
+});
+
+app.delete('/api/meta/campaign/:id', requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const { data: accounts } = await supabase.from('meta_accounts').select('*').eq('ativo', true);
+  let lastErr = 'Nenhuma conta ativa';
+  for (const acc of accounts || []) {
+    try {
+      const r = await axios.delete(`${META_BASE}/${id}`, { params: { access_token: acc.access_token }, timeout: 15000 });
+      if (r.data?.success) return res.json({ ok: true });
+    } catch(e) { lastErr = e.response?.data?.error?.message || e.message; }
+  }
+  res.status(400).json({ error: lastErr });
+});
+
+app.delete('/api/meta/adset/:id', requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const { data: accounts } = await supabase.from('meta_accounts').select('*').eq('ativo', true);
+  let lastErr = 'Nenhuma conta ativa';
+  for (const acc of accounts || []) {
+    try {
+      const r = await axios.delete(`${META_BASE}/${id}`, { params: { access_token: acc.access_token }, timeout: 15000 });
+      if (r.data?.success) return res.json({ ok: true });
+    } catch(e) { lastErr = e.response?.data?.error?.message || e.message; }
+  }
+  res.status(400).json({ error: lastErr });
+});
+
+app.delete('/api/meta/ad/:id', requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const { data: accounts } = await supabase.from('meta_accounts').select('*').eq('ativo', true);
+  let lastErr = 'Nenhuma conta ativa';
+  for (const acc of accounts || []) {
+    try {
+      const r = await axios.delete(`${META_BASE}/${id}`, { params: { access_token: acc.access_token }, timeout: 15000 });
+      if (r.data?.success) return res.json({ ok: true });
+    } catch(e) { lastErr = e.response?.data?.error?.message || e.message; }
+  }
+  res.status(400).json({ error: lastErr });
+});
+
+// Fetch campaign details for duplication
+app.get('/api/meta/campaign/:id', requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const { data: accounts } = await supabase.from('meta_accounts').select('*').eq('ativo', true);
+  for (const acc of accounts || []) {
+    try {
+      const r = await axios.get(`${META_BASE}/${id}`, {
+        params: {
+          access_token: acc.access_token,
+          fields: 'id,name,objective,status,daily_budget,start_time,end_time,adsets{id,name,daily_budget,targeting,start_time,end_time}',
+        },
+        timeout: 15000,
+      });
+      return res.json({ ...r.data, account_id: acc.ad_account_id });
+    } catch(e) {
+      const code = e.response?.data?.error?.code;
+      if (code !== 100 && code !== 803) continue; // try next account
+    }
+  }
+  res.status(404).json({ error: 'Campanha não encontrada em nenhuma conta ativa' });
+});
 
 // ── Análise de Funil ──────────────────────────────────────────────────────────
 app.get('/api/funil', requireAuth, funilHandler);
