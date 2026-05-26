@@ -121,32 +121,32 @@ async function handler(req, res) {
         access_token: p.access_token || null,
       });
 
-      const [resPromote, resMe] = await Promise.allSettled([
-        axios.get(`${META_BASE}/me/promote_pages`, {
+      const [resMe, resPromote] = await Promise.allSettled([
+        axios.get(`${META_BASE}/me/accounts`, {
           params: { fields: 'id,name,access_token,picture{url},fan_count', limit: 100, access_token: token },
           timeout: 15000,
         }),
-        axios.get(`${META_BASE}/me/accounts`, {
+        axios.get(`${META_BASE}/${acctId}/promote_pages`, {
           params: { fields: 'id,name,access_token,picture{url},fan_count', limit: 100, access_token: token },
           timeout: 15000,
         }),
       ]);
 
-      const fromPromote = resPromote.status === 'fulfilled'
-        ? (resPromote.value.data?.data || []).map(normalize) : [];
       const fromMe = resMe.status === 'fulfilled'
         ? (resMe.value.data?.data || []).map(normalize) : [];
+      const fromPromote = resPromote.status === 'fulfilled'
+        ? (resPromote.value.data?.data || []).map(normalize) : [];
 
-      if (resPromote.status === 'rejected')
-        console.error(`[pages] promote_pages falhou ${acctId}:`, resPromote.reason?.response?.data?.error?.message || resPromote.reason?.message);
       if (resMe.status === 'rejected')
         console.error(`[pages] /me/accounts falhou ${acctId}:`, resMe.reason?.response?.data?.error?.message || resMe.reason?.message);
+      if (resPromote.status === 'rejected')
+        console.error(`[pages] promote_pages falhou ${acctId}:`, resPromote.reason?.response?.data?.error?.message || resPromote.reason?.message);
 
-      console.log(`[pages] promote_pages → ${fromPromote.length} | /me/accounts → ${fromMe.length}`);
+      console.log(`[pages] /me/accounts → ${fromMe.length} | promote_pages → ${fromPromote.length}`);
 
-      // Merge deduplicando por id; promote_pages tem prioridade (pode trazer page token)
+      // /me/accounts é fonte primária; promote_pages adiciona páginas BM extras sem duplicar
       const seen = new Map();
-      for (const p of [...fromPromote, ...fromMe]) {
+      for (const p of [...fromMe, ...fromPromote]) {
         if (!seen.has(p.id)) seen.set(p.id, p);
       }
       const pages = [...seen.values()];
@@ -154,8 +154,8 @@ async function handler(req, res) {
       const lastError = pages.length === 0 ? 'TOKEN_MISSING_PERMISSIONS' : null;
       const lastDetail = pages.length === 0
         ? [
-            resPromote.status === 'rejected' ? resPromote.reason?.response?.data?.error?.message : null,
             resMe.status === 'rejected' ? resMe.reason?.response?.data?.error?.message : null,
+            resPromote.status === 'rejected' ? resPromote.reason?.response?.data?.error?.message : null,
           ].filter(Boolean).join(' | ') || 'Token sem permissões pages_show_list/pages_read_engagement — renove o token'
         : null;
 
