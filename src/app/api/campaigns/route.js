@@ -155,10 +155,80 @@ function buildCreativeBody(creative, copies, page_id, conversation_config) {
   };
 }
 
+// ── DIRETO payload builders ───────────────────────────────────────────────────
+
+function buildAdsetBodyDireto(acctId, template, name, campaign_id) {
+  const targeting = {
+    geo_locations: template.geo_locations || { countries: ['BR'] },
+    age_min: template.age_min || 18,
+  };
+  if (template.age_max && template.age_max < 65) targeting.age_max = template.age_max;
+  if (template.locales?.length)           targeting.locales = template.locales;
+  if (template.genders?.length)           targeting.genders = template.genders;
+  if (template.interests?.length)
+    targeting.flexible_spec = [{ interests: template.interests }];
+  if (template.custom_audiences?.length)
+    targeting.custom_audiences = template.custom_audiences.map(a =>
+      typeof a === 'string' ? { id: a } : a
+    );
+
+  const body = {
+    name,
+    campaign_id: campaign_id || '<CAMPAIGN_ID>',
+    daily_budget: template.daily_budget,
+    promoted_object: {
+      pixel_id: template.pixel_id,
+      custom_event_type: 'OTHER',
+      custom_conversion_id: template.custom_conversion_id || '1187119583443241',
+      smart_pse_enabled: false,
+    },
+    optimization_goal: 'OFFSITE_CONVERSIONS',
+    billing_event: 'IMPRESSIONS',
+    bid_strategy: 'LOWEST_COST_WITHOUT_CAP',
+    targeting: { ...targeting, targeting_automation: { advantage_audience: 1 } },
+    attribution_spec: [
+      { event_type: 'CLICK_THROUGH', window_days: 7 },
+      { event_type: 'VIEW_THROUGH',  window_days: 1 },
+    ],
+    status: 'PAUSED',
+    start_time: template.start_time,
+  };
+  if (template.end_time) body.end_time = template.end_time;
+  return body;
+}
+
+function buildCreativeBodyDireto(creative, copies, page_id, url_destino) {
+  const utm_source = creative.name;
+  const dest_url = url_destino
+    ? `${url_destino}${url_destino.includes('?') ? '&' : '?'}utm_source=${encodeURIComponent(utm_source)}`
+    : `https://example.com?utm_source=${encodeURIComponent(utm_source)}`;
+
+  const link_data = {
+    message: copies.texts[0],
+    name: copies.headlines[0],
+    ...(copies.descriptions?.[0] ? { description: copies.descriptions[0] } : {}),
+    link: dest_url,
+    call_to_action: { type: 'LEARN_MORE' },
+  };
+
+  if (creative.video_id) {
+    link_data.video_id = creative.video_id;
+    if (creative.image_hash) link_data.image_hash = creative.image_hash; // thumbnail
+  } else if (creative.image_hash) {
+    link_data.image_hash = creative.image_hash;
+  }
+
+  return {
+    name: creative.name,
+    object_story_spec: { page_id, link_data },
+  };
+}
+
 // ── dry-run ───────────────────────────────────────────────────────────────────
 async function dryRunHandler(req, res) {
   try {
-    const { account_id, campaign, adset_template, adset_names, adset_creatives, copies, page_id, conversation_config, url_tags } = req.body || {};
+    const { account_id, type, campaign, adset_template, adset_names, adset_creatives, copies, page_id, conversation_config, url_tags, url_destino } = req.body || {};
+    const isDireto = type === 'DIRETO';
 
     if (!account_id || !campaign)
       return res.status(400).json({ error: 'account_id e campaign são obrigatórios' });
@@ -182,16 +252,20 @@ async function dryRunHandler(req, res) {
         : [{ name: '<CREATIVE>', image_hash: '<HASH>' }];
       steps.push({
         step: steps.length + 1,
-        description: `Criar Conjunto V${i + 1}: ${name}`,
+        description: `Criar Conjunto ${i + 1}: ${name}`,
         endpoint: `POST ${META_BASE}/${acctId}/adsets`,
-        body: buildAdsetBody(acctId, tpl, name, '<CAMPAIGN_ID>', page_id),
+        body: isDireto
+          ? buildAdsetBodyDireto(acctId, tpl, name, '<CAMPAIGN_ID>')
+          : buildAdsetBody(acctId, tpl, name, '<CAMPAIGN_ID>', page_id),
       });
       crs.forEach(cr => {
         steps.push({
           step: steps.length + 1,
           description: `Criar Criativo ${cr.name} (conjunto ${i + 1})`,
           endpoint: `POST ${META_BASE}/${acctId}/adcreatives`,
-          body: buildCreativeBody(cr, cp, page_id || '<PAGE_ID>', conversation_config || null),
+          body: isDireto
+            ? buildCreativeBodyDireto(cr, cp, page_id || '<PAGE_ID>', url_destino || '')
+            : buildCreativeBody(cr, cp, page_id || '<PAGE_ID>', conversation_config || null),
         });
         steps.push({
           step: steps.length + 1,
@@ -229,8 +303,10 @@ async function dryRunHandler(req, res) {
 
 // ── criar — SSE streaming ─────────────────────────────────────────────────────
 async function criarHandler(req, res) {
-  const { account_id, campaign, adset_template, adset_names, adset_creatives, copies, page_id, conversation_config, url_tags } = req.body || {};
-  console.log('[criar] conversation_config recebido:', JSON.stringify(req.body.conversation_config));
+  const { account_id, type, campaign, adset_template, adset_names, adset_creatives, copies, page_id, conversation_config, url_tags, url_destino } = req.body || {};
+  const isDireto = type === 'DIRETO';
+
+  if (!isDireto) console.log('[criar] conversation_config recebido:', JSON.stringify(req.body.conversation_config));
 
   if (!account_id || !campaign || !adset_template || !adset_names?.length || !adset_creatives?.length || !copies)
     return res.status(400).json({ error: 'Payload incompleto: account_id, campaign, adset_template, adset_names, adset_creatives e copies são obrigatórios' });
@@ -350,7 +426,9 @@ async function criarHandler(req, res) {
       const creatives = adset_creatives[i] || [];
       send('progress', { msg: `Criando conjunto ${i + 1} de ${adset_names.length}: ${name}`, step: step++, total: totalSteps });
 
-      const asBody = { ...buildAdsetBody(acctId, resolvedTemplate, name, campaign_id, page_id), access_token: token };
+      const asBody = isDireto
+        ? { ...buildAdsetBodyDireto(acctId, resolvedTemplate, name, campaign_id), access_token: token }
+        : { ...buildAdsetBody(acctId, resolvedTemplate, name, campaign_id, page_id), access_token: token };
       const asRes  = await metaPost(`${META_BASE}/${acctId}/adsets`, asBody, `Conjunto V${i + 1}`);
       const adset_id = asRes.data?.id;
       if (!adset_id) throw new Error(`Meta não retornou adset_id para ${name}`);
@@ -360,8 +438,10 @@ async function criarHandler(req, res) {
         const cr = creatives[j];
         send('progress', { msg: `Criando criativo ${cr.name} (V${i + 1}, ${j + 1}/${creatives.length})`, step: step++, total: totalSteps });
 
-        console.log('[criar] conversation_config para criativo:', JSON.stringify(conversation_config));
-        const crBody = { ...buildCreativeBody(cr, copies, page_id, conversation_config || null), access_token: token };
+        if (!isDireto) console.log('[criar] conversation_config para criativo:', JSON.stringify(conversation_config));
+        const crBody = isDireto
+          ? { ...buildCreativeBodyDireto(cr, copies, page_id, url_destino || ''), access_token: token }
+          : { ...buildCreativeBody(cr, copies, page_id, conversation_config || null), access_token: token };
         console.log(`[criar] adcreative payload: ${JSON.stringify({ ...crBody, access_token: '[REDACTED]' })}`);
         const crRes  = await metaPost(`${META_BASE}/${acctId}/adcreatives`, crBody, `Criativo ${cr.name} V${i + 1}`);
         const creative_id = crRes.data?.id;

@@ -918,7 +918,7 @@
   <div class="sb-logo">
     <span class="logo">2Junior's</span>
   </div>
-  <button class="btn-criar-campanha" onclick="botWizOpen()">+ Criar Campanha</button>
+  <button class="btn-criar-campanha" onclick="openCampTypeModal()">+ Criar Campanha</button>
   <nav class="sb-nav">
     <button class="nav-btn on" onclick="nav('overview',this)">
       <span class="nav-ind"></span>
@@ -1520,7 +1520,7 @@
           <div class="hdr-actions">
             <button class="btn-outline" onclick="templatesSeed()" title="Inserir templates de exemplo">+ Seed</button>
             <button class="btn-outline" onclick="abrirWizard(null)">+ Novo Template</button>
-            <button class="btn-primary" onclick="botWizOpen()">&#129302; Criar Campanha BOT</button>
+            <button class="btn-primary" onclick="openCampTypeModal()">+ Criar Campanha</button>
           </div>
         </div>
 
@@ -5392,7 +5392,57 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
 .bwz-json-pre{background:var(--bg);border:1px solid var(--border);border-radius:.5rem;padding:1rem;font-family:ui-monospace,SFMono-Regular,"SF Mono",monospace;font-size:.6875rem;line-height:1.7;white-space:pre;overflow:auto;max-height:60vh;color:var(--fg);tab-size:2}
 .bwz-inline-err{background:var(--danger-soft);border:1px solid color-mix(in oklch,var(--danger) 35%,transparent);border-radius:.5rem;padding:.625rem .875rem;font-size:.8125rem;color:var(--danger);margin-top:.5rem;display:none}
 .bwz-inline-err.on{display:block}
+
+/* ── Camp-type modal ── */
+.camp-type-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:400;opacity:0;pointer-events:none;transition:opacity .18s}
+.camp-type-overlay.on{opacity:1;pointer-events:all}
+.camp-type-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:2rem 1.75rem;width:min(480px,95vw);box-shadow:var(--shadow-lg);animation:wiz-slide-in .22s cubic-bezier(.22,1,.36,1)}
+.camp-type-card h2{font-size:1.25rem;font-weight:700;margin:0 0 1.5rem;text-align:center}
+.camp-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.camp-type-opt{border:2px solid var(--border);border-radius:.875rem;padding:1.5rem 1rem;cursor:pointer;text-align:center;transition:border-color .15s,transform .12s,box-shadow .15s;background:var(--bg)}
+.camp-type-opt:hover{border-color:var(--primary);transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.camp-type-opt .cto-icon{font-size:2.5rem;margin-bottom:.75rem}
+.camp-type-opt .cto-title{font-size:1rem;font-weight:700;margin-bottom:.25rem}
+.camp-type-opt .cto-desc{font-size:.8125rem;color:var(--muted)}
+
+/* ── DRZ (Direto wizard) ── */
+.drz-url-preview{font-size:.75rem;font-family:ui-monospace,SFMono-Regular,monospace;background:var(--bg);border:1px solid var(--border);border-radius:.5rem;padding:.5rem .75rem;color:var(--muted);word-break:break-all;margin-top:.375rem;display:none}
+.drz-url-preview.on{display:block}
+.drz-media-grid{display:grid;gap:.75rem;margin-top:.75rem}
+.drz-grupo{border:1px solid var(--border);border-radius:.75rem;padding:.75rem;background:var(--bg-2,var(--bg))}
+.drz-grupo-hdr{font-size:.8125rem;font-weight:600;color:var(--muted);margin-bottom:.5rem}
+.drz-slots-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem}
+.drz-slot{border:2px dashed var(--border);border-radius:.625rem;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;transition:border-color .15s;font-size:.75rem;color:var(--muted);text-align:center;padding:.25rem}
+.drz-slot:hover{border-color:var(--primary)}
+.drz-slot.has-media{border-style:solid;border-color:var(--primary)}
+.drz-slot img,.drz-slot video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:.5rem}
+.drz-slot .drz-slot-rm{position:absolute;top:3px;right:3px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;z-index:2}
+.drz-slot .drz-slot-lbl{font-size:.6875rem;margin-top:.25rem;color:var(--muted);z-index:1}
+.drz-slot.uploading::after{content:'';position:absolute;inset:0;background:rgba(0,0,0,.35);border-radius:.5rem}
+.drz-slot .drz-spin{position:absolute;z-index:3;width:28px;height:28px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+.drz-naming-preview{font-size:.8rem;font-family:ui-monospace,SFMono-Regular,monospace;background:var(--bg);border:1px solid var(--border);border-radius:.5rem;padding:.625rem .875rem;color:var(--primary);margin-top:.375rem;white-space:pre-wrap}
+.drz-inline-err{background:var(--danger-soft);border:1px solid color-mix(in oklch,var(--danger) 35%,transparent);border-radius:.5rem;padding:.625rem .875rem;font-size:.8125rem;color:var(--danger);margin-top:.5rem;display:none}
+.drz-inline-err.on{display:block}
 </style>
+
+<!-- ═══ CAMP-TYPE MODAL ═══ -->
+<div id="camp-type-overlay" class="camp-type-overlay" onclick="if(event.target===this)closeCampTypeModal()">
+ <div class="camp-type-card">
+  <h2>Qual tipo de campanha?</h2>
+  <div class="camp-type-grid">
+   <div class="camp-type-opt" onclick="chooseCampType('BOT')">
+    <div class="cto-icon">&#129302;</div>
+    <div class="cto-title">BOT</div>
+    <div class="cto-desc">Click-to-Messenger</div>
+   </div>
+   <div class="camp-type-opt" onclick="chooseCampType('DIRETO')">
+    <div class="cto-icon">&#128279;</div>
+    <div class="cto-title">Direto</div>
+    <div class="cto-desc">Tráfego Direto</div>
+   </div>
+  </div>
+ </div>
+</div>
 
 <!-- ═══ BOT WIZARD OVERLAY ═══ -->
 <div id="bot-wiz-overlay" class="wizard-overlay" style="display:none;z-index:250" onclick="if(event.target===this)botWizCancel()">
@@ -5778,6 +5828,235 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
   <div class="modal-actions" style="margin-top:.5rem">
    <button class="btn btn-s" onclick="document.getElementById('bwz-confirm-overlay').classList.remove('on')">Cancelar</button>
    <button class="btn btn-p" onclick="botWizPublish()">Confirmar e criar</button>
+  </div>
+ </div>
+</div>
+
+<!-- ═══ DIRETO WIZARD OVERLAY ═══ -->
+<div id="drz-overlay" class="wizard-overlay" style="display:none;z-index:250" onclick="if(event.target===this)drzCancel()">
+ <div id="drz-modal" class="wizard-modal" style="max-width:800px">
+  <div class="wizard-hdr">
+   <h3>&#128279; Criar Campanha Direto</h3>
+   <button class="wizard-close" onclick="drzCancel()">&#215;</button>
+  </div>
+  <div class="wizard-steps-bar" style="overflow-x:auto">
+   <div class="drz-indicator active" data-step="1"><div class="num">1</div><div class="lbl">Conta</div></div>
+   <div class="step-sep"></div>
+   <div class="drz-indicator" data-step="2"><div class="num">2</div><div class="lbl">Campanha</div></div>
+   <div class="step-sep"></div>
+   <div class="drz-indicator" data-step="3"><div class="num">3</div><div class="lbl">Pixel</div></div>
+   <div class="step-sep"></div>
+   <div class="drz-indicator" data-step="4"><div class="num">4</div><div class="lbl">Público</div></div>
+   <div class="step-sep"></div>
+   <div class="drz-indicator" data-step="5"><div class="num">5</div><div class="lbl">Criativos</div></div>
+   <div class="step-sep"></div>
+   <div class="drz-indicator" data-step="6"><div class="num">6</div><div class="lbl">Revisar</div></div>
+  </div>
+
+  <!-- Step 1: Conta + Página -->
+  <div class="wizard-body" id="drz-step-1">
+   <div class="wiz-section">
+    <label class="wiz-label">Conta Meta</label>
+    <select id="drz-account-sel" class="wiz-select" onchange="drzSelectAccount(this.value)">
+     <option value="">Selecione a conta…</option>
+    </select>
+   </div>
+   <div class="wiz-section" id="drz-page-section" style="display:none">
+    <label class="wiz-label">Página do Facebook</label>
+    <select id="drz-page-sel" class="wiz-select" onchange="drzSelectPage(this.value)">
+     <option value="">Selecione a página…</option>
+    </select>
+    <div id="drz-page-loading" class="bwz-page-loading" style="display:none">Buscando páginas…</div>
+    <div id="drz-page-confirm" class="bwz-page-confirm" style="display:none"></div>
+    <div id="drz-no-pages-banner" class="bwz-no-pages-banner" style="display:none">Nenhuma página encontrada para esta conta.</div>
+   </div>
+   <div id="drz-step1-err" class="drz-inline-err"></div>
+  </div>
+
+  <!-- Step 2: Naming + N conjuntos -->
+  <div class="wizard-body" id="drz-step-2" style="display:none">
+   <div class="wiz-row-2">
+    <div class="wiz-section">
+     <label class="wiz-label">SIGLA_PAIS</label>
+     <input id="drz-sigla_pais" class="wiz-input" value="NG" maxlength="8" oninput="drzUpdatePreview()">
+    </div>
+    <div class="wiz-section">
+     <label class="wiz-label">TEMA</label>
+     <input id="drz-tema" class="wiz-input" placeholder="RELA" maxlength="20" oninput="drzUpdatePreview()">
+    </div>
+    <div class="wiz-section">
+     <label class="wiz-label">IDIOMA</label>
+     <input id="drz-idioma" class="wiz-input" value="PT" maxlength="8" oninput="drzUpdatePreview()">
+    </div>
+    <div class="wiz-section">
+     <label class="wiz-label">NUMERO</label>
+     <input id="drz-numero" class="wiz-input" value="0001" maxlength="8" oninput="drzUpdatePreview()">
+    </div>
+   </div>
+   <div class="wiz-section" style="margin-top:.75rem">
+    <label class="wiz-label">N conjuntos</label>
+    <input id="drz-n-conjuntos" class="wiz-input" type="number" value="2" min="1" max="20" style="width:80px" oninput="drzUpdatePreview()">
+    <span class="muted" style="font-size:.8125rem;margin-left:.5rem">× 3 criativos = <strong id="drz-total-ads">6</strong> ads</span>
+   </div>
+   <div class="wiz-section">
+    <label class="wiz-label">Preview</label>
+    <div class="drz-naming-preview" id="drz-naming-preview">…</div>
+   </div>
+   <div class="wiz-section">
+    <label class="wiz-label">Nome da campanha</label>
+    <input id="drz-campaign-name" class="wiz-input" oninput="DRZ.d.campNameEdited=true">
+   </div>
+   <div class="wiz-row-2" style="margin-top:.75rem">
+    <div class="wiz-section">
+     <label class="wiz-label">Budget</label>
+     <div class="toggle-group">
+      <button id="drz-abo-btn" class="tgl-btn on" onclick="drzSetBudgetType('ABO')">ABO</button>
+      <button id="drz-cbo-btn" class="tgl-btn" onclick="drzSetBudgetType('CBO')">CBO</button>
+     </div>
+    </div>
+    <div class="wiz-section">
+     <label class="wiz-label">Status inicial</label>
+     <div class="toggle-group">
+      <button id="drz-paused-btn" class="tgl-btn on" onclick="drzSetPaused(true)">Pausada</button>
+      <button id="drz-active-btn" class="tgl-btn" onclick="drzSetPaused(false)">Ativa</button>
+     </div>
+    </div>
+   </div>
+   <div id="drz-step2-err" class="drz-inline-err"></div>
+  </div>
+
+  <!-- Step 3: Pixel + budget + datas -->
+  <div class="wizard-body" id="drz-step-3" style="display:none">
+   <div class="wiz-section">
+    <label class="wiz-label">Pixel</label>
+    <select id="drz-pixel-sel" class="wiz-select" onchange="DRZ.d.pixel_id=this.value">
+     <option value="">Selecione…</option>
+    </select>
+    <div id="drz-pixel-loading" style="display:none;font-size:.8125rem;color:var(--muted);margin-top:.25rem">Buscando pixels…</div>
+   </div>
+   <div class="wiz-section">
+    <label class="wiz-label">ID Conversão Customizada</label>
+    <input id="drz-custom-conv-id" class="wiz-input" value="1187119583443241">
+   </div>
+   <div class="wiz-section">
+    <label class="wiz-label">Orçamento diário por conjunto (R$)</label>
+    <input id="drz-budget" class="wiz-input" type="number" value="7" min="1" step="0.5" style="width:120px">
+   </div>
+   <div class="wiz-row-2">
+    <div class="wiz-section">
+     <label class="wiz-label">Data início</label>
+     <input id="drz-start-date" class="wiz-input" placeholder="AAAA-MM-DD" readonly>
+    </div>
+    <div class="wiz-section">
+     <label class="wiz-label">Data fim (opcional)</label>
+     <input id="drz-end-date" class="wiz-input" placeholder="AAAA-MM-DD" readonly>
+    </div>
+   </div>
+   <div id="drz-step3-err" class="drz-inline-err"></div>
+  </div>
+
+  <!-- Step 4: Público -->
+  <div class="wizard-body" id="drz-step-4" style="display:none">
+   <div class="wiz-row-2">
+    <div class="wiz-section">
+     <label class="wiz-label">Idade mín.</label>
+     <input id="drz-age-min" class="wiz-input" type="number" value="18" min="18" max="65" style="width:80px">
+    </div>
+    <div class="wiz-section">
+     <label class="wiz-label">Idade máx.</label>
+     <input id="drz-age-max" class="wiz-input" type="number" value="65" min="18" max="65" style="width:80px" placeholder="sem limite">
+    </div>
+    <div class="wiz-section">
+     <label class="wiz-label">Género</label>
+     <select id="drz-gender" class="wiz-select" style="width:auto">
+      <option value="0">Todos</option>
+      <option value="1">Masculino</option>
+      <option value="2">Feminino</option>
+     </select>
+    </div>
+   </div>
+   <div class="wiz-section">
+    <label class="wiz-label">Países</label>
+    <div id="drz-sel-countries" class="bwz-tags-row"></div>
+    <div class="bwz-search-wrap" style="margin-top:.375rem">
+     <input id="drz-country-q" class="wiz-input" placeholder="Buscar país…" oninput="drzCountrySearch(this.value)">
+     <div id="drz-country-drop" class="bwz-dropdown"></div>
+    </div>
+   </div>
+   <div class="wiz-section">
+    <label class="wiz-label">Idiomas</label>
+    <div id="drz-sel-locales" class="bwz-tags-row"></div>
+    <div class="bwz-search-wrap" style="margin-top:.375rem">
+     <input id="drz-locale-q" class="wiz-input" placeholder="Buscar idioma…" oninput="drzLocaleSearch(this.value)">
+     <div id="drz-locale-drop" class="bwz-dropdown"></div>
+    </div>
+   </div>
+   <div class="wiz-section">
+    <label class="wiz-label">Interesses</label>
+    <div id="drz-sel-interests" class="bwz-tags-row"></div>
+    <div class="bwz-search-wrap" style="margin-top:.375rem">
+     <input id="drz-interest-q" class="wiz-input" placeholder="Buscar interesse…" oninput="drzInterestSearch(this.value)">
+     <div id="drz-interest-drop" class="bwz-dropdown"></div>
+    </div>
+   </div>
+   <div class="wiz-section">
+    <label class="wiz-label">Públicos customizados</label>
+    <div id="drz-sel-ca" class="bwz-tags-row"></div>
+    <select id="drz-ca-sel" class="wiz-select" onchange="drzAddCA(this.value);this.value=''">
+     <option value="">Adicionar público…</option>
+    </select>
+    <div id="drz-ca-loading" style="display:none;font-size:.8125rem;color:var(--muted);margin-top:.25rem">Carregando…</div>
+   </div>
+   <div id="drz-step4-err" class="drz-inline-err"></div>
+  </div>
+
+  <!-- Step 5: URL + criativos + copies -->
+  <div class="wizard-body" id="drz-step-5" style="display:none">
+   <div class="wiz-section">
+    <label class="wiz-label">URL de destino</label>
+    <input id="drz-url-destino" class="wiz-input" placeholder="https://exemplo.com/landing" oninput="drzUpdateUrlPreview()">
+    <div id="drz-url-preview" class="drz-url-preview"></div>
+   </div>
+   <div class="wiz-section" style="margin-top:1rem">
+    <label class="wiz-label">Criativos <span class="muted" style="font-size:.8125rem">(<span id="drz-grupos-count">2</span> conjuntos × 3 = <span id="drz-slots-count">6</span> slots)</span></label>
+    <div id="drz-media-grid" class="drz-media-grid"></div>
+   </div>
+   <div class="wiz-section" style="margin-top:1.25rem">
+    <label class="wiz-label">Copies</label>
+    <div class="bwz-copies-block" style="margin-top:.5rem">
+     <label class="wiz-label" style="font-size:.8rem">Textos (primary text)</label>
+     <div id="drz-texts-container"></div>
+     <button class="btn-outline" style="margin-top:.375rem;font-size:.8rem" onclick="drzAddCopyField('text')">+ Texto</button>
+    </div>
+    <div class="bwz-copies-block" style="margin-top:.75rem">
+     <label class="wiz-label" style="font-size:.8rem">Títulos (headline)</label>
+     <div id="drz-headlines-container"></div>
+     <button class="btn-outline" style="margin-top:.375rem;font-size:.8rem" onclick="drzAddCopyField('headline')">+ Título</button>
+    </div>
+    <div class="bwz-copies-block" style="margin-top:.75rem">
+     <label class="wiz-label" style="font-size:.8rem">Descrições</label>
+     <div id="drz-descs-container"></div>
+     <button class="btn-outline" style="margin-top:.375rem;font-size:.8rem" onclick="drzAddCopyField('desc')">+ Descrição</button>
+    </div>
+   </div>
+   <div id="drz-step5-err" class="drz-inline-err"></div>
+  </div>
+
+  <!-- Step 6: Resumo -->
+  <div class="wizard-body" id="drz-step-6" style="display:none">
+   <div id="drz-summary-block"></div>
+   <div style="display:flex;gap:.75rem;margin-top:1.25rem">
+    <button class="btn-outline" onclick="drzDryRun()" style="flex:1">&#128269; Dry-run</button>
+    <button class="btn-primary" onclick="drzShowConfirm()" id="drz-publish-btn" style="flex:1">&#128640; Publicar</button>
+   </div>
+   <div id="drz-dry-result" style="margin-top:1rem"></div>
+   <div id="drz-step6-err" class="drz-inline-err"></div>
+  </div>
+
+  <div class="wizard-ftr">
+   <button class="btn-outline" id="drz-back-btn" onclick="drzStep(DRZ.step-1)" style="display:none">&#8592; Voltar</button>
+   <div style="flex:1"></div>
+   <button class="btn-primary" id="drz-next-btn" onclick="drzNext()">Próximo &#8594;</button>
   </div>
  </div>
 </div>
@@ -6932,6 +7211,849 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 
 })();
+</script>
+
+<!-- ═══ CAMP-TYPE MODAL + DIRETO WIZARD JAVASCRIPT ═══ -->
+<script>
+'use strict';
+
+// ── Camp-type modal ───────────────────────────────────────────────────────────
+function openCampTypeModal(){
+  document.getElementById('camp-type-overlay').classList.add('on');
+}
+function closeCampTypeModal(){
+  document.getElementById('camp-type-overlay').classList.remove('on');
+}
+function chooseCampType(type){
+  closeCampTypeModal();
+  if(type==='BOT') botWizOpen();
+  else if(type==='DIRETO') drzOpen();
+}
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){
+    closeCampTypeModal();
+    drzCancel();
+  }
+});
+
+// ── DRZ state ─────────────────────────────────────────────────────────────────
+const DRZ = {
+  step:1,
+  accounts:[],pixels:[],pages:[],customAudiences:[],countries:[],locales:[],
+  interestTimer:null,fpStart:null,fpEnd:null,_pagesReq:0,
+  selInterests:[],selCountries:[{code:'BR',name:'Brasil'}],
+  selLocales:[{id:6,name:'Português (Brasil)'}],selCA:[],
+  mediaGroups:[], // array of arrays: [[{hash,video_id,preview_url},{...},{...}], ...]
+  d:{
+    account_id:'',account_nome:'',account_moeda:'BRL',
+    page_id:'',page_name:'',page_token:null,
+    sigla_pais:'NG',tema:'',idioma:'PT',numero:'0001',n_conjuntos:2,
+    campaign_name:'',campNameEdited:false,budget_type:'ABO',paused:true,
+    pixel_id:'',custom_conversion_id:'1187119583443241',
+    daily_budget:7,start_time:'',end_time:null,
+    age_min:18,age_max:65,gender:0,
+    url_destino:'',
+  }
+};
+window._DRZ=DRZ;
+
+// ── naming helpers ────────────────────────────────────────────────────────────
+function drzSlug(){
+  const d=DRZ.d;
+  const pais=(d.sigla_pais||'NG').toUpperCase();
+  const tema=(d.tema||'').toUpperCase()||'TEMA';
+  const num=d.numero||'0001';
+  return `${pais}_${tema}_DIRETO_${num}`;
+}
+function drzCampName(){
+  const d=DRZ.d;
+  const slug=drzSlug();
+  const pais=(d.sigla_pais||'NG').toUpperCase();
+  return `[MKUKER] [${slug}] [DIRETO${pais}] CP01`;
+}
+function drzAdsetNames(){
+  const n=DRZ.d.n_conjuntos||2;
+  const slug=drzSlug();
+  const pais=(DRZ.d.sigla_pais||'NG').toUpperCase();
+  return Array.from({length:n},(_,i)=>`[${slug}] [DIRETO${pais}${String(i+1).padStart(2,'0')}]`);
+}
+function drzCreativeName(conjIdx,slotIdx){
+  const pais=(DRZ.d.sigla_pais||'NG').toLowerCase();
+  const base=`direto-${pais}-${String(conjIdx+1).padStart(2,'0')}-fb`;
+  return slotIdx===0 ? base : `${base}-${slotIdx+1}`;
+}
+
+// ── open / cancel ─────────────────────────────────────────────────────────────
+function drzOpen(){
+  // reset state
+  Object.assign(DRZ.d,{
+    account_id:'',account_nome:'',account_moeda:'BRL',
+    page_id:'',page_name:'',page_token:null,
+    sigla_pais:'NG',tema:'',idioma:'PT',numero:'0001',n_conjuntos:2,
+    campaign_name:'',campNameEdited:false,budget_type:'ABO',paused:true,
+    pixel_id:'',custom_conversion_id:'1187119583443241',
+    daily_budget:7,start_time:'',end_time:null,
+    age_min:18,age_max:65,gender:0,url_destino:'',
+  });
+  DRZ.selInterests=[];DRZ.selCountries=[{code:'BR',name:'Brasil'}];
+  DRZ.selLocales=[{id:6,name:'Português (Brasil)'}];DRZ.selCA=[];
+  DRZ.mediaGroups=[];DRZ.pixels=[];DRZ.pages=[];DRZ.customAudiences=[];
+  DRZ._pagesReq=0;
+
+  // populate accounts from BWZ accounts (shared)
+  DRZ.accounts=Array.isArray(window._BWZ?.accounts)?window._BWZ.accounts:[];
+  const sel=document.getElementById('drz-account-sel');
+  if(sel){
+    sel.innerHTML='<option value="">Selecione a conta…</option>';
+    DRZ.accounts.forEach(a=>{
+      const o=document.createElement('option');
+      o.value=a.id;o.textContent=`${a.nome} (${a.id})`;
+      sel.appendChild(o);
+    });
+  }
+
+  // reset UI fields
+  ['drz-sigla_pais','drz-tema','drz-idioma','drz-numero'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.value=DRZ.d[id.replace('drz-','')]||'';
+  });
+  const elN=document.getElementById('drz-n-conjuntos');
+  if(elN) elN.value=2;
+  const elBudget=document.getElementById('drz-budget');
+  if(elBudget) elBudget.value=7;
+  const elConvId=document.getElementById('drz-custom-conv-id');
+  if(elConvId) elConvId.value='1187119583443241';
+  const elUrl=document.getElementById('drz-url-destino');
+  if(elUrl) elUrl.value='';
+  document.getElementById('drz-url-preview')?.classList.remove('on');
+
+  // reset page section
+  document.getElementById('drz-page-section').style.display='none';
+  document.getElementById('drz-page-confirm').style.display='none';
+  document.getElementById('drz-no-pages-banner').style.display='none';
+
+  // default budget/pause buttons
+  document.getElementById('drz-abo-btn')?.classList.add('on');
+  document.getElementById('drz-cbo-btn')?.classList.remove('on');
+  document.getElementById('drz-paused-btn')?.classList.add('on');
+  document.getElementById('drz-active-btn')?.classList.remove('on');
+
+  // copies: seed one of each
+  ['drz-texts-container','drz-headlines-container','drz-descs-container'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.innerHTML='';
+  });
+  drzAddCopyField('text');
+  drzAddCopyField('headline');
+
+  // rebuild media groups
+  drzRebuildMediaGrid();
+  drzUpdatePreview();
+
+  drzGoStep(1);
+  document.getElementById('drz-overlay').style.display='flex';
+  document.body.style.overflow='hidden';
+}
+
+function drzCancel(){
+  document.getElementById('drz-overlay').style.display='none';
+  document.body.style.overflow='';
+  if(DRZ.fpStart){DRZ.fpStart.destroy();DRZ.fpStart=null;}
+  if(DRZ.fpEnd){DRZ.fpEnd.destroy();DRZ.fpEnd=null;}
+}
+
+// ── step navigation ───────────────────────────────────────────────────────────
+function drzGoStep(n){
+  for(let i=1;i<=6;i++){
+    const body=document.getElementById(`drz-step-${i}`);
+    if(body) body.style.display=i===n?'':'none';
+    const ind=document.querySelector(`.drz-indicator[data-step="${i}"]`);
+    if(ind){ind.classList.toggle('active',i===n);ind.classList.toggle('done',i<n);}
+  }
+  DRZ.step=n;
+  const back=document.getElementById('drz-back-btn');
+  const next=document.getElementById('drz-next-btn');
+  if(back) back.style.display=n>1?'':'none';
+  if(next){
+    if(n===6){next.style.display='none';}
+    else{next.style.display='';next.textContent=n===5?'Revisar ↗':'Próximo →';}
+  }
+  // lazy loaders
+  if(n===3) drzLoadStep3();
+  if(n===4) drzLoadStep4();
+  if(n===5) drzLoadStep5();
+  if(n===6) drzBuildSummary();
+}
+
+function drzStep(n){if(n>=1&&n<=6)drzGoStep(n);}
+
+function drzNext(){
+  const err=drzValidateStep(DRZ.step);
+  if(err){drzShowErr(DRZ.step,err);return;}
+  drzClearErr(DRZ.step);
+  if(DRZ.step<6) drzGoStep(DRZ.step+1);
+}
+
+function drzShowErr(step,msg){
+  const el=document.getElementById(`drz-step${step}-err`);
+  if(!el)return;el.textContent=msg;el.classList.add('on');
+}
+function drzClearErr(step){
+  const el=document.getElementById(`drz-step${step}-err`);
+  if(el){el.textContent='';el.classList.remove('on');}
+}
+
+function drzValidateStep(s){
+  if(s===1){
+    if(!DRZ.d.account_id) return 'Selecione uma conta Meta';
+    if(!DRZ.d.page_id) return 'Selecione uma página';
+  }
+  if(s===2){
+    if(!DRZ.d.sigla_pais) return 'SIGLA_PAIS é obrigatório';
+    if(!DRZ.d.tema) return 'TEMA é obrigatório';
+    if(!DRZ.d.n_conjuntos||DRZ.d.n_conjuntos<1) return 'N conjuntos deve ser ≥ 1';
+  }
+  if(s===3){
+    if(!DRZ.d.pixel_id) return 'Selecione um pixel';
+    if(!DRZ.d.start_time) return 'Data de início é obrigatória';
+  }
+  if(s===5){
+    if(!DRZ.d.url_destino) return 'URL de destino é obrigatória';
+    const texts=drzGetCopies().texts;
+    if(!texts.length||!texts[0]) return 'Adicione ao menos um texto';
+    const headlines=drzGetCopies().headlines;
+    if(!headlines.length||!headlines[0]) return 'Adicione ao menos um título';
+  }
+  return null;
+}
+
+// ── Step 1: account + page ────────────────────────────────────────────────────
+function drzSelectAccount(val){
+  DRZ.d.account_id=val;
+  DRZ.d.page_id='';DRZ.d.page_name='';DRZ.d.page_token=null;
+  const acct=DRZ.accounts.find(a=>a.id===val);
+  if(acct){DRZ.d.account_nome=acct.nome||'';DRZ.d.account_moeda=acct.moeda||'BRL';}
+  const sec=document.getElementById('drz-page-section');
+  const sel=document.getElementById('drz-page-sel');
+  const confirm=document.getElementById('drz-page-confirm');
+  const noBanner=document.getElementById('drz-no-pages-banner');
+  const loading=document.getElementById('drz-page-loading');
+  if(!val){sec.style.display='none';return;}
+  sec.style.display='';
+  sel.innerHTML='<option value="">Selecione a página…</option>';
+  confirm.style.display='none';
+  noBanner.style.display='none';
+  if(loading) loading.style.display='';
+  const reqId=++DRZ._pagesReq;
+  fetch(`/api/meta-resources/pages?account_id=${encodeURIComponent(val)}`)
+    .then(r=>r.json()).then(data=>{
+      if(DRZ._pagesReq!==reqId)return;
+      if(loading) loading.style.display='none';
+      const pages=data.pages||[];
+      DRZ.pages=pages;
+      if(!pages.length){noBanner.style.display='';return;}
+      sel.innerHTML='<option value="">Selecione a página…</option>';
+      pages.forEach(p=>{
+        const o=document.createElement('option');
+        o.value=p.id;o.textContent=p.name;
+        sel.appendChild(o);
+      });
+      if(pages.length===1){sel.value=pages[0].id;drzSelectPage(pages[0].id);}
+    }).catch(()=>{
+      if(DRZ._pagesReq!==reqId)return;
+      if(loading) loading.style.display='none';
+      noBanner.style.display='';
+    });
+}
+
+function drzSelectPage(val){
+  DRZ.d.page_id=val;
+  const confirm=document.getElementById('drz-page-confirm');
+  if(!val){confirm.style.display='none';return;}
+  const page=DRZ.pages.find(p=>p.id===val);
+  if(page){
+    DRZ.d.page_name=page.name;
+    DRZ.d.page_token=page.access_token||null;
+    confirm.style.display='';
+    confirm.innerHTML=`<strong>${page.name}</strong><span class="muted" style="font-size:.8rem;margin-left:.5rem">${page.id}</span>`;
+  }
+}
+
+// ── Step 2: naming ────────────────────────────────────────────────────────────
+function drzUpdatePreview(){
+  // sync d from inputs
+  const mapFields={
+    'drz-sigla_pais':'sigla_pais','drz-tema':'tema',
+    'drz-idioma':'idioma','drz-numero':'numero',
+  };
+  Object.entries(mapFields).forEach(([id,key])=>{
+    const el=document.getElementById(id);
+    if(el) DRZ.d[key]=el.value.trim()||DRZ.d[key];
+  });
+  const nEl=document.getElementById('drz-n-conjuntos');
+  const n=parseInt(nEl?.value)||2;
+  DRZ.d.n_conjuntos=n;
+
+  const totalAds=n*3;
+  const elTotal=document.getElementById('drz-total-ads');
+  if(elTotal) elTotal.textContent=totalAds;
+
+  const names=drzAdsetNames();
+  const preview=document.getElementById('drz-naming-preview');
+  if(preview){
+    const lines=[`Campanha: ${drzCampName()}`,'','Conjuntos:'];
+    names.forEach(nm=>lines.push('  '+nm));
+    lines.push('','Criativos (ex conj.1):');
+    [0,1,2].forEach(j=>lines.push('  '+drzCreativeName(0,j)));
+    preview.textContent=lines.join('\n');
+  }
+
+  if(!DRZ.d.campNameEdited){
+    const el=document.getElementById('drz-campaign-name');
+    if(el) el.value=drzCampName();
+    DRZ.d.campaign_name=drzCampName();
+  }
+}
+
+function drzSetBudgetType(t){
+  DRZ.d.budget_type=t;
+  document.getElementById('drz-abo-btn')?.classList.toggle('on',t==='ABO');
+  document.getElementById('drz-cbo-btn')?.classList.toggle('on',t==='CBO');
+}
+function drzSetPaused(v){
+  DRZ.d.paused=v;
+  document.getElementById('drz-paused-btn')?.classList.toggle('on',v===true);
+  document.getElementById('drz-active-btn')?.classList.toggle('on',v===false);
+}
+
+// ── Step 3: pixel + datas ─────────────────────────────────────────────────────
+function drzLoadStep3(){
+  const loading=document.getElementById('drz-pixel-loading');
+  const sel=document.getElementById('drz-pixel-sel');
+  if(DRZ.pixels.length){
+    // already loaded
+  } else {
+    if(loading) loading.style.display='';
+    fetch(`/api/meta-resources/pixels?account_id=${encodeURIComponent(DRZ.d.account_id)}`)
+      .then(r=>r.json()).then(data=>{
+        if(loading) loading.style.display='none';
+        const pixels=Array.isArray(data)?data:(data.pixels||[]);
+        DRZ.pixels=pixels;
+        sel.innerHTML='<option value="">Selecione…</option>';
+        pixels.forEach(p=>{
+          const o=document.createElement('option');
+          o.value=p.id;o.textContent=`${p.name} (${p.id})`;
+          sel.appendChild(o);
+        });
+        if(DRZ.d.pixel_id){sel.value=DRZ.d.pixel_id;}
+        else if(pixels.length===1){sel.value=pixels[0].id;DRZ.d.pixel_id=pixels[0].id;}
+      }).catch(()=>{if(loading) loading.style.display='none';});
+  }
+
+  // flatpickr for dates
+  if(!DRZ.fpStart && typeof flatpickr!=='undefined'){
+    DRZ.fpStart=flatpickr('#drz-start-date',{
+      dateFormat:'Y-m-d',
+      onChange([d]){DRZ.d.start_time=d?d.toISOString().slice(0,10):'';}
+    });
+  }
+  if(!DRZ.fpEnd && typeof flatpickr!=='undefined'){
+    DRZ.fpEnd=flatpickr('#drz-end-date',{
+      dateFormat:'Y-m-d',
+      onChange([d]){DRZ.d.end_time=d?d.toISOString().slice(0,10):null;}
+    });
+  }
+}
+
+// ── Step 4: público ───────────────────────────────────────────────────────────
+function drzLoadStep4(){
+  // countries
+  if(!DRZ.countries.length){
+    fetch('/api/meta-resources/countries').then(r=>r.json()).then(data=>{
+      DRZ.countries=Array.isArray(data)?data:(data.countries||[]);
+      drzRenderCountryTags();
+    }).catch(()=>{});
+  } else { drzRenderCountryTags(); }
+
+  // locales
+  if(!DRZ.locales.length){
+    fetch('/api/meta-resources/locales').then(r=>r.json()).then(data=>{
+      DRZ.locales=Array.isArray(data)?data:(data.locales||[]);
+      drzRenderLocaleTags();
+    }).catch(()=>{});
+  } else { drzRenderLocaleTags(); }
+
+  // custom audiences
+  if(!DRZ.customAudiences.length){
+    const loading=document.getElementById('drz-ca-loading');
+    if(loading) loading.style.display='';
+    fetch(`/api/meta-resources/custom-audiences?account_id=${encodeURIComponent(DRZ.d.account_id)}`)
+      .then(r=>r.json()).then(data=>{
+        if(loading) loading.style.display='none';
+        const cas=Array.isArray(data)?data:(data.audiences||[]);
+        DRZ.customAudiences=cas;
+        const sel=document.getElementById('drz-ca-sel');
+        if(sel){
+          sel.innerHTML='<option value="">Adicionar público…</option>';
+          cas.forEach(a=>{
+            const o=document.createElement('option');
+            o.value=a.id;o.textContent=`${a.name} (~${(a.count||0).toLocaleString()})`;
+            sel.appendChild(o);
+          });
+        }
+      }).catch(()=>{if(loading) loading.style.display='none';});
+  }
+}
+
+function drzRenderCountryTags(){
+  const el=document.getElementById('drz-sel-countries');
+  if(!el)return;
+  el.innerHTML=DRZ.selCountries.map((c,i)=>
+    `<span class="bwz-tag">${c.name}<button onclick="DRZ.selCountries.splice(${i},1);drzRenderCountryTags()">×</button></span>`
+  ).join('');
+}
+function drzRenderLocaleTags(){
+  const el=document.getElementById('drz-sel-locales');
+  if(!el)return;
+  el.innerHTML=DRZ.selLocales.map((l,i)=>
+    `<span class="bwz-tag">${l.name}<button onclick="DRZ.selLocales.splice(${i},1);drzRenderLocaleTags()">×</button></span>`
+  ).join('');
+}
+function drzRenderInterestTags(){
+  const el=document.getElementById('drz-sel-interests');
+  if(!el)return;
+  el.innerHTML=DRZ.selInterests.map((t,i)=>
+    `<span class="bwz-tag">${t.name}<button onclick="DRZ.selInterests.splice(${i},1);drzRenderInterestTags()">×</button></span>`
+  ).join('');
+}
+function drzRenderCATags(){
+  const el=document.getElementById('drz-sel-ca');
+  if(!el)return;
+  el.innerHTML=DRZ.selCA.map((a,i)=>
+    `<span class="bwz-tag">${a.name}<button onclick="DRZ.selCA.splice(${i},1);drzRenderCATags()">×</button></span>`
+  ).join('');
+}
+
+function drzCountrySearch(q){
+  const drop=document.getElementById('drz-country-drop');
+  if(!drop)return;
+  if(q.length<1){drop.innerHTML='';drop.style.display='none';return;}
+  const results=DRZ.countries.filter(c=>
+    c.name.toLowerCase().includes(q.toLowerCase())||c.key?.toLowerCase().includes(q.toLowerCase())
+  ).slice(0,12);
+  if(!results.length){drop.innerHTML='';drop.style.display='none';return;}
+  drop.style.display='';
+  drop.innerHTML=results.map(c=>
+    `<div class="bwz-dd-item" onclick="drzAddCountry('${c.key}','${c.name.replace(/'/g,"\\'")}');document.getElementById('drz-country-q').value='';document.getElementById('drz-country-drop').style.display='none'">${c.name}</div>`
+  ).join('');
+}
+function drzAddCountry(code,name){
+  if(!DRZ.selCountries.find(c=>c.code===code)){
+    DRZ.selCountries.push({code,name});drzRenderCountryTags();
+  }
+}
+
+function drzLocaleSearch(q){
+  const drop=document.getElementById('drz-locale-drop');
+  if(!drop)return;
+  if(q.length<1){drop.innerHTML='';drop.style.display='none';return;}
+  const results=DRZ.locales.filter(l=>l.name.toLowerCase().includes(q.toLowerCase())).slice(0,12);
+  if(!results.length){drop.innerHTML='';drop.style.display='none';return;}
+  drop.style.display='';
+  drop.innerHTML=results.map(l=>
+    `<div class="bwz-dd-item" onclick="drzAddLocale(${l.id},'${l.name.replace(/'/g,"\\'")}');document.getElementById('drz-locale-q').value='';document.getElementById('drz-locale-drop').style.display='none'">${l.name}</div>`
+  ).join('');
+}
+function drzAddLocale(id,name){
+  if(!DRZ.selLocales.find(l=>l.id===id)){
+    DRZ.selLocales.push({id,name});drzRenderLocaleTags();
+  }
+}
+
+function drzInterestSearch(q){
+  const drop=document.getElementById('drz-interest-drop');
+  if(!drop)return;
+  if(q.length<2){drop.innerHTML='';drop.style.display='none';return;}
+  clearTimeout(DRZ.interestTimer);
+  DRZ.interestTimer=setTimeout(()=>{
+    fetch(`/api/meta-resources/interest-search?q=${encodeURIComponent(q)}&account_id=${encodeURIComponent(DRZ.d.account_id)}`)
+      .then(r=>r.json()).then(items=>{
+        drop.style.display='';
+        if(!items.length){drop.innerHTML='<div class="bwz-dd-item muted">Sem resultados</div>';return;}
+        drop.innerHTML=(Array.isArray(items)?items:[]).slice(0,10).map(i=>
+          `<div class="bwz-dd-item" onclick="drzAddInterest('${i.id}','${(i.name||'').replace(/'/g,"\\'")}');document.getElementById('drz-interest-q').value='';document.getElementById('drz-interest-drop').style.display='none'">${i.name}</div>`
+        ).join('');
+      }).catch(()=>{drop.innerHTML='';drop.style.display='none';});
+  },400);
+}
+function drzAddInterest(id,name){
+  if(!DRZ.selInterests.find(i=>i.id===id)){
+    DRZ.selInterests.push({id,name});drzRenderInterestTags();
+  }
+}
+function drzAddCA(val){
+  if(!val)return;
+  const ca=DRZ.customAudiences.find(a=>a.id===val);
+  if(ca&&!DRZ.selCA.find(a=>a.id===ca.id)){
+    DRZ.selCA.push({id:ca.id,name:ca.name});drzRenderCATags();
+  }
+}
+
+// ── Step 5: URL + media grid + copies ────────────────────────────────────────
+function drzLoadStep5(){
+  const n=DRZ.d.n_conjuntos||2;
+  const countEl=document.getElementById('drz-grupos-count');
+  const slotsEl=document.getElementById('drz-slots-count');
+  if(countEl) countEl.textContent=n;
+  if(slotsEl) slotsEl.textContent=n*3;
+  drzRebuildMediaGrid();
+  drzUpdateUrlPreview();
+}
+
+function drzRebuildMediaGrid(){
+  const n=DRZ.d.n_conjuntos||2;
+  // extend mediaGroups to n groups, preserve existing data
+  while(DRZ.mediaGroups.length<n){
+    DRZ.mediaGroups.push([{hash:null,video_id:null,preview_url:null},{hash:null,video_id:null,preview_url:null},{hash:null,video_id:null,preview_url:null}]);
+  }
+  DRZ.mediaGroups.length=n;
+  drzRenderGrid();
+}
+
+function drzRenderGrid(){
+  const grid=document.getElementById('drz-media-grid');
+  if(!grid)return;
+  grid.innerHTML='';
+  DRZ.mediaGroups.forEach((slots,gi)=>{
+    const adsetName=drzAdsetNames()[gi]||`Conjunto ${gi+1}`;
+    const grupo=document.createElement('div');
+    grupo.className='drz-grupo';
+    grupo.innerHTML=`<div class="drz-grupo-hdr">${adsetName}</div><div class="drz-slots-row" id="drz-slots-row-${gi}"></div>`;
+    grid.appendChild(grupo);
+    const row=document.getElementById(`drz-slots-row-${gi}`);
+    slots.forEach((slot,si)=>drzRenderSlot(row,gi,si,slot));
+  });
+}
+
+function drzRenderSlot(row,gi,si,slot){
+  const lbl=drzCreativeName(gi,si);
+  const div=document.createElement('div');
+  div.className='drz-slot'+(slot.hash||slot.video_id?' has-media':'');
+  div.id=`drz-slot-${gi}-${si}`;
+  div.title=lbl;
+  if(slot.uploading){
+    div.classList.add('uploading');
+    div.innerHTML=`<div class="drz-spin"></div><div class="drz-slot-lbl">${lbl}</div>`;
+  } else if(slot.preview_url){
+    if(slot.video_id){
+      div.innerHTML=`<video src="${slot.preview_url}" muted></video><button class="drz-slot-rm" onclick="event.stopPropagation();drzRemoveSlot(${gi},${si})">×</button><div class="drz-slot-lbl" style="position:relative;z-index:1">${lbl}</div>`;
+    } else {
+      div.innerHTML=`<img src="${slot.preview_url}"><button class="drz-slot-rm" onclick="event.stopPropagation();drzRemoveSlot(${gi},${si})">×</button><div class="drz-slot-lbl" style="position:relative;z-index:1">${lbl}</div>`;
+    }
+  } else {
+    div.innerHTML=`<span style="font-size:1.5rem">+</span><div class="drz-slot-lbl">${lbl}</div>`;
+  }
+  div.onclick=(e)=>{if(e.target.classList.contains('drz-slot-rm'))return;drzSlotClick(gi,si);};
+  row.appendChild(div);
+}
+
+function drzSlotClick(gi,si){
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime';
+  inp.onchange=()=>{if(inp.files[0])drzUploadSlot(gi,si,inp.files[0]);};
+  inp.click();
+}
+
+function drzRemoveSlot(gi,si){
+  DRZ.mediaGroups[gi][si]={hash:null,video_id:null,preview_url:null};
+  const row=document.getElementById(`drz-slots-row-${gi}`);
+  if(row){
+    const existing=document.getElementById(`drz-slot-${gi}-${si}`);
+    if(existing) existing.remove();
+    drzRenderSlot(row,gi,si,DRZ.mediaGroups[gi][si]);
+  }
+}
+
+function drzUploadSlot(gi,si,file){
+  DRZ.mediaGroups[gi][si]={hash:null,video_id:null,preview_url:null,uploading:true};
+  const row=document.getElementById(`drz-slots-row-${gi}`);
+  if(row){
+    const existing=document.getElementById(`drz-slot-${gi}-${si}`);
+    if(existing) existing.remove();
+    drzRenderSlot(row,gi,si,DRZ.mediaGroups[gi][si]);
+  }
+  const isVideo=/^video\//.test(file.type);
+  const endpoint=isVideo?'/api/meta-resources/upload-video':'/api/meta-resources/upload-image';
+  const fd=new FormData();
+  fd.append('account_id',DRZ.d.account_id);
+  fd.append('file',file);
+  if(isVideo) fd.append('title',drzCreativeName(gi,si));
+  fetch(endpoint,{method:'POST',body:fd})
+    .then(r=>r.json()).then(data=>{
+      if(data.error){throw new Error(data.detail||data.error);}
+      const preview=isVideo?(URL.createObjectURL(file)):data.url||URL.createObjectURL(file);
+      DRZ.mediaGroups[gi][si]={
+        hash:isVideo?null:(data.hash||null),
+        video_id:isVideo?(data.video_id||null):null,
+        preview_url:preview,uploading:false,
+      };
+      const r2=document.getElementById(`drz-slots-row-${gi}`);
+      const ex=document.getElementById(`drz-slot-${gi}-${si}`);
+      if(ex) ex.remove();
+      if(r2) drzRenderSlot(r2,gi,si,DRZ.mediaGroups[gi][si]);
+    }).catch(err=>{
+      DRZ.mediaGroups[gi][si]={hash:null,video_id:null,preview_url:null,uploading:false};
+      const r2=document.getElementById(`drz-slots-row-${gi}`);
+      const ex=document.getElementById(`drz-slot-${gi}-${si}`);
+      if(ex) ex.remove();
+      if(r2) drzRenderSlot(r2,gi,si,DRZ.mediaGroups[gi][si]);
+      alert('Erro ao enviar mídia: '+err.message);
+    });
+}
+
+function drzUpdateUrlPreview(){
+  const url=(document.getElementById('drz-url-destino')?.value||'').trim();
+  DRZ.d.url_destino=url;
+  const preview=document.getElementById('drz-url-preview');
+  if(!preview)return;
+  if(!url){preview.classList.remove('on');return;}
+  const exName=drzCreativeName(0,0);
+  const sep=url.includes('?')?'&':'?';
+  preview.textContent=`Exemplo: ${url}${sep}utm_source=${exName}`;
+  preview.classList.add('on');
+}
+
+// copies helpers
+function drzAddCopyField(type){
+  const map={text:'drz-texts-container',headline:'drz-headlines-container',desc:'drz-descs-container'};
+  const container=document.getElementById(map[type]);
+  if(!container)return;
+  const wrap=document.createElement('div');
+  wrap.className='bwz-copy-row';
+  wrap.style.cssText='display:flex;gap:.375rem;margin-top:.375rem';
+  const ta=document.createElement('textarea');
+  ta.className='wiz-input';ta.rows=2;ta.style.flex='1';
+  ta.placeholder=type==='text'?'Texto do anúncio…':type==='headline'?'Título…':'Descrição…';
+  const btn=document.createElement('button');
+  btn.className='btn-outline';btn.textContent='×';btn.title='Remover';
+  btn.style.cssText='align-self:flex-start;padding:.25rem .5rem';
+  btn.onclick=()=>wrap.remove();
+  wrap.appendChild(ta);wrap.appendChild(btn);
+  container.appendChild(wrap);
+}
+
+function drzGetCopies(){
+  const getCont=(id)=>Array.from(document.getElementById(id)?.querySelectorAll('textarea')||[]).map(t=>t.value.trim()).filter(Boolean);
+  return{texts:getCont('drz-texts-container'),headlines:getCont('drz-headlines-container'),descriptions:getCont('drz-descs-container')};
+}
+
+// ── Step 6: summary + publish ─────────────────────────────────────────────────
+function drzBuildSummary(){
+  const d=DRZ.d;
+  const copies=drzGetCopies();
+  // sync campaign name
+  const cnEl=document.getElementById('drz-campaign-name');
+  if(cnEl&&cnEl.value) d.campaign_name=cnEl.value.trim();
+  if(!d.campaign_name) d.campaign_name=drzCampName();
+
+  const names=drzAdsetNames();
+  let filled=0,total=0;
+  DRZ.mediaGroups.forEach(g=>g.forEach(s=>{total++;if(s.hash||s.video_id)filled++;}));
+
+  const html=`
+<div style="display:grid;gap:.5rem">
+ <div class="bwz-sum-row"><span class="bwz-sum-k">Campanha</span><span class="bwz-sum-v">${d.campaign_name}</span></div>
+ <div class="bwz-sum-row"><span class="bwz-sum-k">Conta</span><span class="bwz-sum-v">${d.account_nome||d.account_id}</span></div>
+ <div class="bwz-sum-row"><span class="bwz-sum-k">Página</span><span class="bwz-sum-v">${d.page_name}</span></div>
+ <div class="bwz-sum-row"><span class="bwz-sum-k">Conjuntos</span><span class="bwz-sum-v">${names.length}</span></div>
+ <div class="bwz-sum-row"><span class="bwz-sum-k">Total ads</span><span class="bwz-sum-v">${names.length*3}</span></div>
+ <div class="bwz-sum-row"><span class="bwz-sum-k">Mídia</span><span class="bwz-sum-v">${filled}/${total} slots preenchidos</span></div>
+ <div class="bwz-sum-row"><span class="bwz-sum-k">Pixel</span><span class="bwz-sum-v">${d.pixel_id}</span></div>
+ <div class="bwz-sum-row"><span class="bwz-sum-k">Conv. ID</span><span class="bwz-sum-v">${d.custom_conversion_id||'1187119583443241'}</span></div>
+ <div class="bwz-sum-row"><span class="bwz-sum-k">Budget/dia</span><span class="bwz-sum-v">R$ ${d.daily_budget} por conjunto</span></div>
+ <div class="bwz-sum-row"><span class="bwz-sum-k">URL destino</span><span class="bwz-sum-v" style="word-break:break-all;font-size:.8rem">${d.url_destino||'—'}</span></div>
+ <div class="bwz-sum-row"><span class="bwz-sum-k">Textos</span><span class="bwz-sum-v">${copies.texts.length}</span></div>
+ <div class="bwz-sum-row"><span class="bwz-sum-k">Títulos</span><span class="bwz-sum-v">${copies.headlines.length}</span></div>
+</div>`;
+  document.getElementById('drz-summary-block').innerHTML=html;
+}
+
+function drzBuildPayload(status){
+  const d=DRZ.d;
+  const copies=drzGetCopies();
+  const cnEl=document.getElementById('drz-campaign-name');
+  if(cnEl&&cnEl.value) d.campaign_name=cnEl.value.trim();
+  if(!d.campaign_name) d.campaign_name=drzCampName();
+
+  const budgetBRL=parseFloat(document.getElementById('drz-budget')?.value||d.daily_budget)||7;
+  const budgetCents=Math.round(budgetBRL*100);
+
+  const ageMin=parseInt(document.getElementById('drz-age-min')?.value)||18;
+  const ageMax=parseInt(document.getElementById('drz-age-max')?.value)||65;
+  const gender=parseInt(document.getElementById('drz-gender')?.value)||0;
+
+  const convId=(document.getElementById('drz-custom-conv-id')?.value||'1187119583443241').trim();
+  const urlDest=(document.getElementById('drz-url-destino')?.value||'').trim();
+
+  const geo_locations={countries:DRZ.selCountries.map(c=>c.code)};
+  if(!geo_locations.countries.length) geo_locations.countries=['BR'];
+
+  const adset_template={
+    pixel_id:d.pixel_id,
+    custom_conversion_id:convId,
+    daily_budget:budgetCents,
+    start_time:d.start_time||new Date().toISOString().slice(0,10),
+    end_time:d.end_time||null,
+    geo_locations,
+    age_min:ageMin,
+    age_max:ageMax<65?ageMax:undefined,
+    genders:gender>0?[gender]:[],
+    interests:DRZ.selInterests.map(i=>({id:i.id,name:i.name})),
+    locales:DRZ.selLocales.map(l=>l.id),
+    custom_audiences:DRZ.selCA.map(a=>({id:a.id})),
+  };
+
+  const names=drzAdsetNames();
+  const adset_creatives=DRZ.mediaGroups.map((slots,gi)=>
+    slots.map((slot,si)=>{
+      const cr={name:drzCreativeName(gi,si)};
+      if(slot.video_id) cr.video_id=slot.video_id;
+      else if(slot.hash) cr.image_hash=slot.hash;
+      return cr;
+    })
+  );
+
+  return{
+    type:'DIRETO',
+    account_id:d.account_id,
+    page_id:d.page_id,
+    url_destino:urlDest,
+    campaign:{
+      name:d.campaign_name,
+      objective:'OUTCOME_SALES',
+      buying_type:'AUCTION',
+      status:status||'PAUSED',
+      budget_type:d.budget_type,
+      daily_budget:d.budget_type==='CBO'?budgetCents:undefined,
+    },
+    adset_template,
+    adset_names:names,
+    adset_creatives,
+    copies,
+  };
+}
+
+async function drzDryRun(){
+  const payload=drzBuildPayload('PAUSED');
+  const el=document.getElementById('drz-dry-result');
+  if(el) el.innerHTML='<span class="muted">Executando dry-run…</span>';
+  drzClearErr(6);
+  try{
+    const r=await fetch('/api/campaigns/dry-run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data=await r.json();
+    if(!r.ok) throw new Error(data.error||'Erro');
+    const pre=document.createElement('pre');
+    pre.className='bwz-json-pre';
+    pre.style.maxHeight='300px';
+    pre.textContent=JSON.stringify(data,null,2);
+    if(el){el.innerHTML='';el.appendChild(pre);}
+  }catch(e){
+    if(el) el.innerHTML=`<div class="bwz-result-err">${e.message}</div>`;
+  }
+}
+
+function drzShowConfirm(){
+  const payload=drzBuildPayload(DRZ.d.paused?'PAUSED':'ACTIVE');
+  const names=drzAdsetNames();
+  let filled=0,total=0;
+  DRZ.mediaGroups.forEach(g=>g.forEach(s=>{total++;if(s.hash||s.video_id)filled++;}));
+
+  const confirmBody=document.getElementById('bwz-confirm-body');
+  if(confirmBody){
+    confirmBody.innerHTML=`
+<div style="display:grid;gap:.375rem;font-size:.875rem">
+ <div><strong>Campanha:</strong> ${payload.campaign.name}</div>
+ <div><strong>Conjuntos:</strong> ${names.length} · <strong>Ads:</strong> ${names.length*3}</div>
+ <div><strong>Mídia:</strong> ${filled}/${total} slots</div>
+ <div><strong>URL:</strong> <span style="font-size:.8rem;word-break:break-all">${payload.url_destino||'—'}</span></div>
+</div>`;
+  }
+  // Override confirm button to call drzPublish
+  const confirmBtn=document.querySelector('#bwz-confirm-overlay .btn.btn-p');
+  if(confirmBtn) confirmBtn.onclick=()=>drzPublish(payload);
+  document.getElementById('bwz-confirm-overlay').classList.add('on');
+}
+
+function drzMakeProgressToast(){
+  let el=document.getElementById('drz-pub-toast');
+  if(!el){
+    el=document.createElement('div');
+    el.id='drz-pub-toast';
+    el.style.cssText='position:fixed;bottom:1.5rem;right:1.5rem;background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:1rem 1.25rem;box-shadow:var(--shadow-lg);z-index:9999;width:280px;display:none';
+    el.innerHTML='<div style="font-size:.875rem;font-weight:600;margin-bottom:.5rem" id="drz-pub-toast-title">Criando campanha…</div><div style="height:.375rem;border-radius:9999px;background:var(--border);overflow:hidden"><div id="drz-pub-toast-bar" style="height:100%;border-radius:9999px;background:var(--accent);width:0%;transition:width .3s ease"></div></div><div style="font-size:.75rem;color:var(--muted);margin-top:.375rem" id="drz-pub-toast-msg">Iniciando…</div>';
+    document.body.appendChild(el);
+  }
+  return el;
+}
+
+async function drzPublish(payload){
+  document.getElementById('bwz-confirm-overlay').classList.remove('on');
+  drzCancel();
+
+  const toast=drzMakeProgressToast();
+  const barEl=document.getElementById('drz-pub-toast-bar');
+  const msgEl=document.getElementById('drz-pub-toast-msg');
+  const titleEl=document.getElementById('drz-pub-toast-title');
+  toast.style.display='block';
+  if(titleEl) titleEl.textContent='Criando campanha Direto…';
+
+  try{
+    const resp=await fetch('/api/campaigns/criar',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload),
+    });
+    if(!resp.ok||!resp.body){
+      const err=await resp.json().catch(()=>({}));
+      throw new Error(err.error||'Erro ao criar campanha');
+    }
+    const reader=resp.body.getReader();
+    const decoder=new TextDecoder();
+    let buf='';
+    let streamDone=false;
+    while(!streamDone){
+      const{value,done:d}=await reader.read();
+      streamDone=d;
+      if(value) buf+=decoder.decode(value,{stream:true});
+      const parts=buf.split('\n\n');
+      buf=parts.pop()||'';
+      for(const part of parts){
+        const evLine=part.match(/^event:\s*(.+)$/m);
+        const dataLine=part.match(/^data:\s*(.+)$/m);
+        if(!evLine||!dataLine) continue;
+        const ev=evLine[1].trim();
+        const data=JSON.parse(dataLine[1]);
+        if(ev==='progress'){
+          if(barEl&&data.total) barEl.style.width=`${Math.round((data.step/data.total)*100)}%`;
+          if(msgEl) msgEl.textContent=data.msg||'';
+        } else if(ev==='done'){
+          toast.style.display='none';
+          const rawId=(payload.account_id||'').replace('act_','');
+          const url=`https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=${rawId}`;
+          alert(`✅ Campanha criada!\nID: ${data.campaign_id}\nConjuntos: ${data.adset_count} · Ads: ${data.ad_count}\n\n${url}`);
+          return;
+        } else if(ev==='error'){
+          toast.style.display='none';
+          alert(`Erro ao criar campanha:\n${data.error}`);
+          return;
+        }
+      }
+    }
+  }catch(e){
+    toast.style.display='none';
+    alert('Erro: '+e.message);
+  }
+}
 </script>
 
 </body>

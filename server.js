@@ -21,6 +21,7 @@ const historicoHandler = require('./src/app/api/historico/route');
 const { handler: templatesHandler, seedHandler: templatesSeedHandler } = require('./src/app/api/templates/route');
 const metaResourcesHandler = require('./src/app/api/meta-resources/route');
 const uploadImageHandler   = require('./src/app/api/meta-resources/upload');
+const uploadVideoHandler   = require('./src/app/api/meta-resources/upload-video');
 const { dryRunHandler, criarHandler } = require('./src/app/api/campaigns/route');
 const convTemplatesHandler  = require('./src/app/api/conversation-templates/route');
 const adCopiesHandler       = require('./src/app/api/ad-copies-templates/route');
@@ -495,6 +496,7 @@ app.get('/api/meta-accounts', requireAuth, async (_req, res) => {
 // ── Meta Resources (proxy com cache 1h) ──────────────────────────────────────
 app.get('/api/meta-resources/:resource', requireAuth, metaResourcesHandler);
 app.post('/api/meta-resources/upload-image', requireAuth, uploadImageHandler);
+app.post('/api/meta-resources/upload-video', requireAuth, uploadVideoHandler);
 
 // ── Campaigns (BOT wizard) ────────────────────────────────────────────────────
 app.post('/api/campaigns/dry-run', requireAuth, dryRunHandler);
