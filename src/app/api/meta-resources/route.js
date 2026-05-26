@@ -114,52 +114,50 @@ async function handler(req, res) {
         .order('created_at', { ascending: false }).limit(1).maybeSingle();
       if (cached?.data?.pages?.length > 0) return res.json(cached.data);
 
-      let pages = [];
-      let lastError = null;
-      let lastDetail = null;
+      const normalize = p => ({
+        id: p.id, name: p.name,
+        picture_url: p.picture?.data?.url || null,
+        fan_count: p.fan_count || null,
+        access_token: p.access_token || null,
+      });
 
-      // Strategy 1: promote_pages (BM-linked pages)
-      try {
-        const r = await axios.get(`${META_BASE}/${acctId}/promote_pages`, {
+      const [resPromote, resMe] = await Promise.allSettled([
+        axios.get(`${META_BASE}/me/promote_pages`, {
           params: { fields: 'id,name,access_token,picture{url},fan_count', limit: 100, access_token: token },
           timeout: 15000,
-        });
-        pages = (r.data?.data || []).map(p => ({
-          id: p.id, name: p.name,
-          picture_url: p.picture?.data?.url || null,
-          fan_count: p.fan_count || null,
-          access_token: p.access_token || null,
-        }));
-        console.log(`[pages] promote_pages → ${pages.length} páginas para ${acctId}`);
-      } catch (e) {
-        const raw = e.response?.data?.error;
-        lastError = 'TOKEN_MISSING_PERMISSIONS';
-        lastDetail = raw?.message || e.message;
-        console.error(`[pages] promote_pages falhou ${acctId} | code:${raw?.code} | msg:`, lastDetail);
-      }
+        }),
+        axios.get(`${META_BASE}/me/accounts`, {
+          params: { fields: 'id,name,access_token,picture{url},fan_count', limit: 100, access_token: token },
+          timeout: 15000,
+        }),
+      ]);
 
-      // Strategy 2: /me/accounts (user tokens)
-      if (pages.length === 0) {
-        try {
-          const r = await axios.get(`${META_BASE}/me/accounts`, {
-            params: { fields: 'id,name,access_token,picture,fan_count', limit: 100, access_token: token },
-            timeout: 15000,
-          });
-          const list = (r.data?.data || []).map(p => ({
-            id: p.id, name: p.name,
-            picture_url: p.picture?.data?.url || null,
-            fan_count: p.fan_count || null,
-            access_token: p.access_token || null,
-          }));
-          console.log(`[pages] /me/accounts → ${list.length} páginas`);
-          if (list.length > 0) { pages = list; lastError = null; lastDetail = null; }
-        } catch (e) {
-          const raw = e.response?.data?.error;
-          const detail2 = raw?.message || e.message;
-          lastDetail = lastDetail ? `${lastDetail} | /me/accounts: ${detail2}` : detail2;
-          console.error(`[pages] /me/accounts também falhou | code:${raw?.code} | msg:`, detail2);
-        }
+      const fromPromote = resPromote.status === 'fulfilled'
+        ? (resPromote.value.data?.data || []).map(normalize) : [];
+      const fromMe = resMe.status === 'fulfilled'
+        ? (resMe.value.data?.data || []).map(normalize) : [];
+
+      if (resPromote.status === 'rejected')
+        console.error(`[pages] promote_pages falhou ${acctId}:`, resPromote.reason?.response?.data?.error?.message || resPromote.reason?.message);
+      if (resMe.status === 'rejected')
+        console.error(`[pages] /me/accounts falhou ${acctId}:`, resMe.reason?.response?.data?.error?.message || resMe.reason?.message);
+
+      console.log(`[pages] promote_pages → ${fromPromote.length} | /me/accounts → ${fromMe.length}`);
+
+      // Merge deduplicando por id; promote_pages tem prioridade (pode trazer page token)
+      const seen = new Map();
+      for (const p of [...fromPromote, ...fromMe]) {
+        if (!seen.has(p.id)) seen.set(p.id, p);
       }
+      const pages = [...seen.values()];
+
+      const lastError = pages.length === 0 ? 'TOKEN_MISSING_PERMISSIONS' : null;
+      const lastDetail = pages.length === 0
+        ? [
+            resPromote.status === 'rejected' ? resPromote.reason?.response?.data?.error?.message : null,
+            resMe.status === 'rejected' ? resMe.reason?.response?.data?.error?.message : null,
+          ].filter(Boolean).join(' | ') || 'Token sem permissões pages_show_list/pages_read_engagement — renove o token'
+        : null;
 
       if (pages.length > 0) {
         const expires_at = new Date(Date.now() + 3600 * 1000).toISOString();
