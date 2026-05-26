@@ -817,7 +817,7 @@
     .col-toggle-wrap{position:relative}
     .col-toggle-btn{height:2.25rem;padding:0 .75rem;border-radius:var(--r);border:1px solid var(--border);background:var(--sec);color:var(--muted);font-family:inherit;font-size:.8125rem;cursor:pointer;white-space:nowrap;transition:all .15s;display:flex;align-items:center;gap:.375rem}
     .col-toggle-btn:hover{color:var(--fg);border-color:var(--accent)}
-    .col-toggle-dd{display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:.625rem;min-width:180px;z-index:200;box-shadow:var(--shadow-lg)}
+    .col-toggle-dd{display:none;position:absolute;top:calc(100% + 6px);right:0;background:#14141A;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:6px;min-width:180px;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,.5)}
     .col-toggle-dd.open{display:block}
     .col-toggle-item{display:flex;align-items:center;gap:.5rem;padding:.375rem .5rem;border-radius:.375rem;cursor:pointer;font-size:.8125rem;transition:background .1s;user-select:none}
     .col-toggle-item:hover{background:var(--sec)}
@@ -827,11 +827,11 @@
     .acct-menu-wrap{position:relative;display:inline-block}
     .acct-menu-btn{height:1.875rem;width:2rem;border-radius:var(--r);border:1px solid var(--border);background:var(--sec);color:var(--muted);font-family:inherit;font-size:.875rem;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center}
     .acct-menu-btn:hover{color:var(--fg);border-color:var(--accent)}
-    .acct-menu-dd{display:none;position:absolute;top:calc(100% + 4px);right:0;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.25rem;min-width:130px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+    .acct-menu-dd{display:none;position:absolute;top:calc(100% + 4px);right:0;background:#14141A;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:6px;min-width:160px;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,.5)}
     .acct-menu-dd.open{display:block}
-    .acct-menu-item{display:block;width:100%;text-align:left;background:transparent;border:none;color:var(--fg);font-family:inherit;font-size:.8125rem;padding:.4375rem .625rem;border-radius:.25rem;cursor:pointer;transition:background .1s}
-    .acct-menu-item:hover{background:var(--sec)}
-    .acct-menu-item.danger{color:var(--color-negative)}
+    .acct-menu-item{display:block;width:100%;text-align:left;background:transparent;border:none;color:var(--fg);font-family:inherit;font-size:13px;padding:8px 12px;border-radius:6px;cursor:pointer;transition:background .1s}
+    .acct-menu-item:hover{background:rgba(255,255,255,.06)}
+    .acct-menu-item.danger{color:#F87171}
     .acct-menu-item.danger:hover{background:rgba(248,113,113,.1)}
 
     /* ── WIZARD INLINE ERROR ── */
@@ -859,6 +859,9 @@
     .ger-input{height:2.125rem;padding:0 .75rem;border-radius:var(--r);border:1px solid var(--border);background:var(--sec);color:var(--fg);font-family:inherit;font-size:.8125rem;width:180px}
     .ger-input:focus,.ger-select:focus{outline:none;border-color:var(--accent)}
     .ger-right{display:flex;align-items:center;gap:.5rem;margin-left:auto}
+    .ger-date-row{display:flex;gap:2px;background:var(--sec);border-radius:var(--r);padding:3px}
+    .ger-date-btn{padding:.3rem .625rem;border-radius:.3rem;border:none;background:transparent;color:var(--muted);font-family:inherit;font-size:.75rem;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
+    .ger-date-btn.on{background:var(--card);color:var(--fg);box-shadow:var(--shadow-sm)}
     .ger-table-wrap{overflow-x:auto}
     .ger-status{display:inline-flex;align-items:center;gap:.35rem;font-size:.75rem;font-weight:500;padding:.2rem .55rem;border-radius:999px}
     .ger-status.active{background:var(--success-soft);color:var(--color-positive)}
@@ -1335,6 +1338,13 @@
             <button class="ger-tab" data-level="adsets" onclick="gerSwitchLevel(this,'adsets')">Conjuntos</button>
             <button class="ger-tab" data-level="ads" onclick="gerSwitchLevel(this,'ads')">Anúncios</button>
           </div>
+          <div class="ger-date-row">
+            <button class="ger-date-btn" data-preset="today" onclick="gerSetDatePreset('today')">Hoje</button>
+            <button class="ger-date-btn" data-preset="yesterday" onclick="gerSetDatePreset('yesterday')">Ontem</button>
+            <button class="ger-date-btn" data-preset="last_7d" onclick="gerSetDatePreset('last_7d')">7d</button>
+            <button class="ger-date-btn on" data-preset="last_30d" onclick="gerSetDatePreset('last_30d')">30d</button>
+            <button class="ger-date-btn" data-preset="last_90d" onclick="gerSetDatePreset('last_90d')">90d</button>
+          </div>
           <div class="ger-right">
             <input id="ger-search" class="ger-input" placeholder="Buscar nome…" oninput="gerFilter()">
             <select id="ger-status-fil" class="ger-select" onchange="gerFilter()">
@@ -1345,18 +1355,20 @@
             <div class="col-toggle-wrap">
               <button class="col-toggle-btn" onclick="gerToggleColDD(this)">⚙ Colunas</button>
               <div class="col-toggle-dd" id="ger-col-dd">
-                <label class="col-toggle-item"><input type="checkbox" data-gcol="roas" onchange="gerToggleCol(this)"> ROAS</label>
-                <label class="col-toggle-item"><input type="checkbox" data-gcol="lucro" onchange="gerToggleCol(this)"> Lucro</label>
-                <label class="col-toggle-item"><input type="checkbox" data-gcol="faturamento" onchange="gerToggleCol(this)"> Faturamento</label>
-                <label class="col-toggle-item"><input type="checkbox" data-gcol="ecpm" onchange="gerToggleCol(this)"> eCPM</label>
+                <label class="col-toggle-item"><input type="checkbox" data-gcol="roas" onchange="gerToggleCol(this)"> ROAS Meta</label>
+                <label class="col-toggle-item"><input type="checkbox" data-gcol="reach" onchange="gerToggleCol(this)"> Alcance</label>
+                <label class="col-toggle-item"><input type="checkbox" data-gcol="ctr" onchange="gerToggleCol(this)"> CTR</label>
+                <label class="col-toggle-item"><input type="checkbox" data-gcol="cpm" onchange="gerToggleCol(this)"> CPM</label>
                 <label class="col-toggle-item"><input type="checkbox" data-gcol="cpc" onchange="gerToggleCol(this)"> CPC</label>
                 <label class="col-toggle-item"><input type="checkbox" data-gcol="clicks" onchange="gerToggleCol(this)"> Cliques</label>
                 <label class="col-toggle-item"><input type="checkbox" data-gcol="inicio" onchange="gerToggleCol(this)"> Início</label>
+                <label class="col-toggle-item"><input type="checkbox" data-gcol="termino" onchange="gerToggleCol(this)"> Término</label>
               </div>
             </div>
             <button class="col-toggle-btn" onclick="gerLoad()" title="Recarregar">↺</button>
           </div>
         </div>
+        <div id="ger-breadcrumb" style="display:none;align-items:center;gap:.5rem;padding:.5rem 1.5rem;background:var(--sec);border-bottom:1px solid var(--border);font-size:.8125rem;color:var(--muted)"></div>
 
         <div class="ger-table-wrap">
           <table class="data-table" id="ger-table">
@@ -3312,59 +3324,70 @@ document.addEventListener('click',e=>{
 });
 
 /* ═══ GERENCIADOR ═══ */
-const GER = { level:'campaigns', items:[], filtered:[], accts:[], _colPrefs:{} };
+const GER = {
+  level:'campaigns', items:[], filtered:[], accts:[], _colPrefs:{},
+  datePreset:'last_30d',
+  parentFilter:null,   // {id, name, fromLevel}
+  _pendingSearch:null, // applied after gerLoad() renders
+};
 const GER_COL_KEY = 'ger_col_prefs';
 
 const GER_HEADS = {
   campaigns: [
-    {k:'toggle',   l:'',             w:'48px'},
-    {k:'name',     l:'Nome',         w:''},
-    {k:'acct',     l:'Conta',        w:'120px'},
-    {k:'status',   l:'Status',       w:'100px'},
-    {k:'results',  l:'Resultados',   w:'100px'},
-    {k:'cpr',      l:'Custo/Result', w:'110px'},
-    {k:'budget',   l:'Orçamento',    w:'110px'},
-    {k:'spend',    l:'Valor Usado',  w:'110px'},
-    {k:'impressions',l:'Impressões', w:'100px'},
-    {k:'roas',     l:'ROAS',         w:'80px',  extra:true},
-    {k:'lucro',    l:'Lucro',        w:'100px', extra:true},
-    {k:'faturamento',l:'Fat. GAM',   w:'100px', extra:true},
-    {k:'ecpm',     l:'eCPM',         w:'80px',  extra:true},
-    {k:'cpc',      l:'CPC',          w:'80px',  extra:true},
-    {k:'clicks',   l:'Cliques',      w:'80px',  extra:true},
-    {k:'inicio',   l:'Início',       w:'90px',  extra:true},
-    {k:'actions',  l:'Ações',        w:'56px'},
+    {k:'toggle',     l:'',             w:'48px'},
+    {k:'name',       l:'Nome',         w:''},
+    {k:'acct',       l:'Conta',        w:'120px'},
+    {k:'status',     l:'Status',       w:'100px'},
+    {k:'results',    l:'Resultados',   w:'100px'},
+    {k:'cpr',        l:'Custo/Result', w:'110px'},
+    {k:'budget',     l:'Orçamento',    w:'110px'},
+    {k:'spend',      l:'Valor Usado',  w:'110px'},
+    {k:'impressions',l:'Impressões',   w:'100px'},
+    {k:'roas',       l:'ROAS Meta',    w:'80px',  extra:true},
+    {k:'reach',      l:'Alcance',      w:'90px',  extra:true},
+    {k:'ctr',        l:'CTR',          w:'70px',  extra:true},
+    {k:'cpm',        l:'CPM',          w:'80px',  extra:true},
+    {k:'cpc',        l:'CPC',          w:'80px',  extra:true},
+    {k:'clicks',     l:'Cliques',      w:'80px',  extra:true},
+    {k:'inicio',     l:'Início',       w:'90px',  extra:true},
+    {k:'termino',    l:'Término',      w:'90px',  extra:true},
+    {k:'actions',    l:'Ações',        w:'56px'},
   ],
   adsets: [
-    {k:'toggle',   l:'',             w:'48px'},
-    {k:'name',     l:'Nome',         w:''},
-    {k:'parent',   l:'Campanha',     w:'160px'},
-    {k:'status',   l:'Status',       w:'100px'},
-    {k:'results',  l:'Resultados',   w:'100px'},
-    {k:'cpr',      l:'Custo/Result', w:'110px'},
-    {k:'budget',   l:'Orç./dia',     w:'110px'},
-    {k:'spend',    l:'Valor Usado',  w:'110px'},
-    {k:'roas',     l:'ROAS',         w:'80px',  extra:true},
-    {k:'lucro',    l:'Lucro',        w:'100px', extra:true},
-    {k:'ecpm',     l:'eCPM',         w:'80px',  extra:true},
-    {k:'cpc',      l:'CPC',          w:'80px',  extra:true},
-    {k:'clicks',   l:'Cliques',      w:'80px',  extra:true},
-    {k:'actions',  l:'Ações',        w:'56px'},
+    {k:'toggle',     l:'',             w:'48px'},
+    {k:'name',       l:'Nome',         w:''},
+    {k:'parent',     l:'Campanha',     w:'160px'},
+    {k:'status',     l:'Status',       w:'100px'},
+    {k:'results',    l:'Resultados',   w:'100px'},
+    {k:'cpr',        l:'Custo/Result', w:'110px'},
+    {k:'budget',     l:'Orç./dia',     w:'110px'},
+    {k:'spend',      l:'Valor Usado',  w:'110px'},
+    {k:'impressions',l:'Impressões',   w:'100px'},
+    {k:'roas',       l:'ROAS Meta',    w:'80px',  extra:true},
+    {k:'reach',      l:'Alcance',      w:'90px',  extra:true},
+    {k:'ctr',        l:'CTR',          w:'70px',  extra:true},
+    {k:'cpm',        l:'CPM',          w:'80px',  extra:true},
+    {k:'cpc',        l:'CPC',          w:'80px',  extra:true},
+    {k:'clicks',     l:'Cliques',      w:'80px',  extra:true},
+    {k:'actions',    l:'Ações',        w:'56px'},
   ],
   ads: [
-    {k:'toggle',   l:'',             w:'48px'},
-    {k:'thumb',    l:'',             w:'56px'},
-    {k:'name',     l:'Nome',         w:''},
-    {k:'parent',   l:'Conjunto',     w:'140px'},
-    {k:'status',   l:'Status',       w:'100px'},
-    {k:'results',  l:'Resultados',   w:'100px'},
-    {k:'cpr',      l:'Custo/Result', w:'110px'},
-    {k:'spend',    l:'Valor Usado',  w:'110px'},
-    {k:'roas',     l:'ROAS',         w:'80px',  extra:true},
-    {k:'lucro',    l:'Lucro',        w:'100px', extra:true},
-    {k:'ecpm',     l:'eCPM',         w:'80px',  extra:true},
-    {k:'cpc',      l:'CPC',          w:'80px',  extra:true},
-    {k:'actions',  l:'Ações',        w:'56px'},
+    {k:'toggle',     l:'',             w:'48px'},
+    {k:'thumb',      l:'',             w:'56px'},
+    {k:'name',       l:'Nome',         w:''},
+    {k:'parent',     l:'Conjunto',     w:'140px'},
+    {k:'status',     l:'Status',       w:'100px'},
+    {k:'results',    l:'Resultados',   w:'100px'},
+    {k:'cpr',        l:'Custo/Result', w:'110px'},
+    {k:'spend',      l:'Valor Usado',  w:'110px'},
+    {k:'impressions',l:'Impressões',   w:'100px'},
+    {k:'roas',       l:'ROAS Meta',    w:'80px',  extra:true},
+    {k:'reach',      l:'Alcance',      w:'90px',  extra:true},
+    {k:'ctr',        l:'CTR',          w:'70px',  extra:true},
+    {k:'cpm',        l:'CPM',          w:'80px',  extra:true},
+    {k:'cpc',        l:'CPC',          w:'80px',  extra:true},
+    {k:'clicks',     l:'Cliques',      w:'80px',  extra:true},
+    {k:'actions',    l:'Ações',        w:'56px'},
   ],
 };
 
@@ -3395,12 +3418,42 @@ function gerToggleColDD(btn){
   if(!wasOpen)dd.classList.add('open');
 }
 
+function gerSetDatePreset(preset){
+  GER.datePreset=preset;
+  document.querySelectorAll('.ger-date-btn').forEach(b=>b.classList.toggle('on',b.dataset.preset===preset));
+  gerLoad();
+}
+
+function gerRenderBreadcrumb(){
+  const el=document.getElementById('ger-breadcrumb');
+  if(!el)return;
+  if(!GER.parentFilter){el.style.display='none';el.innerHTML='';return;}
+  const fromLabel=GER.parentFilter.fromLevel==='campaigns'?'Campanhas':'Conjuntos';
+  el.style.display='flex';
+  el.innerHTML=`<button class="act-btn" style="color:var(--accent);font-size:.8125rem" onclick="gerClearParentFilter()">← Voltar</button>
+    <span style="color:var(--border)">|</span>
+    <span>${fromLabel}</span>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    <span style="color:var(--fg);font-weight:500">${esc(GER.parentFilter.name)}</span>`;
+}
+
+function gerClearParentFilter(){
+  const prevLevel=GER.parentFilter?.fromLevel||'campaigns';
+  GER.parentFilter=null;
+  GER.level=prevLevel;
+  document.querySelectorAll('.ger-tab').forEach(b=>b.classList.toggle('on',b.dataset.level===prevLevel));
+  document.getElementById('ger-search').value='';
+  gerLoad();
+}
+
 async function gerLoad(){
   const acctSel=document.getElementById('ger-acct-sel');
   const accountId=acctSel?.value||'all';
-  const since=_dpState.since||new Date(Date.now()-30*86400000).toISOString().slice(0,10);
-  const until=_dpState.until||new Date().toISOString().slice(0,10);
-  const url=`/api/gerenciador?level=${GER.level}&account_id=${encodeURIComponent(accountId)}&since=${since}&until=${until}`;
+  let url=`/api/gerenciador?level=${GER.level}&account_id=${encodeURIComponent(accountId)}&date_preset=${GER.datePreset}`;
+  if(GER.parentFilter){
+    if(GER.level==='adsets')url+=`&campaign_id=${encodeURIComponent(GER.parentFilter.id)}`;
+    else if(GER.level==='ads')url+=`&adset_id=${encodeURIComponent(GER.parentFilter.id)}`;
+  }
   try{
     showOverlay('Carregando Gerenciador…');
     const r=await fetch(url);
@@ -3409,12 +3462,17 @@ async function gerLoad(){
     if(d.error)throw new Error(d.error);
     GER.items=d.items||[];
     GER.accts=d.accounts||[];
-    // populate account selector
     if(GER.accts.length&&acctSel){
       acctSel.innerHTML='<option value="all">Todas as contas</option>'+
         GER.accts.map(a=>`<option value="${esc(a.id)}">${esc(a.name)}</option>`).join('');
       acctSel.value=accountId;
     }
+    if(GER._pendingSearch!==null){
+      const searchEl=document.getElementById('ger-search');
+      if(searchEl)searchEl.value=GER._pendingSearch;
+      GER._pendingSearch=null;
+    }
+    gerRenderBreadcrumb();
     gerFilter();
     gerRenderTotals(d.totals||{});
   }catch(e){
@@ -3427,7 +3485,7 @@ function gerFilter(){
   const st=document.getElementById('ger-status-fil')?.value||'all';
   GER.filtered=GER.items.filter(item=>{
     const nameMatch=!q||(item.name||'').toLowerCase().includes(q);
-    const stMatch=st==='all'||item.status===st;
+    const stMatch=st==='all'||item.status===st||item.status==='CAMPAIGN_'+st;
     return nameMatch&&stMatch;
   });
   gerRenderTable();
@@ -3437,13 +3495,14 @@ function gerSwitchLevel(btn,level){
   document.querySelectorAll('.ger-tab').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
   GER.level=level;
+  GER.parentFilter=null;
+  document.getElementById('ger-search').value='';
   gerLoad();
 }
 
 function gerRenderTable(){
   const heads=GER_HEADS[GER.level]||[];
   const prefs=gerLoadColPrefs();
-  // thead
   const th=document.getElementById('ger-thead');
   if(th)th.innerHTML='<tr>'+heads.map(h=>{
     const extra=h.extra?`data-gcol="${h.k}" class="gcol-h${prefs[GER.level+'_'+h.k]?' gcol-on':''}"`:'' ;
@@ -3469,10 +3528,17 @@ function gerStatusBadge(s){
 }
 
 function gerBudgetCell(item){
-  if(!item.id)return item.daily_budget!=null?BRL(item.daily_budget):'—';
+  let label;
+  if(item.daily_budget!=null) label=BRL(item.daily_budget);
+  else if(item.lifetime_budget!=null) label=BRL(item.lifetime_budget)+'<span style="color:var(--muted);font-size:.7rem"> vita</span>';
+  else label=GER.level==='campaigns'
+    ?'<span style="color:var(--muted);font-size:.75rem">ABO</span>'
+    :'<span style="color:var(--muted);font-size:.75rem">—</span>';
+
+  if(!item.id)return label;
   const type=GER.level==='campaigns'?'campaign':'adset';
-  const bStr=item.daily_budget!=null?BRL(item.daily_budget):'—';
-  return`<span class="ger-bud-disp" id="bud-disp-${item.id}">${bStr}</span>`;
+  const currentBudget=item.daily_budget??item.lifetime_budget??0;
+  return`<span class="ger-bud-disp" id="bud-disp-${item.id}" style="cursor:pointer;text-decoration:underline dotted;text-underline-offset:2px" onclick="gerStartEditBudget('${esc(item.id)}',${currentBudget},'${type}')" title="Clique para editar orçamento">${label}</span>`;
 }
 
 function gerRenderRow(item,heads,prefs,i){
@@ -3481,7 +3547,6 @@ function gerRenderRow(item,heads,prefs,i){
   const idSafe=esc(item.id||'');
   const nameSafe=esc(item.name||'');
   const newStatus=isActive?'PAUSED':'ACTIVE';
-  const lucroColor=(item.lucro||0)>=0?'var(--color-positive)':'var(--color-negative)';
   const roasColor=(item.roas||0)>=1?'var(--color-positive)':'var(--color-warning)';
 
   const cells={
@@ -3493,29 +3558,29 @@ function gerRenderRow(item,heads,prefs,i){
         ?`<img class="ger-thumb" src="${esc(item.thumbnail_url)}" alt="">`
         :`<div class="ger-thumb-ph">IMG</div>`)
       :'',
-    name:  `<span title="${nameSafe}">${esc(item.name||'—')}</span>`,
-    acct:  `<span style="color:var(--muted);font-size:.75rem">${esc(item.account_name||'')}</span>`,
+    name:    `<span title="${nameSafe}">${esc(item.name||'—')}</span>`,
+    acct:    `<span style="color:var(--muted);font-size:.75rem">${esc(item.account_name||'')}</span>`,
     parent: GER.level==='adsets'
-      ?`<button class="act-btn" style="font-size:.75rem;color:var(--muted)" onclick="gerFilterByParent('${esc(item.campanha_meta||'')}','${esc(item.campaign_id||'')}','campaigns')" title="${esc(item.campanha_meta||'')}">${esc((item.campanha_meta||'—').slice(0,30))}</button>`
-      :`<button class="act-btn" style="font-size:.75rem;color:var(--muted)" onclick="gerFilterByParent('${esc(item.conjunto_meta||'')}','${esc(item.adset_id||'')}','adsets')" title="${esc(item.conjunto_meta||'')}">${esc((item.conjunto_meta||'—').slice(0,30))}</button>`,
-    status:  gerStatusBadge(item.status),
-    results: `<span style="font-weight:500">${NUM(item.results)}</span>`,
-    cpr:     item.cost_per_result>0?BRL(item.cost_per_result):'—',
-    budget:  gerBudgetCell(item),
-    spend:   BRL(item.spend),
+      ?`<span style="font-size:.75rem;color:var(--muted)" title="${esc(item.campaign_name||'')}">${esc((item.campaign_name||'—').slice(0,30))}</span>`
+      :`<span style="font-size:.75rem;color:var(--muted)" title="${esc(item.adset_name||'')}">${esc((item.adset_name||'—').slice(0,30))}</span>`,
+    status:      gerStatusBadge(item.status),
+    results:     `<span style="font-weight:500">${NUM(item.results)}</span>`,
+    cpr:         item.cost_per_result>0?BRL(item.cost_per_result):'—',
+    budget:      gerBudgetCell(item),
+    spend:       BRL(item.spend),
     impressions: NUM(item.impressions),
-    roas:    `<span style="color:${roasColor}">${ROAS(item.roas)}</span>`,
-    lucro:   `<span style="color:${lucroColor}">${BRL(item.lucro)}</span>`,
-    faturamento: BRL(item.faturamento),
-    ecpm:    item.ecpm>0?BRL(item.ecpm):'—',
-    cpc:     item.cpc>0?BRL(item.cpc):'—',
-    clicks:  NUM(item.clicks),
-    inicio:  item.start_time?item.start_time.slice(0,10):'—',
+    roas:        item.roas>0?`<span style="color:${roasColor}">${item.roas.toFixed(2)}x</span>`:'—',
+    reach:       NUM(item.reach),
+    ctr:         item.ctr>0?item.ctr.toFixed(2)+'%':'—',
+    cpm:         item.cpm>0?BRL(item.cpm):'—',
+    cpc:         item.cpc>0?BRL(item.cpc):'—',
+    clicks:      NUM(item.clicks),
+    inicio:      item.start_time?item.start_time.slice(0,10):'—',
+    termino:     item.end_time?item.end_time.slice(0,10):'—',
     actions: `<div class="acct-menu-wrap" style="display:inline-block">
       <button class="acct-menu-btn" onclick="toggleAcctMenu(this)">⋯</button>
       <div class="acct-menu-dd">
         ${item.id?`<button class="acct-menu-item" onclick="gerDuplicate('${idSafe}','${nameSafe}','${toggleType}',this)">Duplicar</button>`:''}
-        ${item.id&&GER.level!=='ads'?`<button class="acct-menu-item" onclick="gerStartEditBudget('${idSafe}',${item.daily_budget||0},'${toggleType}')">Editar orçamento</button>`:''}
         ${GER.level==='campaigns'?`<button class="acct-menu-item" onclick="gerViewChildren('${nameSafe}','${idSafe}','adsets')">Ver conjuntos</button>`:''}
         ${GER.level==='adsets'?`<button class="acct-menu-item" onclick="gerViewChildren('${nameSafe}','${idSafe}','ads')">Ver anúncios</button>`:''}
         ${item.id?`<button class="acct-menu-item danger" onclick="gerDelete('${idSafe}','${nameSafe}','${toggleType}',this)">Excluir</button>`:''}
@@ -3535,31 +3600,40 @@ function gerRenderRow(item,heads,prefs,i){
 function gerRenderTotals(t){
   const tfoot=document.getElementById('ger-tfoot');
   if(!tfoot)return;
-  tfoot.innerHTML=`<tr style="font-weight:600;border-top:2px solid var(--border)">
-    <td colspan="4">Total (${GER.filtered.length} itens)</td>
-    <td>${NUM(t.results)}</td>
-    <td>${t.results>0?BRL(t.spend/t.results):'—'}</td>
-    <td>—</td>
-    <td>${BRL(t.spend)}</td>
-    <td>${NUM(t.impressions)}</td>
-  </tr>`;
+  const heads=GER_HEADS[GER.level]||[];
+  const prefs=gerLoadColPrefs();
+  const cells={
+    toggle:'',thumb:'',
+    name:`<span style="font-weight:600">Total (${GER.filtered.length} itens)</span>`,
+    acct:'',parent:'',status:'',
+    results:NUM(t.results),
+    cpr:t.results>0?BRL(t.spend/t.results):'—',
+    budget:'',
+    spend:BRL(t.spend),
+    impressions:NUM(t.impressions),
+    roas:'',reach:NUM(t.reach),ctr:'',cpm:'',cpc:'',clicks:NUM(t.clicks),
+    inicio:'',termino:'',actions:'',
+  };
+  tfoot.innerHTML='<tr style="font-weight:600;border-top:2px solid var(--border)">'+
+    heads.map(h=>{
+      const extra=h.extra?`data-gcol="${h.k}" class="gcol-h${prefs[GER.level+'_'+h.k]?' gcol-on':''}"`:'' ;
+      return`<td ${extra}>${cells[h.k]??''}</td>`;
+    }).join('')+
+  '</tr>';
 }
 
 async function gerToggleStatus(id,newStatus,type,cb){
   cb.disabled=true;
   const prev=cb.checked;
-  cb.checked=!prev; // optimistic revert placeholder — keep checked state until confirmed
   try{
     const r=await fetch(`/api/meta/${type}/${id}/toggle`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:newStatus})});
     const d=await r.json();
     if(!r.ok||!d.ok)throw new Error(d.error||'Erro');
-    cb.checked=prev; // confirm the state (toggle was successful, so opposite of prev)
-    // Update item status in memory
     const item=GER.items.find(it=>it.id===id);
     if(item)item.status=newStatus;
     showToast('ok',`${type==='campaign'?'Campanha':type==='adset'?'Conjunto':'Anúncio'} ${newStatus==='PAUSED'?'pausado':'ativado'}`);
   }catch(e){
-    cb.checked=prev; // revert
+    cb.checked=prev;
     showToast('err','Erro: '+e.message);
   }finally{cb.disabled=false;}
 }
@@ -3567,18 +3641,21 @@ async function gerToggleStatus(id,newStatus,type,cb){
 function gerStartEditBudget(id,currentBudget,type){
   const dispEl=document.getElementById(`bud-disp-${id}`);
   if(!dispEl)return;
-  const wrap=dispEl.parentElement;
-  wrap.innerHTML=`<div class="ger-bud-wrap">
-    <input class="ger-bud-input" id="bud-inp-${id}" type="number" min="1" step="0.01" value="${currentBudget||''}" placeholder="R$/dia">
+  const cell=dispEl.closest('td');
+  if(!cell)return;
+  cell.innerHTML=`<div class="ger-bud-wrap">
+    <input class="ger-bud-input" id="bud-inp-${id}" type="number" min="1" step="0.01" value="${currentBudget||''}" placeholder="R$/dia" onkeydown="if(event.key==='Enter')gerSaveBudget('${esc(id)}',${currentBudget||0},'${esc(type)}');if(event.key==='Escape')gerCancelEditBudget('${esc(id)}',${currentBudget||0})">
     <button class="ger-bud-save" onclick="gerSaveBudget('${esc(id)}',${currentBudget||0},'${esc(type)}')">✓</button>
     <button class="ger-bud-cancel" onclick="gerCancelEditBudget('${esc(id)}',${currentBudget||0})">✗</button>
   </div>`;
   document.getElementById(`bud-inp-${id}`)?.select();
 }
 function gerCancelEditBudget(id,current){
-  const wrap=document.querySelector(`#bud-inp-${id}`)?.closest('td');
-  if(!wrap)return;
-  wrap.innerHTML=`<span class="ger-bud-disp" id="bud-disp-${id}">${current>0?BRL(current):'—'}</span>`;
+  const inp=document.getElementById(`bud-inp-${id}`);
+  const cell=inp?.closest('td');
+  if(!cell)return;
+  const item=GER.items.find(it=>it.id===id)||{id,daily_budget:current>0?current:null,lifetime_budget:null};
+  cell.innerHTML=gerBudgetCell(item);
 }
 async function gerSaveBudget(id,budgetBefore,type){
   const inp=document.getElementById(`bud-inp-${id}`);
@@ -3591,7 +3668,7 @@ async function gerSaveBudget(id,budgetBefore,type){
     const d=await r.json();
     if(!r.ok||!d.ok)throw new Error(d.error||'Erro');
     const item=GER.items.find(it=>it.id===id);
-    if(item)item.daily_budget=val;
+    if(item){item.daily_budget=val;item.lifetime_budget=null;}
     showToast('ok','Orçamento atualizado: '+BRL(val));
     gerCancelEditBudget(id,val);
   }catch(e){
@@ -3623,29 +3700,22 @@ async function gerDuplicate(id,name,type,btn){
     const r=await fetch(`/api/meta/campaign/${id}`);
     const camp=await r.json();
     if(!r.ok)throw new Error(camp.error||'Erro ao buscar campanha');
-    // pre-fill wizard
     BWZ.d={};
     BWZ.d.account_id=camp.account_id;
     BWZ.d.campaign_name=`${camp.name} — Cópia`;
     BWZ.d.campNameEdited=true;
-    // parse objective → budget_type
     BWZ.d.budget_type=camp.daily_budget?'CBO':'ABO';
     BWZ.d.paused=true;
-    // try to extract naming from first adset if present
     const firstAdset=camp.adsets?.data?.[0];
     if(firstAdset?.targeting){
       const t=firstAdset.targeting;
-      if(t.geo_locations?.countries?.length){
-        BWZ.d.selCountries=[...t.geo_locations.countries];
-      }
+      if(t.geo_locations?.countries?.length)BWZ.d.selCountries=[...t.geo_locations.countries];
       if(t.age_min)BWZ.d.age_min=t.age_min;
       if(t.age_max)BWZ.d.age_max=t.age_max;
     }
     hideOverlay();
     botWizOpen();
-    // wait for wizard to open, then set account
     await new Promise(r=>setTimeout(r,100));
-    // click the matching account in the wizard
     const row=document.querySelector(`#bwz-acct-list .bwz-acct-row[data-id="${esc(camp.account_id)}"]`);
     if(row)row.click();
     showToast('ok','Dados pré-preenchidos — verifique antes de criar.');
@@ -3656,11 +3726,10 @@ async function gerDuplicate(id,name,type,btn){
 }
 
 function gerViewChildren(name,id,targetLevel){
+  GER.parentFilter={id,name,fromLevel:GER.level};
   GER.level=targetLevel;
-  document.querySelectorAll('.ger-tab').forEach(b=>{
-    b.classList.toggle('on',b.dataset.level===targetLevel);
-  });
-  document.getElementById('ger-search').value=name;
+  document.querySelectorAll('.ger-tab').forEach(b=>b.classList.toggle('on',b.dataset.level===targetLevel));
+  document.getElementById('ger-search').value='';
   gerLoad();
 }
 function gerFilterByParent(name,id,targetLevel){
@@ -3671,9 +3740,9 @@ function navToGerWithUtm(utm){
   const btn=document.getElementById('nav-gerenciador');
   if(btn)nav('gerenciador',btn);
   GER.level='adsets';
+  GER.parentFilter=null;
+  GER._pendingSearch=utm;
   document.querySelectorAll('.ger-tab').forEach(b=>b.classList.toggle('on',b.dataset.level==='adsets'));
-  const searchEl=document.getElementById('ger-search');
-  if(searchEl)searchEl.value=utm;
   gerLoad();
 }
 
