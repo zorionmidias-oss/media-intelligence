@@ -171,12 +171,64 @@ async function fetchMetaAdsForSync(dateRange) {
   return allAds;
 }
 
+// Returns the UTC offset (in whole hours) for an IANA timezone on a given date.
+// e.g. 'America/Los_Angeles' on a PDT day → -7; 'America/Sao_Paulo' in BRT → -3
+function tzOffsetHours(dateStr, timezone) {
+  const ref = new Date(`${dateStr}T12:00:00Z`); // noon UTC on that date
+  const localHour = parseInt(
+    new Intl.DateTimeFormat('en-US', { timeZone: timezone, hour: '2-digit', hour12: false })
+      .formatToParts(ref)
+      .find(p => p.type === 'hour')?.value ?? '12',
+    10
+  );
+  return (localHour === 24 ? 0 : localHour) - 12;
+}
+
 // ─────────────────────────────────────────────
-// ─────────────────────────────────────────────
+// Fetch real currency and timezone_name from Meta API and update meta_accounts.
+// Returns { [act_XXX]: { currency, timezone_name } } for all active accounts.
+async function refreshMetaAccountInfo() {
+  const { data: accounts } = await supabase
+    .from('meta_accounts')
+    .select('id,ad_account_id,access_token')
+    .eq('ativo', true);
+
+  const infoMap = {};
+  for (const acc of accounts || []) {
+    if (!acc.access_token) continue;
+    const accountId = String(acc.ad_account_id).startsWith('act_')
+      ? String(acc.ad_account_id)
+      : `act_${acc.ad_account_id}`;
+    try {
+      const res = await axios.get(`${BASE}/${accountId}`, {
+        params: { access_token: acc.access_token, fields: 'currency,timezone_name' },
+        timeout: 15000,
+      });
+      const { currency, timezone_name } = res.data || {};
+      if (currency) {
+        infoMap[accountId] = { currency, timezone_name: timezone_name || null };
+        await supabase.from('meta_accounts')
+          .update({ moeda: currency, timezone_name: timezone_name || null })
+          .eq('id', acc.id);
+        console.log(`[meta refresh] ${accountId}: currency=${currency} tz=${timezone_name}`);
+      }
+    } catch (e) {
+      console.warn(`[meta refresh ${accountId}]`, e.response?.data?.error?.message || e.message);
+    }
+  }
+  return infoMap;
+}
+
 // Hourly Meta spend: returns { [hora]: investimento_brl } for a given date.
 // Calls Meta API with hourly breakdown per account, converts to BRL with
 // imposto/câmbio, aggregates all accounts.
 async function fetchMetaHourlySpend(date) {
+  // Always get real currency from Meta API — never trust DB cache for moeda
+  const apiInfo = await refreshMetaAccountInfo().catch(e => {
+    console.warn('[hourly Meta] refreshMetaAccountInfo:', e.message);
+    return {};
+  });
+
   const { data: accounts } = await supabase
     .from('meta_accounts')
     .select('ad_account_id,access_token,imposto_percentual,moeda')
@@ -185,14 +237,22 @@ async function fetchMetaHourlySpend(date) {
   const horaMap = {}; // hora (0-23) → total investimento_brl
 
   for (const acc of accounts || []) {
-    const { ad_account_id, access_token: token, imposto_percentual, moeda } = acc;
+    const { ad_account_id, access_token: token, imposto_percentual } = acc;
     if (!token) continue;
-    const accountId = String(ad_account_id).startsWith('act_') ? ad_account_id : `act_${ad_account_id}`;
+    const accountId = String(ad_account_id).startsWith('act_') ? String(ad_account_id) : `act_${ad_account_id}`;
     const fatorImposto = 1 + (Number(imposto_percentual || 0) / 100);
+    // API-verified currency takes precedence over DB moeda
+    const moeda = apiInfo[accountId]?.currency || acc.moeda || 'BRL';
     let taxaUSD = 1;
-    if ((moeda || 'BRL') === 'USD') {
+    if (moeda === 'USD') {
       taxaUSD = await getUSDtoBRLByDate(date).catch(() => 1);
     }
+
+    // Compute shift: account TZ hour → BRT hour
+    const accountTz = apiInfo[accountId]?.timezone_name || 'America/Sao_Paulo';
+    const acctOffset = tzOffsetHours(date, accountTz);        // e.g. -7 for LA PDT
+    const brtOffset  = tzOffsetHours(date, 'America/Sao_Paulo'); // e.g. -3 for BRT
+    const hourShift  = brtOffset - acctOffset; // e.g. +4 for LA → BRT
 
     try {
       const res = await axios.get(`${BASE}/${accountId}/insights`, {
@@ -208,11 +268,17 @@ async function fetchMetaHourlySpend(date) {
       });
       for (const row of res.data?.data || []) {
         const hStr = row.hourly_stats_aggregated_by_advertiser_time_zone || '';
-        // Format: "00:00:00 - 01:00:00" — extract leading hour
-        const hora = parseInt(hStr.slice(0, 2), 10);
-        if (isNaN(hora) || hora < 0 || hora > 23) continue;
+        // Format: "00:00:00 - 01:00:00" — extract leading hour in account TZ
+        const acctHour = parseInt(hStr.slice(0, 2), 10);
+        if (isNaN(acctHour) || acctHour < 0 || acctHour > 23) continue;
+        const brtHour = acctHour + hourShift;
+        // Skip hours that cross into the adjacent BRT day
+        if (brtHour < 0 || brtHour > 23) continue;
         const spend = Number(row.spend || 0);
-        horaMap[hora] = (horaMap[hora] || 0) + spend * taxaUSD * fatorImposto;
+        horaMap[brtHour] = (horaMap[brtHour] || 0) + spend * taxaUSD * fatorImposto;
+      }
+      if (hourShift !== 0) {
+        console.log(`[hourly Meta ${accountId}] tz=${accountTz} shift=${hourShift > 0 ? '+' : ''}${hourShift}h`);
       }
     } catch (e) {
       console.warn(`[hourly Meta ${accountId}]`, e.response?.data?.error?.message || e.message);
@@ -287,6 +353,9 @@ async function syncAll(dateRange) {
       .from('dominios')
       .select('id,nome,prefixo_campanha,codigo_pedido_gam,prefixo_ad_unit')
       .eq('ativo', true);
+
+    // Always refresh Meta account info from API so moedaMap never uses stale DB values
+    await refreshMetaAccountInfo().catch(e => console.warn('[sync] refreshMetaAccountInfo:', e.message));
 
     // BUG 1: Carregar imposto E moeda por conta Meta
     const { data: metaAccountsData } = await supabase
@@ -515,6 +584,22 @@ async function syncAll(dateRange) {
     }
 
     if (adsRows.length > 0) {
+      // Deduplicate: remove zero-spend shadow rows for UTMs where another account
+      // has actual spend on the same date+domain. Prevents double-counting GAM revenue.
+      const utmsWithSpend = new Set(
+        adsRows.filter(r => (r.valor_gasto || 0) > 0)
+          .map(r => `${r.data}|${r.dominio_id}|${r.ad_utm}`)
+      );
+      const beforeDedup = adsRows.length;
+      adsRows = adsRows.filter(r =>
+        (r.valor_gasto || 0) > 0 || !utmsWithSpend.has(`${r.data}|${r.dominio_id}|${r.ad_utm}`)
+      );
+      if (adsRows.length < beforeDedup) {
+        console.log(`[sync] removidas ${beforeDedup - adsRows.length} linhas UTM sem investimento (shadow de outra conta)`);
+      }
+    }
+
+    if (adsRows.length > 0) {
       // BUG 3: pular datas que foram corrigidas manualmente
       const datas = [...new Set(adsRows.map(r => r.data))];
       let fixedRows = [];
@@ -636,11 +721,12 @@ async function syncAll(dateRange) {
       }
 
       if (utmCampaigns.length > 0) {
-        await supabase.from('report_utm_campaign')
+        const { error: utmErr } = await supabase.from('report_utm_campaign')
           .upsert(
             utmCampaigns.map(u => ({
               data: until,
               utm_campaign: u.utm_campaign,
+              dominio_id: 0,
               impressoes: u.impressoes || 0,
               receita: u.receita || 0,
               ecpm: u.ecpm || 0,
@@ -650,9 +736,10 @@ async function syncAll(dateRange) {
               prefixo_ad_unit: pfx,
               updated_at: now,
             })),
-            { onConflict: 'data,utm_campaign,prefixo_ad_unit' }
-          ).catch(e => console.warn('[sync] upsert report_utm_campaign:', e.message));
-        console.log(`[sync] cache GAM: ${utmCampaigns.length} UTMs salvas`);
+            { onConflict: 'data,utm_campaign,dominio_id' }
+          );
+        if (utmErr) console.warn('[sync] upsert report_utm_campaign:', utmErr.message);
+        else console.log(`[sync] cache GAM: ${utmCampaigns.length} UTMs salvas`);
       }
 
       if (utmSources.length > 0) {

@@ -32,14 +32,14 @@ async function handler(req, res) {
     const { data: rows, error } = await query;
     if (error) return res.status(500).json({ error: error.message });
 
-    // Aggregate by (dominio_id, ad_utm, account_id) across date range
+    // Aggregate by (dominio_id, ad_utm) across date range — same UTM from
+    // multiple accounts merges into one row (prevents double-counting GAM revenue)
     const utmMap = {};
     for (const r of rows || []) {
-      const key = `${r.dominio_id}|${r.ad_utm}|${r.account_id || ''}`;
+      const key = `${r.dominio_id}|${r.ad_utm}`;
       if (!utmMap[key]) {
         utmMap[key] = {
           ad_utm: r.ad_utm,
-          account_id: r.account_id || null,
           tipo: r.tipo,
           dominio: r.dominios?.nome || null,
           campanha_meta: r.campanha_meta,
@@ -91,7 +91,6 @@ async function handler(req, res) {
 
     const aggregated = Object.values(utmMap).map(g => ({
       ad_utm: g.ad_utm,
-      account_id: g.account_id,
       tipo: g.tipo,
       dominio: g.dominio,
       campanha_meta: g.campanha_meta,
