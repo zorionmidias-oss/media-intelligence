@@ -285,6 +285,14 @@ async function fetchMetaHourlySpend(date) {
     }
   }
 
+  const totalHoras = Object.keys(horaMap).length;
+  const totalSpend = Object.values(horaMap).reduce((s, v) => s + v, 0);
+  console.log(`[hourly Meta] ${date}: ${totalHoras} horas, investimento total R$${totalSpend.toFixed(2)}`);
+  if (totalHoras > 0) {
+    console.log('[hourly Meta] spend por hora BRT:', JSON.stringify(
+      Object.fromEntries(Object.entries(horaMap).map(([h, v]) => [h, +v.toFixed(2)]))
+    ));
+  }
   return horaMap;
 }
 
@@ -523,7 +531,8 @@ async function syncAll(dateRange) {
       const roas = valorGastoComImposto > 0 ? faturamentoReal / valorGastoComImposto : 0;
       const impressoesGam = gam.impressions || 0;
       const rps = impressoesGam > 0 ? faturamentoReal / impressoesGam : 0;
-      const ecpm = gam.ecpm || 0;
+      // eCPM: usar receita bruta / impressões (não gam.ecpm que é média simples de ad units)
+      const ecpm = impressoesGam > 0 ? +((faturamentoBruto / impressoesGam) * 1000).toFixed(2) : 0;
       const custo = g.results > 0 ? valorGastoComImposto / g.results : 0;
       const cliquesGam = gam.cliques_gam || 0;
       const ctrGam = gam.ctr_gam || 0;

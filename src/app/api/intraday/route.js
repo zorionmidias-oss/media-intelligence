@@ -57,13 +57,9 @@ async function handler(req, res) {
       };
     });
 
-    // Preenche horas 0..horaAtual, inserindo zeros onde não há dado no banco
+    // Retorna apenas horas que existem no banco até horaAtual — sem zero-fill
     const rawHoje = mapRows(hojeRes.data);
-    const mapaHoje = new Map(rawHoje.map(r => [r.hora, r]));
-    const hoje = [];
-    for (let h = 0; h <= horaAtual; h++) {
-      hoje.push(mapaHoje.get(h) || { hora: h, receita: 0, ecpm: 0, investimento: 0, roi: null, impressoes: 0 });
-    }
+    const hoje = rawHoje.filter(r => r.hora <= horaAtual);
 
     const ontem = mapRows(ontemRes.data);
     const semDados = hoje.length === 0 && ontem.length === 0;
