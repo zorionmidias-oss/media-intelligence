@@ -151,26 +151,6 @@
     .kpi-lbl{font-size:.875rem;color:var(--muted);font-weight:500}
     .kpi-icon{width:2.25rem;height:2.25rem;border-radius:var(--r);background:var(--sec);display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0;transition:background .3s,color .3s}
     .card-hv:hover .kpi-icon{background:color-mix(in oklch,var(--accent) 10%,transparent);color:var(--accent)}
-    /* ── PREVISÃO SECTION ── */
-    .previsao-section{background:linear-gradient(135deg,var(--info-soft),var(--success-soft));border:1px dashed var(--border-strong);border-radius:12px;padding:18px 20px;margin:12px 0}
-    .previsao-header{display:flex;align-items:baseline;gap:12px;margin-bottom:4px}
-    .previsao-header h3{margin:0;color:var(--fg);font-size:.9375rem;font-weight:600}
-    .previsao-subtitle{color:var(--muted);font-size:.6875rem;font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace}
-    .prev-row-lbl{font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:10px 0 6px}
-    /* dados atuais — linha 1, cards pequenos */
-    .prev-dados-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
-    .prev-dados-card{background:var(--sec);border:1px solid var(--border);border-radius:6px;padding:8px 10px;display:flex;flex-direction:column;gap:2px;min-height:60px}
-    .prev-dados-card .p-lbl{color:var(--muted);font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;font-weight:600;line-height:1.3}
-    .prev-dados-card .p-micro{color:var(--fg);font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;font-size:.875rem;font-weight:600;margin-top:auto}
-    /* previsão final — linha 2, cards maiores */
-    .previsao-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-    .previsao-card{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow-card);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:4px;min-height:88px}
-    .previsao-card.destaque{border-color:var(--success);background:var(--success-soft)}
-    .previsao-card .p-lbl{color:var(--muted);font-size:.6875rem;text-transform:uppercase;letter-spacing:.04em;font-weight:500}
-    .previsao-card .p-val{color:var(--fg);font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;font-size:1.375rem;font-weight:700;line-height:1.2;margin-top:auto}
-    .previsao-card .p-sub{color:var(--muted);font-size:.6875rem;margin-top:2px}
-    .p-val.verde{color:var(--ok)}
-    .p-val.vermelho{color:var(--bad)}
     /* chart toggles */
     .chart-toggles{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
     .ctog{padding:4px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:.75rem;font-weight:500;cursor:pointer;transition:all .2s;font-family:inherit}
@@ -180,8 +160,7 @@
     .ctog[data-serie="ecpm"].on{color:var(--c5);border-color:var(--c5)}
     .ctog[data-serie="roas"].on{color:var(--c5);border-color:var(--c5)}
     /* mobile */
-    @media(max-width:1280px){.prev-dados-grid{grid-template-columns:repeat(4,1fr)}.previsao-grid{grid-template-columns:repeat(2,1fr)}}
-    @media(max-width:768px){.prev-dados-grid{grid-template-columns:repeat(2,1fr)}.previsao-grid{grid-template-columns:repeat(2,1fr)}.chart-toggles{flex-direction:column}.chart-card .chart-scroll{overflow-x:auto}}
+    @media(max-width:768px){.chart-toggles{flex-direction:column}.chart-card .chart-scroll{overflow-x:auto}}
     .kpi-bot{display:flex;align-items:flex-end;gap:.5rem}
     .kpi-val{font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;font-size:1.75rem;font-weight:700;color:var(--fg);line-height:1.1;letter-spacing:-.025em;font-feature-settings:'tnum' 1}
     .kpi-ch{display:flex;align-items:center;gap:.25rem;font-size:.8125rem;font-weight:500;margin-bottom:.1rem}
@@ -339,23 +318,6 @@
     /* ── UTM MAIN ROW ── */
     .utm-row{border-top:1px solid var(--border)}
 
-    /* ── FORECAST SUB-ROW ── */
-    .tr-prev td,.previsao-row td{background:var(--info-soft)!important;padding:.35rem 1rem!important;border-bottom:2px solid var(--border)!important}
-    .previsao-row{background:var(--info-soft);border-bottom:1px solid var(--border)}
-    .btn-toggle-prev{background:transparent;border:none;cursor:pointer;padding:2px 6px;color:var(--muted);font-size:.65rem;border-radius:.25rem;transition:all .15s;line-height:1}
-    .btn-toggle-prev:hover{background:var(--sec);color:var(--accent)}
-    .btn-toggle-prev .chevron{display:inline-block;transition:transform .2s;font-style:normal}
-    .btn-toggle-all{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.3rem .75rem;border-radius:var(--r);font-size:.75rem;font-family:inherit;cursor:pointer;transition:all .15s;margin-bottom:.5rem}
-    .btn-toggle-all:hover{border-color:var(--accent);color:var(--accent)}
-    .prev-line{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
-    .prev-tag,.badge-previsao{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:var(--info-soft);color:var(--info);padding:.15rem .45rem;border-radius:.25rem;flex-shrink:0}
-    .prev-metric{display:flex;flex-direction:column;gap:.1rem}
-    .prev-metric span{font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace}
-    .prev-metric strong{font-size:.75rem;font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;color:var(--fg)}
-    .prev-pending{color:var(--muted);font-size:.6875rem;font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;font-style:italic}
-    .prev-item{margin-right:20px;color:var(--muted);text-transform:uppercase;font-size:.625rem}
-    .prev-item b{margin-left:6px;color:var(--fg);font-size:.75rem;font-weight:600;text-transform:none;letter-spacing:0}
-    .prev-item b.verde{color:var(--ok)} .prev-item b.vermelho{color:var(--bad)}
 
     /* ── SYNC BADGE ── */
     .sync-badge{display:inline-flex;align-items:center;gap:.375rem;height:2rem;padding:0 .75rem;border-radius:var(--r);font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;font-size:.7rem;white-space:nowrap;background:var(--sec);border:1px solid var(--border);color:var(--muted);cursor:default;transition:all .3s}
@@ -1171,46 +1133,6 @@
           </div>
         </div>
 
-        <section class="previsao-section" id="previsao-section" style="display:none">
-          <div class="previsao-header">
-            <h3>Previsão do Dia</h3>
-            <span class="previsao-subtitle">orçamento ÷ CPC × proporção × eCPM/1000</span>
-          </div>
-
-          <div class="prev-row-lbl">Dados Atuais (até agora)</div>
-          <div class="prev-dados-grid">
-            <div class="prev-dados-card"><span class="p-lbl">Orçamento Total</span><span class="p-micro" id="pd-orcamento">—</span></div>
-            <div class="prev-dados-card"><span class="p-lbl">CPA Atual</span><span class="p-micro" id="pd-cpc">—</span></div>
-            <div class="prev-dados-card"><span class="p-lbl">eCPM Atual</span><span class="p-micro" id="pd-ecpm">—</span></div>
-            <div class="prev-dados-card"><span class="p-lbl">Impressões GAM</span><span class="p-micro" id="pd-imp">—</span></div>
-            <div class="prev-dados-card"><span class="p-lbl">Resultados Meta</span><span class="p-micro" id="pd-clicks">—</span></div>
-            <div class="prev-dados-card"><span class="p-lbl">Prop. Imp/Result.</span><span class="p-micro" id="pd-prop">—</span></div>
-            <div class="prev-dados-card"><span class="p-lbl">Custo/Impressão</span><span class="p-micro" id="pd-cpi">—</span></div>
-          </div>
-
-          <div class="prev-row-lbl">Projeção Final</div>
-          <div class="previsao-grid">
-            <div class="previsao-card">
-              <span class="p-lbl">Faturamento Previsto</span>
-              <span class="p-val" id="prev-faturamento">—</span>
-              <span class="p-sub" id="prev-fat-sub">—</span>
-            </div>
-            <div class="previsao-card">
-              <span class="p-lbl">Lucro Previsto</span>
-              <span class="p-val" id="prev-lucro">—</span>
-            </div>
-            <div class="previsao-card destaque">
-              <span class="p-lbl">ROAS Previsto</span>
-              <span class="p-val" id="prev-roas">—</span>
-            </div>
-            <div class="previsao-card">
-              <span class="p-lbl" id="prev-orc-lbl">Orçamento Restante</span>
-              <span class="p-val" id="prev-orcamento">—</span>
-              <span class="p-sub" id="prev-restante">—</span>
-            </div>
-          </div>
-        </section>
-
         <div class="card chart-card anim" style="animation-delay:150ms">
           <div class="chart-hd">
             <div>
@@ -1304,7 +1226,6 @@
         <div class="tbl-wrap scroll">
           <div class="search-bar" style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
             <input type="text" class="search-in" id="search-camp-db" placeholder="🔍 Pesquisar UTM / domínio…" oninput="filterCampDB(this.value)" style="flex:1;min-width:180px"/>
-            <button class="btn-toggle-all" id="btn-toggle-all-prev" onclick="toggleTodasPrevisoes()" style="display:none">▶ Previsões</button>
             <div class="col-toggle-wrap">
               <button class="col-toggle-btn" onclick="toggleColDD(this)">⚙ Colunas</button>
               <div class="col-toggle-dd" id="col-toggle-dd">
@@ -1326,7 +1247,6 @@
           </table>
           <div class="tbl-foot">
             <span style="font-size:.875rem;color:var(--muted)" id="camp-db-count">—</span>
-            <span style="font-size:.75rem;color:var(--muted)" id="camp-prev-note" style="display:none"></span>
           </div>
         </div>
       </div>
@@ -2233,17 +2153,9 @@ function sortTable(tableId,colIdx,headerEl){
   const tbody=table.tBodies[0];
   if(!tbody)return;
 
-  // Build pairs [mainRow, previsaoRow|null] using explicit CSS classes
-  const allRows=Array.from(tbody.rows);
-  const pairs=[];
-  for(let i=0;i<allRows.length;i++){
-    const row=allRows[i];
-    if(!row.classList.contains('utm-row'))continue; // skip orphan preview rows
-    const next=allRows[i+1];
-    const sub=(next&&next.classList.contains('previsao-row'))?next:null;
-    if(sub)i++; // skip the preview row in the outer loop
-    pairs.push([row,sub]);
-  }
+  const pairs=Array.from(tbody.rows)
+    .filter(r=>r.classList.contains('utm-row'))
+    .map(r=>[r,null]);
 
   const cur=headerEl.dataset.sortDir||'';
   const dir=cur==='desc'?'asc':'desc';
@@ -2474,7 +2386,6 @@ function renderAll(d){
   const k=d.kpis||{};
   renderFXRate(k.usdToBrl);
   renderKPIs(k);
-  renderPrevisao(d.previsao||null);
   renderDelay(k);
   renderAdsets(d.adsets||[],k);
   renderGAM(k,d.adUnits||[]);
@@ -2989,40 +2900,6 @@ function renderKPIs(k){
   animateTo(elR,roi,PCT);
   setTimeout(()=>{if(elR)elR.style.color=roi>=0?'var(--ok)':'var(--bad)'},50);
   document.getElementById('kpi-roi-sub').className='kpi-ch '+(roi>=0?'pos':'neg');
-}
-
-/* ── FORECAST ── */
-function renderPrevisao(p){
-  const sec=document.getElementById('previsao-section');
-  if(!p||p.utms_total===0){if(sec)sec.style.display='none';return;}
-  sec.style.display='block';
-  // Dados atuais
-  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-  set('pd-orcamento',BRL(p.orcamento_total));
-  set('pd-cpc',BRL(p.cpa_atual));
-  set('pd-ecpm','R$'+loc(p.ecpm_atual,2));
-  set('pd-imp',NUM(p.impressoes_gam_atual));
-  set('pd-clicks',NUM(p.resultados_meta_atual));
-  set('pd-prop',loc(p.proporcao_imp_resultado,2)+'×');
-  set('pd-cpi','R$'+loc(p.custo_por_impressao*1000,4));
-  // Projeção
-  set('prev-faturamento',BRL(p.faturamento_real_previsto));
-  set('prev-fat-sub',NUM(p.impressoes_previstas)+' imp. previstas');
-  const orcEl=document.getElementById('prev-orcamento');
-  const orcLbl=document.getElementById('prev-orc-lbl');
-  const orcRest=+(p.orcamento_restante)||0;
-  if(orcRest<0){
-    if(orcLbl)orcLbl.textContent='Gasto acima da meta:';
-    if(orcEl){orcEl.textContent=BRL(Math.abs(orcRest));orcEl.style.color='var(--color-warning)';}
-  }else{
-    if(orcLbl)orcLbl.textContent='Orçamento Restante';
-    if(orcEl){orcEl.textContent=BRL(orcRest);orcEl.style.color='';}
-  }
-  set('prev-restante',BRL(p.gasto_atual)+' gasto até agora');
-  const lEl=document.getElementById('prev-lucro');
-  if(lEl){lEl.textContent=BRL(p.lucro_previsto);lEl.className='p-val '+(p.lucro_previsto>=0?'verde':'vermelho');}
-  const rEl=document.getElementById('prev-roas');
-  if(rEl){rEl.textContent=loc(p.roas_previsto,2)+'×';rEl.className='p-val '+(p.roas_previsto>=1?'verde':'vermelho');}
 }
 
 /* ── DELAY BADGE ── */
@@ -3797,16 +3674,12 @@ function renderCampKPIs(k,tipo){
 function renderCampTable(rows){
   const tb=document.getElementById('camp-db-body');
   const ct=document.getElementById('camp-db-count');
-  const noteEl=document.getElementById('camp-prev-note');
 
   if(!rows.length){
     tb.innerHTML='<tr><td colspan="13" class="empty">Sem dados no banco para o período selecionado.</td></tr>';
     ct.textContent='0 UTMs';
     return;
   }
-
-  const today=new Date().toISOString().slice(0,10);
-  let prevCount=0;
 
   const html=rows.map((r,i)=>{
     const roas=+(r.roas||0);
@@ -3818,14 +3691,11 @@ function renderCampTable(rows){
       ?`<span class="badge" style="background:var(--sec-strong);color:var(--muted)">${esc(r.dominio)}</span>`
       :'<span style="color:var(--muted)">—</span>';
 
-    const prevId=`prev-${i}`;
-    const hasPrevAny=(r.previsao_faturamento_real||0)>0||(r.orcamento_total||0)>0;
     const paisBadge=r.pais_sigla
       ?`<span title="${esc(r.pais_nome||r.pais_sigla)}" style="display:inline-flex;align-items:center;gap:2px;background:var(--sec-strong);border-radius:4px;padding:1px 5px;font-size:.65rem;color:var(--muted);margin-right:4px;flex-shrink:0">${getPaisEmoji(r.pais_sigla)} ${esc(r.pais_sigla)}</span>`
       :'';
-    const mainRow=`<tr class="anim utm-row" style="animation-delay:${i*20}ms">
+    return`<tr class="anim utm-row" style="animation-delay:${i*20}ms">
       <td><div class="td-av">
-        ${hasPrevAny?`<button class="btn-toggle-prev" onclick="togglePrevisao('${prevId}')" id="btn-${prevId}" title="Ver previsão"><span class="chevron">▶</span></button>`:''}
         <div class="t-av">${esc((r.ad_utm||'?').charAt(0).toUpperCase())}</div>
         ${paisBadge}<span style="font-family:monospace;font-size:.8rem">${esc(r.ad_utm)}</span>
       </div></td>
@@ -3845,72 +3715,13 @@ function renderCampTable(rows){
         <button class="act-btn" onclick="abrirHistorico('${esc(r.ad_utm||'')}')" title="Histórico">📜</button>
       </td>
     </tr>`;
-
-    // Forecast sub-row
-    const hasPrev=(r.previsao_faturamento_real||0)>0;
-    const hasOrc=(r.orcamento_total||0)>0;
-    let prevRow='';
-
-    if(hasPrev){
-      prevCount++;
-      const pLucroColor=(r.previsao_lucro||0)>=0?'var(--ok)':'var(--bad)';
-      const pRoasColor=(r.previsao_roas||0)>=2?'var(--ok)':(r.previsao_roas||0)>=1?'var(--warn)':'var(--bad)';
-      prevRow=`<tr class="tr-prev previsao-row" id="${prevId}" style="display:none">
-        <td colspan="13">
-          <div class="prev-line">
-            <span class="prev-tag">⚡ Previsão dia</span>
-            <div class="prev-metric"><span>Fat. Real</span><strong style="color:var(--success)">${BRL(r.previsao_faturamento_real)}</strong></div>
-            <div class="prev-metric"><span>Lucro</span><strong style="color:${pLucroColor}">${BRL(r.previsao_lucro)}</strong></div>
-            <div class="prev-metric"><span>ROAS</span><strong style="color:${pRoasColor}">${ROAS(r.previsao_roas)}</strong></div>
-            <div class="prev-metric"><span>Imp. Prev.</span><strong>${NUM(r.previsao_impressoes)}</strong></div>
-            <div class="prev-metric"><span>Orçamento</span><strong style="color:var(--muted)">${BRL(r.orcamento_total)}</strong></div>
-          </div>
-        </td>
-      </tr>`;
-    } else if(hasOrc){
-      prevRow=`<tr class="tr-prev previsao-row" id="${prevId}" style="display:none">
-        <td colspan="13">
-          <div class="prev-line">
-            <span class="prev-tag">↳ Previsão dia</span>
-            <span class="prev-pending">Aguardando dados do dia — Orç. ${BRL(r.orcamento_total)}/dia</span>
-          </div>
-        </td>
-      </tr>`;
-    }
-
-    return mainRow+prevRow;
   }).join('');
 
   tb.innerHTML=html;
   ct.textContent=`${rows.length} UTM${rows.length!==1?'s':''}`;
-  if(noteEl){
-    if(prevCount>0){noteEl.style.display='';noteEl.textContent=`${prevCount} com previsão de hoje`;}
-    else{noteEl.style.display='none';}
-  }
-  const toggleAllBtn=document.getElementById('btn-toggle-all-prev');
-  if(toggleAllBtn){toggleAllBtn.style.display=prevCount>0?'':'none';toggleAllBtn.textContent='▶ Previsões ('+prevCount+')';}
   makeTableSortable('camp-table');
   applyDefaultSort('camp-table',2);
   applyColumnVisibility();
-}
-
-function togglePrevisao(id){
-  const row=document.getElementById(id);
-  if(!row)return;
-  const btn=document.getElementById('btn-'+id);
-  const chevron=btn?btn.querySelector('.chevron'):null;
-  const isOpen=row.style.display!=='none';
-  row.style.display=isOpen?'none':'';
-  if(chevron)chevron.textContent=isOpen?'▶':'▼';
-}
-
-function toggleTodasPrevisoes(){
-  const rows=document.querySelectorAll('.previsao-row');
-  const allHidden=Array.from(rows).every(r=>r.style.display==='none');
-  rows.forEach(r=>r.style.display=allHidden?'':'none');
-  document.querySelectorAll('.btn-toggle-prev .chevron').forEach(c=>c.textContent=allHidden?'▼':'▶');
-  const btn=document.getElementById('btn-toggle-all-prev');
-  if(btn)btn.textContent=allHidden?'▼ Recolher':'▶ Previsões';
 }
 
 /* ── Column visibility ── */
