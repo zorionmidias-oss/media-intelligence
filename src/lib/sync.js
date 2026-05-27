@@ -241,7 +241,8 @@ async function fetchAndSaveHourly(date) {
     if (rec === 0 && inv === 0 && imp === 0) continue;
     const ecpm = gam?.ecpm || (imp > 0 ? +((rec / imp) * 1000).toFixed(4) : 0);
     const recLiq = rec * 0.9;
-    const roi = inv > 0 ? +((recLiq - inv) / inv * 100).toFixed(4) : 0;
+    // Threshold: investimento < R$1 pode ser artefato de distribuição horária — ROI nulo nesses casos
+    const roi = inv >= 1 ? +((recLiq - inv) / inv * 100).toFixed(4) : 0;
     rows.push({
       data: date, hora, dominio_id: 0,
       receita_bruta:    +rec.toFixed(4),

@@ -44,14 +44,18 @@ async function handler(req, res) {
       buildQuery(dataOntem),
     ]);
 
-    const mapRows = (rows) => (rows || []).map(r => ({
-      hora:         r.hora,
-      receita:      +(r.receita_liquida || 0),
-      ecpm:         +(r.ecpm || 0),
-      investimento: +(r.investimento_brl || 0),
-      roi:          r.roi != null ? +(r.roi) : null,
-      impressoes:   r.impressoes || 0,
-    }));
+    const mapRows = (rows) => (rows || []).map(r => {
+      const inv = +(r.investimento_brl || 0);
+      const roi = r.roi != null && inv >= 1 ? +(r.roi) : null;
+      return {
+        hora:         r.hora,
+        receita:      +(r.receita_liquida || 0),
+        ecpm:         +(r.ecpm || 0),
+        investimento: inv,
+        roi,
+        impressoes:   r.impressoes || 0,
+      };
+    });
 
     const hoje  = mapRows(hojeRes.data).filter(r => r.hora <= horaAtual);
     const ontem = mapRows(ontemRes.data);
