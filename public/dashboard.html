@@ -944,6 +944,20 @@
     .ap-utm-tbl tr.row-total td{font-weight:700;background:color-mix(in srgb,var(--sec) 60%,transparent);border-top:1px solid var(--border)}
     .ap-utm-name{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;font-weight:600;color:var(--accent)}
     .ap-empty{text-align:center;color:var(--muted);font-size:.875rem;padding:2rem}
+    /* Tabela de países */
+    #ap-paises-tbl{width:100%;border-collapse:collapse}
+    #ap-paises-tbl thead th{text-align:right;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:7px 10px;border-bottom:2px solid var(--border);font-weight:500;white-space:nowrap;user-select:none}
+    #ap-paises-tbl thead th.sortable{cursor:pointer}
+    #ap-paises-tbl thead th.sortable:hover{color:var(--fg)}
+    #ap-paises-tbl thead th:nth-child(2){text-align:left}
+    #ap-paises-tbl thead th:first-child{cursor:default;width:1.5rem}
+    .ap-cr{cursor:pointer}
+    .ap-cr td{padding:.75rem .625rem;border-bottom:1px solid var(--border);vertical-align:middle;font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;font-size:.8125rem;font-weight:600;text-align:right;white-space:nowrap}
+    .ap-cr td:first-child{text-align:center;padding:0 .375rem;width:1.5rem}
+    .ap-cr td.ap-cr-nc{text-align:left;font-family:inherit;display:flex;align-items:center;gap:.375rem}
+    .ap-cr:hover td{background:var(--sec)}
+    .ap-dr>td{padding:0;border-bottom:1px solid var(--border)}
+    .ap-cr-name{font-size:.875rem;font-weight:600;color:var(--fg)}
   </style>
 </head>
 <body>
@@ -1337,9 +1351,24 @@
           </div>
         </div>
 
-        <!-- Accordion list -->
-        <div id="ap-acord" class="ap-acord">
-          <div class="ap-empty">Carregando…</div>
+        <!-- Sortable table + expandable rows -->
+        <div class="tbl-wrap scroll">
+          <table id="ap-paises-tbl">
+            <thead><tr>
+              <th></th>
+              <th class="sortable" data-ap-col="pais_nome" onclick="apSort('pais_nome')">País<span class="sort-arrow"> ↕</span></th>
+              <th class="sortable" data-ap-col="investimento" onclick="apSort('investimento')">Investido<span class="sort-arrow"> ↕</span></th>
+              <th class="sortable" data-ap-col="faturamento" onclick="apSort('faturamento')">Faturamento<span class="sort-arrow"> ↓</span></th>
+              <th class="sortable" data-ap-col="lucro" onclick="apSort('lucro')">Lucro<span class="sort-arrow"> ↕</span></th>
+              <th class="sortable" data-ap-col="roas" onclick="apSort('roas')">ROAS<span class="sort-arrow"> ↕</span></th>
+              <th class="sortable" data-ap-col="ecpm_gam" onclick="apSort('ecpm_gam')">eCPM GAM<span class="sort-arrow"> ↕</span></th>
+              <th class="sortable" data-ap-col="impressoes_gam" onclick="apSort('impressoes_gam')">Imp. GAM<span class="sort-arrow"> ↕</span></th>
+              <th class="sortable" data-ap-col="num_utms" onclick="apSort('num_utms')">UTMs<span class="sort-arrow"> ↕</span></th>
+            </tr></thead>
+            <tbody id="ap-paises-tbody">
+              <tr><td colspan="9" class="empty">Carregando…</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -2550,7 +2579,10 @@ function closePaisModal(){
 }
 
 // ── Análise de País ───────────────────────────────────────────────────────────
-let _apNicho='all', _apTipo='all', _apExpanded={};
+let _apNicho='all', _apTipo='all';
+let _apData=[], _apSince='', _apUntil='';
+let _apSortCol='faturamento', _apSortDir='desc';
+let _apExpanded={}, _apUtmCache={};
 
 function apSetNicho(v,btn){
   _apNicho=v;
@@ -2565,91 +2597,127 @@ function apSetTipo(v,btn){
   loadAnalisePaises();
 }
 
+function apSort(col){
+  if(_apSortCol===col){
+    _apSortDir=_apSortDir==='desc'?'asc':'desc';
+  }else{
+    _apSortCol=col;
+    _apSortDir='desc';
+  }
+  renderApList();
+}
+
+function renderApList(){
+  const tbody=document.getElementById('ap-paises-tbody');
+  if(!tbody)return;
+  if(!_apData.length){
+    tbody.innerHTML='<tr><td colspan="9" class="empty">Nenhum país encontrado para o período.</td></tr>';
+    return;
+  }
+  // Sort
+  const sorted=[..._apData].sort((a,b)=>{
+    const va=a[_apSortCol],vb=b[_apSortCol];
+    if(typeof va==='string')return _apSortDir==='asc'?va.localeCompare(vb,'pt-BR'):vb.localeCompare(va,'pt-BR');
+    return _apSortDir==='asc'?va-vb:vb-va;
+  });
+  // Update thead arrows
+  document.querySelectorAll('#ap-paises-tbl thead th[data-ap-col]').forEach(th=>{
+    const isActive=th.dataset.apCol===_apSortCol;
+    th.dataset.sortDir=isActive?_apSortDir:'';
+    const a=th.querySelector('.sort-arrow');
+    if(!a)return;
+    if(isActive){a.textContent=_apSortDir==='desc'?' ↓':' ↑';a.style.opacity='1';}
+    else{a.textContent=' ↕';a.style.opacity='.4';}
+  });
+  // Render rows
+  tbody.innerHTML=sorted.map(p=>{
+    const sig=p.pais_sigla;
+    const lc=p.lucro>=0?'var(--color-positive)':'var(--color-negative)';
+    const rc=p.roas>=1?'var(--color-positive)':'var(--color-warning)';
+    const open=!!_apExpanded[sig];
+    const bodyContent=_apUtmCache[sig]?renderApUtmTable(_apUtmCache[sig]):'<div class="ap-empty" style="padding:1rem">Carregando UTMs…</div>';
+    return`<tr class="ap-cr" id="ap-cr-${sig}" onclick="apToggle('${sig}')">
+      <td><span class="ap-acord-arr${open?' open':''}" id="ap-arr-${sig}">▶</span></td>
+      <td class="ap-cr-nc"><span class="ap-acord-flag">${p.emoji}</span><span class="ap-cr-name">${esc(p.pais_nome)}</span></td>
+      <td>${BRL(p.investimento)}</td>
+      <td style="color:var(--color-info)">${BRL(p.faturamento)}</td>
+      <td style="color:${lc}">${BRL(p.lucro)}</td>
+      <td style="color:${rc}">${p.roas.toFixed(2)}x</td>
+      <td>${p.ecpm_gam>0?BRL(p.ecpm_gam):'—'}</td>
+      <td>${NUM(p.impressoes_gam)}</td>
+      <td>${p.num_utms}</td>
+    </tr>
+    <tr class="ap-dr" id="ap-dr-${sig}"${open?'':' style="display:none"'}>
+      <td colspan="9" style="padding:0"><div class="ap-acord-body open" id="ap-body-${sig}">${bodyContent}</div></td>
+    </tr>`;
+  }).join('');
+  // Kick off lazy loads for expanded-but-uncached countries
+  sorted.filter(p=>_apExpanded[p.pais_sigla]&&!_apUtmCache[p.pais_sigla]).forEach(p=>apLoadUtms(p.pais_sigla));
+}
+
 async function loadAnalisePaises(){
   const since=document.getElementById('f-since')?.value||'';
   const until=document.getElementById('f-until')?.value||'';
-  const acord=document.getElementById('ap-acord');
-  if(!acord)return;
-  acord.innerHTML='<div class="ap-empty">Carregando…</div>';
+  _apSince=since; _apUntil=until;
+  _apExpanded={}; _apUtmCache={};
+  const tbody=document.getElementById('ap-paises-tbody');
+  if(!tbody)return;
+  tbody.innerHTML='<tr><td colspan="9" class="empty">Carregando…</td></tr>';
   try{
-    // Load nichos dynamically
-    const nParams=new URLSearchParams();
-    if(since)nParams.set('since',since);
-    if(until)nParams.set('until',until);
-    const nr=await fetch('/api/analise-paises/nichos?'+nParams);
+    // Nichos dinâmicos
+    const nP=new URLSearchParams();
+    if(since)nP.set('since',since);
+    if(until)nP.set('until',until);
+    const nr=await fetch('/api/analise-paises/nichos?'+nP);
     if(nr.ok){
       const nichos=await nr.json();
       const pillsEl=document.getElementById('ap-nicho-pills');
-      if(pillsEl){
-        pillsEl.innerHTML=`<button class="ap-pill${_apNicho==='all'?' on':''}" data-nicho="all" onclick="apSetNicho('all',this)">Todos</button>`+
-          nichos.map(n=>`<button class="ap-pill${_apNicho===n?' on':''}" data-nicho="${esc(n)}" onclick="apSetNicho('${esc(n)}',this)">${esc(n)}</button>`).join('');
-      }
+      if(pillsEl)pillsEl.innerHTML=
+        `<button class="ap-pill${_apNicho==='all'?' on':''}" data-nicho="all" onclick="apSetNicho('all',this)">Todos</button>`+
+        nichos.map(n=>`<button class="ap-pill${_apNicho===n?' on':''}" data-nicho="${esc(n)}" onclick="apSetNicho('${esc(n)}',this)">${esc(n)}</button>`).join('');
     }
-
-    // Load countries
-    const params=new URLSearchParams();
-    if(since)params.set('since',since);
-    if(until)params.set('until',until);
-    if(_apNicho!=='all')params.set('nicho',_apNicho);
-    if(_apTipo!=='all')params.set('tipo',_apTipo);
-    const res=await fetch('/api/analise-paises?'+params);
-    if(!res.ok){acord.innerHTML='<div class="ap-empty">Erro ao carregar dados.</div>';return;}
-    const paises=await res.json();
-    if(!paises.length){acord.innerHTML='<div class="ap-empty">Nenhum país encontrado para o período.</div>';return;}
-    acord.innerHTML=paises.map(p=>renderApRow(p,since,until)).join('');
+    // Países
+    const p=new URLSearchParams();
+    if(since)p.set('since',since);
+    if(until)p.set('until',until);
+    if(_apNicho!=='all')p.set('nicho',_apNicho);
+    if(_apTipo!=='all')p.set('tipo',_apTipo);
+    const res=await fetch('/api/analise-paises?'+p);
+    if(!res.ok){tbody.innerHTML='<tr><td colspan="9" class="empty">Erro ao carregar dados.</td></tr>';return;}
+    _apData=await res.json();
+    renderApList();
   }catch(e){
     console.warn('[analise-paises]',e);
-    acord.innerHTML='<div class="ap-empty">Erro ao carregar dados.</div>';
+    tbody.innerHTML='<tr><td colspan="9" class="empty">Erro ao carregar dados.</td></tr>';
   }
 }
 
-function renderApRow(p,since,until){
-  const lucroColor=p.lucro>=0?'var(--color-positive)':'var(--color-negative)';
-  const roasColor=p.roas>=1?'var(--color-positive)':'var(--color-warning)';
-  const sig=p.pais_sigla;
-  return`<div class="ap-acord-row" id="ap-row-${sig}">
-    <div class="ap-acord-hd" onclick="apToggle('${sig}','${esc(since)}','${esc(until)}')">
-      <span class="ap-acord-arr${_apExpanded[sig]?' open':''}" id="ap-arr-${sig}">▶</span>
-      <span class="ap-acord-flag">${p.emoji}</span>
-      <span class="ap-acord-name">${esc(p.pais_nome)}</span>
-      <div class="ap-acord-metrics">
-        <div class="ap-metric"><span class="ap-metric-lbl">Investido</span><span class="ap-metric-val">${BRL(p.investimento)}</span></div>
-        <div class="ap-metric"><span class="ap-metric-lbl">Faturamento</span><span class="ap-metric-val" style="color:var(--color-info)">${BRL(p.faturamento)}</span></div>
-        <div class="ap-metric"><span class="ap-metric-lbl">Lucro</span><span class="ap-metric-val" style="color:${lucroColor}">${BRL(p.lucro)}</span></div>
-        <div class="ap-metric"><span class="ap-metric-lbl">ROAS</span><span class="ap-metric-val" style="color:${roasColor}">${p.roas.toFixed(2)}x</span></div>
-        <div class="ap-metric"><span class="ap-metric-lbl">eCPM GAM</span><span class="ap-metric-val">${p.ecpm_gam>0?BRL(p.ecpm_gam):'—'}</span></div>
-        <div class="ap-metric"><span class="ap-metric-lbl">Imp. GAM</span><span class="ap-metric-val">${NUM(p.impressoes_gam)}</span></div>
-        <div class="ap-metric"><span class="ap-metric-lbl">UTMs</span><span class="ap-metric-val">${p.num_utms}</span></div>
-      </div>
-    </div>
-    <div class="ap-acord-body${_apExpanded[sig]?' open':''}" id="ap-body-${sig}">
-      <div class="ap-empty" style="padding:1rem">Carregando UTMs…</div>
-    </div>
-  </div>`;
-}
-
-async function apToggle(sig,since,until){
-  const body=document.getElementById('ap-body-'+sig);
+async function apToggle(sig){
+  const dr=document.getElementById('ap-dr-'+sig);
   const arr=document.getElementById('ap-arr-'+sig);
-  if(!body)return;
-  const isOpen=body.classList.contains('open');
-  body.classList.toggle('open',!isOpen);
-  arr.classList.toggle('open',!isOpen);
+  if(!dr)return;
+  const isOpen=dr.style.display!=='none';
+  dr.style.display=isOpen?'none':'';
+  if(arr)arr.classList.toggle('open',!isOpen);
   _apExpanded[sig]=!isOpen;
-  if(!isOpen&&body.dataset.loaded!=='1'){
-    body.dataset.loaded='1';
-    try{
-      const params=new URLSearchParams();
-      if(since)params.set('since',since);
-      if(until)params.set('until',until);
-      if(_apNicho!=='all')params.set('nicho',_apNicho);
-      if(_apTipo!=='all')params.set('tipo',_apTipo);
-      const res=await fetch(`/api/analise-paises/${encodeURIComponent(sig)}?`+params);
-      if(!res.ok){body.innerHTML='<div class="ap-empty">Erro ao carregar UTMs.</div>';return;}
-      const utms=await res.json();
-      body.innerHTML=renderApUtmTable(utms);
-    }catch(e){body.innerHTML='<div class="ap-empty">Erro ao carregar UTMs.</div>';}
-  }
+  if(!isOpen&&!_apUtmCache[sig])apLoadUtms(sig);
+}
+
+async function apLoadUtms(sig){
+  const body=document.getElementById('ap-body-'+sig);
+  if(!body)return;
+  try{
+    const p=new URLSearchParams();
+    if(_apSince)p.set('since',_apSince);
+    if(_apUntil)p.set('until',_apUntil);
+    if(_apNicho!=='all')p.set('nicho',_apNicho);
+    if(_apTipo!=='all')p.set('tipo',_apTipo);
+    const res=await fetch(`/api/analise-paises/${encodeURIComponent(sig)}?`+p);
+    if(!res.ok){body.innerHTML='<div class="ap-empty">Erro ao carregar UTMs.</div>';return;}
+    const utms=await res.json();
+    _apUtmCache[sig]=utms;
+    body.innerHTML=renderApUtmTable(utms);
+  }catch(e){body.innerHTML='<div class="ap-empty">Erro ao carregar UTMs.</div>';}
 }
 
 function renderApUtmTable(utms){
