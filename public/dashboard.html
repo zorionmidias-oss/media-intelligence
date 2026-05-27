@@ -1161,8 +1161,8 @@
             <canvas id="intraday-canvas"></canvas>
           </div>
           <div id="intraday-legend" style="display:flex;gap:1rem;justify-content:center;margin-top:.5rem;font-size:.75rem;color:var(--muted)">
-            <span><span style="display:inline-block;width:12px;height:3px;background:#6366f1;border-radius:2px;margin-right:4px;vertical-align:middle"></span>Hoje</span>
-            <span><span style="display:inline-block;width:12px;height:3px;background:#94a3b8;border-radius:2px;margin-right:4px;vertical-align:middle;border-top:2px dashed #94a3b8;background:none"></span>Ontem</span>
+            <span><span style="display:inline-block;width:12px;height:2px;background:#00E5B4;border-radius:2px;margin-right:4px;vertical-align:middle"></span>Hoje</span>
+            <span><span style="display:inline-block;width:12px;height:0;border-top:1.5px dashed rgba(150,150,170,0.6);margin-right:4px;vertical-align:middle"></span>Ontem</span>
           </div>
         </div>
       </div>
@@ -2452,27 +2452,28 @@ function renderIntradayChart(data,metric){
         {
           label:'Hoje',
           data:hojeVals,
-          borderColor:'#6366f1',
-          backgroundColor:'rgba(99,102,241,0.10)',
+          borderColor:'#00E5B4',
+          backgroundColor:'rgba(0,229,180,0.08)',
           borderWidth:2,
-          pointRadius:2,
+          borderDash:[],
+          pointRadius:3,
           pointHoverRadius:5,
           tension:.35,
           fill:true,
-          spanGaps:false,
+          spanGaps:true,
         },
         {
           label:'Ontem',
           data:ontemVals,
-          borderColor:'#94a3b8',
+          borderColor:'rgba(150,150,170,0.6)',
           backgroundColor:'transparent',
-          borderWidth:2,
+          borderWidth:1.5,
           borderDash:[5,4],
           pointRadius:0,
           pointHoverRadius:4,
           tension:.35,
           fill:false,
-          spanGaps:false,
+          spanGaps:true,
         },
       ],
     },
