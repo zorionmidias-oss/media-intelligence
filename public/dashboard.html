@@ -135,6 +135,11 @@
 
     /* ── GRIDS ── */
     .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+    .g5{display:grid;grid-template-columns:repeat(5,1fr);gap:.75rem}
+    .gam-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:.875rem 1rem;position:relative}
+    .gam-card-lbl{font-size:.6875rem;color:var(--muted);font-weight:500;margin-bottom:.375rem;display:flex;align-items:center;gap:.375rem}
+    .gam-card-badge{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:var(--accent-soft);color:var(--accent);padding:.1rem .35rem;border-radius:.25rem}
+    .gam-card-val{font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;font-size:1.125rem;font-weight:700;color:var(--fg);line-height:1.2;font-feature-settings:'tnum' 1}
     .g6{display:grid;grid-template-columns:repeat(6,1fr);gap:1rem}
     .g2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
     .g-ch{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:1.5rem}
@@ -298,7 +303,7 @@
     ::-webkit-scrollbar-track{background:transparent}
     ::-webkit-scrollbar-thumb{background:var(--sec);border-radius:2px}
 
-    @media(max-width:1280px){.g4{grid-template-columns:repeat(2,1fr)}.g6{grid-template-columns:repeat(3,1fr)}.g-ch{grid-template-columns:1fr}}
+    @media(max-width:1280px){.g4{grid-template-columns:repeat(2,1fr)}.g5{grid-template-columns:repeat(3,1fr)}.g6{grid-template-columns:repeat(3,1fr)}.g-ch{grid-template-columns:1fr}}
     @media(max-width:768px){.g2,.ai-layout{grid-template-columns:1fr}.sb{width:72px}.main{margin-left:72px}}
 
     /* ── INLINE TABS (Bot / Direto) ── */
@@ -1133,6 +1138,30 @@
           </div>
         </div>
 
+        <!-- GAM KPI cards -->
+        <div class="g5 anim" style="animation-delay:80ms" id="gam-kpi-row">
+          <div class="gam-card" title="Fonte: Google Ad Manager">
+            <div class="gam-card-lbl">eCPM <span class="gam-card-badge">GAM</span></div>
+            <div class="gam-card-val hideable-value" id="gam-kpi-ecpm">…</div>
+          </div>
+          <div class="gam-card" title="Fonte: Google Ad Manager">
+            <div class="gam-card-lbl">RPS <span class="gam-card-badge">GAM</span></div>
+            <div class="gam-card-val hideable-value" id="gam-kpi-rps">…</div>
+          </div>
+          <div class="gam-card" title="Fonte: Google Ad Manager">
+            <div class="gam-card-lbl">CPC <span class="gam-card-badge">GAM</span></div>
+            <div class="gam-card-val hideable-value" id="gam-kpi-cpc">…</div>
+          </div>
+          <div class="gam-card" title="Fonte: Google Ad Manager">
+            <div class="gam-card-lbl">CTR <span class="gam-card-badge">GAM</span></div>
+            <div class="gam-card-val hideable-value" id="gam-kpi-ctr">…</div>
+          </div>
+          <div class="gam-card" title="Fonte: Google Ad Manager">
+            <div class="gam-card-lbl">Impressões <span class="gam-card-badge">GAM</span></div>
+            <div class="gam-card-val hideable-value" id="gam-kpi-imp">…</div>
+          </div>
+        </div>
+
         <div class="card chart-card anim" style="animation-delay:150ms">
           <div class="chart-hd">
             <div>
@@ -1165,6 +1194,7 @@
             <button class="ctog"    data-metric="ecpm"         onclick="intradaySetMetric(this)">eCPM</button>
             <button class="ctog"    data-metric="investimento" onclick="intradaySetMetric(this)">Investimento</button>
             <button class="ctog"    data-metric="roi"          onclick="intradaySetMetric(this)">ROI</button>
+            <button class="ctog"    data-metric="impressoes"   onclick="intradaySetMetric(this)">Impressões</button>
           </div>
           <div style="position:relative;height:260px">
             <canvas id="intraday-canvas"></canvas>
@@ -1173,6 +1203,7 @@
             <span><span style="display:inline-block;width:12px;height:2px;background:#00E5B4;border-radius:2px;margin-right:4px;vertical-align:middle"></span>Hoje</span>
             <span><span style="display:inline-block;width:12px;height:0;border-top:1.5px dashed rgba(150,150,170,0.6);margin-right:4px;vertical-align:middle"></span>Ontem</span>
           </div>
+          <div id="intraday-note" style="display:none;font-size:.7rem;color:var(--muted);text-align:center;margin-top:.25rem">* Investimento distribuído proporcionalmente por hora</div>
         </div>
 
         <!-- Performance por País -->
@@ -2378,6 +2409,7 @@ async function loadData(force=false){
   if(S.tab==='gam')loadGAMReport();
   loadGamDelayGlobal();
   loadIntradayChart();
+  loadGamKpis();
   loadPaises();
 }
 
@@ -2735,11 +2767,12 @@ function renderIntradayChart(data,metric){
   const hojeMap=Object.fromEntries(hoje.map(h=>[h.hora,h]));
   const ontemMap=Object.fromEntries(ontem.map(h=>[h.hora,h]));
 
-  const metaLabel={receita:'Receita',ecpm:'eCPM',investimento:'Investimento',roi:'ROI'}[metric]||metric;
+  const metaLabel={receita:'Receita',ecpm:'eCPM',investimento:'Investimento',roi:'ROI',impressoes:'Impressões'}[metric]||metric;
 
   function fmt(v){
     if(v===null||v===undefined)return null;
     if(metric==='roi')return +v.toFixed(2);
+    if(metric==='impressoes')return Math.round(+v);
     return +v.toFixed(metric==='ecpm'?4:2);
   }
 
@@ -2764,6 +2797,7 @@ function renderIntradayChart(data,metric){
     if(document.body.classList.contains('values-hidden'))return '••••';
     if(metric==='roi')return `${v>=0?'+':''}${loc(v,1)}%`;
     if(metric==='ecpm')return `R$${loc(v,2)}`;
+    if(metric==='impressoes')return NUM(v);
     return BRL(v);
   };
 
@@ -2772,6 +2806,7 @@ function renderIntradayChart(data,metric){
     if(document.body.classList.contains('values-hidden'))return '••';
     if(metric==='roi')return `${v>=0?'+':''}${loc(v,0)}%`;
     if(metric==='ecpm')return `R$${loc(v,1)}`;
+    if(metric==='impressoes')return NUM(v);
     return BRL(v);
   };
 
@@ -2843,9 +2878,37 @@ function renderIntradayChart(data,metric){
     },
   });
 
-  // Update sub label
+  // Update sub label and note
   const sub=document.getElementById('intraday-sub');
   if(sub)sub.textContent=`${data.data_hoje||'Hoje'} vs ${data.data_ontem||'Ontem'} · Horário de Brasília · ${metaLabel}`;
+  const note=document.getElementById('intraday-note');
+  if(note)note.style.display=(metric==='investimento'||metric==='roi')?'':'none';
+}
+
+/* ── GAM KPI CARDS (Overview) ── */
+async function loadGamKpis(){
+  const since=document.getElementById('f-since')?.value||'';
+  const until=document.getElementById('f-until')?.value||'';
+  const domain=document.getElementById('f-domain')?.value||'all';
+  try{
+    let url=`/api/reports-gam?cached=true`;
+    if(since)url+=`&since=${since}`;
+    if(until)url+=`&until=${until}`;
+    if(domain&&domain!=='all')url+=`&domain=${encodeURIComponent(domain)}`;
+    const res=await fetch(url);
+    if(!res.ok)return;
+    const d=await res.json();
+    renderGamKpis(d.kpis||{});
+  }catch(e){console.warn('[gamKpis]',e);}
+}
+
+function renderGamKpis(k){
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  set('gam-kpi-ecpm', k.ecpm!=null?BRL(k.ecpm):'—');
+  set('gam-kpi-rps',  k.rps!=null?BRL(k.rps):'—');
+  set('gam-kpi-cpc',  k.cpc!=null?BRL(k.cpc):'—');
+  set('gam-kpi-ctr',  k.ctr!=null?PCT(k.ctr):'—');
+  set('gam-kpi-imp',  k.impressions!=null?NUM(k.impressions):'—');
 }
 
 /* ── NETWORKS ── */
