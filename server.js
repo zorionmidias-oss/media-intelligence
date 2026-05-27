@@ -675,6 +675,136 @@ app.get('/api/paises', requireAuth, async (req, res) => {
   }
 });
 
+// ── Análise de País ───────────────────────────────────────────────────────────
+function _apDefaults(req) {
+  const now = new Date();
+  return {
+    since: req.query.since || new Date(now.getTime() - 30 * 86400000).toISOString().slice(0, 10),
+    until: req.query.until || now.toISOString().slice(0, 10),
+    nicho: req.query.nicho && req.query.nicho !== 'all' ? req.query.nicho : null,
+    tipo:  req.query.tipo  && req.query.tipo  !== 'all' ? req.query.tipo  : null,
+  };
+}
+
+// MUST be before /:sigla to avoid 'nichos' matching as a sigla
+app.get('/api/analise-paises/nichos', requireAuth, async (req, res) => {
+  try {
+    const { since, until } = _apDefaults(req);
+    const { data, error } = await supabase
+      .from('ads_consolidados')
+      .select('nicho')
+      .gte('data', since)
+      .lte('data', until)
+      .not('nicho', 'is', null);
+    if (error) return res.status(500).json({ error: error.message });
+    const nichos = [...new Set((data || []).map(r => r.nicho).filter(Boolean))].sort();
+    res.json(nichos);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/analise-paises/:sigla', requireAuth, async (req, res) => {
+  try {
+    const { since, until, nicho, tipo } = _apDefaults(req);
+    const sigla = req.params.sigla;
+    let q = supabase
+      .from('ads_consolidados')
+      .select('ad_utm,valor_gasto,faturamento_real,faturamento_bruto,lucro,impressoes_gam,ecpm')
+      .gte('data', since)
+      .lte('data', until)
+      .eq('pais_sigla', sigla);
+    if (nicho) q = q.eq('nicho', nicho);
+    if (tipo)  q = q.eq('tipo', tipo);
+    const { data: rows, error } = await q;
+    if (error) return res.status(500).json({ error: error.message });
+
+    const utmMap = {};
+    for (const r of rows || []) {
+      const utm = r.ad_utm;
+      if (!utmMap[utm]) utmMap[utm] = { utm, investimento: 0, faturamento: 0, faturamento_bruto: 0, lucro: 0, impressoes_gam: 0, _ecpmImpSum: 0, _ecpmImpW: 0 };
+      const u = utmMap[utm];
+      u.investimento      += Number(r.valor_gasto      || 0);
+      u.faturamento       += Number(r.faturamento_real  || 0);
+      u.faturamento_bruto += Number(r.faturamento_bruto || 0);
+      u.lucro             += Number(r.lucro             || 0);
+      u.impressoes_gam    += Number(r.impressoes_gam    || 0);
+      const imp = Number(r.impressoes_gam || 0);
+      if (imp > 0 && (r.ecpm || 0) > 0) { u._ecpmImpSum += r.ecpm * imp; u._ecpmImpW += imp; }
+    }
+
+    const utms = Object.values(utmMap).map(u => {
+      const ecpm_gam = u._ecpmImpW > 0 ? +(u._ecpmImpSum / u._ecpmImpW).toFixed(2)
+        : u.impressoes_gam > 0 ? +(u.faturamento_bruto / u.impressoes_gam * 1000).toFixed(2) : 0;
+      return {
+        utm: u.utm,
+        investimento:      +u.investimento.toFixed(2),
+        faturamento:       +u.faturamento.toFixed(2),
+        receita_gam_bruta: +u.faturamento_bruto.toFixed(2),
+        lucro:             +u.lucro.toFixed(2),
+        roas:              u.investimento > 0 ? +(u.faturamento / u.investimento).toFixed(2) : 0,
+        impressoes_gam:    u.impressoes_gam,
+        ecpm_gam,
+      };
+    }).sort((a, b) => b.faturamento - a.faturamento);
+
+    res.json(utms);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/analise-paises', requireAuth, async (req, res) => {
+  try {
+    const { since, until, nicho, tipo } = _apDefaults(req);
+    let q = supabase
+      .from('ads_consolidados')
+      .select('pais_sigla,pais_nome,valor_gasto,faturamento_real,faturamento_bruto,lucro,impressoes_gam,ecpm')
+      .gte('data', since)
+      .lte('data', until)
+      .neq('pais_sigla', '');
+    if (nicho) q = q.eq('nicho', nicho);
+    if (tipo)  q = q.eq('tipo', tipo);
+    const { data: rows, error } = await q;
+    if (error) return res.status(500).json({ error: error.message });
+
+    const paisMap = {};
+    for (const r of rows || []) {
+      const sig = r.pais_sigla;
+      if (!sig) continue;
+      if (!paisMap[sig]) {
+        const info = PAISES[sig] || {};
+        paisMap[sig] = { pais_sigla: sig, pais_nome: r.pais_nome || info.nome || sig, emoji: info.emoji || '🌍', investimento: 0, faturamento: 0, faturamento_bruto: 0, lucro: 0, impressoes_gam: 0, _ecpmImpSum: 0, _ecpmImpW: 0, _utms: new Set() };
+      }
+      const p = paisMap[sig];
+      p.investimento      += Number(r.valor_gasto      || 0);
+      p.faturamento       += Number(r.faturamento_real  || 0);
+      p.faturamento_bruto += Number(r.faturamento_bruto || 0);
+      p.lucro             += Number(r.lucro             || 0);
+      p.impressoes_gam    += Number(r.impressoes_gam    || 0);
+      if (r.ad_utm) p._utms.add(r.ad_utm);
+      const imp = Number(r.impressoes_gam || 0);
+      if (imp > 0 && (r.ecpm || 0) > 0) { p._ecpmImpSum += r.ecpm * imp; p._ecpmImpW += imp; }
+    }
+
+    const result = Object.values(paisMap).map(p => {
+      const ecpm_gam = p._ecpmImpW > 0 ? +(p._ecpmImpSum / p._ecpmImpW).toFixed(2)
+        : p.impressoes_gam > 0 ? +(p.faturamento_bruto / p.impressoes_gam * 1000).toFixed(2) : 0;
+      return {
+        pais_sigla:        p.pais_sigla,
+        pais_nome:         p.pais_nome,
+        emoji:             p.emoji,
+        investimento:      +p.investimento.toFixed(2),
+        faturamento:       +p.faturamento.toFixed(2),
+        receita_gam_bruta: +p.faturamento_bruto.toFixed(2),
+        lucro:             +p.lucro.toFixed(2),
+        roas:              p.investimento > 0 ? +(p.faturamento / p.investimento).toFixed(2) : 0,
+        impressoes_gam:    p.impressoes_gam,
+        ecpm_gam,
+        num_utms:          p._utms.size,
+      };
+    }).sort((a, b) => b.faturamento - a.faturamento);
+
+    res.json(result);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ── Sync ─────────────────────────────────────────────────────────────────────
 app.post('/api/sync/forcar', requireAuth, async (req, res) => {
   try {

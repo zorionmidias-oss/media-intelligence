@@ -37,6 +37,16 @@ function extractPaisSigla(name) {
   return m ? m[1] : '';
 }
 
+// "[GH_RELA_EN_BOT_0001]" → "RELA"  |  "[NG_NEWS_EN_BOT_0002]" → "NEWS"
+function extractNicho(adsetName, campaignName) {
+  for (const name of [adsetName, campaignName]) {
+    if (!name) continue;
+    const m = String(name).match(/\[[A-Z]{2,3}_([A-Z]+)_/);
+    if (m) return m[1];
+  }
+  return null;
+}
+
 function extractDomainPrefix(campaignName) {
   if (!campaignName) return null;
   const m = String(campaignName).match(FIRST_BRACKET_RE);
@@ -73,6 +83,7 @@ function groupAdsByUTM(ads) {
         campaignName: ad.campaignName,
         accountId: ad.accountId || null,
         paisSigla: pais,
+        nicho: ad.nicho || null,
         spend: 0, clicks: 0, impressions: 0, results: 0,
         _cpcSum: 0, _cpcW: 0,
         _ctrSum: 0, _ctrW: 0,
@@ -81,6 +92,7 @@ function groupAdsByUTM(ads) {
     }
 
     const g = groups[key];
+    if (!g.nicho && ad.nicho) g.nicho = ad.nicho;
     g.spend += ad.spend || 0;
     g.clicks += ad.clicks || 0;
     g.impressions += ad.impressions || 0;
@@ -114,6 +126,7 @@ function groupAdsByUTM(ads) {
       campaignName: g.campaignName,
       accountId: g.accountId,
       paisSigla: g.paisSigla,
+      nicho: g.nicho,
       spend: g.spend,
       clicks: g.clicks,
       impressions: g.impressions,
@@ -125,4 +138,4 @@ function groupAdsByUTM(ads) {
   });
 }
 
-module.exports = { extractDomainPrefix, extractAdUTM, extractTipo, groupAdsByUTM, extractPaisSigla, PAISES };
+module.exports = { extractDomainPrefix, extractAdUTM, extractTipo, groupAdsByUTM, extractPaisSigla, extractNicho, PAISES };

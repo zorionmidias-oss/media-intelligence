@@ -911,6 +911,39 @@
     .pais-utm-table tr:hover td{background:var(--sec)}
     .pais-utm-table tr{cursor:pointer}
     .pais-utm-name{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;font-weight:600;color:var(--fg)}
+
+    /* ── Análise de País (tab) ── */
+    .ap-filters{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem}
+    .ap-filter-group{display:flex;align-items:center;gap:.375rem;flex-wrap:wrap}
+    .ap-filter-lbl{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);white-space:nowrap}
+    .ap-pill{background:var(--sec);border:1px solid var(--border);border-radius:20px;padding:.25rem .75rem;font-size:.75rem;font-weight:500;color:var(--muted);cursor:pointer;transition:background .12s,color .12s,border-color .12s;white-space:nowrap}
+    .ap-pill:hover{border-color:var(--accent);color:var(--fg)}
+    .ap-pill.on{background:var(--accent);border-color:var(--accent);color:#fff}
+    .ap-acord{display:flex;flex-direction:column;gap:.5rem}
+    .ap-acord-row{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+    .ap-acord-hd{display:flex;align-items:center;gap:.75rem;padding:.875rem 1.125rem;cursor:pointer;transition:background .12s;user-select:none}
+    .ap-acord-hd:hover{background:var(--sec)}
+    .ap-acord-arr{font-size:.75rem;color:var(--muted);transition:transform .18s;flex-shrink:0;width:1rem;text-align:center}
+    .ap-acord-arr.open{transform:rotate(90deg)}
+    .ap-acord-flag{font-size:1.375rem;line-height:1;flex-shrink:0}
+    .ap-acord-name{font-size:.9375rem;font-weight:600;color:var(--fg);min-width:110px}
+    .ap-acord-metrics{display:flex;gap:1.5rem;flex-wrap:wrap;margin-left:auto;font-size:.8125rem}
+    .ap-metric{display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+    .ap-metric-lbl{font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+    .ap-metric-val{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;font-weight:600}
+    .ap-acord-body{display:none;border-top:1px solid var(--border);background:color-mix(in srgb,var(--bg) 96%,transparent)}
+    .ap-acord-body.open{display:block}
+    .ap-utm-tbl{width:100%;border-collapse:collapse}
+    .ap-utm-tbl th{text-align:right;font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:7px 14px;border-bottom:1px solid var(--border);font-weight:500}
+    .ap-utm-tbl th:first-child{text-align:left}
+    .ap-utm-tbl td{padding:8px 14px;font-size:.8125rem;border-bottom:1px solid var(--border);text-align:right}
+    .ap-utm-tbl td:first-child{text-align:left}
+    .ap-utm-tbl tr:last-child td{border-bottom:none}
+    .ap-utm-tbl tr.ap-utm-row{cursor:pointer}
+    .ap-utm-tbl tr.ap-utm-row:hover td{background:var(--sec)}
+    .ap-utm-tbl tr.row-total td{font-weight:700;background:color-mix(in srgb,var(--sec) 60%,transparent);border-top:1px solid var(--border)}
+    .ap-utm-name{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;font-weight:600;color:var(--accent)}
+    .ap-empty{text-align:center;color:var(--muted);font-size:.875rem;padding:2rem}
   </style>
 </head>
 <body>
@@ -964,6 +997,11 @@
       <span class="nav-ind"></span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>
       <span class="nav-lbl">Campanhas</span>
+    </button>
+    <button class="nav-btn" onclick="nav('analise-paises',this)">
+      <span class="nav-ind"></span>
+      <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      <span class="nav-lbl">Análise de País</span>
     </button>
     <button class="nav-btn" onclick="nav('gam',this)">
       <span class="nav-ind"></span>
@@ -1276,6 +1314,32 @@
             <span style="font-size:.875rem;color:var(--muted)" id="camp-db-count">—</span>
             <span style="font-size:.75rem;color:var(--muted)" id="camp-prev-note" style="display:none"></span>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANÁLISE DE PAÍS -->
+    <div id="tab-analise-paises" class="tab-panel">
+      <div class="sec">
+        <!-- Filters -->
+        <div class="ap-filters">
+          <div class="ap-filter-group">
+            <span class="ap-filter-lbl">Nicho</span>
+            <div id="ap-nicho-pills" class="ap-filter-group">
+              <button class="ap-pill on" data-nicho="all" onclick="apSetNicho('all',this)">Todos</button>
+            </div>
+          </div>
+          <div class="ap-filter-group" style="margin-left:auto">
+            <span class="ap-filter-lbl">Tipo</span>
+            <button class="ap-pill on" data-tipo="all"    onclick="apSetTipo('all',this)">Todos</button>
+            <button class="ap-pill"    data-tipo="bot"    onclick="apSetTipo('bot',this)">Bot</button>
+            <button class="ap-pill"    data-tipo="direto" onclick="apSetTipo('direto',this)">Tráfego Direto</button>
+          </div>
+        </div>
+
+        <!-- Accordion list -->
+        <div id="ap-acord" class="ap-acord">
+          <div class="ap-empty">Carregando…</div>
         </div>
       </div>
     </div>
@@ -2075,6 +2139,7 @@ async function refreshAll(){
   try{
     await loadData(false);
     if(S.tab==='campaigns') loadCampaignsDB(S.campTipo||'bot');
+    if(S.tab==='analise-paises') loadAnalisePaises();
   }catch(e){console.error('[refreshAll]',e)}
   finally{hideOverlay();}
 }
@@ -2084,6 +2149,7 @@ async function forceSync(){
   try{
     await loadData(true);
     if(S.tab==='campaigns') loadCampaignsDB(S.campTipo||'bot');
+    if(S.tab==='analise-paises') loadAnalisePaises();
   }catch(e){console.error('[forceSync]',e)}
   finally{hideOverlay();}
 }
@@ -2212,7 +2278,7 @@ function toggleSb(){
 }
 
 /* ═══ NAV ═══ */
-const TITLES={overview:'Overview',campaigns:'Campanhas',gam:'Reports GAM',funil:'Análise de Funil',gerenciador:'Gerenciador',ai:'Análise IA',domains:'Domínios',contas:'Contas Meta','criar-campanha':'Criar Campanha'};
+const TITLES={overview:'Overview',campaigns:'Campanhas','analise-paises':'Análise de País',gam:'Reports GAM',funil:'Análise de Funil',gerenciador:'Gerenciador',ai:'Análise IA',domains:'Domínios',contas:'Contas Meta','criar-campanha':'Criar Campanha'};
 function nav(id,btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('on'));
@@ -2221,6 +2287,7 @@ function nav(id,btn){
   document.getElementById('hdr-title').textContent=TITLES[id]||id;
   S.tab=id;
   if(id==='ai'){checkAI();return;}
+  if(id==='analise-paises'){showOverlay('Carregando…');loadAnalisePaises().finally(hideOverlay);return;}
   if(id==='campaigns'){showOverlay('Carregando...');loadCampaignsDB(S.campTipo||'bot').finally(hideOverlay);return;}
   if(id==='domains'){showOverlay('Carregando...');loadDominios().finally(hideOverlay);return;}
   if(id==='gam'){showOverlay('Carregando...');loadGAMReport().finally(hideOverlay);return;}
@@ -2480,6 +2547,152 @@ function openPaisModal(sigla){
 
 function closePaisModal(){
   document.getElementById('modal-pais').classList.remove('on');
+}
+
+// ── Análise de País ───────────────────────────────────────────────────────────
+let _apNicho='all', _apTipo='all', _apExpanded={};
+
+function apSetNicho(v,btn){
+  _apNicho=v;
+  document.querySelectorAll('#ap-nicho-pills .ap-pill').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  loadAnalisePaises();
+}
+function apSetTipo(v,btn){
+  _apTipo=v;
+  document.querySelectorAll('[data-tipo]').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  loadAnalisePaises();
+}
+
+async function loadAnalisePaises(){
+  const since=document.getElementById('f-since')?.value||'';
+  const until=document.getElementById('f-until')?.value||'';
+  const acord=document.getElementById('ap-acord');
+  if(!acord)return;
+  acord.innerHTML='<div class="ap-empty">Carregando…</div>';
+  try{
+    // Load nichos dynamically
+    const nParams=new URLSearchParams();
+    if(since)nParams.set('since',since);
+    if(until)nParams.set('until',until);
+    const nr=await fetch('/api/analise-paises/nichos?'+nParams);
+    if(nr.ok){
+      const nichos=await nr.json();
+      const pillsEl=document.getElementById('ap-nicho-pills');
+      if(pillsEl){
+        pillsEl.innerHTML=`<button class="ap-pill${_apNicho==='all'?' on':''}" data-nicho="all" onclick="apSetNicho('all',this)">Todos</button>`+
+          nichos.map(n=>`<button class="ap-pill${_apNicho===n?' on':''}" data-nicho="${esc(n)}" onclick="apSetNicho('${esc(n)}',this)">${esc(n)}</button>`).join('');
+      }
+    }
+
+    // Load countries
+    const params=new URLSearchParams();
+    if(since)params.set('since',since);
+    if(until)params.set('until',until);
+    if(_apNicho!=='all')params.set('nicho',_apNicho);
+    if(_apTipo!=='all')params.set('tipo',_apTipo);
+    const res=await fetch('/api/analise-paises?'+params);
+    if(!res.ok){acord.innerHTML='<div class="ap-empty">Erro ao carregar dados.</div>';return;}
+    const paises=await res.json();
+    if(!paises.length){acord.innerHTML='<div class="ap-empty">Nenhum país encontrado para o período.</div>';return;}
+    acord.innerHTML=paises.map(p=>renderApRow(p,since,until)).join('');
+  }catch(e){
+    console.warn('[analise-paises]',e);
+    acord.innerHTML='<div class="ap-empty">Erro ao carregar dados.</div>';
+  }
+}
+
+function renderApRow(p,since,until){
+  const lucroColor=p.lucro>=0?'var(--color-positive)':'var(--color-negative)';
+  const roasColor=p.roas>=1?'var(--color-positive)':'var(--color-warning)';
+  const sig=p.pais_sigla;
+  return`<div class="ap-acord-row" id="ap-row-${sig}">
+    <div class="ap-acord-hd" onclick="apToggle('${sig}','${esc(since)}','${esc(until)}')">
+      <span class="ap-acord-arr${_apExpanded[sig]?' open':''}" id="ap-arr-${sig}">▶</span>
+      <span class="ap-acord-flag">${p.emoji}</span>
+      <span class="ap-acord-name">${esc(p.pais_nome)}</span>
+      <div class="ap-acord-metrics">
+        <div class="ap-metric"><span class="ap-metric-lbl">Investido</span><span class="ap-metric-val">${BRL(p.investimento)}</span></div>
+        <div class="ap-metric"><span class="ap-metric-lbl">Faturamento</span><span class="ap-metric-val" style="color:var(--color-info)">${BRL(p.faturamento)}</span></div>
+        <div class="ap-metric"><span class="ap-metric-lbl">Lucro</span><span class="ap-metric-val" style="color:${lucroColor}">${BRL(p.lucro)}</span></div>
+        <div class="ap-metric"><span class="ap-metric-lbl">ROAS</span><span class="ap-metric-val" style="color:${roasColor}">${p.roas.toFixed(2)}x</span></div>
+        <div class="ap-metric"><span class="ap-metric-lbl">eCPM GAM</span><span class="ap-metric-val">${p.ecpm_gam>0?BRL(p.ecpm_gam):'—'}</span></div>
+        <div class="ap-metric"><span class="ap-metric-lbl">Imp. GAM</span><span class="ap-metric-val">${NUM(p.impressoes_gam)}</span></div>
+        <div class="ap-metric"><span class="ap-metric-lbl">UTMs</span><span class="ap-metric-val">${p.num_utms}</span></div>
+      </div>
+    </div>
+    <div class="ap-acord-body${_apExpanded[sig]?' open':''}" id="ap-body-${sig}">
+      <div class="ap-empty" style="padding:1rem">Carregando UTMs…</div>
+    </div>
+  </div>`;
+}
+
+async function apToggle(sig,since,until){
+  const body=document.getElementById('ap-body-'+sig);
+  const arr=document.getElementById('ap-arr-'+sig);
+  if(!body)return;
+  const isOpen=body.classList.contains('open');
+  body.classList.toggle('open',!isOpen);
+  arr.classList.toggle('open',!isOpen);
+  _apExpanded[sig]=!isOpen;
+  if(!isOpen&&body.dataset.loaded!=='1'){
+    body.dataset.loaded='1';
+    try{
+      const params=new URLSearchParams();
+      if(since)params.set('since',since);
+      if(until)params.set('until',until);
+      if(_apNicho!=='all')params.set('nicho',_apNicho);
+      if(_apTipo!=='all')params.set('tipo',_apTipo);
+      const res=await fetch(`/api/analise-paises/${encodeURIComponent(sig)}?`+params);
+      if(!res.ok){body.innerHTML='<div class="ap-empty">Erro ao carregar UTMs.</div>';return;}
+      const utms=await res.json();
+      body.innerHTML=renderApUtmTable(utms);
+    }catch(e){body.innerHTML='<div class="ap-empty">Erro ao carregar UTMs.</div>';}
+  }
+}
+
+function renderApUtmTable(utms){
+  if(!utms.length)return'<div class="ap-empty">Nenhum UTM encontrado.</div>';
+  const totInv=utms.reduce((s,u)=>s+u.investimento,0);
+  const totFat=utms.reduce((s,u)=>s+u.faturamento,0);
+  const totBru=utms.reduce((s,u)=>s+u.receita_gam_bruta,0);
+  const totLuc=utms.reduce((s,u)=>s+u.lucro,0);
+  const totImp=utms.reduce((s,u)=>s+u.impressoes_gam,0);
+  const totRoas=totInv>0?(totFat/totInv):0;
+  const totEcpm=totImp>0?(totBru/totImp*1000):0;
+  const rows=utms.map(u=>{
+    const lc=u.lucro>=0?'var(--color-positive)':'var(--color-negative)';
+    const rc=u.roas>=1?'var(--color-positive)':'var(--color-warning)';
+    return`<tr class="ap-utm-row" onclick="openDrilldown('${esc(u.utm)}')">
+      <td><span class="ap-utm-name">${esc(u.utm)}</span></td>
+      <td>${BRL(u.investimento)}</td>
+      <td style="color:var(--color-info)">${BRL(u.faturamento)}</td>
+      <td style="color:${lc}">${BRL(u.lucro)}</td>
+      <td style="color:${rc}">${u.roas.toFixed(2)}x</td>
+      <td>${NUM(u.impressoes_gam)}</td>
+      <td>${BRL(u.receita_gam_bruta)}</td>
+      <td>${u.ecpm_gam>0?BRL(u.ecpm_gam):'—'}</td>
+    </tr>`;
+  }).join('');
+  const totLc=totLuc>=0?'var(--color-positive)':'var(--color-negative)';
+  const totRc=totRoas>=1?'var(--color-positive)':'var(--color-warning)';
+  const totRow=`<tr class="row-total">
+    <td>TOTAL</td>
+    <td>${BRL(totInv)}</td>
+    <td style="color:var(--color-info)">${BRL(totFat)}</td>
+    <td style="color:${totLc}">${BRL(totLuc)}</td>
+    <td style="color:${totRc}">${totRoas.toFixed(2)}x</td>
+    <td>${NUM(totImp)}</td>
+    <td>${BRL(totBru)}</td>
+    <td>${totEcpm>0?BRL(totEcpm):'—'}</td>
+  </tr>`;
+  return`<table class="ap-utm-tbl">
+    <thead><tr>
+      <th>UTM</th><th>Investido</th><th>Fat. Real</th><th>Lucro</th><th>ROAS</th><th>Imp. GAM</th><th>Receita GAM</th><th>eCPM GAM</th>
+    </tr></thead>
+    <tbody>${rows}${totRow}</tbody>
+  </table>`;
 }
 
 // ── Intraday ──────────────────────────────────────────────────────────────────
