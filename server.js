@@ -27,7 +27,7 @@ const convTemplatesHandler  = require('./src/app/api/conversation-templates/rout
 const adCopiesHandler       = require('./src/app/api/ad-copies-templates/route');
 const intradayHandler       = require('./src/app/api/intraday/route');
 const supabase = require('./src/lib/supabase');
-const { syncAll } = require('./src/lib/sync');
+const { syncAll, fetchAndSaveHourly } = require('./src/lib/sync');
 const { startScheduler } = require('./src/lib/scheduler');
 const { hashPassword, verifyPassword, generateToken, requireAuth, COOKIE_NAME } = require('./src/lib/auth');
 const { registrarHistorico } = require('./src/lib/historico');
@@ -607,6 +607,22 @@ app.post('/api/sync/forcar', requireAuth, async (req, res) => {
     }
     const result = await syncAll(dateRange);
     res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Populate dados_hora for specific dates without full sync
+app.post('/api/sync/hourly', requireAuth, async (req, res) => {
+  try {
+    const { dates } = req.body || {};
+    const list = Array.isArray(dates) ? dates : [dates].filter(Boolean);
+    if (list.length === 0) return res.status(400).json({ error: 'Forneça body: { dates: ["yyyy-mm-dd", ...] }' });
+    const results = {};
+    for (const d of list) {
+      results[d] = await fetchAndSaveHourly(d).catch(e => ({ error: e.message }));
+    }
+    res.json({ ok: true, results });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

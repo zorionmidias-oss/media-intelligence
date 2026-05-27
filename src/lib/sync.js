@@ -172,6 +172,99 @@ async function fetchMetaAdsForSync(dateRange) {
 }
 
 // ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// Hourly Meta spend: returns { [hora]: investimento_brl } for a given date.
+// Calls Meta API with hourly breakdown per account, converts to BRL with
+// imposto/câmbio, aggregates all accounts.
+async function fetchMetaHourlySpend(date) {
+  const { data: accounts } = await supabase
+    .from('meta_accounts')
+    .select('ad_account_id,access_token,imposto_percentual,moeda')
+    .eq('ativo', true);
+
+  const horaMap = {}; // hora (0-23) → total investimento_brl
+
+  for (const acc of accounts || []) {
+    const { ad_account_id, access_token: token, imposto_percentual, moeda } = acc;
+    if (!token) continue;
+    const accountId = String(ad_account_id).startsWith('act_') ? ad_account_id : `act_${ad_account_id}`;
+    const fatorImposto = 1 + (Number(imposto_percentual || 0) / 100);
+    let taxaUSD = 1;
+    if ((moeda || 'BRL') === 'USD') {
+      taxaUSD = await getUSDtoBRLByDate(date).catch(() => 1);
+    }
+
+    try {
+      const res = await axios.get(`${BASE}/${accountId}/insights`, {
+        params: {
+          access_token: token,
+          level: 'account',
+          fields: 'spend',
+          time_range: JSON.stringify({ since: date, until: date }),
+          breakdowns: 'hourly_stats_aggregated_by_advertiser_time_zone',
+          limit: 50,
+        },
+        timeout: 30000,
+      });
+      for (const row of res.data?.data || []) {
+        const hStr = row.hourly_stats_aggregated_by_advertiser_time_zone || '';
+        // Format: "00:00:00 - 01:00:00" — extract leading hour
+        const hora = parseInt(hStr.slice(0, 2), 10);
+        if (isNaN(hora) || hora < 0 || hora > 23) continue;
+        const spend = Number(row.spend || 0);
+        horaMap[hora] = (horaMap[hora] || 0) + spend * taxaUSD * fatorImposto;
+      }
+    } catch (e) {
+      console.warn(`[hourly Meta ${accountId}]`, e.response?.data?.error?.message || e.message);
+    }
+  }
+
+  return horaMap;
+}
+
+// Fetch GAM + Meta hourly data for one date and upsert into dados_hora.
+async function fetchAndSaveHourly(date) {
+  const [gamRows, metaHoraMap] = await Promise.all([
+    fetchGAMHourly({ since: date, until: date }).catch(e => { console.warn('[hourly GAM]', e.message); return []; }),
+    fetchMetaHourlySpend(date).catch(e => { console.warn('[hourly Meta]', e.message); return {}; }),
+  ]);
+
+  const gamMap = {};
+  for (const h of gamRows) gamMap[h.hora] = h;
+
+  const rows = [];
+  for (let hora = 0; hora < 24; hora++) {
+    const gam = gamMap[hora];
+    const inv = +(metaHoraMap[hora] || 0).toFixed(4);
+    const rec = gam?.receita || 0;
+    const imp = gam?.impressoes || 0;
+    if (rec === 0 && inv === 0 && imp === 0) continue;
+    const ecpm = gam?.ecpm || (imp > 0 ? +((rec / imp) * 1000).toFixed(4) : 0);
+    const recLiq = rec * 0.9;
+    const roi = inv > 0 ? +((recLiq - inv) / inv * 100).toFixed(4) : 0;
+    rows.push({
+      data: date, hora, dominio_id: 0,
+      receita_bruta:    +rec.toFixed(4),
+      impressoes:       imp,
+      ecpm:             +ecpm.toFixed(4),
+      investimento_brl: inv,
+      roi,
+      atualizado_em:    new Date().toISOString(),
+    });
+  }
+
+  if (rows.length === 0) {
+    console.log(`[hourly] sem dados para ${date}`);
+    return 0;
+  }
+
+  const { error } = await supabase.from('dados_hora')
+    .upsert(rows, { onConflict: 'data,hora,dominio_id' });
+  if (error) console.warn(`[hourly] upsert ${date}:`, error.message);
+  else console.log(`[hourly] ${rows.length} horas salvas → ${date}`);
+  return rows.length;
+}
+
 // Main sync function
 // ─────────────────────────────────────────────
 function yesterday() {
@@ -583,6 +676,14 @@ async function syncAll(dateRange) {
       // Não deixar falhar o sync principal por causa do cache
     }
 
+    // ── Salvar dados horários para o gráfico intraday ────────────────────────
+    try {
+      await fetchAndSaveHourly(until);
+      if (since !== until) await fetchAndSaveHourly(since);
+    } catch (e) {
+      console.warn('[sync] hourly save:', e.message);
+    }
+
     // ── Log success ───────────────────────────────
     const duration = Date.now() - startMs;
     await supabase.from('sync_log').insert({
@@ -612,4 +713,4 @@ async function syncAll(dateRange) {
   }
 }
 
-module.exports = { syncAll };
+module.exports = { syncAll, fetchAndSaveHourly };
