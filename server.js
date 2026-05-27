@@ -25,6 +25,7 @@ const uploadVideoHandler   = require('./src/app/api/meta-resources/upload-video'
 const { dryRunHandler, criarHandler } = require('./src/app/api/campaigns/route');
 const convTemplatesHandler  = require('./src/app/api/conversation-templates/route');
 const adCopiesHandler       = require('./src/app/api/ad-copies-templates/route');
+const intradayHandler       = require('./src/app/api/intraday/route');
 const supabase = require('./src/lib/supabase');
 const { syncAll } = require('./src/lib/sync');
 const { startScheduler } = require('./src/lib/scheduler');
@@ -93,6 +94,7 @@ app.get('/api/overview', requireAuth, overviewHandler);
 app.get('/api/dashboard', requireAuth, dashboardHandler);
 app.get('/api/reports-gam', requireAuth, reportsGamHandler);
 app.get('/api/gam-status', requireAuth, gamStatusHandler);
+app.get('/api/intraday', requireAuth, intradayHandler);
 
 // ── Contas Meta ──────────────────────────────────────────────────────────────
 app.get('/api/contas', requireAuth, async (_req, res) => {

@@ -1141,6 +1141,30 @@
             <canvas id="trend-canvas"></canvas>
           </div>
         </div>
+
+        <!-- Intraday chart -->
+        <div class="card chart-card anim" id="intraday-card" style="animation-delay:200ms">
+          <div class="chart-hd">
+            <div>
+              <div class="chart-title">Performance por Hora do Dia</div>
+              <div class="chart-sub" id="intraday-sub">Hoje vs Ontem · Horário de Brasília</div>
+            </div>
+            <span id="intraday-spinner" style="font-size:.75rem;color:var(--muted);display:none">Carregando…</span>
+          </div>
+          <div class="chart-toggles" id="intraday-toggles">
+            <button class="ctog on" data-metric="receita"      onclick="intradaySetMetric(this)">Receita</button>
+            <button class="ctog"    data-metric="ecpm"         onclick="intradaySetMetric(this)">eCPM</button>
+            <button class="ctog"    data-metric="investimento" onclick="intradaySetMetric(this)">Investimento</button>
+            <button class="ctog"    data-metric="roi"          onclick="intradaySetMetric(this)">ROI</button>
+          </div>
+          <div style="position:relative;height:260px">
+            <canvas id="intraday-canvas"></canvas>
+          </div>
+          <div id="intraday-legend" style="display:flex;gap:1rem;justify-content:center;margin-top:.5rem;font-size:.75rem;color:var(--muted)">
+            <span><span style="display:inline-block;width:12px;height:3px;background:#6366f1;border-radius:2px;margin-right:4px;vertical-align:middle"></span>Hoje</span>
+            <span><span style="display:inline-block;width:12px;height:3px;background:#94a3b8;border-radius:2px;margin-right:4px;vertical-align:middle;border-top:2px dashed #94a3b8;background:none"></span>Ontem</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -2282,6 +2306,7 @@ async function loadData(force=false){
   finally{S.busy=false;hideLoading();}
   if(S.tab==='gam')loadGAMReport();
   loadGamDelayGlobal();
+  loadIntradayChart();
 }
 
 /* ═══ RENDER ALL ═══ */
@@ -2314,6 +2339,158 @@ async function loadTrendFixed(){
     _trendFixed30=d.trend||[];
     renderTrend(_trendFixed30);
   }catch(e){console.warn('[trend30]',e);}
+}
+
+/* ── INTRADAY CHART — HOJE VS ONTEM POR HORA ── */
+let _intradayChart=null;
+let _intradayData=null;
+let _intradayMetric='receita';
+
+async function loadIntradayChart(){
+  const spinner=document.getElementById('intraday-spinner');
+  if(spinner)spinner.style.display='';
+  try{
+    const domain=document.getElementById('f-domain')?.value||'all';
+    let url='/api/intraday';
+    if(domain&&domain!=='all')url+=`?domain=${encodeURIComponent(domain)}`;
+    const res=await fetch(url);
+    if(!res.ok)return;
+    _intradayData=await res.json();
+    renderIntradayChart(_intradayData,_intradayMetric);
+  }catch(e){console.warn('[intraday]',e);}
+  finally{if(spinner)spinner.style.display='none';}
+}
+
+function intradaySetMetric(btn){
+  document.querySelectorAll('#intraday-toggles .ctog').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  _intradayMetric=btn.dataset.metric;
+  if(_intradayData)renderIntradayChart(_intradayData,_intradayMetric);
+}
+
+function renderIntradayChart(data,metric){
+  const canvas=document.getElementById('intraday-canvas');
+  if(!canvas)return;
+
+  const hoje=data.hoje||[];
+  const ontem=data.ontem||[];
+  const horaAtual=data.hora_atual??23;
+
+  // Build full 24-label array; missing hours get null
+  const allHoras=Array.from({length:24},(_,i)=>i);
+  const hojeMap=Object.fromEntries(hoje.map(h=>[h.hora,h]));
+  const ontemMap=Object.fromEntries(ontem.map(h=>[h.hora,h]));
+
+  const metaLabel={receita:'Receita',ecpm:'eCPM',investimento:'Investimento',roi:'ROI'}[metric]||metric;
+
+  function fmt(v){
+    if(v===null||v===undefined)return null;
+    if(metric==='roi')return +v.toFixed(2);
+    return +v.toFixed(metric==='ecpm'?4:2);
+  }
+
+  const labels=allHoras.map(h=>`${String(h).padStart(2,'0')}h`);
+  const hojeVals=allHoras.map(h=>{
+    if(h>horaAtual)return null;
+    const row=hojeMap[h];
+    return row?fmt(row[metric]):null;
+  });
+  const ontemVals=allHoras.map(h=>{
+    const row=ontemMap[h];
+    return row?fmt(row[metric]):null;
+  });
+
+  const isLight=document.documentElement.getAttribute('data-theme')==='light';
+  const gridColor=isLight?'rgba(0,0,0,0.07)':'rgba(255,255,255,0.07)';
+  const tickColor=isLight?'rgba(0,0,0,0.50)':'rgba(255,255,255,0.45)';
+  const font={family:'ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace',size:11};
+
+  const tooltipFmt=(v)=>{
+    if(v===null||v===undefined)return '—';
+    if(document.body.classList.contains('values-hidden'))return '••••';
+    if(metric==='roi')return `${v>=0?'+':''}${loc(v,1)}%`;
+    if(metric==='ecpm')return `R$${loc(v,2)}`;
+    return BRL(v);
+  };
+
+  const tickFmt=(v)=>{
+    if(v===null)return '';
+    if(document.body.classList.contains('values-hidden'))return '••';
+    if(metric==='roi')return `${v>=0?'+':''}${loc(v,0)}%`;
+    if(metric==='ecpm')return `R$${loc(v,1)}`;
+    return BRL(v);
+  };
+
+  if(_intradayChart){_intradayChart.destroy();_intradayChart=null;}
+
+  _intradayChart=new Chart(canvas,{
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {
+          label:'Hoje',
+          data:hojeVals,
+          borderColor:'#6366f1',
+          backgroundColor:'rgba(99,102,241,0.10)',
+          borderWidth:2,
+          pointRadius:2,
+          pointHoverRadius:5,
+          tension:.35,
+          fill:true,
+          spanGaps:false,
+        },
+        {
+          label:'Ontem',
+          data:ontemVals,
+          borderColor:'#94a3b8',
+          backgroundColor:'transparent',
+          borderWidth:2,
+          borderDash:[5,4],
+          pointRadius:0,
+          pointHoverRadius:4,
+          tension:.35,
+          fill:false,
+          spanGaps:false,
+        },
+      ],
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:isLight?'rgba(255,255,255,0.95)':'rgba(15,15,25,0.92)',
+          borderColor:isLight?'rgba(0,0,0,0.12)':'rgba(255,255,255,0.12)',
+          borderWidth:1,
+          titleColor:isLight?'#1D1D1F':'#fff',
+          bodyColor:isLight?'rgba(0,0,0,0.7)':'rgba(255,255,255,0.7)',
+          padding:12,
+          callbacks:{
+            title:items=>items[0].label,
+            label:item=>{
+              const v=item.raw;
+              const prefix=item.datasetIndex===0?' Hoje:'  :' Ontem:';
+              return `${prefix} ${tooltipFmt(v)}`;
+            },
+          },
+        },
+      },
+      scales:{
+        x:{grid:{color:gridColor},ticks:{color:tickColor,font,maxTicksLimit:12}},
+        y:{
+          position:'left',
+          grid:{color:gridColor},
+          ticks:{color:tickColor,font,callback:tickFmt},
+        },
+      },
+    },
+  });
+
+  // Update sub label
+  const sub=document.getElementById('intraday-sub');
+  if(sub)sub.textContent=`${data.data_hoje||'Hoje'} vs ${data.data_ontem||'Ontem'} · Horário de Brasília · ${metaLabel}`;
 }
 
 /* ── NETWORKS ── */
@@ -4543,7 +4720,11 @@ async function abrirHistorico(utm){
   loadGamDelayGlobal();
   setInterval(loadGamDelayGlobal,5*60*1000);
   loadTrendFixed();
-  window.addEventListener('resize',()=>{if(_trendFixed30.length)renderTrend(_trendFixed30)});
+  loadIntradayChart();
+  window.addEventListener('resize',()=>{
+    if(_trendFixed30.length)renderTrend(_trendFixed30);
+    if(_intradayData)renderIntradayChart(_intradayData,_intradayMetric);
+  });
 })();
 
 /* ═══ ANÁLISE DE FUNIL ═══ */
