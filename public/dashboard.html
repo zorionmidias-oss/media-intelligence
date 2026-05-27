@@ -2354,7 +2354,7 @@ async function loadIntradayChart(){
     let url='/api/intraday';
     if(domain&&domain!=='all')url+=`?domain=${encodeURIComponent(domain)}`;
     const res=await fetch(url);
-    if(!res.ok)return;
+    if(!res.ok){console.warn('[intraday] HTTP',res.status);return;}
     _intradayData=await res.json();
     renderIntradayChart(_intradayData,_intradayMetric);
   }catch(e){console.warn('[intraday]',e);}
@@ -2368,6 +2368,22 @@ function intradaySetMetric(btn){
   if(_intradayData)renderIntradayChart(_intradayData,_intradayMetric);
 }
 
+function intradayShowEmpty(msg){
+  if(_intradayChart){_intradayChart.destroy();_intradayChart=null;}
+  const canvas=document.getElementById('intraday-canvas');
+  if(!canvas)return;
+  const sub=document.getElementById('intraday-sub');
+  if(sub)sub.textContent=msg||'Sem dados disponíveis';
+  // Draw centered message on canvas
+  const ctx=canvas.getContext('2d');
+  const isLight=document.documentElement.getAttribute('data-theme')==='light';
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle=isLight?'rgba(0,0,0,0.35)':'rgba(255,255,255,0.35)';
+  ctx.font='13px ui-sans-serif,system-ui,sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText(msg||'Sem dados',canvas.width/2,canvas.height/2);
+}
+
 function renderIntradayChart(data,metric){
   const canvas=document.getElementById('intraday-canvas');
   if(!canvas)return;
@@ -2375,6 +2391,11 @@ function renderIntradayChart(data,metric){
   const hoje=data.hoje||[];
   const ontem=data.ontem||[];
   const horaAtual=data.hora_atual??23;
+
+  if(data.sem_dados||(hoje.length===0&&ontem.length===0)){
+    intradayShowEmpty('Sem dados de hora · acesse a aba GAM para sincronizar');
+    return;
+  }
 
   // Build full 24-label array; missing hours get null
   const allHoras=Array.from({length:24},(_,i)=>i);
