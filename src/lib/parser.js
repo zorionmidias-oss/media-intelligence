@@ -6,6 +6,37 @@ const FIRST_BRACKET_RE = /^\[([^\]]+)\]/;
 // "01-janefb" → "janefb" | "02_janefb" → "janefb"
 const NUM_PREFIX_RE = /^\d+[-_\s]*/;
 
+// Country code lookup: ISO 3166-1 alpha-2 siglas encontradas nas campanhas
+const PAISES = {
+  GH: { nome: 'Ghana',           emoji: '🇬🇭' },
+  NG: { nome: 'Nigeria',         emoji: '🇳🇬' },
+  SN: { nome: 'Senegal',         emoji: '🇸🇳' },
+  KE: { nome: 'Kenya',           emoji: '🇰🇪' },
+  ZA: { nome: 'South Africa',    emoji: '🇿🇦' },
+  TZ: { nome: 'Tanzania',        emoji: '🇹🇿' },
+  UG: { nome: 'Uganda',          emoji: '🇺🇬' },
+  ET: { nome: 'Ethiopia',        emoji: '🇪🇹' },
+  CI: { nome: "Côte d'Ivoire",   emoji: '🇨🇮' },
+  CM: { nome: 'Cameroon',        emoji: '🇨🇲' },
+  CD: { nome: 'DR Congo',        emoji: '🇨🇩' },
+  MG: { nome: 'Madagascar',      emoji: '🇲🇬' },
+  MZ: { nome: 'Mozambique',      emoji: '🇲🇿' },
+  AO: { nome: 'Angola',          emoji: '🇦🇴' },
+  RW: { nome: 'Rwanda',          emoji: '🇷🇼' },
+  ZM: { nome: 'Zambia',          emoji: '🇿🇲' },
+  ZW: { nome: 'Zimbabwe',        emoji: '🇿🇼' },
+  MA: { nome: 'Morocco',         emoji: '🇲🇦' },
+  AFS: { nome: 'South Africa',   emoji: '🇿🇦' },
+};
+
+// "[MKUKER] [NG_RELA_EN_BOT_0001] [JANE]" → "NG"
+// Matches first occurrence of "[XX_" where XX = 2-3 uppercase letters
+function extractPaisSigla(name) {
+  if (!name) return '';
+  const m = String(name).match(/\[([A-Z]{2,3})_/);
+  return m ? m[1] : '';
+}
+
 function extractDomainPrefix(campaignName) {
   if (!campaignName) return null;
   const m = String(campaignName).match(FIRST_BRACKET_RE);
@@ -21,7 +52,7 @@ function extractTipo(campaignName) {
   return /direto/i.test(String(campaignName || '')) ? 'direto' : 'bot';
 }
 
-// Groups ads by (date, domainId, adUTM).
+// Groups ads by (date, domainId, adUTM, accountId, paisSigla).
 // Sums spend/clicks/impressions/results.
 // CPC/CTR = clicks/impressions-weighted averages.
 // orcamentoTotal = sum of UNIQUE adset daily budgets in the group.
@@ -30,7 +61,8 @@ function groupAdsByUTM(ads) {
 
   for (const ad of ads) {
     if (!ad.adUTM) continue;
-    const key = `${ad.date}|${ad.domainId}|${ad.adUTM}|${ad.accountId || ''}`;
+    const pais = ad.paisSigla || '';
+    const key = `${ad.date}|${ad.domainId}|${ad.adUTM}|${ad.accountId || ''}|${pais}`;
 
     if (!groups[key]) {
       groups[key] = {
@@ -40,6 +72,7 @@ function groupAdsByUTM(ads) {
         date: ad.date,
         campaignName: ad.campaignName,
         accountId: ad.accountId || null,
+        paisSigla: pais,
         spend: 0, clicks: 0, impressions: 0, results: 0,
         _cpcSum: 0, _cpcW: 0,
         _ctrSum: 0, _ctrW: 0,
@@ -80,6 +113,7 @@ function groupAdsByUTM(ads) {
       date: g.date,
       campaignName: g.campaignName,
       accountId: g.accountId,
+      paisSigla: g.paisSigla,
       spend: g.spend,
       clicks: g.clicks,
       impressions: g.impressions,
@@ -91,4 +125,4 @@ function groupAdsByUTM(ads) {
   });
 }
 
-module.exports = { extractDomainPrefix, extractAdUTM, extractTipo, groupAdsByUTM };
+module.exports = { extractDomainPrefix, extractAdUTM, extractTipo, groupAdsByUTM, extractPaisSigla, PAISES };

@@ -3,7 +3,7 @@ const axios = require('axios');
 const supabase = require('./supabase');
 const { getBMConfigs, updateBMStatus } = require('./meta');
 const { fetchGAMReport, fetchGAMFunnelsByUTM, getUSDtoBRL, getUSDtoBRLByDate, fetchGAMHourly, fetchGAMUtmCampaigns, fetchGAMUtmSources } = require('./gam');
-const { extractDomainPrefix, extractAdUTM, extractTipo, groupAdsByUTM } = require('./parser');
+const { extractDomainPrefix, extractAdUTM, extractTipo, groupAdsByUTM, extractPaisSigla, PAISES } = require('./parser');
 
 const BASE = 'https://graph.facebook.com/v19.0';
 const AD_FIELDS = 'ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name,spend,impressions,inline_link_clicks,outbound_clicks,clicks,ctr,cpc,actions,objective,optimization_goal';
@@ -449,6 +449,7 @@ async function syncAll(dateRange) {
         });
       }
 
+      const paisSigla = extractPaisSigla(ad.adset_name) || extractPaisSigla(ad.campaign_name) || '';
       adsForGrouping.push({
         adUTM,
         domainId: domain.id,
@@ -457,6 +458,7 @@ async function syncAll(dateRange) {
         campaignName: ad.campaign_name,
         conjuntoMeta: ad.adset_name || null,
         accountId: ad._accountId || null,
+        paisSigla,
         spend,
         clicks: Number(ad.inline_link_clicks || 0),
         impressions: Number(ad.impressions || 0),
@@ -553,6 +555,8 @@ async function syncAll(dateRange) {
 
       if (g.orcamentoTotal > 0) console.log(`[budget] date=${g.date} utm="${g.adUTM}" tipo=${g.tipo} orcamento=R$${(g.orcamentoTotal || 0).toFixed(2)}`);
       const cpcComImposto = g.clicks > 0 ? valorGastoComImposto / g.clicks : 0;
+      const gPaisSigla = g.paisSigla || '';
+      const gPaisNome = (PAISES[gPaisSigla] || {}).nome || '';
       adsRows.push({
         data: g.date,
         dominio_id: g.domainId,
@@ -560,6 +564,8 @@ async function syncAll(dateRange) {
         campanha_meta: g.campaignName,
         tipo: g.tipo,
         account_id: g.accountId || null,
+        pais_sigla: gPaisSigla,
+        pais_nome: gPaisNome,
         moeda_original: moeda,
         taxa_usd_aplicada: +taxaAplicada.toFixed(4),
         valor_gasto_original: +valorGastoOriginal.toFixed(4),
@@ -634,17 +640,40 @@ async function syncAll(dateRange) {
     if (adsRows.length > 0) {
       let { error: uErr } = await supabase
         .from('ads_consolidados')
-        .upsert(adsRows, { onConflict: 'data,dominio_id,ad_utm,account_id' });
+        .upsert(adsRows, { onConflict: 'data,dominio_id,ad_utm,account_id,pais_sigla' });
       if (uErr && uErr.message.toLowerCase().includes('could not find')) {
         // New columns not yet migrated — retry without them
-        const fallback = adsRows.map(({ cpc_gam, ctr_gam, cliques_gam, account_id, valor_gasto_original, imposto_aplicado, moeda_original, taxa_usd_aplicada, ...rest }) => rest);
+        const fallback = adsRows.map(({ cpc_gam, ctr_gam, cliques_gam, account_id, valor_gasto_original, imposto_aplicado, moeda_original, taxa_usd_aplicada, pais_sigla, pais_nome, ...rest }) => rest);
         ({ error: uErr } = await supabase
           .from('ads_consolidados')
-          .upsert(fallback, { onConflict: 'data,dominio_id,ad_utm,account_id' }));
+          .upsert(fallback, { onConflict: 'data,dominio_id,ad_utm,account_id,pais_sigla' }));
         if (!uErr) console.warn('[sync] upserted without new columns — run ALTER TABLE migration');
       }
       if (uErr) console.error('[sync] upsert ads_consolidados:', uErr.message);
       rowsProcessed += adsRows.length;
+
+      // Clean up ghost rows: pais_sigla='' entries that now have a real country counterpart
+      if (!uErr) {
+        const seen = new Set();
+        const toClean = adsRows.filter(r => {
+          if (!r.pais_sigla) return false;
+          const k = `${r.data}|${r.dominio_id}|${r.ad_utm}|${r.account_id || ''}`;
+          if (seen.has(k)) return false;
+          seen.add(k);
+          return true;
+        });
+        for (const r of toClean) {
+          let q = supabase.from('ads_consolidados').delete()
+            .eq('data', r.data)
+            .eq('dominio_id', r.dominio_id)
+            .eq('ad_utm', r.ad_utm)
+            .eq('pais_sigla', '');
+          q = r.account_id ? q.eq('account_id', r.account_id) : q.is('account_id', null);
+          const { error: delErr } = await q;
+          if (delErr) console.error('[sync] ghost cleanup:', delErr.message);
+        }
+        if (toClean.length > 0) console.log(`[sync] cleaned ${toClean.length} ghost pais_sigla='' entries`);
+      }
     }
 
     // ── Insert pending domains ────────────────────
@@ -709,7 +738,7 @@ async function syncAll(dateRange) {
       const pfx = dominios?.[0]?.prefixo_ad_unit || '';
 
       if (hourly.length > 0) {
-        await supabase.from('report_hora')
+        const { error: rHoraErr } = await supabase.from('report_hora')
           .upsert(
             hourly.map(h => ({
               data: until,
@@ -725,8 +754,9 @@ async function syncAll(dateRange) {
               updated_at: now,
             })),
             { onConflict: 'data,hora,prefixo_ad_unit' }
-          ).catch(e => console.warn('[sync] upsert report_hora:', e.message));
-        console.log(`[sync] cache GAM: ${hourly.length} horas salvas`);
+          );
+        if (rHoraErr) console.warn('[sync] upsert report_hora:', rHoraErr.message);
+        else console.log(`[sync] cache GAM: ${hourly.length} horas salvas`);
       }
 
       if (utmCampaigns.length > 0) {
@@ -752,7 +782,7 @@ async function syncAll(dateRange) {
       }
 
       if (utmSources.length > 0) {
-        await supabase.from('report_utm_source')
+        const { error: rSrcErr } = await supabase.from('report_utm_source')
           .upsert(
             utmSources.map(u => ({
               data: until,
@@ -765,8 +795,9 @@ async function syncAll(dateRange) {
               updated_at: now,
             })),
             { onConflict: 'data,utm_source,prefixo_ad_unit' }
-          ).catch(e => console.warn('[sync] upsert report_utm_source:', e.message));
-        console.log(`[sync] cache GAM: ${utmSources.length} sources salvas`);
+          );
+        if (rSrcErr) console.warn('[sync] upsert report_utm_source:', rSrcErr.message);
+        else console.log(`[sync] cache GAM: ${utmSources.length} sources salvas`);
       }
     } catch (e) {
       console.warn('[sync] GAM cache background:', e.message);

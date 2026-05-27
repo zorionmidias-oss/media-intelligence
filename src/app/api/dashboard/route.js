@@ -36,13 +36,15 @@ async function handler(req, res) {
     // multiple accounts merges into one row (prevents double-counting GAM revenue)
     const utmMap = {};
     for (const r of rows || []) {
-      const key = `${r.dominio_id}|${r.ad_utm}`;
+      const key = `${r.dominio_id}|${r.ad_utm}|${r.pais_sigla || ''}`;
       if (!utmMap[key]) {
         utmMap[key] = {
           ad_utm: r.ad_utm,
           tipo: r.tipo,
           dominio: r.dominios?.nome || null,
           campanha_meta: r.campanha_meta,
+          pais_sigla: r.pais_sigla || '',
+          pais_nome: r.pais_nome || '',
           valor_gasto: 0,
           faturamento_real: 0,
           faturamento_bruto: 0,
@@ -94,6 +96,8 @@ async function handler(req, res) {
       tipo: g.tipo,
       dominio: g.dominio,
       campanha_meta: g.campanha_meta,
+      pais_sigla: g.pais_sigla,
+      pais_nome: g.pais_nome,
       valor_gasto: +g.valor_gasto.toFixed(2),
       faturamento_real: +g.faturamento_real.toFixed(2),
       lucro: +g.lucro.toFixed(2),

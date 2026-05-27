@@ -876,6 +876,41 @@
     #ger-table td,#ger-table th{vertical-align:middle}
     #ger-table .gcol-h{display:none}
     #ger-table .gcol-h.gcol-on{display:table-cell}
+
+    /* ── Performance por País ── */
+    .pais-section{margin-top:1.5rem}
+    .pais-section-hd{display:flex;align-items:baseline;gap:.75rem;margin-bottom:1rem}
+    .pais-section-title{font-size:.9375rem;font-weight:600;color:var(--fg)}
+    .pais-section-sub{font-size:.75rem;color:var(--muted)}
+    .pais-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.875rem}
+    @media(max-width:900px){.pais-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:600px){.pais-grid{grid-template-columns:1fr}}
+    .pais-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem;cursor:pointer;transition:border-color .15s,box-shadow .15s;display:flex;flex-direction:column;gap:.625rem}
+    .pais-card:hover{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+    .pais-card-hd{display:flex;align-items:center;gap:.5rem}
+    .pais-flag{font-size:1.5rem;line-height:1}
+    .pais-card-name{font-size:.875rem;font-weight:600;color:var(--fg)}
+    .pais-card-utms{font-size:.7rem;color:var(--muted);margin-left:auto}
+    .pais-card-kpis{display:grid;grid-template-columns:1fr 1fr;gap:.375rem .75rem}
+    .pais-kpi{display:flex;flex-direction:column;gap:1px}
+    .pais-kpi-lbl{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+    .pais-kpi-val{font-size:.8125rem;font-weight:600;font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace}
+
+    /* Modal país */
+    .modal-pais{position:fixed;inset:0;background:var(--bg);z-index:350;display:none;flex-direction:column;overflow:hidden}
+    .modal-pais.on{display:flex}
+    .modal-pais-hd{display:flex;align-items:flex-start;gap:1rem;padding:1.25rem 2rem;border-bottom:1px solid var(--border);flex-shrink:0}
+    .modal-pais-hd-left{flex:1;min-width:0}
+    .modal-pais-title{font-size:1.4rem;font-weight:700;color:var(--fg);margin-bottom:.5rem}
+    .modal-pais-kpis{display:flex;gap:1.25rem;flex-wrap:wrap;font-size:.8125rem;color:var(--muted)}
+    .modal-pais-kpis b{color:var(--fg);font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace}
+    .modal-pais-body{flex:1;overflow-y:auto;padding:1.5rem 2rem 2rem}
+    .pais-utm-table{width:100%;border-collapse:collapse}
+    .pais-utm-table th{text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:6px 10px;border-bottom:1px solid var(--border);font-weight:500}
+    .pais-utm-table td{padding:8px 10px;font-size:.8125rem;border-bottom:1px solid var(--border)}
+    .pais-utm-table tr:hover td{background:var(--sec)}
+    .pais-utm-table tr{cursor:pointer}
+    .pais-utm-name{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;font-weight:600;color:var(--fg)}
   </style>
 </head>
 <body>
@@ -1164,6 +1199,15 @@
             <span><span style="display:inline-block;width:12px;height:2px;background:#00E5B4;border-radius:2px;margin-right:4px;vertical-align:middle"></span>Hoje</span>
             <span><span style="display:inline-block;width:12px;height:0;border-top:1.5px dashed rgba(150,150,170,0.6);margin-right:4px;vertical-align:middle"></span>Ontem</span>
           </div>
+        </div>
+
+        <!-- Performance por País -->
+        <div class="pais-section" id="pais-section" style="display:none">
+          <div class="pais-section-hd">
+            <span class="pais-section-title">Performance por País</span>
+            <span class="pais-section-sub" id="pais-section-sub"></span>
+          </div>
+          <div class="pais-grid" id="pais-grid"></div>
         </div>
       </div>
     </div>
@@ -1876,6 +1920,25 @@
 </div>
 
 <!-- MODAL DRILLDOWN -->
+<!-- MODAL PAÍS -->
+<div class="modal-pais" id="modal-pais">
+  <div class="modal-pais-hd">
+    <div class="modal-pais-hd-left">
+      <div class="modal-pais-title" id="modal-pais-title">País</div>
+      <div class="modal-pais-kpis" id="modal-pais-kpis"></div>
+    </div>
+    <button class="modal-fs-close" onclick="closePaisModal()">✕ Fechar</button>
+  </div>
+  <div class="modal-pais-body">
+    <table class="pais-utm-table">
+      <thead><tr>
+        <th>UTM</th><th>Investido</th><th>Faturamento</th><th>Lucro</th><th>ROAS</th><th>eCPM</th>
+      </tr></thead>
+      <tbody id="modal-pais-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
 <div class="modal-fs" id="modal-drilldown">
   <div class="modal-fs-hd">
     <div class="modal-fs-hd-left">
@@ -2307,6 +2370,7 @@ async function loadData(force=false){
   if(S.tab==='gam')loadGAMReport();
   loadGamDelayGlobal();
   loadIntradayChart();
+  loadPaises();
 }
 
 /* ═══ RENDER ALL ═══ */
@@ -2342,6 +2406,83 @@ async function loadTrendFixed(){
 }
 
 /* ── INTRADAY CHART — HOJE VS ONTEM POR HORA ── */
+// ── País helpers ─────────────────────────────────────────────────────────────
+const PAISES_EMOJI={GH:'🇬🇭',NG:'🇳🇬',SN:'🇸🇳',KE:'🇰🇪',ZA:'🇿🇦',AFS:'🇿🇦',TZ:'🇹🇿',UG:'🇺🇬',ET:'🇪🇹',CI:'🇨🇮',CM:'🇨🇲',CD:'🇨🇩',MG:'🇲🇬',MZ:'🇲🇿',AO:'🇦🇴',RW:'🇷🇼',ZM:'🇿🇲',ZW:'🇿🇼',MA:'🇲🇦'};
+function getPaisEmoji(sigla){return PAISES_EMOJI[sigla]||'🌍';}
+
+let _paisesData=null;
+
+async function loadPaises(){
+  const since=document.getElementById('f-since')?.value||'';
+  const until=document.getElementById('f-until')?.value||'';
+  const sec=document.getElementById('pais-section');
+  const grid=document.getElementById('pais-grid');
+  const sub=document.getElementById('pais-section-sub');
+  if(!sec||!grid)return;
+  try{
+    let url='/api/paises';
+    const ps=[];
+    if(since)ps.push('since='+since);
+    if(until)ps.push('until='+until);
+    if(ps.length)url+='?'+ps.join('&');
+    const res=await fetch(url);
+    if(!res.ok)return;
+    _paisesData=await res.json();
+    if(!_paisesData||_paisesData.length===0){sec.style.display='none';return;}
+    sec.style.display='';
+    if(sub&&since&&until)sub.textContent=since===until?since:since+' → '+until;
+    grid.innerHTML=_paisesData.map(p=>{
+      const lucroColor=p.lucro>=0?'var(--color-positive)':'var(--color-negative)';
+      const roasColor=p.roas>=1?'var(--color-positive)':'var(--color-warning)';
+      return`<div class="pais-card" onclick="openPaisModal('${esc(p.pais_sigla)}')">
+        <div class="pais-card-hd">
+          <span class="pais-flag">${p.emoji||getPaisEmoji(p.pais_sigla)}</span>
+          <span class="pais-card-name">${esc(p.pais_nome||p.pais_sigla)}</span>
+          <span class="pais-card-utms">${p.num_utms} UTM${p.num_utms!==1?'s':''}</span>
+        </div>
+        <div class="pais-card-kpis">
+          <div class="pais-kpi"><span class="pais-kpi-lbl">Investido</span><span class="pais-kpi-val">${BRL(p.investimento)}</span></div>
+          <div class="pais-kpi"><span class="pais-kpi-lbl">Faturamento</span><span class="pais-kpi-val" style="color:var(--color-info)">${BRL(p.faturamento)}</span></div>
+          <div class="pais-kpi"><span class="pais-kpi-lbl">Lucro</span><span class="pais-kpi-val" style="color:${lucroColor}">${BRL(p.lucro)}</span></div>
+          <div class="pais-kpi"><span class="pais-kpi-lbl">ROAS</span><span class="pais-kpi-val" style="color:${roasColor}">${p.roas.toFixed(2)}x</span></div>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){console.warn('[paises]',e);}
+}
+
+function openPaisModal(sigla){
+  if(!_paisesData)return;
+  const p=_paisesData.find(x=>x.pais_sigla===sigla);
+  if(!p)return;
+  document.getElementById('modal-pais-title').textContent=`${p.emoji||getPaisEmoji(sigla)} ${p.pais_nome||sigla}`;
+  const lucroColor=p.lucro>=0?'var(--color-positive)':'var(--color-negative)';
+  document.getElementById('modal-pais-kpis').innerHTML=
+    `<span>Investido: <b>${BRL(p.investimento)}</b></span>`+
+    `<span>Faturamento: <b style="color:var(--color-info)">${BRL(p.faturamento)}</b></span>`+
+    `<span>Lucro: <b style="color:${lucroColor}">${BRL(p.lucro)}</b></span>`+
+    `<span>ROAS: <b style="color:${p.roas>=1?'var(--color-positive)':'var(--color-warning)'}">${p.roas.toFixed(2)}x</b></span>`;
+  const tb=document.getElementById('modal-pais-tbody');
+  tb.innerHTML=p.utms.map(u=>{
+    const lucroColor=u.lucro>=0?'var(--color-positive)':'var(--color-negative)';
+    const roasColor=u.roas>=1?'var(--color-positive)':'var(--color-warning)';
+    return`<tr onclick="closePaisModal();openDrilldown('${esc(u.utm)}')">
+      <td><span class="pais-utm-name">${esc(u.utm)}</span></td>
+      <td class="mo">${BRL(u.investimento)}</td>
+      <td class="mo" style="color:var(--color-info)">${BRL(u.faturamento)}</td>
+      <td class="mo" style="color:${lucroColor}">${BRL(u.lucro)}</td>
+      <td class="mo" style="color:${roasColor}">${u.roas.toFixed(2)}x</td>
+      <td class="mo">${u.ecpm>0?BRL(u.ecpm):'—'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('modal-pais').classList.add('on');
+}
+
+function closePaisModal(){
+  document.getElementById('modal-pais').classList.remove('on');
+}
+
+// ── Intraday ──────────────────────────────────────────────────────────────────
 let _intradayChart=null;
 let _intradayData=null;
 let _intradayMetric='receita';
@@ -3398,11 +3539,14 @@ function renderCampTable(rows){
 
     const prevId=`prev-${i}`;
     const hasPrevAny=(r.previsao_faturamento_real||0)>0||(r.orcamento_total||0)>0;
+    const paisBadge=r.pais_sigla
+      ?`<span title="${esc(r.pais_nome||r.pais_sigla)}" style="display:inline-flex;align-items:center;gap:2px;background:var(--sec-strong);border-radius:4px;padding:1px 5px;font-size:.65rem;color:var(--muted);margin-right:4px;flex-shrink:0">${getPaisEmoji(r.pais_sigla)} ${esc(r.pais_sigla)}</span>`
+      :'';
     const mainRow=`<tr class="anim utm-row" style="animation-delay:${i*20}ms">
       <td><div class="td-av">
         ${hasPrevAny?`<button class="btn-toggle-prev" onclick="togglePrevisao('${prevId}')" id="btn-${prevId}" title="Ver previsão"><span class="chevron">▶</span></button>`:''}
         <div class="t-av">${esc((r.ad_utm||'?').charAt(0).toUpperCase())}</div>
-        <span style="font-family:monospace;font-size:.8rem">${esc(r.ad_utm)}</span>
+        ${paisBadge}<span style="font-family:monospace;font-size:.8rem">${esc(r.ad_utm)}</span>
       </div></td>
       <td>${domBadge}</td>
       <td class="mo" data-sort="${r.valor_gasto||0}">${BRL(r.valor_gasto)}<span class="uvar-inv" data-utm="${esc(r.ad_utm||'')}"></span></td>
@@ -4743,6 +4887,7 @@ async function abrirHistorico(utm){
   setInterval(loadGamDelayGlobal,5*60*1000);
   loadTrendFixed();
   loadIntradayChart();
+  loadPaises();
   window.addEventListener('resize',()=>{
     if(_trendFixed30.length)renderTrend(_trendFixed30);
     if(_intradayData)renderIntradayChart(_intradayData,_intradayMetric);
