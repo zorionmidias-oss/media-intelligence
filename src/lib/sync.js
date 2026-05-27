@@ -3,7 +3,7 @@ const axios = require('axios');
 const supabase = require('./supabase');
 const { getBMConfigs, updateBMStatus } = require('./meta');
 const { fetchGAMReport, fetchGAMFunnelsByUTM, getUSDtoBRL, getUSDtoBRLByDate, fetchGAMHourly, fetchGAMUtmCampaigns, fetchGAMUtmSources } = require('./gam');
-const { extractDomainPrefix, extractAdUTM, extractTipo, groupAdsByUTM, extractPaisSigla, extractNicho, PAISES } = require('./parser');
+const { extractDomainPrefix, extractAdUTM, extractTipo, groupAdsByUTM, extractPaisSigla, extractNicho, resolveCountry } = require('./parser');
 
 const BASE = 'https://graph.facebook.com/v19.0';
 const AD_FIELDS = 'ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name,spend,impressions,inline_link_clicks,outbound_clicks,clicks,ctr,cpc,actions,objective,optimization_goal';
@@ -558,7 +558,9 @@ async function syncAll(dateRange) {
       if (g.orcamentoTotal > 0) console.log(`[budget] date=${g.date} utm="${g.adUTM}" tipo=${g.tipo} orcamento=R$${(g.orcamentoTotal || 0).toFixed(2)}`);
       const cpcComImposto = g.clicks > 0 ? valorGastoComImposto / g.clicks : 0;
       const gPaisSigla = g.paisSigla || '';
-      const gPaisNome = (PAISES[gPaisSigla] || {}).nome || '';
+      const country = gPaisSigla ? resolveCountry(gPaisSigla) : null;
+      const gPaisNome  = country?.nome  || '';
+      const gPaisEmoji = country?.emoji || '';
       adsRows.push({
         data: g.date,
         dominio_id: g.domainId,
@@ -568,6 +570,7 @@ async function syncAll(dateRange) {
         account_id: g.accountId || null,
         pais_sigla: gPaisSigla,
         pais_nome: gPaisNome,
+        pais_emoji: gPaisEmoji,
         nicho: g.nicho || null,
         moeda_original: moeda,
         taxa_usd_aplicada: +taxaAplicada.toFixed(4),
@@ -646,7 +649,7 @@ async function syncAll(dateRange) {
         .upsert(adsRows, { onConflict: 'data,dominio_id,ad_utm,account_id,pais_sigla' });
       if (uErr && uErr.message.toLowerCase().includes('could not find')) {
         // New columns not yet migrated — retry without them
-        const fallback = adsRows.map(({ cpc_gam, ctr_gam, cliques_gam, account_id, valor_gasto_original, imposto_aplicado, moeda_original, taxa_usd_aplicada, pais_sigla, pais_nome, nicho, ...rest }) => rest);
+        const fallback = adsRows.map(({ cpc_gam, ctr_gam, cliques_gam, account_id, valor_gasto_original, imposto_aplicado, moeda_original, taxa_usd_aplicada, pais_sigla, pais_nome, pais_emoji, nicho, ...rest }) => rest);
         ({ error: uErr } = await supabase
           .from('ads_consolidados')
           .upsert(fallback, { onConflict: 'data,dominio_id,ad_utm,account_id,pais_sigla' }));

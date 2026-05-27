@@ -28,7 +28,7 @@ const adCopiesHandler       = require('./src/app/api/ad-copies-templates/route')
 const intradayHandler       = require('./src/app/api/intraday/route');
 const supabase = require('./src/lib/supabase');
 const { syncAll, fetchAndSaveHourly } = require('./src/lib/sync');
-const { PAISES } = require('./src/lib/parser');
+const { resolveCountry } = require('./src/lib/parser');
 const { startScheduler } = require('./src/lib/scheduler');
 const { hashPassword, verifyPassword, generateToken, requireAuth, COOKIE_NAME } = require('./src/lib/auth');
 const { registrarHistorico } = require('./src/lib/historico');
@@ -602,7 +602,7 @@ app.get('/api/paises', requireAuth, async (req, res) => {
 
     const { data: rows, error } = await supabase
       .from('ads_consolidados')
-      .select('pais_sigla,pais_nome,ad_utm,valor_gasto,faturamento_real,lucro,ecpm,tipo')
+      .select('pais_sigla,pais_nome,pais_emoji,ad_utm,valor_gasto,faturamento_real,lucro,ecpm,tipo')
       .gte('data', since)
       .lte('data', until)
       .neq('pais_sigla', '');
@@ -614,11 +614,11 @@ app.get('/api/paises', requireAuth, async (req, res) => {
     for (const r of rows || []) {
       const sig = r.pais_sigla;
       if (!paisMap[sig]) {
-        const info = PAISES[sig] || {};
+        const info = resolveCountry(sig) || {};
         paisMap[sig] = {
           pais_sigla: sig,
           pais_nome: r.pais_nome || info.nome || sig,
-          emoji: info.emoji || '',
+          emoji: r.pais_emoji || info.emoji || '🌍',
           investimento: 0,
           faturamento: 0,
           lucro: 0,
@@ -755,7 +755,7 @@ app.get('/api/analise-paises', requireAuth, async (req, res) => {
     const { since, until, nicho, tipo } = _apDefaults(req);
     let q = supabase
       .from('ads_consolidados')
-      .select('pais_sigla,pais_nome,valor_gasto,faturamento_real,faturamento_bruto,lucro,impressoes_gam,ecpm')
+      .select('pais_sigla,pais_nome,pais_emoji,valor_gasto,faturamento_real,faturamento_bruto,lucro,impressoes_gam,ecpm')
       .gte('data', since)
       .lte('data', until)
       .neq('pais_sigla', '');
@@ -769,8 +769,8 @@ app.get('/api/analise-paises', requireAuth, async (req, res) => {
       const sig = r.pais_sigla;
       if (!sig) continue;
       if (!paisMap[sig]) {
-        const info = PAISES[sig] || {};
-        paisMap[sig] = { pais_sigla: sig, pais_nome: r.pais_nome || info.nome || sig, emoji: info.emoji || '🌍', investimento: 0, faturamento: 0, faturamento_bruto: 0, lucro: 0, impressoes_gam: 0, _ecpmImpSum: 0, _ecpmImpW: 0, _utms: new Set() };
+        const info = resolveCountry(sig) || {};
+        paisMap[sig] = { pais_sigla: sig, pais_nome: r.pais_nome || info.nome || sig, emoji: r.pais_emoji || info.emoji || '🌍', investimento: 0, faturamento: 0, faturamento_bruto: 0, lucro: 0, impressoes_gam: 0, _ecpmImpSum: 0, _ecpmImpW: 0, _utms: new Set() };
       }
       const p = paisMap[sig];
       p.investimento      += Number(r.valor_gasto      || 0);

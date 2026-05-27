@@ -6,31 +6,52 @@ const FIRST_BRACKET_RE = /^\[([^\]]+)\]/;
 // "01-janefb" → "janefb" | "02_janefb" → "janefb"
 const NUM_PREFIX_RE = /^\d+[-_\s]*/;
 
-// Country code lookup: ISO 3166-1 alpha-2 siglas encontradas nas campanhas
-const PAISES = {
-  GH: { nome: 'Ghana',           emoji: '🇬🇭' },
-  NG: { nome: 'Nigeria',         emoji: '🇳🇬' },
-  SN: { nome: 'Senegal',         emoji: '🇸🇳' },
-  KE: { nome: 'Kenya',           emoji: '🇰🇪' },
-  ZA: { nome: 'South Africa',    emoji: '🇿🇦' },
-  TZ: { nome: 'Tanzania',        emoji: '🇹🇿' },
-  UG: { nome: 'Uganda',          emoji: '🇺🇬' },
-  ET: { nome: 'Ethiopia',        emoji: '🇪🇹' },
-  CI: { nome: "Côte d'Ivoire",   emoji: '🇨🇮' },
-  CM: { nome: 'Cameroon',        emoji: '🇨🇲' },
-  CD: { nome: 'DR Congo',        emoji: '🇨🇩' },
-  MG: { nome: 'Madagascar',      emoji: '🇲🇬' },
-  MZ: { nome: 'Mozambique',      emoji: '🇲🇿' },
-  AO: { nome: 'Angola',          emoji: '🇦🇴' },
-  RW: { nome: 'Rwanda',          emoji: '🇷🇼' },
-  ZM: { nome: 'Zambia',          emoji: '🇿🇲' },
-  ZW: { nome: 'Zimbabwe',        emoji: '🇿🇼' },
-  MA: { nome: 'Morocco',         emoji: '🇲🇦' },
-  AFS: { nome: 'South Africa',   emoji: '🇿🇦' },
+// Non-ISO codes used by the client — Intl.DisplayNames won't resolve these
+const COUNTRY_OVERRIDES = {
+  AFS: { nome: 'South Africa', emoji: '🇿🇦' },
 };
 
+// Converts a 2-letter ISO code to its flag emoji via Unicode regional indicators
+function siglaParaEmoji(sigla) {
+  if (!sigla || sigla.length !== 2) return '🌍';
+  return [...sigla.toUpperCase()]
+    .map(c => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65))
+    .join('');
+}
+
+// Resolves any country code to { sigla, nome, emoji }
+// Uses Intl.DisplayNames (supports any valid ISO 3166-1 alpha-2 automatically)
+// Falls back to COUNTRY_OVERRIDES for non-ISO client codes (e.g. AFS)
+const _countryCache = {};
+function resolveCountry(sigla) {
+  if (!sigla) return null;
+  const key = sigla.toUpperCase();
+  if (_countryCache[key]) return _countryCache[key];
+
+  if (COUNTRY_OVERRIDES[key]) {
+    return (_countryCache[key] = { sigla: key, ...COUNTRY_OVERRIDES[key] });
+  }
+
+  try {
+    const display = new Intl.DisplayNames(['en'], { type: 'region' });
+    const nome = display.of(key);
+    const emoji = key.length === 2 ? siglaParaEmoji(key) : '🌍';
+    // Intl returns "Unknown Region" for unrecognised codes
+    const resolved = (!nome || nome === key || nome === 'Unknown Region')
+      ? key : nome;
+    return (_countryCache[key] = { sigla: key, nome: resolved, emoji });
+  } catch {
+    return (_countryCache[key] = { sigla: key, nome: key, emoji: '🌍' });
+  }
+}
+
+// Thin compat shim — code that does PAISES['GH'].emoji still works
+const PAISES = new Proxy({}, {
+  get(_, k) { return resolveCountry(k) || undefined; },
+  has(_, k) { return !!resolveCountry(k); },
+});
+
 // "[MKUKER] [NG_RELA_EN_BOT_0001] [JANE]" → "NG"
-// Matches first occurrence of "[XX_" where XX = 2-3 uppercase letters
 function extractPaisSigla(name) {
   if (!name) return '';
   const m = String(name).match(/\[([A-Z]{2,3})_/);
@@ -87,7 +108,7 @@ function groupAdsByUTM(ads) {
         spend: 0, clicks: 0, impressions: 0, results: 0,
         _cpcSum: 0, _cpcW: 0,
         _ctrSum: 0, _ctrW: 0,
-        _adsetBudgets: new Map(), // adset_id → daily_budget (dedup)
+        _adsetBudgets: new Map(),
       };
     }
 
@@ -106,16 +127,13 @@ function groupAdsByUTM(ads) {
       g._ctrSum += ad.ctr * ad.impressions;
       g._ctrW += ad.impressions;
     }
-    // Track unique adset budgets so we sum them once per adset
     if (ad.adsetId && (ad.adsetBudget || 0) > 0) {
       g._adsetBudgets.set(ad.adsetId, ad.adsetBudget);
     }
   }
 
   return Object.values(groups).map(g => {
-    // CPC = total_spend / total_clicks (weighted — avoids artifacts from ads with 0 clicks)
     const cpc = g.clicks > 0 ? g.spend / g.clicks : 0;
-    // CTR = total_clicks / total_impressions × 100
     const ctr = g.impressions > 0 ? (g.clicks / g.impressions) * 100 : 0;
     console.log(`[utm ${g.adUTM} ${g.date}] spend=${g.spend.toFixed(2)}, clicks=${g.clicks}, cpc=${cpc.toFixed(4)}`);
     return {
@@ -138,4 +156,4 @@ function groupAdsByUTM(ads) {
   });
 }
 
-module.exports = { extractDomainPrefix, extractAdUTM, extractTipo, groupAdsByUTM, extractPaisSigla, extractNicho, PAISES };
+module.exports = { extractDomainPrefix, extractAdUTM, extractTipo, groupAdsByUTM, extractPaisSigla, extractNicho, resolveCountry, siglaParaEmoji, PAISES };
