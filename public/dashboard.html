@@ -7843,7 +7843,7 @@ function bwzPageDropReset(){
   document.getElementById('bwz-page-search').value='';
 }
 
-async function bwzSyncPaginas(){
+window.bwzSyncPaginas=async function(){
   const btn=document.getElementById('bwz-page-sync-btn');
   if(btn){btn.disabled=true;btn.textContent='…';}
   try{
@@ -7852,26 +7852,29 @@ async function bwzSyncPaginas(){
     await botWizLoadPages();
   }catch(e){console.warn('[bwz sync paginas]',e);}
   finally{if(btn){btn.disabled=false;btn.textContent='↻ Sync';}}
-}
+};
 
-async function bwzSyncPixels(){
+window.bwzSyncPixels=async function(){
   const btn=document.getElementById('bwz-pixel-sync-btn');
   if(btn){btn.disabled=true;btn.textContent='…';}
   BWZ.pixels=[];
   const sel=document.getElementById('bwz-pixel');
-  sel.innerHTML='<option value="">Carregando…</option>';
+  if(sel)sel.innerHTML='<option value="">Carregando…</option>';
   try{
     const r=await fetch(`/api/meta-resources/pixels?account_id=${encodeURIComponent(BWZ.d.account_id)}`);
-    BWZ.pixels=await r.json();
-    if(BWZ.pixels.length){
-      sel.innerHTML='<option value="">Selecione um pixel…</option>'+BWZ.pixels.map(p=>`<option value="${esc(p.id)}">${esc(p.name)} (${esc(p.id)})</option>`).join('');
-      if(BWZ.pixels.length===1){sel.value=BWZ.pixels[0].id;BWZ.d.pixel_id=BWZ.pixels[0].id;}
-    }else{
-      sel.innerHTML='<option value="">Nenhum pixel encontrado</option>';
+    const json=await r.json();
+    BWZ.pixels=Array.isArray(json)?json:[];
+    if(sel){
+      if(BWZ.pixels.length){
+        sel.innerHTML='<option value="">Selecione um pixel…</option>'+BWZ.pixels.map(p=>`<option value="${esc(p.id)}">${esc(p.name)} (${esc(p.id)})</option>`).join('');
+        if(BWZ.pixels.length===1){sel.value=BWZ.pixels[0].id;BWZ.d.pixel_id=BWZ.pixels[0].id;}
+      }else{
+        sel.innerHTML='<option value="">Nenhum pixel encontrado</option>';
+      }
     }
-  }catch(e){sel.innerHTML=`<option value="">Erro: ${esc(e.message)}</option>`;}
+  }catch(e){if(sel)sel.innerHTML=`<option value="">Erro: ${esc(e.message)}</option>`;}
   finally{if(btn){btn.disabled=false;btn.textContent='↻ Sync';}}
-}
+};
 
 // ── Ajuste 3: domínio field ────────────────────────────────────────────────
 async function bwzLoadDominios(){
