@@ -851,16 +851,50 @@ async function syncAll(dateRange) {
 }
 
 // ── Sync páginas (Facebook Pages) ────────────────────────────────────────────
-async function buscarPaisDaPagina(nomePagina) {
-  const slug = nomePagina.toLowerCase().replace(/\s+/g, '');
-  const { data } = await supabase
-    .from('ads_consolidados')
-    .select('pais_sigla,pais_nome')
-    .ilike('utm_campaign', `${slug}%`)
-    .not('pais_sigla', 'is', null)
-    .order('data', { ascending: false })
-    .limit(1);
-  return data?.[0] || null;
+
+// Deriva o slug da primeira palavra do nome da página, sem acentos
+function slugDaPagina(nome) {
+  return nome.trim().split(/\s+/)[0]
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '');
+}
+
+// Verifica se a página tem campanhas ativas nos últimos 3 dias no banco.
+// Cascata de 3 estratégias para lidar com variações de escrita nos UTMs:
+//  1. Exata:   ad_utm ILIKE '{firstName}fb%'        — cobre 10/12 páginas
+//  2. Fuzzy-4: ad_utm ILIKE '{first4}%fb'           — cobre "zainab"→"zainahfb"
+//  3. Campanha: campanha_meta ILIKE '%[{FIRSTNAME}%' — cobre typos de ad_utm ("naledi"→"nalidefb")
+async function detectarUsoNoBanco(nome) {
+  const firstName = slugDaPagina(nome);
+  const firstNameUpper = nome.trim().split(/\s+/)[0].toUpperCase();
+  const first4 = firstName.slice(0, 4);
+  const since = new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10);
+  const sel = 'ad_utm,pais_sigla,pais_nome,data';
+
+  // 1. Exato: "aishafb%", "adamafb%", etc.
+  const { data: exact } = await supabase.from('ads_consolidados').select(sel)
+    .ilike('ad_utm', `${firstName}fb%`).gte('data', since)
+    .not('pais_sigla', 'is', null).order('data', { ascending: false }).limit(1);
+  if (exact?.length) return { emUso: true, row: exact[0] };
+
+  // 2. Fuzzy-4: primeiros 4 chars + wildcard + "fb" (ex: "zain%fb" → "zainahfb")
+  if (first4.length >= 4) {
+    const { data: fuzzy4 } = await supabase.from('ads_consolidados').select(sel)
+      .ilike('ad_utm', `${first4}%fb`).gte('data', since)
+      .not('pais_sigla', 'is', null).order('data', { ascending: false }).limit(1);
+    if (fuzzy4?.length) return { emUso: true, row: fuzzy4[0] };
+  }
+
+  // 3. Fallback via campanha_meta (captura UTMs com typo ex: "nalede→nalidi")
+  {
+    const { data: camp } = await supabase.from('ads_consolidados').select(sel)
+      .ilike('campanha_meta', `%[${firstNameUpper}%`).gte('data', since)
+      .not('pais_sigla', 'is', null).order('data', { ascending: false }).limit(1);
+    if (camp?.length) return { emUso: true, row: camp[0] };
+  }
+
+  return { emUso: false, row: null };
 }
 
 async function syncPaginas() {
@@ -926,37 +960,12 @@ async function syncPaginas() {
       continue;
     }
 
-    // ── 3. Fetch active ads to determine which pages are in use ───────────────
-    let activeAds = [];
-    try {
-      const adsRes = await axios.get(`${BASE}/${accountId}/ads`, {
-        params: {
-          access_token: acc.access_token,
-          fields: 'id,status,creative{page_id}',
-          filtering: JSON.stringify([{ field: 'effective_status', operator: 'IN', value: ['ACTIVE', 'CAMPAIGN_PAUSED'] }]),
-          limit: 500,
-        },
-        timeout: 20000,
-      });
-      activeAds = adsRes.data?.data || [];
-    } catch (e) {
-      console.warn(`[syncPaginas] ${accountId} /ads:`, e.response?.data?.error?.message || e.message);
-    }
-
-    const activePageIds = new Set(activeAds.map(a => a.creative?.page_id).filter(Boolean));
-
-    // ── 4. Upsert each page ───────────────────────────────────────────────────
+    // ── 3. Upsert each page — detects "em uso" via ads_consolidados ──────────
+    let emUsoCount = 0;
     for (const page of pages) {
-      // support both live-API shape {id,name,picture_url} and cache shape {id,name,picture_url}
       const pictureUrl = page.picture_url ?? page.picture?.data?.url ?? null;
-      const emUso = activePageIds.has(page.id);
-      let paisSigla = null, paisNome = null;
-
-      if (emUso) {
-        const pais = await buscarPaisDaPagina(page.name).catch(() => null);
-        paisSigla = pais?.pais_sigla || null;
-        paisNome  = pais?.pais_nome  || null;
-      }
+      const { emUso, row } = await detectarUsoNoBanco(page.name).catch(() => ({ emUso: false, row: null }));
+      if (emUso) emUsoCount++;
 
       const { error: uErr } = await supabase.from('paginas').upsert({
         page_id:       page.id,
@@ -964,15 +973,15 @@ async function syncPaginas() {
         foto_url:      pictureUrl,
         ad_account_id: acc.ad_account_id,
         status:        emUso ? 'em_uso' : 'disponivel',
-        pais_sigla:    emUso ? paisSigla : null,
-        pais_nome:     emUso ? paisNome  : null,
-        em_uso_desde:  emUso ? new Date().toISOString().slice(0, 10) : null,
+        pais_sigla:    emUso ? (row?.pais_sigla || null) : null,
+        pais_nome:     emUso ? (row?.pais_nome  || null) : null,
+        em_uso_desde:  emUso ? (row?.data || new Date().toISOString().slice(0, 10)) : null,
         ultima_sync:   new Date().toISOString(),
       }, { onConflict: 'page_id' });
       if (uErr) console.warn('[syncPaginas] upsert erro:', uErr.message, '| page_id:', page.id);
     }
 
-    console.log(`[syncPaginas] ${accountId}: ${pages.length} páginas upseridas, ${activePageIds.size} em uso`);
+    console.log(`[syncPaginas] ${accountId}: ${pages.length} páginas upseridas, ${emUsoCount} em uso`);
   }
   console.log('[syncPaginas] concluído.');
 }
