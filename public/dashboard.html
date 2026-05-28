@@ -10,6 +10,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,700;1,900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="/js/formatters.js"></script>
+  <script src="/js/api.js"></script>
   <script src="/lib/chart.umd.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -2135,10 +2137,7 @@
 const S={metrics:null,chat:[],busy:false,aiOk:null,sbCol:false,tab:'overview'};
 
 /* ═══ FORMAT ═══ */
-const loc=(n,d=2)=>n==null||isNaN(+n)?'—':(+n).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
-const BRL=n=>n==null||isNaN(+n)?'—':'R$ '+loc(n,2);
-const PCT=n=>n==null||isNaN(+n)?'—':loc(n,2)+'%';
-const NUM=n=>n==null||isNaN(+n)?'—':(+n).toLocaleString('pt-BR',{maximumFractionDigits:0});
+// loc, BRL, PCT, NUM definidas em /js/formatters.js (carregado no <head>)
 const ROAS=n=>n==null||isNaN(+n)?'—':loc(n,2)+'x';
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
@@ -3454,9 +3453,8 @@ function renderAtrasoGAM(atrasoInfo){
 
 async function loadGamDelayGlobal(){
   try{
-    const r=await fetch('/api/gam-status');
-    if(!r.ok)return;
-    const a=await r.json();
+    const a=await apiFetch('/api/gam-status');
+    if(!a)return;
     // legacy element (kept)
     const el=document.getElementById('gam-delay-global');
     if(el){
@@ -4041,10 +4039,8 @@ async function gerLoad(){
   }
   try{
     showOverlay('Carregando Gerenciador…');
-    const r=await fetch(url);
-    if(r.status===401){window.location.href='/login.html';return;}
-    const d=await r.json();
-    if(d.error)throw new Error(d.error);
+    const d=await apiFetch(url);
+    if(!d)return;
     GER.items=d.items||[];
     GER.accts=d.accounts||[];
     if(GER.accts.length&&acctSel){
