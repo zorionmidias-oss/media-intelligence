@@ -34,7 +34,7 @@ async function handler(req, res) {
 
     const buildQuery = (data) =>
       supabase.from('dados_hora')
-        .select('hora,receita_liquida,ecpm,investimento_brl,roi,impressoes')
+        .select('hora,receita_bruta,receita_liquida,ecpm,investimento_brl,roi,impressoes')
         .eq('data', data)
         .eq('dominio_id', did)
         .order('hora', { ascending: true });
@@ -49,7 +49,7 @@ async function handler(req, res) {
       const roi = r.roi != null && inv >= 1 ? +(r.roi) : null;
       return {
         hora:         r.hora,
-        receita:      +(r.receita_liquida || 0),
+        receita:      +(r.receita_liquida ?? (r.receita_bruta * 0.9) ?? 0),
         ecpm:         +(r.ecpm || 0),
         investimento: inv,
         roi,

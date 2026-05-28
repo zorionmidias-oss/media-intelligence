@@ -320,6 +320,7 @@ async function fetchAndSaveHourly(date) {
     rows.push({
       data: date, hora, dominio_id: 0,
       receita_bruta:    +rec.toFixed(4),
+      receita_liquida:  +recLiq.toFixed(4),
       impressoes:       imp,
       ecpm:             +ecpm.toFixed(4),
       investimento_brl: inv,
