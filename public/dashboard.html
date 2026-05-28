@@ -1222,7 +1222,6 @@
               <div class="chart-sub" id="intraday-sub">Hoje vs Ontem · Horário de Brasília</div>
             </div>
             <span id="intraday-spinner" style="font-size:.75rem;color:var(--muted);display:none">Carregando…</span>
-            <button id="intraday-sync-btn" onclick="intradaySyncNow()" title="Sincronizar agora" style="background:transparent;border:1px solid var(--border);border-radius:.5rem;color:var(--muted);cursor:pointer;font-size:.8rem;padding:.25rem .5rem;line-height:1;transition:color .15s,border-color .15s" onmouseover="this.style.color='var(--fg)';this.style.borderColor='var(--accent)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">↻ Sync</button>
           </div>
           <div class="chart-toggles" id="intraday-toggles">
             <button class="ctog on" data-metric="receita"      onclick="intradaySetMetric(this)">Receita</button>
@@ -2790,16 +2789,6 @@ async function loadIntradayChart(){
   finally{if(spinner)spinner.style.display='none';}
 }
 
-async function intradaySyncNow(){
-  const btn=document.getElementById('intraday-sync-btn');
-  if(btn){btn.disabled=true;btn.textContent='…';}
-  try{
-    const today=new Date().toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'});
-    const r=await fetch('/api/sync/hourly',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dates:[today]})});
-    if(r.ok)await loadIntradayChart();
-  }catch(e){console.warn('[intraday sync]',e);}
-  finally{if(btn){btn.disabled=false;btn.textContent='↻ Sync';}}
-}
 
 function intradaySetMetric(btn){
   document.querySelectorAll('#intraday-toggles .ctog').forEach(b=>b.classList.remove('on'));
@@ -3059,7 +3048,7 @@ function renderDelay(k){
   const txt=document.getElementById('delay-txt');
   const status=document.getElementById('topbar-status');
   if(!inlineWrap)return;
-  if(h===0){inlineWrap.style.display='none';if(status)status.className='topbar-status';return;}
+  if(h===0) return;
   inlineWrap.style.display='';
   if(txt)txt.textContent=h.toFixed(1);
   if(status){status.className='topbar-status'+(h>3?' late':'');}
@@ -4038,6 +4027,17 @@ async function gerLoad(){
   if(GER.parentFilter){
     if(GER.level==='adsets')url+=`&campaign_id=${encodeURIComponent(GER.parentFilter.id)}`;
     else if(GER.level==='ads')url+=`&adset_id=${encodeURIComponent(GER.parentFilter.id)}`;
+  }
+  if((GER.level==='adsets'||GER.level==='ads')&&!GER.parentFilter){
+    document.getElementById('ger-tbody').innerHTML=
+      `<tr><td colspan="12" class="empty" style="color:var(--muted);padding:2rem;text-align:center">
+        ${GER.level==='adsets'
+          ? '← Clique em uma campanha para ver seus conjuntos'
+          : '← Clique em um conjunto para ver seus anúncios'}
+      </td></tr>`;
+    gerRenderTotals({});
+    hideOverlay();
+    return;
   }
   try{
     showOverlay('Carregando Gerenciador…');

@@ -95,8 +95,8 @@ async function handler(req, res) {
         const spend   = +(ins.spend || 0);
         const results = extractResults(ins.actions);
 
-        const daily_budget    = item.daily_budget    ? +(item.daily_budget)    / 100 : null;
-        const lifetime_budget = item.lifetime_budget ? +(item.lifetime_budget) / 100 : null;
+        const daily_budget    = item.daily_budget    && +item.daily_budget    > 0 ? +(item.daily_budget)    / 100 : null;
+        const lifetime_budget = item.lifetime_budget && +item.lifetime_budget > 0 ? +(item.lifetime_budget) / 100 : null;
 
         const purchaseRoasArr = Array.isArray(ins.purchase_roas) ? ins.purchase_roas : [];
         const roas = +(purchaseRoasArr.find(r=>r.action_type==='omni_purchase')?.value || 0);

@@ -173,8 +173,8 @@ async function handler(req, res) {
       domainId = d?.id || null;
       const rawPrefix = d?.prefixo_ad_unit
         || (d?.codigo_pedido_gam ? (d.codigo_pedido_gam.split('-')[0] + '_') : null)
-        || (String(domain).replace(/[^a-z0-9]/gi, '').slice(0, 3) + '_');
-      adUnitPrefix = rawPrefix.toLowerCase();
+        || (d?.nome ? d.nome.replace(/[^a-z0-9]/gi, '').slice(0, 4) + '_' : null);
+      adUnitPrefix = rawPrefix ? rawPrefix.toLowerCase() : null;
     }
 
     // Previous period dates (same duration, immediately before df)
