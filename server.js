@@ -270,12 +270,18 @@ app.post('/api/admin/recalcular-imposto', requireAuth, async (req, res) => {
 });
 
 // ── Páginas Meta ─────────────────────────────────────────────────────────────
-app.get('/api/paginas', requireAuth, async (_req, res) => {
+app.get('/api/paginas', requireAuth, async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { account_id } = req.query;
+    let q = supabase
       .from('paginas')
       .select('page_id,nome,foto_url,ad_account_id,status,pais_sigla,pais_nome,em_uso_desde,ultima_sync,meta_accounts(nome)')
       .order('nome');
+    if (account_id) {
+      const normalized = String(account_id).startsWith('act_') ? account_id : `act_${account_id}`;
+      q = q.eq('ad_account_id', normalized);
+    }
+    const { data, error } = await q;
     if (error) return res.status(500).json({ error: error.message });
     const rows = (data || [])
       .map(p => ({ ...p, conta_nome: p.meta_accounts?.nome || null, meta_accounts: undefined }))
