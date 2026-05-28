@@ -871,20 +871,22 @@ async function syncPaginas() {
     // ── 1. Buscar campanhas ATIVAS da conta via Meta API ─────────────────────
     const paginasEmUso = new Map(); // slug_maiusculo → { campaign_id, campaign_name, pais_sigla, pais_nome }
     try {
+      // Buscar sem filtering server-side: CAMPAIGN_PAUSED não existe em campaigns (só em adsets)
+      // Filtramos client-side por effective_status === 'ACTIVE'
       const campRes = await axios.get(`${BASE}/${accountId}/campaigns`, {
         params: {
-          fields:    'id,name,status,effective_status',
-          filtering: JSON.stringify([{ field: 'effective_status', operator: 'IN', value: ['ACTIVE', 'CAMPAIGN_PAUSED'] }]),
-          limit:     200,
+          fields:       'id,name,status,effective_status',
+          effective_status: JSON.stringify(['ACTIVE', 'PAUSED']),
+          limit:        500,
           access_token: acc.access_token,
         },
         timeout: 20000,
       });
       const campanhas = campRes.data?.data || [];
-      console.log(`[syncPaginas] ${accountId}: ${campanhas.length} campanhas encontradas (ACTIVE+PAUSED)`);
+      const ativas = campanhas.filter(c => c.effective_status === 'ACTIVE');
+      console.log(`[syncPaginas] ${accountId}: ${campanhas.length} campanhas total, ${ativas.length} ACTIVE`);
 
-      for (const camp of campanhas) {
-        if (camp.effective_status !== 'ACTIVE') continue;
+      for (const camp of ativas) {
 
         // Segundo colchete: ][SLUG] ex: "[NG_RELA_BOT_0001][AISHA] CP01" → "AISHA"
         const slugMatch = camp.name.match(/\]\[([A-Z]+)\]/);
