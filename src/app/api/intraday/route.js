@@ -1,26 +1,26 @@
 'use strict';
 const supabase = require('../../../lib/supabase');
 
-function spNow() {
-  return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+// en-CA locale gives ISO "YYYY-MM-DD" directly — no re-parsing ambiguity
+function spDateHoje() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
 }
 
-function isoDate(d) {
-  return d.toISOString().slice(0, 10);
+function spHoraAtual() {
+  const s = new Date().toLocaleTimeString('en-US', { timeZone: 'America/Sao_Paulo', hour: '2-digit', hour12: false });
+  return parseInt(s.split(':')[0], 10) % 24;
 }
 
-function yesterday(d) {
-  const y = new Date(d);
-  y.setDate(y.getDate() - 1);
-  return y;
+function dateMinusDays(isoDate, days) {
+  const [y, m, d] = isoDate.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d - days)).toISOString().slice(0, 10);
 }
 
 async function handler(req, res) {
   try {
-    const now = spNow();
-    const horaAtual = now.getHours();
-    const dataHoje = isoDate(now);
-    const dataOntem = isoDate(yesterday(now));
+    const dataHoje  = spDateHoje();
+    const horaAtual = spHoraAtual();
+    const dataOntem = dateMinusDays(dataHoje, 1);
 
     // Resolve domain filter — dominio_id=0 is the global aggregate
     let did = 0;
