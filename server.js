@@ -301,6 +301,27 @@ app.post('/api/paginas/sync', requireAuth, async (_req, res) => {
   }
 });
 
+// ── Histórico campanhas: sugerir próximo número ──────────────────────────────
+app.get('/api/historico-campanhas/ultimo-numero', requireAuth, async (req, res) => {
+  const { sigla, tema, idioma } = req.query;
+  if (!sigla || !tema || !idioma) return res.json({ proximo: null });
+  try {
+    const { data, error } = await supabase
+      .from('historico_campanhas')
+      .select('numero')
+      .ilike('sigla_pais', sigla)
+      .ilike('tema', tema)
+      .ilike('idioma', idioma)
+      .order('numero', { ascending: false })
+      .limit(1);
+    if (error || !data?.length) return res.json({ proximo: 1 });
+    const ultimo = parseInt(data[0].numero, 10) || 0;
+    res.json({ proximo: ultimo + 1 });
+  } catch (err) {
+    res.json({ proximo: null });
+  }
+});
+
 // ── Domínios ────────────────────────────────────────────────────────────────
 app.get('/api/dominios', requireAuth, async (req, res) => {
   const { data, error } = await supabase

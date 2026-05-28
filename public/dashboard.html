@@ -6019,6 +6019,46 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
 .bwz-drop-overlay.loading{background:rgba(0,0,0,.4)}
 .bwz-drop-overlay.error{background:rgba(0,0,0,.5)}
 .bwz-drop-retry{position:absolute;bottom:3px;right:3px;background:var(--danger,#ef4444);color:#fff;font-size:.6rem;padding:2px 5px;border-radius:3px;cursor:pointer;border:none;font-family:inherit}
+.btn-remove-img{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.7);color:#fff;border:none;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:opacity .15s;font-size:.7rem;line-height:1;z-index:5;padding:0}
+.bwz-drop-item:hover .btn-remove-img{opacity:1}
+.bwz-limpar-row{display:flex;align-items:center;justify-content:flex-end;gap:.5rem;margin-top:.5rem;min-height:1.75rem}
+.bwz-limpar-btn{background:none;border:1px solid var(--border);color:var(--muted);font-size:.75rem;padding:.25rem .625rem;border-radius:.375rem;cursor:pointer;font-family:inherit;transition:border-color .15s,color .15s}
+.bwz-limpar-btn:hover{border-color:var(--danger,#ef4444);color:var(--danger,#ef4444)}
+.bwz-limpar-confirm{display:flex;align-items:center;gap:.375rem;font-size:.75rem;color:var(--fg)}
+.bwz-limpar-confirm button{padding:.2rem .5rem;border-radius:.3rem;border:1px solid var(--border);cursor:pointer;font-size:.75rem;font-family:inherit}
+.bwz-limpar-confirm .btn-sim{background:var(--danger,#ef4444);border-color:var(--danger,#ef4444);color:#fff}
+.bwz-limpar-confirm .btn-nao{background:var(--sec);color:var(--fg)}
+.bwz-page-custom{position:relative}
+.bwz-page-trigger{width:100%;padding:.5rem .875rem;border:1px solid var(--border);border-radius:.625rem;background:var(--sec);color:var(--fg);font-size:.875rem;cursor:pointer;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:.5rem;font-family:inherit;transition:border-color .15s}
+.bwz-page-trigger:hover,.bwz-page-trigger.open{border-color:var(--accent)}
+.bwz-page-trigger-lbl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}
+.bwz-page-trigger-lbl.sel{color:var(--fg)}
+.bwz-page-trigger-arrow{font-size:.6rem;color:var(--muted);flex-shrink:0;transition:transform .2s}
+.bwz-page-trigger.open .bwz-page-trigger-arrow{transform:rotate(180deg)}
+.bwz-page-droplist{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg);border:1px solid var(--border);border-radius:.625rem;box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:40;overflow:hidden;max-height:260px;display:flex;flex-direction:column}
+.bwz-page-search-wrap{padding:.5rem;border-bottom:1px solid var(--border);flex-shrink:0}
+.bwz-page-search{width:100%;padding:.375rem .625rem;border:1px solid var(--border);border-radius:.375rem;background:var(--sec);color:var(--fg);font-size:.8125rem;outline:none;font-family:inherit}
+.bwz-page-opts{overflow-y:auto;max-height:200px}
+.bwz-page-opt{display:flex;align-items:center;gap:.625rem;padding:.5rem .75rem;cursor:pointer;font-size:.8125rem;transition:background .1s}
+.bwz-page-opt:hover{background:var(--sec)}
+.bwz-page-opt.selected{background:color-mix(in oklch,var(--accent) 10%,transparent)}
+.bwz-page-opt-pic{width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;background:var(--border)}
+.bwz-page-opt-pic-fallback{width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.75rem;font-weight:700;flex-shrink:0}
+.bwz-page-opt-info{flex:1;min-width:0}
+.bwz-page-opt-name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bwz-page-opt-meta{font-size:.7rem;color:var(--muted);display:flex;align-items:center;gap:.375rem;margin-top:.1rem}
+.bwz-page-status-em{display:inline-block;padding:1px 5px;border-radius:3px;font-size:.6rem;font-weight:700;background:color-mix(in oklch,var(--success,#22c55e) 18%,transparent);color:var(--success,#22c55e);text-transform:uppercase;letter-spacing:.04em}
+.bwz-page-status-disp{display:inline-block;padding:1px 5px;border-radius:3px;font-size:.6rem;font-weight:700;background:color-mix(in oklch,var(--muted) 12%,transparent);color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.bwz-page-country{display:inline-block;padding:1px 5px;border-radius:3px;font-size:.6rem;background:var(--sec);border:1px solid var(--border);color:var(--fg)}
+.bwz-dom-info{display:flex;align-items:center;gap:.375rem;font-size:.8125rem;color:var(--muted);padding:.375rem .625rem;background:var(--sec);border-radius:.375rem;border:1px solid var(--border);margin-top:.5rem}
+.bwz-dom-info span{font-weight:600;color:var(--fg)}
+.bwz-recall-banner{background:color-mix(in oklch,var(--accent) 10%,transparent);border:1px solid color-mix(in oklch,var(--accent) 30%,transparent);border-radius:.5rem;padding:.625rem .875rem;font-size:.8125rem;display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem}
+.bwz-recall-banner .bwz-recall-msg{flex:1;color:var(--fg)}
+.bwz-recall-banner button{padding:.25rem .625rem;border-radius:.375rem;border:1px solid var(--border);cursor:pointer;font-size:.75rem;font-family:inherit;background:var(--sec);color:var(--fg)}
+.bwz-recall-banner button:hover{border-color:var(--accent);color:var(--accent)}
+.bwz-outra-banner{background:color-mix(in oklch,#f59e0b 12%,transparent);border:1px solid color-mix(in oklch,#f59e0b 35%,transparent);border-radius:.5rem;padding:.5rem .875rem;font-size:.8125rem;color:#92400e;margin-bottom:.75rem;display:none}
+.bwz-success-btns{display:flex;gap:.625rem;flex-wrap:wrap;margin-top:1rem}
+.bwz-success-btns .btn-outline,.bwz-success-btns .btn-primary{flex:1;min-width:120px;justify-content:center}
 .bwz-copy-section{margin-top:1.25rem}
 .bwz-copy-group{margin-bottom:1rem}
 .bwz-copy-group-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.5rem;display:block}
@@ -6138,6 +6178,14 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
 
   <div class="wizard-body">
 
+   <!-- recall / outra-igual banners (shown conditionally) -->
+   <div id="bwz-recall-banner" class="bwz-recall-banner" style="display:none">
+    <div class="bwz-recall-msg">Encontramos uma campanha anterior salva. Deseja carregar os dados?</div>
+    <button onclick="bwzRecallLoad()">Carregar</button>
+    <button onclick="bwzRecallIgnore()">Ignorar</button>
+   </div>
+   <div id="bwz-outra-banner" class="bwz-outra-banner">Dados da campanha anterior pre-preenchidos. Numero incrementado. Adicione as imagens para continuar.</div>
+
    <!-- ── STEP 1: Conta + Página ── -->
    <div class="bwz-step active" id="bwz-step-1">
     <p class="bwz-step-title">Conta e Página</p>
@@ -6153,9 +6201,18 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
 
     <div class="wz-field" id="bwz-page-field" style="display:none">
      <label class="wz-lbl">Página do Facebook *</label>
-     <select id="bwz-page-select" class="bwz-page-select" onchange="botWizSelectPage(this.value)" disabled>
-      <option value="">Carregando páginas...</option>
-     </select>
+     <div class="bwz-page-custom" id="bwz-page-custom">
+      <button type="button" class="bwz-page-trigger" id="bwz-page-trigger" onclick="bwzPageToggleDrop()" disabled>
+       <span class="bwz-page-trigger-lbl" id="bwz-page-trigger-lbl">Carregando páginas...</span>
+       <span class="bwz-page-trigger-arrow">&#9660;</span>
+      </button>
+      <div class="bwz-page-droplist" id="bwz-page-droplist" style="display:none">
+       <div class="bwz-page-search-wrap">
+        <input class="bwz-page-search" id="bwz-page-search" placeholder="Buscar página…" oninput="bwzPageFilter(this.value)" autocomplete="off">
+       </div>
+       <div class="bwz-page-opts" id="bwz-page-opts"></div>
+      </div>
+     </div>
      <div id="bwz-page-confirm" class="bwz-page-confirm" style="display:none"></div>
      <div id="bwz-page-banner" class="bwz-banner warn" style="display:none">
       <span class="bwz-banner-ico">&#9888;&#65039;</span>
@@ -6166,6 +6223,13 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
        </div>
       </div>
      </div>
+    </div>
+
+    <div class="wz-field" id="bwz-dom-field" style="display:none">
+     <label class="wz-lbl">Domínio de monetização *</label>
+     <select class="wz-select" id="bwz-dom-select" onchange="bwzDomSelect(this.value,this.options[this.selectedIndex]?.dataset?.nome||this.options[this.selectedIndex]?.textContent)">
+      <option value="">Carregando domínios…</option>
+     </select>
     </div>
 
     <div id="bwz-slug-preview" class="bwz-banner succ" style="display:none">
@@ -6231,6 +6295,7 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
    <div class="bwz-step" id="bwz-step-3">
     <p class="bwz-step-title">Conjunto de anúncios</p>
     <p class="bwz-step-sub">Pixel, evento, orçamento e período — aplicados nos 6 conjuntos.</p>
+    <div class="bwz-dom-info" id="bwz-dom-step3-info" style="display:none">Domínio de monetização: <span id="bwz-dom-step3-nome">—</span></div>
 
     <div class="wz-row">
      <div class="wz-field" style="margin:0">
@@ -6347,6 +6412,10 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
        <div class="bwz-dropzone-sub">JPEG · PNG · GIF &nbsp;·&nbsp; múltiplos arquivos</div>
      </div>
      <input type="file" id="bwz-file-batch" accept="image/*" multiple style="display:none" onchange="bwzBatchFiles(this.files);this.value=''">
+     <div class="bwz-limpar-row" id="bwz-limpar-row" style="display:none">
+      <div id="bwz-limpar-confirm-wrap"></div>
+      <button class="bwz-limpar-btn" onclick="bwzLimparTudo()">Limpar tudo</button>
+     </div>
      <div class="bwz-drop-warn" id="bwz-drop-warn"></div>
      <div class="bwz-drop-progress" id="bwz-drop-progress">
        <div class="bwz-drop-prog-lbl" id="bwz-drop-prog-lbl">Enviando…</div>
@@ -6962,6 +7031,7 @@ window.botWizOpen=function(){
     daily_budget:7,start_time:'',end_time:null,
     age_min:18,age_max:45,gender:0,
     conversation_config:null,
+    dominio_id:'',dominio_nome:'',
   });
   BWZ.selInterests=[];BWZ.selCountries=[{code:'BR',name:'Brasil'}];
   BWZ.selLocales=[{id:16,name:'Português (Brasil)'}];BWZ.selCA=[];
@@ -6969,15 +7039,17 @@ window.botWizOpen=function(){
   BWZ.mediaSlots=Array.from({length:6},()=>[{hash:null,preview_url:null},{hash:null,preview_url:null},{hash:null,preview_url:null}]);
   BWZ._dropItems=[];
   BWZ.fpStart=null;BWZ.fpEnd=null;
+  BWZ._outraIgual=false;
 
   // reset UI
   document.getElementById('bwz-page-field').style.display='none';
+  document.getElementById('bwz-dom-field').style.display='none';
   document.getElementById('bwz-slug-preview').style.display='none';
   document.getElementById('bwz-page-banner').style.display='none';
   document.getElementById('bwz-page-confirm').style.display='none';
-  const selReset=document.getElementById('bwz-page-select');
-  selReset.innerHTML='<option value="">Carregando páginas...</option>';
-  selReset.disabled=true;selReset.style.display='';
+  document.getElementById('bwz-outra-banner').style.display='none';
+  document.getElementById('bwz-recall-banner').style.display='none';
+  bwzPageDropReset();
   bwzRenderMediaGrid();
   // reset step 2 naming inputs
   ['bwz-sigla-pais','bwz-tema','bwz-idioma','bwz-numero'].forEach(id=>{
@@ -7018,11 +7090,24 @@ window.botWizOpen=function(){
   document.getElementById('bwz-btn-dryrun').style.display='';
   document.getElementById('bwz-btn-publish').style.display='';
 
+  // check localStorage for previous state
+  try{
+    const prev=localStorage.getItem('wizard_ultimo_estado');
+    if(prev){
+      const p=JSON.parse(prev);
+      if(p&&p.sigla_pais){
+        BWZ._pendingRecall=p;
+        document.getElementById('bwz-recall-banner').style.display='flex';
+      }
+    }
+  }catch(e){}
+
   botWizStep(1);
   document.getElementById('bot-wiz-overlay').style.display='flex';
   botWizLoadAccounts();
   bwzLoadCopiesTemplatesList();
   bwzLoadConvTemplatesList();
+  bwzLoadDominios();
 };
 
 window.botWizCancel=function(){
@@ -7143,13 +7228,14 @@ window.botWizSelectAccount=function(id,nome,moeda,temToken){
   BWZ.pixels=[];BWZ.pages=[];BWZ.customAudiences=[];
   // reset page data
   BWZ.d.page_id='';BWZ.d.page_name='';BWZ.d.page_token=null;BWZ.d.page_slug='';BWZ.d.page_suffix='';
-  // reset page UI immediately — não esperar o fetch
-  const sel=document.getElementById('bwz-page-select');
-  sel.innerHTML='<option value="">Carregando páginas...</option>';
-  sel.disabled=true;sel.style.display='';
+  // reset page UI immediately
+  bwzPageDropReset();
+  document.getElementById('bwz-page-trigger-lbl').textContent='Carregando páginas...';
+  document.getElementById('bwz-page-trigger').disabled=true;
   document.getElementById('bwz-page-confirm').style.display='none';
   document.getElementById('bwz-page-banner').style.display='none';
   document.getElementById('bwz-slug-preview').style.display='none';
+  document.getElementById('bwz-page-custom').style.display='';
   // show field and fetch
   document.getElementById('bwz-page-field').style.display='';
   botWizLoadPages();
@@ -7159,11 +7245,12 @@ async function botWizLoadPages(){
   // guard: se o usuário trocou de conta antes da resposta, descarta
   BWZ._pagesReq=(BWZ._pagesReq||0)+1;
   const reqId=BWZ._pagesReq;
-  const sel=document.getElementById('bwz-page-select');
+  const trigger=document.getElementById('bwz-page-trigger');
   const confirm=document.getElementById('bwz-page-confirm');
   const banner=document.getElementById('bwz-page-banner');
-  sel.innerHTML='<option value="">Carregando páginas...</option>';
-  sel.disabled=true;sel.style.display='';
+  bwzPageDropReset();
+  document.getElementById('bwz-page-trigger-lbl').textContent='Carregando páginas...';
+  trigger.disabled=true;
   confirm.style.display='none';
   banner.style.display='none';
   BWZ.pages=[];
@@ -7174,21 +7261,21 @@ async function botWizLoadPages(){
     if(BWZ._pagesReq!==reqId)return;
     if(data.pages&&data.pages.length){
       BWZ.pages=data.pages;
-      sel.innerHTML='<option value="">Selecione uma página...</option>'+
-        data.pages.map(p=>`<option value="${esc(p.id)}">${esc(p.name)} — ${esc(p.id)}</option>`).join('');
-      sel.disabled=false;
+      document.getElementById('bwz-page-trigger-lbl').textContent='Selecione uma página...';
+      trigger.disabled=false;
       banner.style.display='none';
+      bwzPageRenderOpts(data.pages,'');
       if(data.pages.length===1){
-        sel.value=data.pages[0].id;
         botWizSelectPage(data.pages[0].id);
       }
     }else{
-      sel.style.display='none';
+      document.getElementById('bwz-page-custom').style.display='none';
       banner.style.display='flex';
     }
   }catch(e){
     if(BWZ._pagesReq!==reqId)return;
-    sel.style.display='none';banner.style.display='flex';
+    document.getElementById('bwz-page-custom').style.display='none';
+    banner.style.display='flex';
     console.error('[bwz pages]',e.message);
   }
 }
@@ -7200,18 +7287,27 @@ window.botWizSelectPage=function(id){
     confirm.style.display='none';
     preview.style.display='none';
     BWZ.d.page_id='';BWZ.d.page_name='';BWZ.d.page_token=null;
+    document.getElementById('bwz-page-trigger-lbl').textContent='Selecione uma página...';
+    document.getElementById('bwz-page-trigger-lbl').classList.remove('sel');
     return;
   }
   const page=BWZ.pages?.find(p=>p.id===id);
   if(!page)return;
   BWZ.d.page_id=page.id;BWZ.d.page_name=page.name;BWZ.d.page_token=page.access_token||null;
   BWZ.d.page_slug=bwzSlug(page.name);BWZ.d.page_suffix=bwzSuffix(page.name);
+  // update trigger label
+  const lbl=document.getElementById('bwz-page-trigger-lbl');
+  lbl.textContent=page.name;lbl.classList.add('sel');
+  bwzPageDropClose();
+  // render confirm card
   confirm.innerHTML=
-    (page.picture_url?`<img class="bwz-acct-pic" src="${esc(page.picture_url)}" alt="">`:'<div class="bwz-acct-pic" style="background:var(--sec);display:flex;align-items:center;justify-content:center;font-size:1.1rem">📄</div>')+
+    (page.picture_url?`<img class="bwz-acct-pic" src="${esc(page.picture_url)}" alt="">`:'<div class="bwz-acct-pic" style="background:var(--sec);display:flex;align-items:center;justify-content:center;font-size:1.1rem">P</div>')+
     `<div class="bwz-acct-info"><div class="bwz-acct-name">${esc(page.name)}</div><div class="bwz-acct-sub">ID ${esc(page.id)}${page.fan_count?' · '+NUM(page.fan_count)+' fãs':''}</div></div>`;
   confirm.style.display='flex';
   document.getElementById('bwz-slug-names').textContent=BWZ.d.page_suffix;
   preview.style.display='flex';
+  // highlight selected option
+  document.querySelectorAll('#bwz-page-opts .bwz-page-opt').forEach(el=>el.classList.toggle('selected',el.dataset.id===id));
 };
 
 window.bwzPageManual=function(){
@@ -7228,6 +7324,8 @@ window.bwzPageManual=function(){
 /* ─── STEP 2: naming + campaign name ────────────────────────────────────── */
 window.bwzUpdateNamePreview=function(el,field){
   if(el)BWZ.d[field]=el.value.toUpperCase();
+  if(el&&field==='numero')el.dataset.userEdited='1';
+  if(field==='sigla_pais'||field==='tema'||field==='idioma')bwzSuggestNumero();
   const d=BWZ.d;
   const previewEl=document.getElementById('bwz-adset-preview-body');
   if(!d.sigla_pais||!d.tema||!d.idioma||!d.numero){
@@ -7529,6 +7627,8 @@ window.bwzRenderMediaGrid=function(){
   const w=document.getElementById('bwz-drop-warn');
   w.className='bwz-drop-warn';w.textContent='';
   document.getElementById('bwz-drop-progress').className='bwz-drop-progress';
+  const lr=document.getElementById('bwz-limpar-row');if(lr)lr.style.display='none';
+  const cw=document.getElementById('bwz-limpar-confirm-wrap');if(cw)cw.innerHTML='';
   BWZ._dropItems=[];
 };
 
@@ -7564,6 +7664,8 @@ function bwzRenderDropGrid(){
   const grid=document.getElementById('bwz-drop-grid');
   const N=BWZ._dropItems.length;
   grid.innerHTML='';
+  const limparRow=document.getElementById('bwz-limpar-row');
+  if(limparRow)limparRow.style.display=N>0?'flex':'none';
   BWZ._dropItems.forEach((item,i)=>{
     const g=bwzPrimaryGroup(i,N);
     const el=document.createElement('div');
@@ -7580,6 +7682,7 @@ function bwzRenderDropGrid(){
           item.status==='error'?'<span style="color:#fca5a5">&#10060;</span>':''}
       </div>
       ${item.status==='error'?`<button class="bwz-drop-retry" onclick="bwzRetryItem(${i})">retry</button>`:''}
+      <button class="btn-remove-img" onclick="event.stopPropagation();removeImagem(${i})" title="Remover">&#215;</button>
     `;
     el.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',String(i));el.style.opacity='.45';});
     el.addEventListener('dragend',()=>{el.style.opacity='';});
@@ -7623,6 +7726,217 @@ window.bwzRetryItem=async function(i){
   bwzRenderDropGrid();
   bwzSyncSlots();
 };
+
+// ── Ajuste 2: remove individual image ─────────────────────────────────────
+window.removeImagem=function(idx){
+  BWZ._dropItems.splice(idx,1);
+  document.getElementById('bwz-limpar-confirm-wrap').innerHTML='';
+  bwzRenderDropGrid();
+  bwzSyncSlots();
+};
+
+window.bwzLimparTudo=function(){
+  const wrap=document.getElementById('bwz-limpar-confirm-wrap');
+  const n=BWZ._dropItems.length;
+  if(!n){wrap.innerHTML='';return;}
+  wrap.innerHTML=`<div class="bwz-limpar-confirm">Limpar as ${n} imagens?&nbsp;<button class="btn-sim" onclick="bwzLimparConfirmado()">Sim</button><button class="btn-nao" onclick="bwzLimparNao()">Não</button></div>`;
+};
+window.bwzLimparConfirmado=function(){
+  BWZ._dropItems=[];
+  BWZ.mediaSlots=Array.from({length:6},()=>[{hash:null,preview_url:null},{hash:null,preview_url:null},{hash:null,preview_url:null}]);
+  document.getElementById('bwz-limpar-confirm-wrap').innerHTML='';
+  bwzRenderDropGrid();
+};
+window.bwzLimparNao=function(){
+  document.getElementById('bwz-limpar-confirm-wrap').innerHTML='';
+};
+
+// ── Ajuste 3: custom page dropdown ────────────────────────────────────────
+window.BWZ._pagesDom=[];
+function bwzPageRenderOpts(pages,query){
+  const q=query.toLowerCase().trim();
+  const opts=document.getElementById('bwz-page-opts');
+  const filtered=q?pages.filter(p=>p.name.toLowerCase().includes(q)||p.id.includes(q)):pages;
+  // merge with paginas DB data stored in BWZ._pagesDom
+  opts.innerHTML=filtered.map(p=>{
+    const dbPage=BWZ._pagesDom.find(d=>d.page_id===p.id)||null;
+    const status=dbPage?dbPage.status:'';
+    const country=dbPage?.pais_sigla||'';
+    const pic=p.picture_url;
+    const initial=(p.name||'?')[0].toUpperCase();
+    const statusBadge=status==='em_uso'?`<span class="bwz-page-status-em">EM USO</span>`:
+                       status==='disponivel'?`<span class="bwz-page-status-disp">DISPONIVEL</span>`:'';
+    const countryBadge=country?`<span class="bwz-page-country">${esc(country)}</span>`:'';
+    return `<div class="bwz-page-opt${BWZ.d.page_id===p.id?' selected':''}" data-id="${esc(p.id)}" onclick="botWizSelectPage('${esc(p.id)}')">
+      ${pic?`<img class="bwz-page-opt-pic" src="${esc(pic)}" alt="">`:
+            `<div class="bwz-page-opt-pic-fallback">${esc(initial)}</div>`}
+      <div class="bwz-page-opt-info">
+        <div class="bwz-page-opt-name">${esc(p.name)}</div>
+        <div class="bwz-page-opt-meta">${statusBadge}${countryBadge}<span>${esc(p.id)}</span></div>
+      </div>
+    </div>`;
+  }).join('')||'<div style="padding:.75rem;color:var(--muted);font-size:.8125rem">Nenhuma página encontrada</div>';
+}
+window.bwzPageFilter=function(q){
+  bwzPageRenderOpts(BWZ.pages,q);
+};
+window.bwzPageToggleDrop=function(){
+  const drop=document.getElementById('bwz-page-droplist');
+  const trigger=document.getElementById('bwz-page-trigger');
+  const isOpen=drop.style.display!=='none';
+  if(isOpen){bwzPageDropClose();}else{
+    drop.style.display='flex';trigger.classList.add('open');
+    const search=document.getElementById('bwz-page-search');
+    search.value='';bwzPageRenderOpts(BWZ.pages,'');search.focus();
+  }
+};
+function bwzPageDropClose(){
+  document.getElementById('bwz-page-droplist').style.display='none';
+  document.getElementById('bwz-page-trigger').classList.remove('open');
+}
+function bwzPageDropReset(){
+  bwzPageDropClose();
+  document.getElementById('bwz-page-opts').innerHTML='';
+  document.getElementById('bwz-page-search').value='';
+}
+
+// ── Ajuste 3: domínio field ────────────────────────────────────────────────
+async function bwzLoadDominios(){
+  try{
+    const r=await fetch('/api/dominios');
+    const doms=await r.json();
+    const sel=document.getElementById('bwz-dom-select');
+    const field=document.getElementById('bwz-dom-field');
+    if(!doms||!doms.length){field.style.display='none';return;}
+    sel.innerHTML=doms.map(d=>`<option value="${esc(String(d.id))}" data-nome="${esc(d.nome)}">${esc(d.nome)}</option>`).join('');
+    field.style.display='';
+    if(doms.length===1){
+      bwzDomSelect(String(doms[0].id),doms[0].nome);
+    }
+    // pre-load paginas DB for dropdown enrichment
+    try{
+      const pr=await fetch('/api/paginas');
+      BWZ._pagesDom=(await pr.json())||[];
+    }catch(e){BWZ._pagesDom=[];}
+  }catch(e){console.error('[bwz dom]',e.message);}
+}
+window.bwzDomSelect=function(id,nome){
+  BWZ.d.dominio_id=id;
+  const opt=document.querySelector(`#bwz-dom-select option[value="${id}"]`);
+  BWZ.d.dominio_nome=nome||opt?.dataset?.nome||opt?.textContent||'';
+  document.getElementById('bwz-dom-select').value=id;
+  // update step 3 info
+  const info=document.getElementById('bwz-dom-step3-info');
+  const nm=document.getElementById('bwz-dom-step3-nome');
+  if(info&&nm){nm.textContent=BWZ.d.dominio_nome;info.style.display=BWZ.d.dominio_nome?'flex':'none';}
+};
+
+// ── Ajuste 1 & 4: success state handlers ──────────────────────────────────
+function bwzSaveLastState(publishData){
+  try{
+    const state={
+      sigla_pais:BWZ.d.sigla_pais,tema:BWZ.d.tema,idioma:BWZ.d.idioma,numero:BWZ.d.numero,
+      campaign_name:BWZ.d.campaign_name,budget_type:BWZ.d.budget_type,paused:BWZ.d.paused,
+      pixel_id:BWZ.d.pixel_id,conversion_event:BWZ.d.conversion_event,
+      daily_budget:BWZ.d.daily_budget,start_time:BWZ.d.start_time,end_time:BWZ.d.end_time,
+      age_min:BWZ.d.age_min,age_max:BWZ.d.age_max,gender:BWZ.d.gender,
+      dominio_id:BWZ.d.dominio_id,dominio_nome:BWZ.d.dominio_nome,
+      account_id:BWZ.d.account_id,account_nome:BWZ.d.account_nome,
+      page_id:BWZ.d.page_id,page_name:BWZ.d.page_name,
+      selCountries:BWZ.selCountries,selLocales:BWZ.selLocales,selInterests:BWZ.selInterests,
+      texts:[...document.querySelectorAll('[id^="bwz-text-"]')].map(e=>e.value),
+      headlines:[...document.querySelectorAll('[id^="bwz-hl-"]')].map(e=>e.value),
+      descs:[...document.querySelectorAll('[id^="bwz-desc-"]')].map(e=>e.value),
+      savedAt:Date.now(),
+    };
+    localStorage.setItem('wizard_ultimo_estado',JSON.stringify(state));
+  }catch(e){}
+}
+window.bwzFinalizar=function(){
+  document.getElementById('bot-wiz-overlay').style.display='none';
+  if(typeof loadDashboard==='function')loadDashboard();
+  else if(typeof refreshAll==='function')refreshAll();
+};
+window.bwzCriarOutraIgual=function(){
+  const prev=BWZ._pendingRecall||null;
+  // load from saved state (already saved above)
+  let state=null;
+  try{state=JSON.parse(localStorage.getItem('wizard_ultimo_estado'));}catch(e){}
+  if(!state)return;
+  BWZ._outraIgual=true;
+  // increment numero
+  const n=parseInt(state.numero||'1',10);
+  state.numero=String(n+1).padStart(4,'0');
+  BWZ._pendingRecall=state;
+  // reopen wizard but apply state immediately
+  document.getElementById('bot-wiz-overlay').style.display='none';
+  botWizOpen();
+  bwzApplyRecall(state,true);
+};
+window.bwzRecallLoad=function(){
+  const state=BWZ._pendingRecall;
+  if(!state)return;
+  document.getElementById('bwz-recall-banner').style.display='none';
+  bwzApplyRecall(state,false);
+};
+window.bwzRecallIgnore=function(){
+  BWZ._pendingRecall=null;
+  document.getElementById('bwz-recall-banner').style.display='none';
+};
+function bwzApplyRecall(state,outraIgual){
+  // apply naming fields
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v||'';};
+  set('bwz-sigla-pais',state.sigla_pais);set('bwz-tema',state.tema);
+  set('bwz-idioma',state.idioma);set('bwz-numero',state.numero);
+  set('bwz-camp-name',state.campaign_name);
+  // apply BWZ.d
+  Object.assign(BWZ.d,{
+    sigla_pais:state.sigla_pais||'BR',tema:state.tema||'',
+    idioma:state.idioma||'PT',numero:state.numero||'0001',
+    campaign_name:state.campaign_name||'',campNameEdited:!!state.campaign_name,
+    budget_type:state.budget_type||'ABO',paused:state.paused!==false,
+    pixel_id:state.pixel_id||'',conversion_event:state.conversion_event||'CONTENT_VIEW',
+    daily_budget:state.daily_budget||7,start_time:state.start_time||'',end_time:state.end_time||null,
+    age_min:state.age_min||18,age_max:state.age_max||45,gender:state.gender||0,
+    dominio_id:state.dominio_id||'',dominio_nome:state.dominio_nome||'',
+  });
+  botWizSetBudgetType(BWZ.d.budget_type);
+  const pausedEl=document.getElementById('bwz-paused');if(pausedEl)pausedEl.checked=BWZ.d.paused;
+  if(state.selCountries)BWZ.selCountries=state.selCountries;
+  if(state.selLocales)BWZ.selLocales=state.selLocales;
+  if(state.selInterests)BWZ.selInterests=state.selInterests;
+  if(BWZ.d.dominio_nome){
+    const sel=document.getElementById('bwz-dom-select');
+    if(sel&&BWZ.d.dominio_id)sel.value=BWZ.d.dominio_id;
+    bwzDomSelect(BWZ.d.dominio_id,BWZ.d.dominio_nome);
+  }
+  if(outraIgual){
+    document.getElementById('bwz-outra-banner').style.display='block';
+  }
+}
+
+// ── Ajuste 6: auto-suggest NUMERO ─────────────────────────────────────────
+async function bwzSuggestNumero(){
+  const {sigla_pais,tema,idioma}=BWZ.d;
+  if(!sigla_pais||!tema||!idioma)return;
+  try{
+    const r=await fetch(`/api/historico-campanhas/ultimo-numero?sigla=${encodeURIComponent(sigla_pais)}&tema=${encodeURIComponent(tema)}&idioma=${encodeURIComponent(idioma)}`);
+    if(!r.ok)return;
+    const data=await r.json();
+    if(data.proximo){
+      const el=document.getElementById('bwz-numero');
+      if(el&&!el.dataset.userEdited){
+        el.value=String(data.proximo).padStart(4,'0');
+        BWZ.d.numero=el.value;
+      }
+    }
+  }catch(e){}
+}
+
+// close page dropdown on outside click
+document.addEventListener('click',function(e){
+  if(!e.target.closest('#bwz-page-custom')){bwzPageDropClose();}
+});
 
 window.bwzBatchFiles=async function(fileList){
   const files=Array.from(fileList).filter(f=>f.type.startsWith('image/'));
@@ -7821,11 +8135,16 @@ window.botWizPublish=async function(){
         }else if(evType==='done'){
           barFill.style.width='100%';
           progWrap.style.display='none';
+          bwzSaveLastState(data);
           resultDiv.innerHTML=`<div class="bwz-result-ok">
             <div style="font-size:1.5rem;margin-bottom:.5rem">&#127881;</div>
             <div style="font-weight:700;font-size:1rem;color:var(--success);margin-bottom:.5rem">&#9989; ${data.ad_count} ads criados com sucesso!</div>
             <div style="font-size:.8125rem;color:var(--muted);margin-bottom:.75rem">Campanha: <code>${esc(data.campaign_id)}</code> · ${data.adset_count} conjuntos</div>
-            <a href="${esc(data.meta_url)}" target="_blank" class="btn-primary" style="display:inline-flex;align-items:center;gap:.5rem;text-decoration:none;padding:.5rem 1.25rem">&#128279; Abrir no Ads Manager</a>
+            <div class="bwz-success-btns">
+              <a href="${esc(data.meta_url)}" target="_blank" class="btn-outline" style="display:inline-flex;align-items:center;gap:.5rem;text-decoration:none;padding:.5rem 1rem">&#128279; Abrir no Ads Manager</a>
+              <button class="btn-outline" onclick="bwzCriarOutraIgual()">Criar outra igual</button>
+              <button class="btn-primary" onclick="bwzFinalizar()">Finalizar</button>
+            </div>
           </div>`;
         }else if(evType==='error'){
           progWrap.style.display='none';
