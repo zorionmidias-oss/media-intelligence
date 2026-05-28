@@ -2884,7 +2884,7 @@ function renderIntradayChart(data,metric){
           label:'Hoje',
           data:hojeVals,
           borderColor:'#00E5B4',
-          backgroundColor:'rgba(0,229,180,0.08)',
+          backgroundColor:metric==='roi'?'transparent':'rgba(0,229,180,0.08)',
           borderWidth:2,
           borderDash:[],
           pointRadius:3,
@@ -2892,6 +2892,14 @@ function renderIntradayChart(data,metric){
           tension:.35,
           fill:true,
           spanGaps:true,
+          segment:{
+            borderColor:ctx=>metric!=='roi'?undefined:(ctx.p1.parsed.y<0?'#E5384B':'#00E5B4'),
+          },
+          pointBackgroundColor:ctx=>{
+            if(metric!=='roi')return '#00E5B4';
+            const v=hojeVals[ctx.dataIndex];
+            return(v!==null&&v<0)?'#E5384B':'#00E5B4';
+          },
         },
         {
           label:'Ontem',
