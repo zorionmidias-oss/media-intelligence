@@ -107,13 +107,14 @@ async function handler(req, res) {
 
     // ── A: pages ──────────────────────────────────────────────────────────────
     if (resource === 'pages') {
-      // Check cache manually — only serve if has pages (not empty/error)
-      const { data: cached } = await supabase.from('meta_resources_cache')
+      // 1. Fresh cache (not expired)
+      const { data: freshCache } = await supabase.from('meta_resources_cache')
         .select('data').eq('account_id', acctId).eq('resource_type', 'pages')
         .eq('query_hash', '').gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false }).limit(1).maybeSingle();
-      if (cached?.data?.pages?.length > 0) return res.json(cached.data);
+      if (freshCache?.data?.pages?.length > 0) return res.json(freshCache.data);
 
+      // 2. Try live Meta API
       const normalize = p => ({
         id: p.id, name: p.name,
         picture_url: p.picture?.data?.url || null,
@@ -144,23 +145,15 @@ async function handler(req, res) {
 
       console.log(`[pages] /me/accounts → ${fromMe.length} | promote_pages → ${fromPromote.length}`);
 
-      // /me/accounts é fonte primária; promote_pages adiciona páginas BM extras sem duplicar
       const seen = new Map();
       for (const p of [...fromMe, ...fromPromote]) {
         if (!seen.has(p.id)) seen.set(p.id, p);
       }
       const pages = [...seen.values()];
 
-      const lastError = pages.length === 0 ? 'TOKEN_MISSING_PERMISSIONS' : null;
-      const lastDetail = pages.length === 0
-        ? [
-            resMe.status === 'rejected' ? resMe.reason?.response?.data?.error?.message : null,
-            resPromote.status === 'rejected' ? resPromote.reason?.response?.data?.error?.message : null,
-          ].filter(Boolean).join(' | ') || 'Token sem permissões pages_show_list/pages_read_engagement — renove o token'
-        : null;
-
       if (pages.length > 0) {
-        const expires_at = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+        // TTL de 1h — pages não mudam com frequência
+        const expires_at = new Date(Date.now() + 60 * 60 * 1000).toISOString();
         await supabase.from('meta_resources_cache').upsert({
           account_id: acctId, resource_type: 'pages', query_hash: '',
           data: { pages }, expires_at,
@@ -168,10 +161,22 @@ async function handler(req, res) {
         return res.json({ pages });
       }
 
+      // 3. Live API retornou vazio — servir cache expirado como fallback
+      const { data: staleCache } = await supabase.from('meta_resources_cache')
+        .select('data').eq('account_id', acctId).eq('resource_type', 'pages')
+        .eq('query_hash', '').order('created_at', { ascending: false }).limit(1).maybeSingle();
+      if (staleCache?.data?.pages?.length > 0) {
+        console.warn(`[pages] ${acctId}: API vazia — servindo cache expirado (${staleCache.data.pages.length} páginas)`);
+        return res.json(staleCache.data);
+      }
+
       return res.json({
         pages: [],
-        error: lastError || 'TOKEN_MISSING_PERMISSIONS',
-        detail: lastDetail || 'Token sem permissões pages_show_list/pages_read_engagement — renove o token',
+        error: 'TOKEN_MISSING_PERMISSIONS',
+        detail: [
+          resMe.status === 'rejected' ? resMe.reason?.response?.data?.error?.message : null,
+          resPromote.status === 'rejected' ? resPromote.reason?.response?.data?.error?.message : null,
+        ].filter(Boolean).join(' | ') || 'Token sem permissões pages_show_list/pages_read_engagement — renove o token',
       });
     }
 
