@@ -264,14 +264,17 @@
       <div class="gam-card" title="Fonte: Google Ad Manager">
         <div class="gam-card-lbl">eCPM <span class="gam-sm-badge">GAM</span></div>
         <div class="gam-card-val hv" id="ov-gam-ecpm">—</div>
+        <div class="kpi-chg" id="ov-gam-ecpm-chg"></div>
       </div>
       <div class="gam-card" title="Fonte: Google Ad Manager">
         <div class="gam-card-lbl">Impr. <span class="gam-sm-badge">GAM</span></div>
         <div class="gam-card-val hv" id="ov-gam-imp">—</div>
+        <div class="kpi-chg" id="ov-gam-imp-chg"></div>
       </div>
       <div class="gam-card" title="Fonte: Google Ad Manager">
         <div class="gam-card-lbl">CTR <span class="gam-sm-badge">GAM</span></div>
         <div class="gam-card-val" id="ov-gam-ctr">—</div>
+        <div class="kpi-chg" id="ov-gam-ctr-chg"></div>
       </div>
     </div>
 
@@ -637,6 +640,10 @@ function renderOverview(d){
   set('ov-gam-ecpm',k.ecpm!=null?BRL(k.ecpm):'—');
   set('ov-gam-imp',k.impressions!=null?NUM(k.impressions):'—');
   set('ov-gam-ctr',k.ctr!=null?PCT(k.ctr):'—');
+  const gamChg=(id,v)=>{const e=document.getElementById(id);if(e)e.innerHTML=v!=null?chgHtml(v):'';};
+  gamChg('ov-gam-ecpm-chg',cmp.gamEcpm);
+  gamChg('ov-gam-imp-chg',cmp.gamImpressions);
+  gamChg('ov-gam-ctr-chg',cmp.gamCtr);
 }
 
 // ══ INTRADAY ══════════════════════════════════════════════════════════════════

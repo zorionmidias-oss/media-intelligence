@@ -64,7 +64,13 @@ async function handler(req, res) {
       .gte('data', prevDf).lte('data', prevDt);
     if (domainId) prevAdsQ = prevAdsQ.eq('dominio_id', domainId);
 
-    const [{ data: ads, error: adsErr }, { data: gam }, { data: prevAds }] = await Promise.all([adsQ, gamQ, prevAdsQ]);
+    let prevGamQ = supabase
+      .from('blocos_anuncio')
+      .select('impressoes,total_clicks,ecpm_medio')
+      .gte('data', prevDf).lte('data', prevDt);
+    if (domainId) prevGamQ = prevGamQ.eq('dominio_id', domainId);
+
+    const [{ data: ads, error: adsErr }, { data: gam }, { data: prevAds }, { data: prevGam }] = await Promise.all([adsQ, gamQ, prevAdsQ, prevGamQ]);
     if (adsErr) return res.status(500).json({ error: adsErr.message });
 
     // ─── Aggregate ads_consolidados (Meta spend + UTM attribution) ───
@@ -227,6 +233,20 @@ async function handler(req, res) {
 
     const roi = totSpend > 0 ? +((totLucro / totSpend) * 100).toFixed(2) : 0;
 
+    // ─── Previous period GAM aggregation ────────────────────────────────────
+    let prevGamImps = 0, prevGamClicks = 0;
+    let _prevEcpmWtSum = 0, _prevEcpmWt = 0;
+    for (const r of prevGam || []) {
+      const imp = Number(r.impressoes || 0);
+      const clk = Number(r.total_clicks || 0);
+      const em  = Number(r.ecpm_medio || 0);
+      prevGamImps  += imp;
+      prevGamClicks += clk;
+      if (imp > 0 && em > 0) { _prevEcpmWtSum += em * imp; _prevEcpmWt += imp; }
+    }
+    const prevEcpm   = _prevEcpmWt > 0 ? _prevEcpmWtSum / _prevEcpmWt : 0;
+    const prevGamCtr = prevGamImps > 0 ? (prevGamClicks / prevGamImps) * 100 : 0;
+
     // ─── Previous period comparison ──────────────────────────────────────────
     const prevUtmMap = {};
     for (const r of prevAds || []) {
@@ -249,6 +269,9 @@ async function handler(req, res) {
       investimento: varPct(totSpend,  prevTotSpend),
       lucro:        varPct(totLucro,  prevTotLucro),
       roi:          prevRoi !== 0 ? +(roi - prevRoi).toFixed(1) : null,
+      gamEcpm:       prevGamImps > 0 ? varPct(ecpm,    prevEcpm)   : null,
+      gamImpressions: prevGamImps > 0 ? varPct(gamImps, prevGamImps) : null,
+      gamCtr:        prevGamImps > 0 ? varPct(gamCtr,  prevGamCtr) : null,
       porUtm: Object.fromEntries(allUTMs.map(u => {
         const p = prevUtmMap[u.ad_utm] || { spend: 0, fat: 0 };
         return [u.ad_utm, {

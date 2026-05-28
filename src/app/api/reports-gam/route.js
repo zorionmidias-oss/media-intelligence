@@ -177,6 +177,13 @@ async function handler(req, res) {
       adUnitPrefix = rawPrefix.toLowerCase();
     }
 
+    // Previous period dates (same duration, immediately before df)
+    const dias = Math.round((new Date(dt) - new Date(df)) / 86400000) + 1;
+    const anteriorUntilDate = new Date(df); anteriorUntilDate.setDate(anteriorUntilDate.getDate() - 1);
+    const anteriorSinceDate = new Date(df); anteriorSinceDate.setDate(anteriorSinceDate.getDate() - dias);
+    const anteriorDf = anteriorSinceDate.toISOString().slice(0, 10);
+    const anteriorDt = anteriorUntilDate.toISOString().slice(0, 10);
+
     let gamQ = supabase
       .from('blocos_anuncio')
       .select('nome_bloco,impressoes,total_clicks,receita_total,ecpm_medio,taxa_correspondencia_programatica')
@@ -190,6 +197,20 @@ async function handler(req, res) {
       .gte('data', df)
       .lte('data', dt);
     if (domainId) adsQ = adsQ.eq('dominio_id', domainId);
+
+    let prevGamQ = supabase
+      .from('blocos_anuncio')
+      .select('impressoes,receita_total,ecpm_medio')
+      .gte('data', anteriorDf)
+      .lte('data', anteriorDt);
+    if (domainId) prevGamQ = prevGamQ.eq('dominio_id', domainId);
+
+    let prevAdsQ = supabase
+      .from('ads_consolidados')
+      .select('impressoes_gam,cpc_gam,cliques_gam')
+      .gte('data', anteriorDf)
+      .lte('data', anteriorDt);
+    if (domainId) prevAdsQ = prevAdsQ.eq('dominio_id', domainId);
 
     const opts = { since: df, until: dt, adUnitPrefix: adUnitPrefix || undefined };
     const pfx = adUnitPrefix || '';
@@ -219,7 +240,7 @@ async function handler(req, res) {
       );
     }
 
-    const [{ data: rows }, { data: adsRows }] = await Promise.all([gamQ, adsQ]);
+    const [{ data: rows }, { data: adsRows }, { data: prevRows }, { data: prevAdsRows }] = await Promise.all([gamQ, adsQ, prevGamQ, prevAdsQ]);
     console.log(`[GAM filter] dominio_id=${domainId ?? 0}, blocos=${rows?.length ?? 0}, horas=${(hourly || []).length}, utms=${(utmCampaigns || []).length}`);
 
     let totImps = 0, totRev = 0, totClicks = 0;
@@ -271,6 +292,37 @@ async function handler(req, res) {
     const cpc_gam = _cpcGamWt > 0 ? _cpcGamWtSum / _cpcGamWt : 0;
     const ctr_gam = _impGamForCtr > 0 ? (_cliquesGamTotal / _impGamForCtr) * 100 : 0;
 
+    // Aggregate previous period
+    let _prevEcpmWtSum = 0, _prevEcpmWt = 0, prevTotImps = 0, prevTotRev = 0;
+    for (const r of prevRows || []) {
+      const imp = Number(r.impressoes || 0);
+      const rev = Number(r.receita_total || 0);
+      const em  = Number(r.ecpm_medio || 0);
+      prevTotImps += imp;
+      prevTotRev  += rev;
+      if (imp > 0 && em > 0) { _prevEcpmWtSum += em * imp; _prevEcpmWt += imp; }
+    }
+    let _prevCpcWtSum = 0, _prevCpcWt = 0, prevCliques = 0, prevImpForCtr = 0;
+    for (const r of prevAdsRows || []) {
+      const cpcG = Number(r.cpc_gam || 0);
+      const clG  = Number(r.cliques_gam || 0);
+      const im   = Number(r.impressoes_gam || 0);
+      if (cpcG > 0 && clG > 0) { _prevCpcWtSum += cpcG * clG; _prevCpcWt += clG; }
+      prevCliques    += clG;
+      prevImpForCtr  += im;
+    }
+    const prevEcpm   = _prevEcpmWt > 0 ? _prevEcpmWtSum / _prevEcpmWt : 0;
+    const prevRps    = prevTotImps > 0 ? prevTotRev / prevTotImps : 0;
+    const prevCpc    = _prevCpcWt  > 0 ? _prevCpcWtSum / _prevCpcWt : 0;
+    const prevCtrGam = prevImpForCtr > 0 ? (prevCliques / prevImpForCtr) * 100 : 0;
+    const anterior = prevTotImps > 0 ? {
+      ecpm: +prevEcpm.toFixed(2),
+      rps:  +prevRps.toFixed(4),
+      cpc:  +prevCpc.toFixed(4),
+      ctr:  +prevCtrGam.toFixed(2),
+      impressions: prevTotImps,
+    } : null;
+
     const adUnits = Object.values(adUnitMap).map(u => ({
       name: u.name,
       impressions: u.impressions,
@@ -292,6 +344,7 @@ async function handler(req, res) {
         cliques_gam: _cliquesGamTotal,
         faturamento: +totRev.toFixed(2),
         impressions: totImps,
+        anterior,
       },
       adUnits,
       advertisers: [],

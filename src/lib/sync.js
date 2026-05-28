@@ -818,6 +818,9 @@ async function syncAll(dateRange) {
       console.warn('[sync] hourly save:', e.message);
     }
 
+    // ── Sync páginas Meta ────────────────────────────────────────────────────
+    syncPaginas().catch(e => console.warn('[sync] syncPaginas:', e.message));
+
     // ── Log success ───────────────────────────────
     const duration = Date.now() - startMs;
     await supabase.from('sync_log').insert({
@@ -847,4 +850,87 @@ async function syncAll(dateRange) {
   }
 }
 
-module.exports = { syncAll, fetchAndSaveHourly };
+// ── Sync páginas (Facebook Pages) ────────────────────────────────────────────
+async function buscarPaisDaPagina(nomePagina) {
+  const slug = nomePagina.toLowerCase().replace(/\s+/g, '');
+  const { data } = await supabase
+    .from('ads_consolidados')
+    .select('pais_sigla,pais_nome')
+    .ilike('utm_campaign', `${slug}%`)
+    .not('pais_sigla', 'is', null)
+    .order('data', { ascending: false })
+    .limit(1);
+  return data?.[0] || null;
+}
+
+async function syncPaginas() {
+  const { data: accounts } = await supabase
+    .from('meta_accounts')
+    .select('ad_account_id,access_token,nome')
+    .eq('ativo', true);
+
+  for (const acc of accounts || []) {
+    if (!acc.access_token) continue;
+    const accountId = String(acc.ad_account_id).startsWith('act_')
+      ? String(acc.ad_account_id)
+      : `act_${acc.ad_account_id}`;
+
+    let pages = [];
+    try {
+      const res = await axios.get(`${BASE}/me/accounts`, {
+        params: { access_token: acc.access_token, fields: 'id,name,picture{url}', limit: 100 },
+        timeout: 20000,
+      });
+      pages = res.data?.data || [];
+    } catch (e) {
+      console.warn(`[syncPaginas] ${accountId} /me/accounts:`, e.response?.data?.error?.message || e.message);
+      continue;
+    }
+
+    // Fetch active ads for this account to detect which pages are in use
+    let activeAds = [];
+    try {
+      const adsRes = await axios.get(`${BASE}/${accountId}/ads`, {
+        params: {
+          access_token: acc.access_token,
+          fields: 'id,status,creative{page_id}',
+          filtering: JSON.stringify([{ field: 'effective_status', operator: 'IN', value: ['ACTIVE', 'CAMPAIGN_PAUSED'] }]),
+          limit: 500,
+        },
+        timeout: 20000,
+      });
+      activeAds = adsRes.data?.data || [];
+    } catch (e) {
+      console.warn(`[syncPaginas] ${accountId} /ads:`, e.response?.data?.error?.message || e.message);
+    }
+
+    const activePageIds = new Set(activeAds.map(a => a.creative?.page_id).filter(Boolean));
+
+    for (const page of pages) {
+      const emUso = activePageIds.has(page.id);
+      let paisSigla = null, paisNome = null;
+
+      if (emUso) {
+        const pais = await buscarPaisDaPagina(page.name).catch(() => null);
+        paisSigla = pais?.pais_sigla || null;
+        paisNome  = pais?.pais_nome  || null;
+      }
+
+      await supabase.from('paginas').upsert({
+        page_id:       page.id,
+        nome:          page.name,
+        foto_url:      page.picture?.data?.url || null,
+        ad_account_id: acc.ad_account_id,
+        status:        emUso ? 'em_uso' : 'disponivel',
+        pais_sigla:    emUso ? paisSigla : null,
+        pais_nome:     emUso ? paisNome  : null,
+        em_uso_desde:  emUso ? new Date().toISOString().slice(0, 10) : null,
+        ultima_sync:   new Date().toISOString(),
+      }, { onConflict: 'page_id' }).catch(e => console.warn('[syncPaginas] upsert:', e.message));
+    }
+
+    console.log(`[syncPaginas] ${accountId}: ${pages.length} páginas, ${activePageIds.size} em uso`);
+  }
+}
+
+module.exports = { syncAll, fetchAndSaveHourly, syncPaginas };

@@ -140,6 +140,7 @@
     .gam-card-lbl{font-size:.6875rem;color:var(--muted);font-weight:500;margin-bottom:.375rem;display:flex;align-items:center;gap:.375rem}
     .gam-card-badge{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:var(--accent-soft);color:var(--accent);padding:.1rem .35rem;border-radius:.25rem}
     .gam-card-val{font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;font-size:1.125rem;font-weight:700;color:var(--fg);line-height:1.2;font-feature-settings:'tnum' 1}
+    .gam-card-var{margin-top:.3rem;min-height:.9rem}
     .g6{display:grid;grid-template-columns:repeat(6,1fr);gap:1rem}
     .g2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
     .g-ch{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:1.5rem}
@@ -377,6 +378,28 @@
     .test-result.ok{background:color-mix(in oklch,var(--ok) 10%,transparent);color:var(--ok);display:block}
     .test-result.err{background:color-mix(in oklch,var(--bad) 10%,transparent);color:var(--bad);display:block}
 
+    /* ── Páginas Meta ── */
+    .pag-filter-pills{display:flex;gap:.5rem;margin-bottom:1.25rem}
+    .pag-pill{height:2rem;padding:0 .875rem;border-radius:9999px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:inherit;font-size:.8125rem;font-weight:500;cursor:pointer;transition:all .15s}
+    .pag-pill.on{background:var(--accent);border-color:var(--accent);color:#fff}
+    .pag-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.875rem}
+    .pag-divider{grid-column:1/-1;display:flex;align-items:center;gap:.75rem;margin:.25rem 0}
+    .pag-divider::before,.pag-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+    .pag-divider-lbl{font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);white-space:nowrap}
+    .pag-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:.875rem 1rem;display:flex;flex-direction:column;gap:.625rem}
+    .pag-card-top{display:flex;align-items:center;gap:.75rem}
+    .pag-avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid var(--border);flex-shrink:0}
+    .pag-avatar-fb{width:40px;height:40px;border-radius:50%;background:var(--sec-strong);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:700;color:var(--muted);flex-shrink:0}
+    .pag-nome{font-size:.9375rem;font-weight:600;color:var(--fg);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .pag-card-row{display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+    .pag-status{display:inline-flex;align-items:center;gap:.375rem;font-size:.6875rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+    .pag-status.em-uso{color:var(--ok)}
+    .pag-status.disponivel{color:var(--muted)}
+    .pag-country{display:inline-flex;align-items:center;gap:.375rem;font-size:.8125rem;color:var(--muted)}
+    .country-pill{display:inline-block;background:var(--sec-strong);color:var(--muted);border-radius:4px;padding:1px 6px;font-size:.65rem;font-weight:600;letter-spacing:.04em}
+    .pag-conta{font-size:.75rem;color:var(--muted)}
+    .pag-footer{display:flex;align-items:center;gap:.375rem;font-size:.75rem;color:var(--muted);margin-top:.25rem}
+    .pag-empty{text-align:center;padding:3rem 1rem;color:var(--muted);font-size:.875rem}
     /* ── LOADING OVERLAY ── */
     .loading-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:99999;transition:opacity .3s ease,visibility .3s ease}
     .loading-overlay.hide{opacity:0;visibility:hidden;pointer-events:none}
@@ -1010,6 +1033,12 @@
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
       <span class="nav-lbl">Contas Meta</span>
     </button>
+    <button class="nav-btn" id="nav-paginas" onclick="nav('paginas',this)">
+      <span class="nav-ind"></span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span class="nav-lbl">Páginas</span>
+      <span class="nav-badge" id="nav-paginas-badge" style="display:none">0</span>
+    </button>
   </nav>
   <div class="sb-foot">
     <button class="nav-btn" id="nav-domains" onclick="nav('domains',this)" style="width:100%">
@@ -1143,22 +1172,27 @@
           <div class="gam-card" title="Fonte: Google Ad Manager">
             <div class="gam-card-lbl">eCPM <span class="gam-card-badge">GAM</span></div>
             <div class="gam-card-val hideable-value" id="gam-kpi-ecpm">…</div>
+            <div class="gam-card-var" id="gam-kpi-ecpm-var"></div>
           </div>
           <div class="gam-card" title="Fonte: Google Ad Manager">
             <div class="gam-card-lbl">RPS <span class="gam-card-badge">GAM</span></div>
             <div class="gam-card-val hideable-value" id="gam-kpi-rps">…</div>
+            <div class="gam-card-var" id="gam-kpi-rps-var"></div>
           </div>
           <div class="gam-card" title="Fonte: Google Ad Manager">
             <div class="gam-card-lbl">CPC <span class="gam-card-badge">GAM</span></div>
             <div class="gam-card-val hideable-value" id="gam-kpi-cpc">…</div>
+            <div class="gam-card-var" id="gam-kpi-cpc-var"></div>
           </div>
           <div class="gam-card" title="Fonte: Google Ad Manager">
             <div class="gam-card-lbl">CTR <span class="gam-card-badge">GAM</span></div>
             <div class="gam-card-val hideable-value" id="gam-kpi-ctr">…</div>
+            <div class="gam-card-var" id="gam-kpi-ctr-var"></div>
           </div>
           <div class="gam-card" title="Fonte: Google Ad Manager">
             <div class="gam-card-lbl">Impressões <span class="gam-card-badge">GAM</span></div>
             <div class="gam-card-val hideable-value" id="gam-kpi-imp">…</div>
+            <div class="gam-card-var" id="gam-kpi-imp-var"></div>
           </div>
         </div>
 
@@ -1518,6 +1552,34 @@
             <tbody id="contas-body"><tr><td colspan="7" class="empty">Carregando…</td></tr></tbody>
           </table>
           <div class="tbl-foot"><span style="font-size:.875rem;color:var(--muted)" id="contas-count">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PÁGINAS META -->
+    <div id="tab-paginas" class="tab-panel">
+      <div class="sec">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem">
+          <div>
+            <div class="chart-title">Páginas</div>
+            <div class="chart-sub" id="pag-subtitle">Páginas do Facebook vinculadas às contas Meta</div>
+          </div>
+          <button class="btn btn-p" onclick="syncPaginasManual()" id="pag-sync-btn" style="display:flex;align-items:center;gap:.375rem">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5"/></svg>
+            Sincronizar
+          </button>
+        </div>
+        <div class="pag-filter-pills">
+          <button class="pag-pill on" data-filter="todas" onclick="paginasFiltrar(this)">Todas</button>
+          <button class="pag-pill" data-filter="em_uso" onclick="paginasFiltrar(this)">Em uso</button>
+          <button class="pag-pill" data-filter="disponivel" onclick="paginasFiltrar(this)">Disponível</button>
+        </div>
+        <div class="pag-grid" id="pag-grid">
+          <div class="pag-empty" style="grid-column:1/-1">Carregando…</div>
+        </div>
+        <div class="pag-footer" id="pag-footer" style="margin-top:1rem">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span id="pag-sync-time">—</span>
         </div>
       </div>
     </div>
@@ -2250,7 +2312,7 @@ function toggleSb(){
 }
 
 /* ═══ NAV ═══ */
-const TITLES={overview:'Overview',campaigns:'Campanhas','analise-paises':'Análise de País',gam:'Reports GAM',funil:'Análise de Funil',gerenciador:'Gerenciador',ai:'Análise IA',domains:'Domínios',contas:'Contas Meta','criar-campanha':'Criar Campanha'};
+const TITLES={overview:'Overview',campaigns:'Campanhas','analise-paises':'Análise de País',gam:'Reports GAM',funil:'Análise de Funil',gerenciador:'Gerenciador',ai:'Análise IA',domains:'Domínios',contas:'Contas Meta',paginas:'Páginas','criar-campanha':'Criar Campanha'};
 function nav(id,btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('on'));
@@ -2264,6 +2326,7 @@ function nav(id,btn){
   if(id==='domains'){showOverlay('Carregando...');loadDominios().finally(hideOverlay);return;}
   if(id==='gam'){showOverlay('Carregando...');loadGAMReport().finally(hideOverlay);return;}
   if(id==='contas'){showOverlay('Carregando...');loadContas().finally(hideOverlay);}
+  if(id==='paginas'){showOverlay('Carregando...');loadPaginas().finally(hideOverlay);}
   if(id==='funil'){showOverlay('Carregando…');initFunilTab().finally(hideOverlay);}
   if(id==='gerenciador'){showOverlay('Carregando…');gerLoad().finally(hideOverlay);}
   if(id==='criar-campanha'){showOverlay('Carregando templates…');initCriarCampanha().finally(hideOverlay);}
@@ -2904,11 +2967,23 @@ async function loadGamKpis(){
 
 function renderGamKpis(k){
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  const ant=k.anterior||null;
+  const setVar=(id,atual,antVal)=>{
+    const e=document.getElementById(id);
+    if(!e)return;
+    if(antVal==null||antVal===0||atual==null){e.innerHTML='';return;}
+    e.innerHTML=renderVariacao(((atual-antVal)/Math.abs(antVal))*100);
+  };
   set('gam-kpi-ecpm', k.ecpm!=null?BRL(k.ecpm):'—');
+  setVar('gam-kpi-ecpm-var', k.ecpm, ant?.ecpm);
   set('gam-kpi-rps',  k.rps!=null?BRL(k.rps):'—');
+  setVar('gam-kpi-rps-var', k.rps, ant?.rps);
   set('gam-kpi-cpc',  k.cpc!=null?BRL(k.cpc):'—');
+  setVar('gam-kpi-cpc-var', k.cpc, ant?.cpc);
   set('gam-kpi-ctr',  k.ctr!=null?PCT(k.ctr):'—');
+  setVar('gam-kpi-ctr-var', k.ctr, ant?.ctr);
   set('gam-kpi-imp',  k.impressions!=null?NUM(k.impressions):'—');
+  setVar('gam-kpi-imp-var', k.impressions, ant?.impressions);
 }
 
 /* ── NETWORKS ── */
@@ -4455,6 +4530,97 @@ async function loadContas(){
   }catch(e){
     if(tbody)tbody.innerHTML=`<tr><td colspan="6" class="empty">Erro: ${esc(e.message)}</td></tr>`;
   }
+}
+
+/* ═══ PÁGINAS META ═══ */
+let _paginasData = [];
+let _paginasFiltro = 'todas';
+
+async function loadPaginas(){
+  try{
+    const res=await fetch('/api/paginas');
+    if(!res.ok)return;
+    const d=await res.json();
+    _paginasData=d.paginas||[];
+    // Update nav badge (disponíveis)
+    const badge=document.getElementById('nav-paginas-badge');
+    if(badge){
+      if(d.disponivel>0){badge.textContent=d.disponivel;badge.style.display='flex';}
+      else badge.style.display='none';
+    }
+    // Update subtitle
+    const sub=document.getElementById('pag-subtitle');
+    if(sub)sub.textContent=`${d.total} página(s) · ${d.em_uso} em uso · ${d.disponivel} disponível`;
+    // Sync time
+    const ft=document.getElementById('pag-sync-time');
+    if(ft&&d.ultima_sync){
+      const dt=new Date(d.ultima_sync);
+      ft.textContent=`Atualizado às ${dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} · sincroniza a cada 30min`;
+    }
+    renderPaginas();
+  }catch(e){console.warn('[paginas]',e);}
+}
+
+function paginasFiltrar(btn){
+  document.querySelectorAll('.pag-pill').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  _paginasFiltro=btn.dataset.filter;
+  renderPaginas();
+}
+
+function renderPaginas(){
+  const grid=document.getElementById('pag-grid');
+  if(!grid)return;
+  let rows=_paginasData;
+  if(_paginasFiltro==='em_uso')rows=rows.filter(p=>p.status==='em_uso');
+  else if(_paginasFiltro==='disponivel')rows=rows.filter(p=>p.status==='disponivel');
+
+  if(!rows.length){grid.innerHTML='<div class="pag-empty" style="grid-column:1/-1">Nenhuma página encontrada.</div>';return;}
+
+  const emUso=rows.filter(p=>p.status==='em_uso');
+  const disp=rows.filter(p=>p.status==='disponivel');
+
+  let html='';
+  if(emUso.length&&disp.length&&_paginasFiltro==='todas'){
+    html+=`<div class="pag-divider"><span class="pag-divider-lbl">Em uso (${emUso.length})</span></div>`;
+    html+=emUso.map(pagCard).join('');
+    html+=`<div class="pag-divider"><span class="pag-divider-lbl">Disponível (${disp.length})</span></div>`;
+    html+=disp.map(pagCard).join('');
+  }else{
+    html+=rows.map(pagCard).join('');
+  }
+  grid.innerHTML=html;
+}
+
+function pagCard(p){
+  const emUso=p.status==='em_uso';
+  const fotoHtml=p.foto_url
+    ?`<img class="pag-avatar" src="${esc(p.foto_url)}" width="40" height="40" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+       <div class="pag-avatar-fb" style="display:none">${esc((p.nome||'?')[0].toUpperCase())}</div>`
+    :`<div class="pag-avatar-fb">${esc((p.nome||'?')[0].toUpperCase())}</div>`;
+  const statusHtml=emUso
+    ?`<span class="pag-status em-uso"><svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="var(--ok)"/></svg>Em uso</span>`
+    :`<span class="pag-status disponivel"><svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="var(--muted)"/></svg>Disponível</span>`;
+  const paisHtml=emUso&&p.pais_sigla
+    ?`<span class="pag-country"><span class="country-pill">${esc(p.pais_sigla)}</span><span>${esc(p.pais_nome||p.pais_sigla)}</span></span>`
+    :`<span class="pag-country" style="color:var(--muted)">—</span>`;
+  const contaHtml=p.conta_nome?`<div class="pag-conta">Conta: ${esc(p.conta_nome)}</div>`:'';
+  return`<div class="pag-card">
+    <div class="pag-card-top">${fotoHtml}<span class="pag-nome" title="${esc(p.nome)}">${esc(p.nome)}</span></div>
+    <div class="pag-card-row">${statusHtml}${paisHtml}</div>
+    ${contaHtml}
+  </div>`;
+}
+
+async function syncPaginasManual(){
+  const btn=document.getElementById('pag-sync-btn');
+  if(btn){btn.disabled=true;btn.textContent='Sincronizando…';}
+  try{
+    await fetch('/api/paginas/sync',{method:'POST'});
+    await new Promise(r=>setTimeout(r,3000));
+    await loadPaginas();
+  }catch(e){console.warn('[syncPaginas]',e);}
+  finally{if(btn){btn.disabled=false;btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5"/></svg> Sincronizar';}}
 }
 
 function openModalAddConta(){

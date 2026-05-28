@@ -27,7 +27,7 @@ const convTemplatesHandler  = require('./src/app/api/conversation-templates/rout
 const adCopiesHandler       = require('./src/app/api/ad-copies-templates/route');
 const intradayHandler       = require('./src/app/api/intraday/route');
 const supabase = require('./src/lib/supabase');
-const { syncAll, fetchAndSaveHourly } = require('./src/lib/sync');
+const { syncAll, fetchAndSaveHourly, syncPaginas } = require('./src/lib/sync');
 const { resolveCountry } = require('./src/lib/parser');
 const { startScheduler } = require('./src/lib/scheduler');
 const { hashPassword, verifyPassword, generateToken, requireAuth, COOKIE_NAME } = require('./src/lib/auth');
@@ -267,6 +267,38 @@ app.post('/api/admin/recalcular-imposto', requireAuth, async (req, res) => {
   }
 
   res.json({ ok: true, message: `Recalculando ${(contas || []).length} conta(s)...` });
+});
+
+// ── Páginas Meta ─────────────────────────────────────────────────────────────
+app.get('/api/paginas', requireAuth, async (_req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('paginas')
+      .select('page_id,nome,foto_url,ad_account_id,status,pais_sigla,pais_nome,em_uso_desde,ultima_sync,meta_accounts(nome)')
+      .order('nome');
+    if (error) return res.status(500).json({ error: error.message });
+    const rows = (data || [])
+      .map(p => ({ ...p, conta_nome: p.meta_accounts?.nome || null, meta_accounts: undefined }))
+      .sort((a, b) => {
+        const s = (a.status === 'em_uso' ? 0 : 1) - (b.status === 'em_uso' ? 0 : 1);
+        return s !== 0 ? s : a.nome.localeCompare(b.nome, 'pt-BR');
+      });
+    const em_uso     = rows.filter(p => p.status === 'em_uso').length;
+    const disponivel = rows.filter(p => p.status === 'disponivel').length;
+    const ultima_sync = rows.reduce((mx, p) => (!mx || p.ultima_sync > mx ? p.ultima_sync : mx), null);
+    res.json({ paginas: rows, total: rows.length, em_uso, disponivel, ultima_sync });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/paginas/sync', requireAuth, async (_req, res) => {
+  try {
+    syncPaginas().catch(e => console.warn('[syncPaginas manual]', e.message));
+    res.json({ ok: true, message: 'Sync de páginas iniciado em background' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ── Domínios ────────────────────────────────────────────────────────────────
