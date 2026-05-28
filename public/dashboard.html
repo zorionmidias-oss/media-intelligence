@@ -6212,7 +6212,10 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
     </div>
 
     <div class="wz-field" id="bwz-page-field" style="display:none">
-     <label class="wz-lbl">Página do Facebook *</label>
+     <label class="wz-lbl" style="display:flex;align-items:center;justify-content:space-between">
+      <span>Página do Facebook *</span>
+      <button type="button" id="bwz-page-sync-btn" onclick="bwzSyncPaginas()" title="Sincronizar páginas" style="background:transparent;border:1px solid var(--border);border-radius:.4rem;color:var(--muted);cursor:pointer;font-size:.72rem;padding:.15rem .45rem;line-height:1.4;transition:color .15s,border-color .15s" onmouseover="this.style.color='var(--fg)';this.style.borderColor='var(--accent)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">↻ Sync</button>
+     </label>
      <div class="bwz-page-custom" id="bwz-page-custom">
       <button type="button" class="bwz-page-trigger" id="bwz-page-trigger" onclick="bwzPageToggleDrop()" disabled>
        <span class="bwz-page-trigger-lbl" id="bwz-page-trigger-lbl">Carregando páginas...</span>
@@ -6311,7 +6314,10 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
 
     <div class="wz-row">
      <div class="wz-field" style="margin:0">
-      <label class="wz-lbl">Pixel *</label>
+      <label class="wz-lbl" style="display:flex;align-items:center;justify-content:space-between">
+       <span>Pixel *</span>
+       <button type="button" id="bwz-pixel-sync-btn" onclick="bwzSyncPixels()" title="Recarregar pixels" style="background:transparent;border:1px solid var(--border);border-radius:.4rem;color:var(--muted);cursor:pointer;font-size:.72rem;padding:.15rem .45rem;line-height:1.4;transition:color .15s,border-color .15s" onmouseover="this.style.color='var(--fg)';this.style.borderColor='var(--accent)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">↻ Sync</button>
+      </label>
       <select class="wz-select" id="bwz-pixel"><option value="">Carregando…</option></select>
      </div>
      <div class="wz-field" style="margin:0">
@@ -7835,6 +7841,36 @@ function bwzPageDropReset(){
   bwzPageDropClose();
   document.getElementById('bwz-page-opts').innerHTML='';
   document.getElementById('bwz-page-search').value='';
+}
+
+async function bwzSyncPaginas(){
+  const btn=document.getElementById('bwz-page-sync-btn');
+  if(btn){btn.disabled=true;btn.textContent='…';}
+  try{
+    await fetch('/api/paginas/sync',{method:'POST'});
+    BWZ.pages=[];
+    await botWizLoadPages();
+  }catch(e){console.warn('[bwz sync paginas]',e);}
+  finally{if(btn){btn.disabled=false;btn.textContent='↻ Sync';}}
+}
+
+async function bwzSyncPixels(){
+  const btn=document.getElementById('bwz-pixel-sync-btn');
+  if(btn){btn.disabled=true;btn.textContent='…';}
+  BWZ.pixels=[];
+  const sel=document.getElementById('bwz-pixel');
+  sel.innerHTML='<option value="">Carregando…</option>';
+  try{
+    const r=await fetch(`/api/meta-resources/pixels?account_id=${encodeURIComponent(BWZ.d.account_id)}`);
+    BWZ.pixels=await r.json();
+    if(BWZ.pixels.length){
+      sel.innerHTML='<option value="">Selecione um pixel…</option>'+BWZ.pixels.map(p=>`<option value="${esc(p.id)}">${esc(p.name)} (${esc(p.id)})</option>`).join('');
+      if(BWZ.pixels.length===1){sel.value=BWZ.pixels[0].id;BWZ.d.pixel_id=BWZ.pixels[0].id;}
+    }else{
+      sel.innerHTML='<option value="">Nenhum pixel encontrado</option>';
+    }
+  }catch(e){sel.innerHTML=`<option value="">Erro: ${esc(e.message)}</option>`;}
+  finally{if(btn){btn.disabled=false;btn.textContent='↻ Sync';}}
 }
 
 // ── Ajuste 3: domínio field ────────────────────────────────────────────────
