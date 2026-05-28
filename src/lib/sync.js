@@ -853,51 +853,6 @@ async function syncAll(dateRange) {
 
 // ── Sync páginas (Facebook Pages) ────────────────────────────────────────────
 
-// Deriva o slug da primeira palavra do nome da página, sem acentos
-function slugDaPagina(nome) {
-  return nome.trim().split(/\s+/)[0]
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '');
-}
-
-// Verifica se a página tem campanhas ativas nos últimos 3 dias no banco.
-// Cascata de 3 estratégias para lidar com variações de escrita nos UTMs:
-//  1. Exata:   ad_utm ILIKE '{firstName}fb%'        — cobre 10/12 páginas
-//  2. Fuzzy-4: ad_utm ILIKE '{first4}%fb'           — cobre "zainab"→"zainahfb"
-//  3. Campanha: campanha_meta ILIKE '%[{FIRSTNAME}%' — cobre typos de ad_utm ("naledi"→"nalidefb")
-async function detectarUsoNoBanco(nome) {
-  const firstName = slugDaPagina(nome);
-  const firstNameUpper = nome.trim().split(/\s+/)[0].toUpperCase();
-  const first4 = firstName.slice(0, 4);
-  const since = new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10);
-  const sel = 'ad_utm,pais_sigla,pais_nome,data';
-
-  // 1. Exato: "aishafb%", "adamafb%", etc.
-  const { data: exact } = await supabase.from('ads_consolidados').select(sel)
-    .ilike('ad_utm', `${firstName}fb%`).gte('data', since)
-    .not('pais_sigla', 'is', null).order('data', { ascending: false }).limit(1);
-  if (exact?.length) return { emUso: true, row: exact[0] };
-
-  // 2. Fuzzy-4: primeiros 4 chars + wildcard + "fb" (ex: "zain%fb" → "zainahfb")
-  if (first4.length >= 4) {
-    const { data: fuzzy4 } = await supabase.from('ads_consolidados').select(sel)
-      .ilike('ad_utm', `${first4}%fb`).gte('data', since)
-      .not('pais_sigla', 'is', null).order('data', { ascending: false }).limit(1);
-    if (fuzzy4?.length) return { emUso: true, row: fuzzy4[0] };
-  }
-
-  // 3. Fallback via campanha_meta (captura UTMs com typo ex: "nalede→nalidi")
-  {
-    const { data: camp } = await supabase.from('ads_consolidados').select(sel)
-      .ilike('campanha_meta', `%[${firstNameUpper}%`).gte('data', since)
-      .not('pais_sigla', 'is', null).order('data', { ascending: false }).limit(1);
-    if (camp?.length) return { emUso: true, row: camp[0] };
-  }
-
-  return { emUso: false, row: null };
-}
-
 async function syncPaginas() {
   console.log('[syncPaginas] iniciando...');
   const { data: accounts } = await supabase
@@ -913,7 +868,51 @@ async function syncPaginas() {
       ? String(acc.ad_account_id)
       : `act_${acc.ad_account_id}`;
 
-    // ── 1. Try to get pages from existing wizard cache first ──────────────────
+    // ── 1. Buscar campanhas ATIVAS da conta via Meta API ─────────────────────
+    const paginasEmUso = new Map(); // slug_maiusculo → { campaign_id, campaign_name, pais_sigla, pais_nome }
+    try {
+      const campRes = await axios.get(`${BASE}/${accountId}/campaigns`, {
+        params: {
+          fields:    'id,name,status,effective_status',
+          filtering: JSON.stringify([{ field: 'effective_status', operator: 'IN', value: ['ACTIVE', 'CAMPAIGN_PAUSED'] }]),
+          limit:     200,
+          access_token: acc.access_token,
+        },
+        timeout: 20000,
+      });
+      const campanhas = campRes.data?.data || [];
+      console.log(`[syncPaginas] ${accountId}: ${campanhas.length} campanhas encontradas (ACTIVE+PAUSED)`);
+
+      for (const camp of campanhas) {
+        if (camp.effective_status !== 'ACTIVE') continue;
+
+        // Segundo colchete: ][SLUG] ex: "[NG_RELA_BOT_0001][AISHA] CP01" → "AISHA"
+        const slugMatch = camp.name.match(/\]\[([A-Z]+)\]/);
+        if (!slugMatch) continue;
+        const slugPagina = slugMatch[1];
+
+        // Primeiro colchete: [CC_ ex: "[NG_RELA..." → "NG"
+        const paisMatch = camp.name.match(/\[([A-Z]{2,3})_/);
+        const paisSigla = paisMatch ? paisMatch[1] : null;
+        const paisInfo  = paisSigla ? resolveCountry(paisSigla) : null;
+
+        paginasEmUso.set(slugPagina, {
+          campaign_id:   camp.id,
+          campaign_name: camp.name,
+          pais_sigla:    paisSigla,
+          pais_nome:     paisInfo?.nome || null,
+        });
+      }
+
+      console.log(`[syncPaginas] Campanhas ATIVAS encontradas: ${paginasEmUso.size}`);
+      for (const [slug, info] of paginasEmUso) {
+        console.log(`  ${slug} → ${info.campaign_name} [${info.pais_sigla}]`);
+      }
+    } catch (e) {
+      console.warn(`[syncPaginas] ${accountId} campanhas:`, e.response?.data?.error?.message || e.message);
+    }
+
+    // ── 2. Buscar páginas (cache primeiro, depois Meta API) ───────────────────
     let cachedPages = [];
     {
       const { data: cacheRow } = await supabase
@@ -929,7 +928,6 @@ async function syncPaginas() {
       if (cachedPages.length) console.log(`[syncPaginas] ${accountId}: ${cachedPages.length} páginas do cache`);
     }
 
-    // ── 2. Fall back to live Meta API (same dual-source as wizard) ────────────
     let pages = cachedPages;
     if (!pages.length) {
       const normalize = p => ({ id: p.id, name: p.name, picture_url: p.picture?.data?.url || null });
@@ -961,12 +959,23 @@ async function syncPaginas() {
       continue;
     }
 
-    // ── 3. Upsert each page — detects "em uso" via ads_consolidados ──────────
+    // ── 3. Upsert cada página — status via campanhas ATIVAS ───────────────────
+    console.log(`[syncPaginas] Mapeamento páginas (${pages.length}):`);
     let emUsoCount = 0;
     for (const page of pages) {
       const pictureUrl = page.picture_url ?? page.picture?.data?.url ?? null;
-      const { emUso, row } = await detectarUsoNoBanco(page.name).catch(() => ({ emUso: false, row: null }));
+
+      // Slug: primeira palavra do nome, maiúsculo, sem acentos
+      const slugPagina = page.name.trim().split(/\s+/)[0]
+        .toUpperCase()
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '');
+
+      const uso   = paginasEmUso.get(slugPagina);
+      const emUso = !!uso;
       if (emUso) emUsoCount++;
+
+      console.log(`  ${page.name} → slug: ${slugPagina} → ${emUso ? `EM USO [${uso.pais_sigla}] ${uso.campaign_name}` : 'DISPONÍVEL'}`);
 
       const { error: uErr } = await supabase.from('paginas').upsert({
         page_id:       page.id,
@@ -974,9 +983,9 @@ async function syncPaginas() {
         foto_url:      pictureUrl,
         ad_account_id: acc.ad_account_id,
         status:        emUso ? 'em_uso' : 'disponivel',
-        pais_sigla:    emUso ? (row?.pais_sigla || null) : null,
-        pais_nome:     emUso ? (row?.pais_nome  || null) : null,
-        em_uso_desde:  emUso ? (row?.data || new Date().toISOString().slice(0, 10)) : null,
+        pais_sigla:    emUso ? uso.pais_sigla : null,
+        pais_nome:     emUso ? uso.pais_nome  : null,
+        em_uso_desde:  emUso ? new Date().toISOString().slice(0, 10) : null,
         ultima_sync:   new Date().toISOString(),
       }, { onConflict: 'page_id' });
       if (uErr) console.warn('[syncPaginas] upsert erro:', uErr.message, '| page_id:', page.id);
