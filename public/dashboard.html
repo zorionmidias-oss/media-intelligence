@@ -6035,7 +6035,7 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
 .bwz-page-trigger-lbl.sel{color:var(--fg)}
 .bwz-page-trigger-arrow{font-size:.6rem;color:var(--muted);flex-shrink:0;transition:transform .2s}
 .bwz-page-trigger.open .bwz-page-trigger-arrow{transform:rotate(180deg)}
-.bwz-page-droplist{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg);border:1px solid var(--border);border-radius:.625rem;box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:40;overflow:hidden;max-height:260px;display:flex;flex-direction:column}
+.bwz-page-droplist{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg);border:1px solid var(--border);border-radius:.625rem;box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:400;overflow:hidden;max-height:260px;display:flex;flex-direction:column}
 .bwz-page-search-wrap{padding:.5rem;border-bottom:1px solid var(--border);flex-shrink:0}
 .bwz-page-search{width:100%;padding:.375rem .625rem;border:1px solid var(--border);border-radius:.375rem;background:var(--sec);color:var(--fg);font-size:.8125rem;outline:none;font-family:inherit}
 .bwz-page-opts{overflow-y:auto;max-height:200px}
@@ -7254,9 +7254,8 @@ async function botWizLoadPages(){
   banner.style.display='none';
   BWZ.pages=[];
   try{
-    // Fonte primária: tabela paginas (sempre disponível, nunca expira)
-    const acctRaw=BWZ.d.account_id.replace(/^act_/,'');
-    const r=await fetch(`/api/paginas?account_id=${encodeURIComponent(acctRaw)}`);
+    // Fonte primária: tabela paginas (todas as páginas do BM, sem filtro por conta)
+    const r=await fetch('/api/paginas');
     if(BWZ._pagesReq!==reqId)return;
     const data=await r.json();
     if(BWZ._pagesReq!==reqId)return;
@@ -7802,13 +7801,22 @@ window.bwzPageToggleDrop=function(){
   const trigger=document.getElementById('bwz-page-trigger');
   const isOpen=drop.style.display!=='none';
   if(isOpen){bwzPageDropClose();}else{
-    drop.style.display='flex';trigger.classList.add('open');
+    const rect=trigger.getBoundingClientRect();
+    drop.style.position='fixed';
+    drop.style.top=(rect.bottom+4)+'px';
+    drop.style.left=rect.left+'px';
+    drop.style.width=rect.width+'px';
+    drop.style.right='auto';
+    drop.style.display='flex';
+    trigger.classList.add('open');
     const search=document.getElementById('bwz-page-search');
     search.value='';bwzPageRenderOpts(BWZ.pages,'');search.focus();
   }
 };
 function bwzPageDropClose(){
-  document.getElementById('bwz-page-droplist').style.display='none';
+  const drop=document.getElementById('bwz-page-droplist');
+  drop.style.display='none';
+  drop.style.position='';drop.style.top='';drop.style.left='';drop.style.width='';drop.style.right='';
   document.getElementById('bwz-page-trigger').classList.remove('open');
 }
 function bwzPageDropReset(){
