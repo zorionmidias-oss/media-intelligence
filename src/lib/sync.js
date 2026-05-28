@@ -864,10 +864,13 @@ async function buscarPaisDaPagina(nomePagina) {
 }
 
 async function syncPaginas() {
+  console.log('[syncPaginas] iniciando...');
   const { data: accounts } = await supabase
     .from('meta_accounts')
     .select('ad_account_id,access_token,nome')
     .eq('ativo', true);
+
+  if (!accounts?.length) { console.warn('[syncPaginas] nenhuma conta ativa'); return; }
 
   for (const acc of accounts || []) {
     if (!acc.access_token) continue;
@@ -875,19 +878,55 @@ async function syncPaginas() {
       ? String(acc.ad_account_id)
       : `act_${acc.ad_account_id}`;
 
-    let pages = [];
-    try {
-      const res = await axios.get(`${BASE}/me/accounts`, {
-        params: { access_token: acc.access_token, fields: 'id,name,picture{url}', limit: 100 },
-        timeout: 20000,
-      });
-      pages = res.data?.data || [];
-    } catch (e) {
-      console.warn(`[syncPaginas] ${accountId} /me/accounts:`, e.response?.data?.error?.message || e.message);
+    // ── 1. Try to get pages from existing wizard cache first ──────────────────
+    let cachedPages = [];
+    {
+      const { data: cacheRow } = await supabase
+        .from('meta_resources_cache')
+        .select('data')
+        .eq('account_id', accountId)
+        .eq('resource_type', 'pages')
+        .eq('query_hash', '')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      cachedPages = cacheRow?.data?.pages || [];
+      if (cachedPages.length) console.log(`[syncPaginas] ${accountId}: ${cachedPages.length} páginas do cache`);
+    }
+
+    // ── 2. Fall back to live Meta API (same dual-source as wizard) ────────────
+    let pages = cachedPages;
+    if (!pages.length) {
+      const normalize = p => ({ id: p.id, name: p.name, picture_url: p.picture?.data?.url || null });
+      const [resMe, resPromote] = await Promise.allSettled([
+        axios.get(`${BASE}/me/accounts`, {
+          params: { access_token: acc.access_token, fields: 'id,name,picture{url}', limit: 100 },
+          timeout: 20000,
+        }),
+        axios.get(`${BASE}/${accountId}/promote_pages`, {
+          params: { access_token: acc.access_token, fields: 'id,name,picture{url}', limit: 100 },
+          timeout: 20000,
+        }),
+      ]);
+      if (resMe.status === 'rejected')
+        console.warn(`[syncPaginas] ${accountId} /me/accounts:`, resMe.reason?.response?.data?.error?.message || resMe.reason?.message);
+      if (resPromote.status === 'rejected')
+        console.warn(`[syncPaginas] ${accountId} promote_pages:`, resPromote.reason?.response?.data?.error?.message || resPromote.reason?.message);
+
+      const fromMe      = resMe.status === 'fulfilled' ? (resMe.value.data?.data || []).map(normalize) : [];
+      const fromPromote = resPromote.status === 'fulfilled' ? (resPromote.value.data?.data || []).map(normalize) : [];
+      const seen = new Map();
+      for (const p of [...fromMe, ...fromPromote]) if (!seen.has(p.id)) seen.set(p.id, p);
+      pages = [...seen.values()];
+      console.log(`[syncPaginas] ${accountId}: /me/accounts→${fromMe.length} promote_pages→${fromPromote.length}`);
+    }
+
+    if (!pages.length) {
+      console.warn(`[syncPaginas] ${accountId}: 0 páginas encontradas — token pode não ter permissão pages_show_list`);
       continue;
     }
 
-    // Fetch active ads for this account to detect which pages are in use
+    // ── 3. Fetch active ads to determine which pages are in use ───────────────
     let activeAds = [];
     try {
       const adsRes = await axios.get(`${BASE}/${accountId}/ads`, {
@@ -906,7 +945,10 @@ async function syncPaginas() {
 
     const activePageIds = new Set(activeAds.map(a => a.creative?.page_id).filter(Boolean));
 
+    // ── 4. Upsert each page ───────────────────────────────────────────────────
     for (const page of pages) {
+      // support both live-API shape {id,name,picture_url} and cache shape {id,name,picture_url}
+      const pictureUrl = page.picture_url ?? page.picture?.data?.url ?? null;
       const emUso = activePageIds.has(page.id);
       let paisSigla = null, paisNome = null;
 
@@ -916,21 +958,23 @@ async function syncPaginas() {
         paisNome  = pais?.pais_nome  || null;
       }
 
-      await supabase.from('paginas').upsert({
+      const { error: uErr } = await supabase.from('paginas').upsert({
         page_id:       page.id,
         nome:          page.name,
-        foto_url:      page.picture?.data?.url || null,
+        foto_url:      pictureUrl,
         ad_account_id: acc.ad_account_id,
         status:        emUso ? 'em_uso' : 'disponivel',
         pais_sigla:    emUso ? paisSigla : null,
         pais_nome:     emUso ? paisNome  : null,
         em_uso_desde:  emUso ? new Date().toISOString().slice(0, 10) : null,
         ultima_sync:   new Date().toISOString(),
-      }, { onConflict: 'page_id' }).catch(e => console.warn('[syncPaginas] upsert:', e.message));
+      }, { onConflict: 'page_id' });
+      if (uErr) console.warn('[syncPaginas] upsert erro:', uErr.message, '| page_id:', page.id);
     }
 
-    console.log(`[syncPaginas] ${accountId}: ${pages.length} páginas, ${activePageIds.size} em uso`);
+    console.log(`[syncPaginas] ${accountId}: ${pages.length} páginas upseridas, ${activePageIds.size} em uso`);
   }
+  console.log('[syncPaginas] concluído.');
 }
 
 module.exports = { syncAll, fetchAndSaveHourly, syncPaginas };
