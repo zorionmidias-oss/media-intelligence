@@ -861,7 +861,7 @@ async function syncPaginas() {
 
   if (!accounts?.length) { console.warn('[syncPaginas] nenhuma conta ativa'); return; }
 
-  const since3d = new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10);
+  const hoje = new Date().toISOString().slice(0, 10);
 
   for (const acc of accounts || []) {
     if (!acc.access_token) continue;
@@ -927,7 +927,7 @@ async function syncPaginas() {
       const { data: rows } = await supabase
         .from('ads_consolidados')
         .select('campanha_meta,pais_sigla,pais_nome')
-        .gte('data', since3d)
+        .gte('data', hoje)
         .ilike('campanha_meta', `%${slug}%`)
         .limit(1);
 
@@ -944,7 +944,7 @@ async function syncPaginas() {
         status:        emUso ? 'em_uso' : 'disponivel',
         pais_sigla:    emUso ? rows[0].pais_sigla : null,
         pais_nome:     emUso ? rows[0].pais_nome  : null,
-        em_uso_desde:  emUso ? since3d : null,
+        em_uso_desde:  emUso ? hoje : null,
         ultima_sync:   new Date().toISOString(),
       }, { onConflict: 'page_id' });
       if (uErr) console.warn('[syncPaginas] upsert erro:', uErr.message, '| page_id:', page.id);
