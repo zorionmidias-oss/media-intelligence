@@ -861,59 +861,16 @@ async function syncPaginas() {
 
   if (!accounts?.length) { console.warn('[syncPaginas] nenhuma conta ativa'); return; }
 
+  const since3d = new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10);
+
   for (const acc of accounts || []) {
     if (!acc.access_token) continue;
     const accountId = String(acc.ad_account_id).startsWith('act_')
       ? String(acc.ad_account_id)
       : `act_${acc.ad_account_id}`;
 
-    // ── 1. Buscar campanhas ATIVAS da conta via Meta API ─────────────────────
-    const paginasEmUso = new Map(); // slug_maiusculo → { campaign_id, campaign_name, pais_sigla, pais_nome }
-    try {
-      // Sem filtering server-side — mesmo padrão de fetchMetaAdsForSync (linha 90)
-      // Filtro client-side por effective_status === 'ACTIVE'
-      const campRes = await axios.get(`${BASE}/${accountId}/campaigns`, {
-        params: {
-          fields:       'id,name,status,effective_status',
-          limit:        500,
-          access_token: acc.access_token,
-        },
-        timeout: 20000,
-      });
-      const campanhas = campRes.data?.data || [];
-      const ativas = campanhas.filter(c => c.effective_status === 'ACTIVE');
-      console.log(`[syncPaginas] ${accountId}: ${campanhas.length} campanhas total, ${ativas.length} ACTIVE`);
-
-      for (const camp of ativas) {
-
-        // Segundo colchete: ][SLUG] ex: "[NG_RELA_BOT_0001][AISHA] CP01" → "AISHA"
-        const slugMatch = camp.name.match(/\]\[([A-Z]+)\]/);
-        if (!slugMatch) continue;
-        const slugPagina = slugMatch[1];
-
-        // Primeiro colchete: [CC_ ex: "[NG_RELA..." → "NG"
-        const paisMatch = camp.name.match(/\[([A-Z]{2,3})_/);
-        const paisSigla = paisMatch ? paisMatch[1] : null;
-        const paisInfo  = paisSigla ? resolveCountry(paisSigla) : null;
-
-        paginasEmUso.set(slugPagina, {
-          campaign_id:   camp.id,
-          campaign_name: camp.name,
-          pais_sigla:    paisSigla,
-          pais_nome:     paisInfo?.nome || null,
-        });
-      }
-
-      console.log(`[syncPaginas] Campanhas ATIVAS encontradas: ${paginasEmUso.size}`);
-      for (const [slug, info] of paginasEmUso) {
-        console.log(`  ${slug} → ${info.campaign_name} [${info.pais_sigla}]`);
-      }
-    } catch (e) {
-      console.warn(`[syncPaginas] ${accountId} campanhas:`, e.response?.data?.error?.message || e.message);
-    }
-
-    // ── 2. Buscar páginas (cache primeiro, depois Meta API) ───────────────────
-    let cachedPages = [];
+    // ── 1. Buscar páginas (cache primeiro, depois Meta API) ───────────────────
+    let pages = [];
     {
       const { data: cacheRow } = await supabase
         .from('meta_resources_cache')
@@ -924,11 +881,10 @@ async function syncPaginas() {
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
-      cachedPages = cacheRow?.data?.pages || [];
-      if (cachedPages.length) console.log(`[syncPaginas] ${accountId}: ${cachedPages.length} páginas do cache`);
+      pages = cacheRow?.data?.pages || [];
+      if (pages.length) console.log(`[syncPaginas] ${accountId}: ${pages.length} páginas do cache`);
     }
 
-    let pages = cachedPages;
     if (!pages.length) {
       const normalize = p => ({ id: p.id, name: p.name, picture_url: p.picture?.data?.url || null });
       const [resMe, resPromote] = await Promise.allSettled([
@@ -941,13 +897,12 @@ async function syncPaginas() {
           timeout: 20000,
         }),
       ]);
+      const fromMe      = resMe.status === 'fulfilled' ? (resMe.value.data?.data || []).map(normalize) : [];
+      const fromPromote = resPromote.status === 'fulfilled' ? (resPromote.value.data?.data || []).map(normalize) : [];
       if (resMe.status === 'rejected')
         console.warn(`[syncPaginas] ${accountId} /me/accounts:`, resMe.reason?.response?.data?.error?.message || resMe.reason?.message);
       if (resPromote.status === 'rejected')
         console.warn(`[syncPaginas] ${accountId} promote_pages:`, resPromote.reason?.response?.data?.error?.message || resPromote.reason?.message);
-
-      const fromMe      = resMe.status === 'fulfilled' ? (resMe.value.data?.data || []).map(normalize) : [];
-      const fromPromote = resPromote.status === 'fulfilled' ? (resPromote.value.data?.data || []).map(normalize) : [];
       const seen = new Map();
       for (const p of [...fromMe, ...fromPromote]) if (!seen.has(p.id)) seen.set(p.id, p);
       pages = [...seen.values()];
@@ -955,27 +910,31 @@ async function syncPaginas() {
     }
 
     if (!pages.length) {
-      console.warn(`[syncPaginas] ${accountId}: 0 páginas encontradas — token pode não ter permissão pages_show_list`);
+      console.warn(`[syncPaginas] ${accountId}: 0 páginas encontradas`);
       continue;
     }
 
-    // ── 3. Upsert cada página — status via campanhas ATIVAS ───────────────────
-    console.log(`[syncPaginas] Mapeamento páginas (${pages.length}):`);
+    // ── 2. Para cada página: detectar uso via ads_consolidados (últimos 3 dias) ─
     let emUsoCount = 0;
     for (const page of pages) {
       const pictureUrl = page.picture_url ?? page.picture?.data?.url ?? null;
 
-      // Slug: primeira palavra do nome, maiúsculo, sem acentos
-      const slugPagina = page.name.trim().split(/\s+/)[0]
+      const slug = page.name.trim().split(/\s+/)[0]
         .toUpperCase()
         .normalize('NFD')
         .replace(/[̀-ͯ]/g, '');
 
-      const uso   = paginasEmUso.get(slugPagina);
-      const emUso = !!uso;
+      const { data: rows } = await supabase
+        .from('ads_consolidados')
+        .select('campanha_meta,pais_sigla,pais_nome')
+        .gte('data', since3d)
+        .ilike('campanha_meta', `%${slug}%`)
+        .limit(1);
+
+      const emUso = rows && rows.length > 0;
       if (emUso) emUsoCount++;
 
-      console.log(`  ${page.name} → slug: ${slugPagina} → ${emUso ? `EM USO [${uso.pais_sigla}] ${uso.campaign_name}` : 'DISPONÍVEL'}`);
+      console.log(`  ${page.name} → ${slug} → ${emUso ? `EM USO [${rows[0].pais_sigla}] ${rows[0].campanha_meta}` : 'DISPONÍVEL'}`);
 
       const { error: uErr } = await supabase.from('paginas').upsert({
         page_id:       page.id,
@@ -983,9 +942,9 @@ async function syncPaginas() {
         foto_url:      pictureUrl,
         ad_account_id: acc.ad_account_id,
         status:        emUso ? 'em_uso' : 'disponivel',
-        pais_sigla:    emUso ? uso.pais_sigla : null,
-        pais_nome:     emUso ? uso.pais_nome  : null,
-        em_uso_desde:  emUso ? new Date().toISOString().slice(0, 10) : null,
+        pais_sigla:    emUso ? rows[0].pais_sigla : null,
+        pais_nome:     emUso ? rows[0].pais_nome  : null,
+        em_uso_desde:  emUso ? since3d : null,
         ultima_sync:   new Date().toISOString(),
       }, { onConflict: 'page_id' });
       if (uErr) console.warn('[syncPaginas] upsert erro:', uErr.message, '| page_id:', page.id);
