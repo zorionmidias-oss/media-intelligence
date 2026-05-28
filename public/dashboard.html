@@ -6117,7 +6117,7 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
 .camp-type-card h2{font-size:1.25rem;font-weight:700;margin:0 0 1.5rem;text-align:center}
 .camp-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
 .camp-type-opt{border:2px solid var(--border);border-radius:.875rem;padding:1.5rem 1rem;cursor:pointer;text-align:center;transition:border-color .15s,transform .12s,box-shadow .15s;background:var(--bg)}
-.camp-type-opt:hover{border-color:var(--primary);transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.camp-type-opt:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.12)}
 .camp-type-opt .cto-icon{font-size:2.5rem;margin-bottom:.75rem}
 .camp-type-opt .cto-title{font-size:1rem;font-weight:700;margin-bottom:.25rem}
 .camp-type-opt .cto-desc{font-size:.8125rem;color:var(--muted)}
@@ -6130,16 +6130,59 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
 .drz-grupo-hdr{font-size:.8125rem;font-weight:600;color:var(--muted);margin-bottom:.5rem}
 .drz-slots-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem}
 .drz-slot{border:2px dashed var(--border);border-radius:.625rem;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;transition:border-color .15s;font-size:.75rem;color:var(--muted);text-align:center;padding:.25rem}
-.drz-slot:hover{border-color:var(--primary)}
-.drz-slot.has-media{border-style:solid;border-color:var(--primary)}
+.drz-slot:hover{border-color:var(--accent)}
+.drz-slot.has-media{border-style:solid;border-color:var(--accent)}
 .drz-slot img,.drz-slot video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:.5rem}
 .drz-slot .drz-slot-rm{position:absolute;top:3px;right:3px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;z-index:2}
 .drz-slot .drz-slot-lbl{font-size:.6875rem;margin-top:.25rem;color:var(--muted);z-index:1}
 .drz-slot.uploading::after{content:'';position:absolute;inset:0;background:rgba(0,0,0,.35);border-radius:.5rem}
 .drz-slot .drz-spin{position:absolute;z-index:3;width:28px;height:28px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
-.drz-naming-preview{font-size:.8rem;font-family:ui-monospace,SFMono-Regular,monospace;background:var(--bg);border:1px solid var(--border);border-radius:.5rem;padding:.625rem .875rem;color:var(--primary);margin-top:.375rem;white-space:pre-wrap}
+.drz-naming-preview{font-size:.8rem;font-family:ui-monospace,SFMono-Regular,monospace;background:var(--bg);border:1px solid var(--border);border-radius:.5rem;padding:.625rem .875rem;color:var(--accent);margin-top:.375rem;white-space:pre-wrap}
 .drz-inline-err{background:var(--danger-soft);border:1px solid color-mix(in oklch,var(--danger) 35%,transparent);border-radius:.5rem;padding:.625rem .875rem;font-size:.8125rem;color:var(--danger);margin-top:.5rem;display:none}
 .drz-inline-err.on{display:block}
+
+/* ── DRZ form helpers (mirror wz-* for drz wizard) ── */
+.wiz-input,.wiz-select{width:100%;background:var(--sec);border:1px solid var(--border);border-radius:.5rem;color:var(--fg);font-family:inherit;font-size:.8125rem;padding:.5rem .75rem;outline:none;transition:border-color .2s;height:2.375rem}
+.wiz-input:focus,.wiz-select:focus{border-color:var(--accent)}
+.wiz-select option{background:var(--card)}
+.wiz-label{font-size:.8125rem;color:var(--muted);font-weight:500;display:block;margin-bottom:.375rem}
+.wiz-section{margin-bottom:1rem}
+.wiz-row-2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.25rem}
+@media(max-width:520px){.wiz-row-2{grid-template-columns:1fr}}
+
+/* ── DRZ step indicators ── */
+.drz-indicator{display:flex;align-items:center;gap:.5rem;flex-shrink:0}
+.drz-indicator .num{width:1.75rem;height:1.75rem;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:var(--muted);transition:all .2s}
+.drz-indicator .lbl{font-size:.75rem;color:var(--muted);white-space:nowrap;transition:color .2s}
+.drz-indicator.done .num{background:var(--accent);border-color:var(--accent);color:var(--acc-fg)}
+.drz-indicator.active .num{border-color:var(--accent);color:var(--accent)}
+.drz-indicator.active .lbl{color:var(--fg)}
+
+/* ── Toggle group (ABO/CBO, Pausada/Ativa) ── */
+.toggle-group{display:flex;gap:.375rem;margin-top:.375rem}
+.tgl-btn{flex:1;height:2.25rem;border-radius:.5rem;border:2px solid var(--border);background:var(--sec);color:var(--muted);font-family:inherit;font-size:.8125rem;font-weight:500;cursor:pointer;transition:all .15s}
+.tgl-btn.on{border-color:var(--accent);color:var(--accent);background:color-mix(in oklch,var(--accent) 10%,var(--sec))}
+
+/* ── Search-wrap, dropdown, tags ── */
+.bwz-search-wrap{position:relative}
+.bwz-tags-row{display:flex;flex-wrap:wrap;gap:.375rem;min-height:1.5rem;margin-top:.25rem}
+.bwz-dropdown{background:var(--card);border:1px solid var(--border);border-radius:.5rem;margin-top:.25rem;max-height:10rem;overflow-y:auto;display:none;box-shadow:var(--shadow-md);z-index:10;position:relative}
+.bwz-dd-item{padding:.5rem .75rem;font-size:.8125rem;cursor:pointer;transition:background .12s}
+.bwz-dd-item:hover{background:var(--sec)}
+
+/* ── Summary rows ── */
+.bwz-sum-row{display:flex;justify-content:space-between;align-items:baseline;gap:.5rem;padding:.3rem 0;border-bottom:1px solid var(--border);font-size:.8125rem}
+.bwz-sum-row:last-child{border-bottom:none}
+.bwz-sum-k{color:var(--muted);flex-shrink:0}
+.bwz-sum-v{color:var(--fg);font-weight:500;text-align:right}
+
+/* ── Misc DRZ helpers ── */
+.bwz-no-pages-banner{background:var(--warning-soft);border:1px solid color-mix(in oklch,var(--warning) 35%,transparent);border-radius:.5rem;padding:.5rem .75rem;font-size:.8125rem;color:var(--warning);margin-top:.375rem}
+.bwz-copies-block{border:1px solid var(--border);border-radius:.625rem;padding:.75rem}
+.bwz-page-loading{font-size:.8125rem;color:var(--muted);margin-top:.375rem}
+
+/* ── Camp-type slide-in animation ── */
+@keyframes wiz-slide-in{from{opacity:0;transform:translateY(.75rem) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
 </style>
 
 <!-- ═══ CAMP-TYPE MODAL ═══ -->
@@ -8427,6 +8470,8 @@ function drzGoStep(n){
     if(ind){ind.classList.toggle('active',i===n);ind.classList.toggle('done',i<n);}
   }
   DRZ.step=n;
+  const activeBody=document.getElementById(`drz-step-${n}`);
+  if(activeBody) activeBody.scrollTop=0;
   const back=document.getElementById('drz-back-btn');
   const next=document.getElementById('drz-next-btn');
   if(back) back.style.display=n>1?'':'none';
