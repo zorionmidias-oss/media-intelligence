@@ -871,12 +871,11 @@ async function syncPaginas() {
     // ── 1. Buscar campanhas ATIVAS da conta via Meta API ─────────────────────
     const paginasEmUso = new Map(); // slug_maiusculo → { campaign_id, campaign_name, pais_sigla, pais_nome }
     try {
-      // Buscar sem filtering server-side: CAMPAIGN_PAUSED não existe em campaigns (só em adsets)
-      // Filtramos client-side por effective_status === 'ACTIVE'
+      // Sem filtering server-side — mesmo padrão de fetchMetaAdsForSync (linha 90)
+      // Filtro client-side por effective_status === 'ACTIVE'
       const campRes = await axios.get(`${BASE}/${accountId}/campaigns`, {
         params: {
           fields:       'id,name,status,effective_status',
-          effective_status: JSON.stringify(['ACTIVE', 'PAUSED']),
           limit:        500,
           access_token: acc.access_token,
         },
