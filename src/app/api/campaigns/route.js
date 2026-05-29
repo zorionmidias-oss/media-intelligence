@@ -15,6 +15,26 @@ async function getAccountInfo(acctId) {
   return data || null;
 }
 
+// ── Domínio helpers ──────────────────────────────────────────────────────────
+
+async function getDominioPrefixo(dominio_id) {
+  if (!dominio_id) return null;
+  const { data } = await supabase.from('dominios')
+    .select('prefixo_campanha').eq('id', dominio_id).maybeSingle();
+  return data?.prefixo_campanha || null;
+}
+
+// Normaliza payload: aceita novo formato `campanhas` OU legado single-campaign
+function normalizeCampanhas(body) {
+  if (Array.isArray(body.campanhas) && body.campanhas.length) return body.campanhas;
+  // backward compat: payload antigo com campaign/adset_names/adset_creatives no nível raiz
+  return [{
+    campaign:        body.campaign,
+    adset_names:     body.adset_names,
+    adset_creatives: body.adset_creatives,
+  }];
+}
+
 // ── Timezone helpers ──────────────────────────────────────────────────────────
 
 function tzOffsetStr(ianaTimezone, dateStr) {
@@ -227,73 +247,112 @@ function buildCreativeBodyDireto(creative, copies, page_id, url_destino) {
 // ── dry-run ───────────────────────────────────────────────────────────────────
 async function dryRunHandler(req, res) {
   try {
-    const { account_id, type, campaign, adset_template, adset_names, adset_creatives, copies, page_id, conversation_config, url_tags, url_destino } = req.body || {};
+    const {
+      account_id, type, dominio_id, adset_template, copies, page_id,
+      conversation_config, url_tags, url_destino,
+    } = req.body || {};
     const isDireto = type === 'DIRETO';
 
-    if (!account_id || !campaign)
-      return res.status(400).json({ error: 'account_id e campaign são obrigatórios' });
+    if (!account_id)
+      return res.status(400).json({ error: 'account_id é obrigatório' });
 
     const acctId = normalizeActId(account_id);
-    const names  = adset_names || ['<ADSET_NAME>'];
     const cp     = copies || { texts: ['<TEXT>'], headlines: ['<HEADLINE>'], descriptions: ['<DESC>'] };
     const tpl    = adset_template || {};
 
-    const steps = [{
-      step: 1,
-      description: 'Criar Campanha',
-      endpoint: `POST ${META_BASE}/${acctId}/campaigns`,
-      body: buildCampaignBody(campaign, campaign.status || 'PAUSED'),
-    }];
+    // Valida prefixo_campanha no backend (não confiar apenas no frontend)
+    const prefixo_campanha = await getDominioPrefixo(dominio_id);
 
+    // Normaliza para array de campanhas
+    const campanhas = normalizeCampanhas(req.body);
+
+    const campanhaResults = [];
+    let totalAdsets = 0;
     let totalAds = 0;
-    names.forEach((name, i) => {
-      const crs = (adset_creatives && adset_creatives[i]?.length)
-        ? adset_creatives[i]
-        : [{ name: '<CREATIVE>', image_hash: '<HASH>' }];
-      steps.push({
-        step: steps.length + 1,
-        description: `Criar Conjunto ${i + 1}: ${name}`,
-        endpoint: `POST ${META_BASE}/${acctId}/adsets`,
-        body: isDireto
-          ? buildAdsetBodyDireto(acctId, tpl, name, '<CAMPAIGN_ID>')
-          : buildAdsetBody(acctId, tpl, name, '<CAMPAIGN_ID>', page_id),
-      });
-      crs.forEach(cr => {
+
+    for (let ci = 0; ci < campanhas.length; ci++) {
+      const camp = campanhas[ci];
+      if (!camp || !camp.campaign) {
+        campanhaResults.push({ campaign_name: `<campanha ${ci + 1}>`, steps: [], total_ads: 0, error: 'campaign ausente' });
+        continue;
+      }
+
+      const names = camp.adset_names || ['<ADSET_NAME>'];
+      const steps = [{
+        step: 1,
+        description: 'Criar Campanha',
+        endpoint: `POST ${META_BASE}/${acctId}/campaigns`,
+        body: buildCampaignBody(camp.campaign, camp.campaign.status || 'PAUSED'),
+      }];
+
+      let campAds = 0;
+      names.forEach((name, i) => {
+        const crs = (camp.adset_creatives && camp.adset_creatives[i]?.length)
+          ? camp.adset_creatives[i]
+          : [{ name: '<CREATIVE>', image_hash: '<HASH>' }];
         steps.push({
           step: steps.length + 1,
-          description: `Criar Criativo ${cr.name} (conjunto ${i + 1})`,
-          endpoint: `POST ${META_BASE}/${acctId}/adcreatives`,
+          description: `Criar Conjunto ${i + 1}: ${name}`,
+          endpoint: `POST ${META_BASE}/${acctId}/adsets`,
           body: isDireto
-            ? buildCreativeBodyDireto(cr, cp, page_id || '<PAGE_ID>', url_destino || '')
-            : buildCreativeBody(cr, cp, page_id || '<PAGE_ID>', conversation_config || null),
+            ? buildAdsetBodyDireto(acctId, tpl, name, '<CAMPAIGN_ID>')
+            : buildAdsetBody(acctId, tpl, name, '<CAMPAIGN_ID>', page_id),
         });
-        steps.push({
-          step: steps.length + 1,
-          description: `Criar Ad ${cr.name} (conjunto ${i + 1})`,
-          endpoint: `POST ${META_BASE}/${acctId}/ads`,
-          body: {
-            name: cr.name,
-            adset_id: '<ADSET_ID>',
-            creative: { creative_id: '<CREATIVE_ID>' },
-            status: 'PAUSED',
-            tracking_specs: [{ 'action.type': ['offsite_conversion'], fb_pixel: [tpl.pixel_id || '<PIXEL>'] }],
-            ...(url_tags ? { url_tags } : {}),
-          },
+        crs.forEach(cr => {
+          steps.push({
+            step: steps.length + 1,
+            description: `Criar Criativo ${cr.name} (conjunto ${i + 1})`,
+            endpoint: `POST ${META_BASE}/${acctId}/adcreatives`,
+            body: isDireto
+              ? buildCreativeBodyDireto(cr, cp, page_id || '<PAGE_ID>', url_destino || '')
+              : buildCreativeBody(cr, cp, page_id || '<PAGE_ID>', conversation_config || null),
+          });
+          steps.push({
+            step: steps.length + 1,
+            description: `Criar Ad ${cr.name} (conjunto ${i + 1})`,
+            endpoint: `POST ${META_BASE}/${acctId}/ads`,
+            body: {
+              name: cr.name,
+              adset_id: '<ADSET_ID>',
+              creative: { creative_id: '<CREATIVE_ID>' },
+              status: 'PAUSED',
+              tracking_specs: [{ 'action.type': ['offsite_conversion'], fb_pixel: [tpl.pixel_id || '<PIXEL>'] }],
+              ...(url_tags ? { url_tags } : {}),
+            },
+          });
+          campAds++;
         });
-        totalAds++;
       });
-    });
+
+      totalAdsets += names.length;
+      totalAds    += campAds;
+      campanhaResults.push({
+        campaign_name: camp.campaign.name,
+        adsets: names.length,
+        total_ads: campAds,
+        creatives_per_adset: (camp.adset_creatives || []).map((v, i) => `V${i + 1}:${v.length}`).join(' '),
+        steps,
+      });
+    }
 
     return res.json({
       dry_run: true,
       note: 'Nenhuma chamada à Meta API foi realizada',
+      prefixo_campanha,
       summary: {
-        campaign: campaign.name,
-        adsets: names.length,
-        total_ads: totalAds,
-        creatives_per_adset: (adset_creatives || []).map((v, i) => `V${i + 1}:${v.length}`).join(' '),
+        total_campanhas: campanhas.length,
+        total_adsets:    totalAdsets,
+        total_ads:       totalAds,
       },
-      steps,
+      campanhas: campanhaResults,
+      // backward compat: se for 1 campanha, expõe campos no nível raiz também
+      ...(campanhas.length === 1 ? {
+        steps:                campanhaResults[0]?.steps || [],
+        campaign:             campanhaResults[0]?.campaign_name,
+        adsets:               campanhaResults[0]?.adsets,
+        total_ads:            campanhaResults[0]?.total_ads,
+        creatives_per_adset:  campanhaResults[0]?.creatives_per_adset,
+      } : {}),
     });
   } catch (e) {
     console.error('[dry-run]', e.message);
@@ -303,13 +362,24 @@ async function dryRunHandler(req, res) {
 
 // ── criar — SSE streaming ─────────────────────────────────────────────────────
 async function criarHandler(req, res) {
-  const { account_id, type, campaign, adset_template, adset_names, adset_creatives, copies, page_id, conversation_config, url_tags, url_destino } = req.body || {};
+  const {
+    account_id, type, dominio_id, adset_template, copies, page_id,
+    conversation_config, url_tags, url_destino,
+  } = req.body || {};
   const isDireto = type === 'DIRETO';
 
   if (!isDireto) console.log('[criar] conversation_config recebido:', JSON.stringify(req.body.conversation_config));
 
-  if (!account_id || !campaign || !adset_template || !adset_names?.length || !adset_creatives?.length || !copies)
-    return res.status(400).json({ error: 'Payload incompleto: account_id, campaign, adset_template, adset_names, adset_creatives e copies são obrigatórios' });
+  const campanhas = normalizeCampanhas(req.body);
+
+  if (!account_id || !adset_template || !copies || !campanhas.length)
+    return res.status(400).json({ error: 'Payload incompleto: account_id, adset_template, copies e campanhas são obrigatórios' });
+
+  for (let ci = 0; ci < campanhas.length; ci++) {
+    const c = campanhas[ci];
+    if (!c?.campaign || !c?.adset_names?.length || !c?.adset_creatives?.length)
+      return res.status(400).json({ error: `Campanha ${ci + 1}: campaign, adset_names e adset_creatives são obrigatórios` });
+  }
 
   const acctId   = normalizeActId(account_id);
   const acctInfo = await getAccountInfo(acctId);
@@ -360,154 +430,204 @@ async function criarHandler(req, res) {
     try { res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`); } catch (_) {}
   };
 
-  let campaign_id = null;
-  const adset_ids = [];
-  const ad_ids    = [];
-
-  const rollback = async () => {
-    if (!campaign_id) return;
-    try {
-      await axios.post(`${META_BASE}/${campaign_id}`, { status: 'DELETED', access_token: token }, { timeout: 15000 });
-      console.log(`[criar] rollback: campanha ${campaign_id} deletada`);
-    } catch (e) {
-      console.error('[criar] rollback falhou:', e.response?.data?.error?.message || e.message);
-    }
+  // Helper para chamadas à Meta API (fechado sobre token e send)
+  const makeMetaPost = () => {
+    let currentStepName = 'init';
+    const metaPost = async (url, body, label) => {
+      currentStepName = label;
+      const bodyWithoutToken = { ...body };
+      delete bodyWithoutToken.access_token;
+      console.log(`\n[criar] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ${label}`);
+      console.log(`[criar] URL    : POST ${url}`);
+      console.log(`[criar] PAYLOAD: ${JSON.stringify(bodyWithoutToken, null, 2)}`);
+      try {
+        const r = await axios.post(url, body, { timeout: 20000 });
+        console.log(`[criar] ✓ OK   : HTTP ${r.status} → id=${r.data?.id}`);
+        return r;
+      } catch (e) {
+        const status  = e.response?.status ?? 'NO_RESPONSE';
+        const headers = e.response?.headers ?? {};
+        const raw     = e.response?.data;
+        console.error(`[criar] ✗ ERRO : HTTP ${status}`);
+        console.error(`[criar] HEADERS: ${JSON.stringify({ 'content-type': headers['content-type'], 'x-fb-req-id': headers['x-fb-req-id'] })}`);
+        console.error(`[criar] BODY   : ${JSON.stringify(raw, null, 2)}`);
+        console.error(`[criar] MSG    : ${e.message}`);
+        if (raw?.error) {
+          const err = raw.error;
+          console.error(`[criar] META_CODE    : ${err.code}`);
+          console.error(`[criar] META_SUBCODE : ${err.error_subcode ?? '—'}`);
+          console.error(`[criar] META_TYPE    : ${err.type}`);
+          console.error(`[criar] META_USER_MSG: ${err.error_user_msg ?? '—'}`);
+          console.error(`[criar] META_TRACE   : ${err.fbtrace_id ?? '—'}`);
+        }
+        const msg = raw?.error?.message || e.message;
+        throw Object.assign(new Error(msg), { stepName: currentStepName, httpStatus: status, metaError: raw?.error });
+      }
+    };
+    return metaPost;
   };
 
-  let currentStepName = 'init';
+  const successes = [];
+  const failures  = [];
 
-  const metaPost = async (url, body, label) => {
-    currentStepName = label;
-    const bodyWithoutToken = { ...body };
-    delete bodyWithoutToken.access_token;
-    console.log(`\n[criar] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ${label}`);
-    console.log(`[criar] URL    : POST ${url}`);
-    console.log(`[criar] PAYLOAD: ${JSON.stringify(bodyWithoutToken, null, 2)}`);
-    try {
-      const res = await axios.post(url, body, { timeout: 20000 });
-      console.log(`[criar] ✓ OK   : HTTP ${res.status} → id=${res.data?.id}`);
-      return res;
-    } catch (e) {
-      const status  = e.response?.status ?? 'NO_RESPONSE';
-      const headers = e.response?.headers ?? {};
-      const raw     = e.response?.data;
-      console.error(`[criar] ✗ ERRO : HTTP ${status}`);
-      console.error(`[criar] HEADERS: ${JSON.stringify({ 'content-type': headers['content-type'], 'x-fb-req-id': headers['x-fb-req-id'] })}`);
-      console.error(`[criar] BODY   : ${JSON.stringify(raw, null, 2)}`);
-      console.error(`[criar] MSG    : ${e.message}`);
-      if (raw?.error) {
-        const err = raw.error;
-        console.error(`[criar] META_CODE    : ${err.code}`);
-        console.error(`[criar] META_SUBCODE : ${err.error_subcode ?? '—'}`);
-        console.error(`[criar] META_TYPE    : ${err.type}`);
-        console.error(`[criar] META_USER_MSG: ${err.error_user_msg ?? '—'}`);
-        console.error(`[criar] META_TRACE   : ${err.fbtrace_id ?? '—'}`);
+  for (let ci = 0; ci < campanhas.length; ci++) {
+    const camp      = campanhas[ci];
+    const { campaign, adset_names, adset_creatives } = camp;
+    const cpLabel   = `CP${String(ci + 1).padStart(2, '0')}`;
+    const metaPost  = makeMetaPost();
+
+    send('progress', { msg: `[${ci + 1}/${campanhas.length}] Criando campanha ${cpLabel}: ${campaign.name}…` });
+
+    let campaign_id = null;
+
+    const rollbackCamp = async () => {
+      if (!campaign_id) return;
+      try {
+        await axios.post(`${META_BASE}/${campaign_id}`, { status: 'DELETED', access_token: token }, { timeout: 15000 });
+        console.log(`[criar] rollback: campanha ${campaign_id} (${cpLabel}) deletada`);
+      } catch (e) {
+        console.error(`[criar] rollback ${cpLabel} falhou:`, e.response?.data?.error?.message || e.message);
       }
-      const msg = raw?.error?.message || e.message;
-      throw Object.assign(new Error(msg), { stepName: label, httpStatus: status, metaError: raw?.error });
-    }
-  };
-
-  try {
-    const totalSteps = 1 + adset_names.length + adset_creatives.reduce((s, v) => s + (v.length * 2), 0);
-    let step = 0;
-
-    // PASSO 1 — Campanha
-    send('progress', { msg: 'Criando campanha…', step: step++, total: totalSteps });
-    const cpBody = { ...buildCampaignBody(campaign, campaign.status || 'PAUSED'), access_token: token };
-    const cpRes = await metaPost(`${META_BASE}/${acctId}/campaigns`, cpBody, 'Criar Campanha');
-    campaign_id = cpRes.data?.id;
-    if (!campaign_id) throw new Error('Meta não retornou campaign_id');
-    send('progress', { msg: `Campanha criada (${campaign_id})`, step: step++, total: totalSteps });
-
-    // PASSO 2-N — Conjuntos + Criativos por conjunto
-    for (let i = 0; i < adset_names.length; i++) {
-      const name = adset_names[i];
-      const creatives = adset_creatives[i] || [];
-      send('progress', { msg: `Criando conjunto ${i + 1} de ${adset_names.length}: ${name}`, step: step++, total: totalSteps });
-
-      const asBody = isDireto
-        ? { ...buildAdsetBodyDireto(acctId, resolvedTemplate, name, campaign_id), access_token: token }
-        : { ...buildAdsetBody(acctId, resolvedTemplate, name, campaign_id, page_id), access_token: token };
-      const asRes  = await metaPost(`${META_BASE}/${acctId}/adsets`, asBody, `Conjunto V${i + 1}`);
-      const adset_id = asRes.data?.id;
-      if (!adset_id) throw new Error(`Meta não retornou adset_id para ${name}`);
-      adset_ids.push(adset_id);
-
-      for (let j = 0; j < creatives.length; j++) {
-        const cr = creatives[j];
-        send('progress', { msg: `Criando criativo ${cr.name} (V${i + 1}, ${j + 1}/${creatives.length})`, step: step++, total: totalSteps });
-
-        if (!isDireto) console.log('[criar] conversation_config para criativo:', JSON.stringify(conversation_config));
-        const crBody = isDireto
-          ? { ...buildCreativeBodyDireto(cr, copies, page_id, url_destino || ''), access_token: token }
-          : { ...buildCreativeBody(cr, copies, page_id, conversation_config || null), access_token: token };
-        console.log(`[criar] adcreative payload: ${JSON.stringify({ ...crBody, access_token: '[REDACTED]' })}`);
-        const crRes  = await metaPost(`${META_BASE}/${acctId}/adcreatives`, crBody, `Criativo ${cr.name} V${i + 1}`);
-        const creative_id = crRes.data?.id;
-        if (!creative_id) throw new Error(`Meta não retornou creative_id para ${cr.name}`);
-
-        const adBody = {
-          name: cr.name,
-          adset_id,
-          creative: { creative_id },
-          status: 'PAUSED',
-          tracking_specs: [{ 'action.type': ['offsite_conversion'], fb_pixel: [resolvedTemplate.pixel_id] }],
-          access_token: token,
-        };
-        if (url_tags) adBody.url_tags = url_tags;
-
-        const adBodyLog = { ...adBody };
-        delete adBodyLog.access_token;
-        console.log(`\n[criar] >>> AD BODY EXATO (antes de enviar) <<<`);
-        console.log(JSON.stringify(adBodyLog, null, 2));
-
-        const adRes = await metaPost(`${META_BASE}/${acctId}/ads`, adBody, `Ad ${cr.name} V${i + 1}`);
-        const ad_id = adRes.data?.id;
-        if (!ad_id) throw new Error(`Meta não retornou ad_id para ${cr.name}`);
-        ad_ids.push(ad_id);
-        send('progress', { msg: `Ad ${cr.name} criado (V${i + 1})`, step: step++, total: totalSteps });
-      }
-    }
+    };
 
     try {
-      await supabase.from('historico_campanhas').insert({
-        account_id: acctId, campaign_id,
+      const totalSteps = 1 + adset_names.length + adset_creatives.reduce((s, v) => s + (v.length * 2), 0);
+      let step = 0;
+
+      // PASSO 1 — Campanha
+      send('progress', { msg: `[${ci + 1}/${campanhas.length}] ${cpLabel}: Criando estrutura da campanha…`, step: step++, total: totalSteps });
+      const cpBody = { ...buildCampaignBody(campaign, campaign.status || 'PAUSED'), access_token: token };
+      const cpRes  = await metaPost(`${META_BASE}/${acctId}/campaigns`, cpBody, `Criar Campanha ${cpLabel}`);
+      campaign_id  = cpRes.data?.id;
+      if (!campaign_id) throw new Error('Meta não retornou campaign_id');
+      send('progress', { msg: `[${ci + 1}/${campanhas.length}] ${cpLabel}: Campanha criada (${campaign_id})`, step: step++, total: totalSteps });
+
+      // PASSO 2-N — Conjuntos + Criativos
+      const adset_ids = [];
+      const ad_ids    = [];
+
+      for (let i = 0; i < adset_names.length; i++) {
+        const name      = adset_names[i];
+        const creatives = adset_creatives[i] || [];
+        send('progress', { msg: `[${ci + 1}/${campanhas.length}] ${cpLabel}: Conjunto ${i + 1}/${adset_names.length}: ${name}`, step: step++, total: totalSteps });
+
+        const asBody = isDireto
+          ? { ...buildAdsetBodyDireto(acctId, resolvedTemplate, name, campaign_id), access_token: token }
+          : { ...buildAdsetBody(acctId, resolvedTemplate, name, campaign_id, page_id), access_token: token };
+        const asRes  = await metaPost(`${META_BASE}/${acctId}/adsets`, asBody, `Conjunto V${i + 1} (${cpLabel})`);
+        const adset_id = asRes.data?.id;
+        if (!adset_id) throw new Error(`Meta não retornou adset_id para ${name}`);
+        adset_ids.push(adset_id);
+
+        for (let j = 0; j < creatives.length; j++) {
+          const cr = creatives[j];
+          send('progress', { msg: `[${ci + 1}/${campanhas.length}] ${cpLabel}: Criativo ${cr.name} (V${i + 1}, ${j + 1}/${creatives.length})`, step: step++, total: totalSteps });
+
+          if (!isDireto) console.log('[criar] conversation_config para criativo:', JSON.stringify(conversation_config));
+          const crBody = isDireto
+            ? { ...buildCreativeBodyDireto(cr, copies, page_id, url_destino || ''), access_token: token }
+            : { ...buildCreativeBody(cr, copies, page_id, conversation_config || null), access_token: token };
+          console.log(`[criar] adcreative payload: ${JSON.stringify({ ...crBody, access_token: '[REDACTED]' })}`);
+          const crRes  = await metaPost(`${META_BASE}/${acctId}/adcreatives`, crBody, `Criativo ${cr.name} V${i + 1} (${cpLabel})`);
+          const creative_id = crRes.data?.id;
+          if (!creative_id) throw new Error(`Meta não retornou creative_id para ${cr.name}`);
+
+          const adBody = {
+            name: cr.name,
+            adset_id,
+            creative: { creative_id },
+            status: 'PAUSED',
+            tracking_specs: [{ 'action.type': ['offsite_conversion'], fb_pixel: [resolvedTemplate.pixel_id] }],
+            access_token: token,
+          };
+          if (url_tags) adBody.url_tags = url_tags;
+
+          const adBodyLog = { ...adBody };
+          delete adBodyLog.access_token;
+          console.log(`\n[criar] >>> AD BODY EXATO (${cpLabel}, V${i+1}) <<<`);
+          console.log(JSON.stringify(adBodyLog, null, 2));
+
+          const adRes = await metaPost(`${META_BASE}/${acctId}/ads`, adBody, `Ad ${cr.name} V${i + 1} (${cpLabel})`);
+          const ad_id = adRes.data?.id;
+          if (!ad_id) throw new Error(`Meta não retornou ad_id para ${cr.name}`);
+          ad_ids.push(ad_id);
+          send('progress', { msg: `[${ci + 1}/${campanhas.length}] ${cpLabel}: Ad ${cr.name} criado (V${i + 1})`, step: step++, total: totalSteps });
+        }
+      }
+
+      // Log de sucesso
+      try {
+        await supabase.from('historico_campanhas').insert({
+          account_id: acctId, campaign_id,
+          campaign_name: campaign.name,
+          status: 'success', erro: null,
+          payload: { ...req.body, _campanha_idx: ci },
+        });
+      } catch (logErr) { console.error('[criar] log failed:', logErr.message); }
+
+      const rawId = acctId.replace('act_', '');
+      successes.push({
+        campaign_id,
         campaign_name: campaign.name,
-        status: 'success', erro: null, payload: req.body,
+        adset_count: adset_ids.length,
+        ad_count: ad_ids.length,
+        meta_url: `https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=${rawId}`,
       });
-    } catch (logErr) { console.error('[criar] log failed:', logErr.message); }
+      send('progress', { msg: `[${ci + 1}/${campanhas.length}] ✓ ${cpLabel} criada — ${ad_ids.length} ads` });
 
-    const rawId = acctId.replace('act_', '');
+    } catch (e) {
+      const errMsg = e.response?.data?.error?.message || e.message;
+      console.error(`[criar] ${cpLabel} falhou:`, errMsg);
+      await rollbackCamp();
+      try {
+        await supabase.from('historico_campanhas').insert({
+          account_id: acctId, campaign_id,
+          campaign_name: campaign?.name,
+          status: 'failed', erro: errMsg,
+          payload: { ...req.body, _campanha_idx: ci },
+        });
+      } catch (_) {}
+      failures.push({
+        campaign_name: campaign?.name,
+        error: errMsg,
+        campaign_id,
+        step_failed: e.stepName,
+        http_status: e.httpStatus || null,
+        meta_error:  e.metaError || null,
+      });
+      send('progress', { msg: `[${ci + 1}/${campanhas.length}] ✗ ${cpLabel} falhou — ${errMsg.slice(0, 80)}` });
+    }
+  }
+
+  const totalAds = successes.reduce((s, c) => s + c.ad_count, 0);
+  const first    = successes[0];
+
+  if (successes.length > 0) {
     send('done', {
       success: true,
-      campaign_id,
-      adset_count: adset_ids.length,
-      ad_count: ad_ids.length,
-      meta_url: `https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=${rawId}`,
+      // backward compat: campos da primeira campanha no nível raiz
+      campaign_id:  first.campaign_id,
+      adset_count:  first.adset_count,
+      ad_count:     first.ad_count,
+      meta_url:     first.meta_url,
+      // multi-campaign summary
+      total_ads:    totalAds,
+      successes,
+      failures,
     });
-
-  } catch (e) {
-    const errMsg = e.response?.data?.error?.message || e.message;
-    console.error('[criar] falhou:', errMsg);
-    await rollback();
-    try {
-      await supabase.from('historico_campanhas').insert({
-        account_id: acctId, campaign_id,
-        campaign_name: campaign?.name,
-        status: 'failed', erro: errMsg, payload: req.body,
-      });
-    } catch (_) {}
+  } else {
+    const errMsg = failures.map(f => `${f.campaign_name}: ${f.error}`).join('; ');
     send('error', {
-      error: errMsg,
-      campaign_id,
-      step_failed: e.stepName || currentStepName,
-      http_status: e.httpStatus || null,
-      meta_error: e.metaError || null,
+      error:    errMsg,
+      failures,
+      campaign_id:  failures[0]?.campaign_id || null,
+      step_failed:  failures[0]?.step_failed || null,
+      http_status:  failures[0]?.http_status || null,
+      meta_error:   failures[0]?.meta_error  || null,
     });
-  } finally {
-    res.end();
   }
+
+  res.end();
 }
 
 module.exports = { dryRunHandler, criarHandler };

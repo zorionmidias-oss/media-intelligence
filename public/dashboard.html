@@ -6307,7 +6307,7 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
    <!-- ── STEP 2: Campanha ── -->
    <div class="bwz-step" id="bwz-step-2">
     <p class="bwz-step-title">Configurar campanha</p>
-    <p class="bwz-step-sub">Defina os parâmetros de nomeação — os 6 conjuntos serão nomeados automaticamente.</p>
+    <p class="bwz-step-sub">Defina nomeação e quantidades — os nomes são gerados automaticamente.</p>
 
     <div class="bwz-naming-grid">
      <div class="wz-field" style="margin:0">
@@ -6328,8 +6328,28 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
      </div>
     </div>
 
+    <!-- Quantidades paramétricas -->
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.625rem">
+     <div class="wz-field" style="margin:0;flex:1;min-width:90px">
+      <label class="wz-lbl">Campanhas</label>
+      <input class="wz-input bwz-qty-input" id="bwz-qtd-campanhas" type="number" value="1" min="1" max="10" style="width:80px" oninput="bwzUpdateQty()">
+     </div>
+     <div class="wz-field" style="margin:0;flex:1;min-width:90px">
+      <label class="wz-lbl">Conjuntos/camp.</label>
+      <input class="wz-input bwz-qty-input" id="bwz-qtd-conjuntos" type="number" value="6" min="1" max="20" style="width:80px" oninput="bwzUpdateQty()">
+     </div>
+     <div class="wz-field" style="margin:0;flex:1;min-width:90px">
+      <label class="wz-lbl">Criativos/conj.</label>
+      <input class="wz-input bwz-qty-input" id="bwz-qtd-criativos" type="number" value="3" min="1" max="10" style="width:80px" oninput="bwzUpdateQty()">
+     </div>
+    </div>
+    <div class="bwz-banner info" id="bwz-qty-counter" style="margin-top:.5rem;padding:.5rem .75rem;font-size:.8125rem">
+     <span id="bwz-qty-total-label">1 campanha × 6 conjuntos × 3 criativos = <strong>18 ads</strong></span>
+     &nbsp;·&nbsp; <span class="muted" id="bwz-qty-imgs-label">18 imagens/campanha</span>
+    </div>
+
     <div class="bwz-name-preview">
-     <span class="bwz-cv-lbl">Preview dos 6 conjuntos</span>
+     <span class="bwz-cv-lbl">Preview — campanhas e conjuntos</span>
      <div id="bwz-adset-preview-body" style="font-family:monospace;font-size:.75rem;line-height:1.8;color:var(--fg)">—</div>
     </div>
 
@@ -6406,7 +6426,7 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
    <!-- ── STEP 4: Público ── -->
    <div class="bwz-step" id="bwz-step-4">
     <p class="bwz-step-title">Público</p>
-    <p class="bwz-step-sub">Mesmo público aplicado nos 6 conjuntos.</p>
+    <p class="bwz-step-sub">Mesmo público aplicado em todos os conjuntos.</p>
 
     <div class="wz-field">
      <label class="wz-lbl">Países *</label>
@@ -6467,31 +6487,13 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
    <!-- ── STEP 5: Criativos ── -->
    <div class="bwz-step" id="bwz-step-5">
     <p class="bwz-step-title">Criativos</p>
-    <p class="bwz-step-sub">3 mídias + copies compartilhadas (dynamic creative) — Meta otimiza automaticamente.</p>
+    <p class="bwz-step-sub" id="bwz-step5-sub">Mídias por campanha + copies compartilhadas — Meta otimiza automaticamente.</p>
 
-    <div class="wz-field">
-     <label class="wz-lbl">Mídias — até 18 imagens (mínimo 3) *</label>
-     <div class="bwz-dropzone" id="bwz-dropzone"
-       ondragover="event.preventDefault();this.classList.add('over')"
-       ondragleave="this.classList.remove('over')"
-       ondrop="bwzDropzoneDrop(event)"
-       onclick="document.getElementById('bwz-file-batch').click()">
-       <div class="bwz-dropzone-ico">&#128444;&#65039;</div>
-       <div class="bwz-dropzone-lbl">Solte 18 imagens aqui ou clique para selecionar</div>
-       <div class="bwz-dropzone-sub">JPEG · PNG · GIF &nbsp;·&nbsp; múltiplos arquivos</div>
-     </div>
-     <input type="file" id="bwz-file-batch" accept="image/*" multiple style="display:none" onchange="bwzBatchFiles(this.files);this.value=''">
-     <div class="bwz-limpar-row" id="bwz-limpar-row" style="display:none">
-      <div id="bwz-limpar-confirm-wrap"></div>
-      <button class="bwz-limpar-btn" onclick="bwzLimparTudo()">Limpar tudo</button>
-     </div>
-     <div class="bwz-drop-warn" id="bwz-drop-warn"></div>
-     <div class="bwz-drop-progress" id="bwz-drop-progress">
-       <div class="bwz-drop-prog-lbl" id="bwz-drop-prog-lbl">Enviando…</div>
-       <div class="bwz-drop-prog-track"><div class="bwz-drop-prog-bar" id="bwz-drop-prog-bar"></div></div>
-     </div>
-     <div class="bwz-drop-grid" id="bwz-drop-grid"></div>
-    </div>
+    <!-- Container dinâmico: uma seção de dropzone por campanha -->
+    <div id="bwz-camp-sections"></div>
+
+    <!-- Input de arquivo oculto — reutilizado por todas as campanhas -->
+    <input type="file" id="bwz-file-batch" accept="image/*" multiple style="display:none" onchange="bwzBatchFilesInput(this)">
 
     <div class="bwz-copy-section">
 
@@ -6577,7 +6579,7 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
    <!-- ── STEP 6: Publicar ── -->
    <div class="bwz-step" id="bwz-step-6">
     <p class="bwz-step-title">Revisão e publicação</p>
-    <p class="bwz-step-sub">Confirme os dados e crie os 18 ads.</p>
+    <p class="bwz-step-sub" id="bwz-step6-sub">Confirme os dados e crie os ads.</p>
 
     <div class="bwz-summary-grid" id="bwz-summary">
      <div>Carregando resumo…</div>
@@ -6585,7 +6587,7 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
 
     <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.5rem">
      <button class="btn-outline" id="bwz-btn-dryrun" onclick="botWizDryRun()">&#128269; Ver JSON</button>
-     <button class="btn-primary" id="bwz-btn-publish" style="flex:1" onclick="botWizShowConfirm()">&#128640; Criar 18 ads</button>
+     <button class="btn-primary" id="bwz-btn-publish" style="flex:1" onclick="botWizShowConfirm()">&#128640; Criar ads</button>
     </div>
 
     <div class="bwz-prog-wrap" id="bwz-publish-state">
@@ -6677,6 +6679,12 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
     <div id="drz-page-confirm" class="bwz-page-confirm" style="display:none"></div>
     <div id="drz-no-pages-banner" class="bwz-no-pages-banner" style="display:none">Nenhuma página encontrada para esta conta.</div>
    </div>
+   <div class="wiz-section" id="drz-dom-field" style="display:none">
+    <label class="wiz-label">Domínio de monetização *</label>
+    <select id="drz-dom-select" class="wiz-select" onchange="drzDomSelect(this.value)">
+     <option value="">Carregando domínios…</option>
+    </select>
+   </div>
    <div id="drz-step1-err" class="drz-inline-err"></div>
   </div>
 
@@ -6700,10 +6708,23 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
      <input id="drz-numero" class="wiz-input" value="0001" maxlength="8" oninput="drzUpdatePreview()">
     </div>
    </div>
-   <div class="wiz-section" style="margin-top:.75rem">
-    <label class="wiz-label">N conjuntos</label>
-    <input id="drz-n-conjuntos" class="wiz-input" type="number" value="2" min="1" max="20" style="width:80px" oninput="drzUpdatePreview()">
-    <span class="muted" style="font-size:.8125rem;margin-left:.5rem">× 3 criativos = <strong id="drz-total-ads">6</strong> ads</span>
+   <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.75rem">
+    <div class="wiz-section" style="margin:0;flex:1;min-width:90px">
+     <label class="wiz-label">Campanhas</label>
+     <input id="drz-qtd-campanhas" class="wiz-input" type="number" value="1" min="1" max="10" style="width:80px" oninput="drzUpdatePreview()">
+    </div>
+    <div class="wiz-section" style="margin:0;flex:1;min-width:90px">
+     <label class="wiz-label">Conjuntos/camp.</label>
+     <input id="drz-n-conjuntos" class="wiz-input" type="number" value="2" min="1" max="20" style="width:80px" oninput="drzUpdatePreview()">
+    </div>
+    <div class="wiz-section" style="margin:0;flex:1;min-width:90px">
+     <label class="wiz-label">Criativos/conj.</label>
+     <input id="drz-qtd-criativos" class="wiz-input" type="number" value="3" min="1" max="10" style="width:80px" oninput="drzUpdatePreview()">
+    </div>
+   </div>
+   <div class="bwz-banner info" style="margin-top:.5rem;padding:.5rem .75rem;font-size:.8125rem">
+    <span id="drz-total-summary">1 × 2 × 3 = <strong id="drz-total-ads">6</strong> ads</span>
+    &nbsp;·&nbsp; <span class="muted" id="drz-imgs-label">6 imagens/campanha</span>
    </div>
    <div class="wiz-section">
     <label class="wiz-label">Preview</label>
@@ -6899,10 +6920,11 @@ window._BWZ=BWZ;
 /* ─── helpers ────────────────────────────────────────────────────────────── */
 function bwzSlug(name){return(name||'').split(/[\s\-_]+/)[0].toUpperCase()||'PAGE';}
 function bwzSuffix(name){return(name||'').split(/[\s\-_]+/)[0].toLowerCase()+'fb';}
-function bwzAdsetNames(){
+function bwzAdsetNames(qtd_conjuntos){
   const d=BWZ.d;
+  const n=qtd_conjuntos||d.qtd_conjuntos||6;
   const s=`${(d.sigla_pais||'').toUpperCase()}_${(d.tema||'').toUpperCase()}_${(d.idioma||'').toUpperCase()}_BOT_${d.numero||'0001'}`;
-  return[1,2,3,4,5,6].map(n=>`[${s}] [${d.page_slug||'PAGE'}] V${n}`);
+  return Array.from({length:n},(_,i)=>`[${s}] [${d.page_slug||'PAGE'}] V${i+1}`);
 }
 function bwzErr(msg){showToast('err',msg,3500);}
 window.bwzCC=function(el,cntId){
@@ -7100,13 +7122,17 @@ window.botWizOpen=function(){
     daily_budget:7,start_time:'',end_time:null,
     age_min:18,age_max:45,gender:0,
     conversation_config:null,
-    dominio_id:'',dominio_nome:'',
+    dominio_id:'',dominio_nome:'',dominio_prefixo:'',
+    qtd_campanhas:1,qtd_conjuntos:6,qtd_criativos:3,
   });
   BWZ.selInterests=[];BWZ.selCountries=[{code:'BR',name:'Brasil'}];
   BWZ.selLocales=[{id:16,name:'Português (Brasil)'}];BWZ.selCA=[];
   BWZ.pixels=[];BWZ.pages=[];BWZ.customAudiences=[];BWZ.countries=[];BWZ.locales=[];
-  BWZ.mediaSlots=Array.from({length:6},()=>[{hash:null,preview_url:null},{hash:null,preview_url:null},{hash:null,preview_url:null}]);
-  BWZ._dropItems=[];
+  // campDropItems[ci] = array de drop items para campanha ci
+  // campMediaSlots[ci][conjIdx][slotIdx] = {hash, preview_url}
+  BWZ.campDropItems=[[]];
+  BWZ.campMediaSlots=bwzInitCampSlots(1,6,3);
+  BWZ._activeCampIdx=null; // índice da campanha ativa no file-input
   BWZ.fpStart=null;BWZ.fpEnd=null;
   BWZ._outraIgual=false;
 
@@ -7119,7 +7145,7 @@ window.botWizOpen=function(){
   document.getElementById('bwz-outra-banner').style.display='none';
   document.getElementById('bwz-recall-banner').style.display='none';
   bwzPageDropReset();
-  bwzRenderMediaGrid();
+  // step 5 será renderizado quando entrar no step
   // reset step 2 naming inputs
   ['bwz-sigla-pais','bwz-tema','bwz-idioma','bwz-numero'].forEach(id=>{
     const el=document.getElementById(id);
@@ -7129,6 +7155,11 @@ window.botWizOpen=function(){
   });
   document.getElementById('bwz-adset-preview-body').textContent='—';
   document.getElementById('bwz-camp-name').value='';
+  // reset qty inputs
+  const qcEl=document.getElementById('bwz-qtd-campanhas');if(qcEl)qcEl.value=1;
+  const qsEl=document.getElementById('bwz-qtd-conjuntos');if(qsEl)qsEl.value=6;
+  const qrEl=document.getElementById('bwz-qtd-criativos');if(qrEl)qrEl.value=3;
+  bwzUpdateQty();
   botWizSetBudgetType('ABO');
   document.getElementById('bwz-paused').checked=true;
   // reset step 5 copies — remove extra dynamic fields, clear first field
@@ -7199,6 +7230,7 @@ function botWizStep(n){
   if(n===6){nxt.style.display='none';}else{nxt.style.display='';nxt.textContent='Continuar →';}
   if(n===3)botWizLoadStep3();
   if(n===4)botWizLoadStep4();
+  if(n===5){bwzUpdateQty();bwzRenderMediaGrid();}
   if(n===6)botWizRenderStep6();
   document.querySelector('#bot-wiz-modal .wizard-body').scrollTop=0;
 }
@@ -7257,9 +7289,20 @@ function botWizValidate(n){
     return true;
   }
   if(n===5){
-    const uploaded=BWZ._dropItems.filter(it=>it.hash);
-    if(uploaded.length<3){bwzErr('Faça upload de pelo menos 3 imagens.');return false;}
-    if(BWZ._dropItems.some(it=>it.status==='loading')){bwzErr('Aguarde os uploads terminarem.');return false;}
+    const qC=BWZ.d.qtd_campanhas||1;
+    const qConj=BWZ.d.qtd_conjuntos||6;
+    const qCr=BWZ.d.qtd_criativos||3;
+    const need=qConj*qCr;
+    for(let ci=0;ci<qC;ci++){
+      const items=BWZ.campDropItems[ci]||[];
+      if(items.some(it=>it.status==='loading')){bwzErr('Aguarde os uploads terminarem.');return false;}
+      const uploaded=items.filter(it=>it.hash);
+      if(uploaded.length<need){
+        const cpLabel=`CP${String(ci+1).padStart(2,'0')}`;
+        bwzErr(`${cpLabel}: ${uploaded.length}/${need} imagens enviadas. São necessárias ${need}.`);
+        return false;
+      }
+    }
     const t1=document.getElementById('bwz-text-1').value.trim();
     if(!t1){bwzErr('Informe pelo menos o Texto 1.');return false;}
     const h1=document.getElementById('bwz-hl-1').value.trim();
@@ -7413,20 +7456,32 @@ window.bwzUpdateNamePreview=function(el,field){
   if(el&&field==='numero')el.dataset.userEdited='1';
   if(field==='sigla_pais'||field==='tema'||field==='idioma')bwzSuggestNumero();
   const d=BWZ.d;
+  const prefixo=d.dominio_prefixo||'MKUKER';
+  const qC=d.qtd_campanhas||1;
+  const qConj=d.qtd_conjuntos||6;
   const previewEl=document.getElementById('bwz-adset-preview-body');
   if(!d.sigla_pais||!d.tema||!d.idioma||!d.numero){
     if(previewEl)previewEl.innerHTML='<span style="color:var(--muted);font-style:italic">Preencha os campos acima para ver o preview</span>';
   }else{
-    const names=bwzAdsetNames();
-    if(previewEl)previewEl.innerHTML=names.map(n=>`<div>${esc(n)}</div>`).join('');
+    const s=`${d.sigla_pais}_${d.tema}_${d.idioma}_BOT_${d.numero||'0001'}`;
+    const lines=[];
+    for(let c=0;c<Math.min(qC,3);c++){
+      const cpSuffix=`CP${String(c+1).padStart(2,'0')}`;
+      lines.push(`<div style="color:var(--accent);font-weight:600">[${prefixo}] [${s}] [${d.page_slug||'PAGE'}] ${cpSuffix}</div>`);
+      const names=bwzAdsetNames(qConj);
+      names.slice(0,Math.min(names.length,3)).forEach(n=>lines.push(`<div style="padding-left:.75rem">${esc(n)}</div>`));
+      if(names.length>3)lines.push(`<div style="padding-left:.75rem;color:var(--muted)">… +${names.length-3} conjuntos</div>`);
+    }
+    if(qC>3)lines.push(`<div style="color:var(--muted)">… +${qC-3} campanhas</div>`);
+    if(previewEl)previewEl.innerHTML=lines.join('');
   }
-  // auto-update campaign name if not manually edited
+  // auto-update campaign name se não foi editado manualmente
   if(!BWZ.d.campNameEdited){
-    const d=BWZ.d;
     const s=`${(d.sigla_pais||'').toUpperCase()}_${(d.tema||'').toUpperCase()}_${(d.idioma||'').toUpperCase()}_BOT_${d.numero||'0001'}`;
     const campEl=document.getElementById('bwz-camp-name');
-    if(campEl)campEl.value=`[MKUKER] [${s}] [${d.page_slug||'PÁGINA'}] CP01`;
+    if(campEl)campEl.value=`[${prefixo}] [${s}] [${d.page_slug||'PÁGINA'}] CP01`;
   }
+  bwzUpdateQty();
 };
 
 window.botWizSetBudgetType=function(type){
@@ -7485,10 +7540,11 @@ async function botWizLoadStep3(){
 
 window.botWizUpdateWeekly=function(){
   const v=parseFloat(document.getElementById('bwz-budget').value)||0;
-  const total6=v*6,week=total6*7;
-  const fmt=n=>n.toLocaleString('pt-BR',{minimumFractionDigits:2});
+  const n=BWZ.d.qtd_conjuntos||6;
+  const totalN=v*n,week=totalN*7;
+  const fmt=x=>x.toLocaleString('pt-BR',{minimumFractionDigits:2});
   document.getElementById('bwz-weekly').textContent=
-    `R$ ${fmt(v)}/dia × 6 conjuntos = R$ ${fmt(total6)}/dia total (≈ R$ ${fmt(week)}/semana)`;
+    `R$ ${fmt(v)}/dia × ${n} conjuntos = R$ ${fmt(totalN)}/dia total (≈ R$ ${fmt(week)}/semana)`;
 };
 
 /* ─── STEP 4: audience ──────────────────────────────────────────────────── */
@@ -7707,57 +7763,89 @@ window.botWizSetGender=function(v){
   document.getElementById('bwz-g-f').classList.toggle('on',v===2);
 };
 
-/* ─── STEP 5: batch dropzone ─────────────────────────────────────────────── */
-window.bwzRenderMediaGrid=function(){
-  document.getElementById('bwz-drop-grid').innerHTML='';
-  const w=document.getElementById('bwz-drop-warn');
-  w.className='bwz-drop-warn';w.textContent='';
-  document.getElementById('bwz-drop-progress').className='bwz-drop-progress';
-  const lr=document.getElementById('bwz-limpar-row');if(lr)lr.style.display='none';
-  const cw=document.getElementById('bwz-limpar-confirm-wrap');if(cw)cw.innerHTML='';
-  BWZ._dropItems=[];
+/* ─── STEP 5: media por campanha ─────────────────────────────────────────── */
+
+/* Inicializa estrutura 3D: campMediaSlots[ci][conjIdx][slotIdx] */
+function bwzInitCampSlots(qC,qConj,qCr){
+  return Array.from({length:qC},()=>
+    Array.from({length:qConj},()=>
+      Array.from({length:qCr},()=>({hash:null,preview_url:null}))
+    )
+  );
+}
+
+/* Atualiza qtd_* do BWZ.d a partir dos inputs do step 2 */
+window.bwzUpdateQty=function(){
+  const qC  =Math.max(1,parseInt(document.getElementById('bwz-qtd-campanhas')?.value)||1);
+  const qConj=Math.max(1,parseInt(document.getElementById('bwz-qtd-conjuntos')?.value)||6);
+  const qCr =Math.max(1,parseInt(document.getElementById('bwz-qtd-criativos')?.value)||3);
+  BWZ.d.qtd_campanhas=qC;BWZ.d.qtd_conjuntos=qConj;BWZ.d.qtd_criativos=qCr;
+  // ajusta arrays para novo tamanho (preserva dados existentes)
+  while(BWZ.campDropItems.length<qC)BWZ.campDropItems.push([]);
+  BWZ.campDropItems.length=qC;
+  while(BWZ.campMediaSlots.length<qC)BWZ.campMediaSlots.push([]);
+  BWZ.campMediaSlots.length=qC;
+  for(let ci=0;ci<qC;ci++){
+    if(!BWZ.campMediaSlots[ci])BWZ.campMediaSlots[ci]=[];
+    while(BWZ.campMediaSlots[ci].length<qConj)BWZ.campMediaSlots[ci].push([]);
+    BWZ.campMediaSlots[ci].length=qConj;
+    for(let g=0;g<qConj;g++){
+      if(!BWZ.campMediaSlots[ci][g])BWZ.campMediaSlots[ci][g]=[];
+      while(BWZ.campMediaSlots[ci][g].length<qCr)BWZ.campMediaSlots[ci][g].push({hash:null,preview_url:null});
+      BWZ.campMediaSlots[ci][g].length=qCr;
+    }
+  }
+  // live counter
+  const totalAds=qC*qConj*qCr;
+  const totalEl=document.getElementById('bwz-qty-total-label');
+  if(totalEl)totalEl.innerHTML=`${qC} campanha${qC!==1?'s':''} × ${qConj} conjuntos × ${qCr} criativos = <strong>${totalAds} ads</strong>`;
+  const imgsEl=document.getElementById('bwz-qty-imgs-label');
+  if(imgsEl)imgsEl.textContent=`${qConj*qCr} imagens/campanha`;
+  botWizUpdateWeekly();
 };
 
-window.bwzDropzoneDrop=function(e){
-  e.preventDefault();
-  document.getElementById('bwz-dropzone').classList.remove('over');
-  bwzBatchFiles(e.dataTransfer.files);
-};
-
-/* Distribui N itens em 6 grupos × max 3 slots com ciclo */
-function bwzSyncSlots(){
-  BWZ.mediaSlots=Array.from({length:6},()=>[
-    {hash:null,preview_url:null},{hash:null,preview_url:null},{hash:null,preview_url:null}
-  ]);
-  const items=BWZ._dropItems.filter(it=>it.hash);
+/* Distribui N itens de uma campanha em qConj grupos × qCr slots (sequencial) */
+function bwzSyncCampSlots(ci){
+  const qConj=BWZ.d.qtd_conjuntos||6;
+  const qCr  =BWZ.d.qtd_criativos||3;
+  // reinicia slots
+  BWZ.campMediaSlots[ci]=Array.from({length:qConj},()=>
+    Array.from({length:qCr},()=>({hash:null,preview_url:null}))
+  );
+  const items=(BWZ.campDropItems[ci]||[]).filter(it=>it.hash);
   const N=items.length;
   if(!N)return;
-  const perGroup=Math.max(1,Math.ceil(N/6));
-  for(let g=0;g<6;g++){
-    for(let s=0;s<perGroup&&s<3;s++){
-      const idx=(g*perGroup+s)%N;
-      BWZ.mediaSlots[g][s]={hash:items[idx].hash,preview_url:items[idx].preview_url};
+  // distribuição sequencial: imgs 0..qCr-1 → conjunto 0, qCr..2qCr-1 → conjunto 1, etc.
+  let idx=0;
+  for(let g=0;g<qConj&&idx<N;g++){
+    for(let s=0;s<qCr&&idx<N;s++){
+      BWZ.campMediaSlots[ci][g][s]={hash:items[idx].hash,preview_url:items[idx].preview_url};
+      idx++;
     }
   }
 }
 
-function bwzPrimaryGroup(i,N){
-  const perGroup=Math.max(1,Math.ceil(N/6));
-  return Math.floor(i/perGroup)%6;
+/* Índice de conjunto primário de uma imagem (para badge na grade) */
+function bwzCampPrimaryGroup(i,qConj,qCr){
+  return Math.min(Math.floor(i/qCr),qConj-1);
 }
 
-function bwzRenderDropGrid(){
-  const grid=document.getElementById('bwz-drop-grid');
-  const N=BWZ._dropItems.length;
+/* Renderiza grade de miniaturas para campanha ci */
+function bwzRenderCampDropGrid(ci){
+  const grid=document.getElementById(`bwz-drop-grid-${ci}`);
+  if(!grid)return;
+  const items=BWZ.campDropItems[ci]||[];
+  const N=items.length;
+  const qConj=BWZ.d.qtd_conjuntos||6;
+  const qCr  =BWZ.d.qtd_criativos||3;
   grid.innerHTML='';
-  const limparRow=document.getElementById('bwz-limpar-row');
+  const limparRow=document.getElementById(`bwz-limpar-row-${ci}`);
   if(limparRow)limparRow.style.display=N>0?'flex':'none';
-  BWZ._dropItems.forEach((item,i)=>{
-    const g=bwzPrimaryGroup(i,N);
+  items.forEach((item,i)=>{
+    const g=bwzCampPrimaryGroup(i,qConj,qCr);
     const el=document.createElement('div');
     el.className='bwz-drop-item '+(item.status||'pending');
-    el.draggable=true;
-    el.dataset.idx=i;
+    el.draggable=true;el.dataset.idx=i;
     el.innerHTML=`
       ${item.preview_url?`<img src="${esc(item.preview_url)}" alt="">`:''}
       <div class="bwz-drop-num">${i+1}</div>
@@ -7767,8 +7855,8 @@ function bwzRenderDropGrid(){
           item.status==='done'?'<span style="color:#22c55e;text-shadow:0 1px 3px rgba(0,0,0,.5)">&#10003;</span>':
           item.status==='error'?'<span style="color:#fca5a5">&#10060;</span>':''}
       </div>
-      ${item.status==='error'?`<button class="bwz-drop-retry" onclick="bwzRetryItem(${i})">retry</button>`:''}
-      <button class="btn-remove-img" onclick="event.stopPropagation();removeImagem(${i})" title="Remover">&#215;</button>
+      ${item.status==='error'?`<button class="bwz-drop-retry" onclick="bwzRetryItemCamp(${ci},${i})">retry</button>`:''}
+      <button class="btn-remove-img" onclick="event.stopPropagation();bwzRemoveImagemCamp(${ci},${i})" title="Remover">&#215;</button>
     `;
     el.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',String(i));el.style.opacity='.45';});
     el.addEventListener('dragend',()=>{el.style.opacity='';});
@@ -7779,26 +7867,112 @@ function bwzRenderDropGrid(){
       const from=parseInt(e.dataTransfer.getData('text/plain'));
       const to=parseInt(el.dataset.idx);
       if(from===to||isNaN(from)||isNaN(to))return;
-      const tmp=BWZ._dropItems[from];
-      BWZ._dropItems[from]=BWZ._dropItems[to];
-      BWZ._dropItems[to]=tmp;
-      bwzRenderDropGrid();
-      bwzSyncSlots();
+      const arr=BWZ.campDropItems[ci];
+      const tmp=arr[from];arr[from]=arr[to];arr[to]=tmp;
+      bwzRenderCampDropGrid(ci);
+      bwzSyncCampSlots(ci);
     });
     grid.appendChild(el);
   });
 }
 
-function bwzUpdateProgress(done,total){
-  document.getElementById('bwz-drop-prog-lbl').textContent=`Enviando… ${done} de ${total}`;
-  document.getElementById('bwz-drop-prog-bar').style.width=`${total?Math.round(done/total*100):0}%`;
+function bwzUpdateCampProgress(ci,done,total){
+  const lbl=document.getElementById(`bwz-drop-prog-lbl-${ci}`);
+  const bar=document.getElementById(`bwz-drop-prog-bar-${ci}`);
+  if(lbl)lbl.textContent=`Enviando… ${done} de ${total}`;
+  if(bar)bar.style.width=`${total?Math.round(done/total*100):0}%`;
 }
 
-window.bwzRetryItem=async function(i){
-  const item=BWZ._dropItems[i];
+/* Renderiza TODAS as seções de campanha no step 5 */
+window.bwzRenderMediaGrid=function(){
+  const qC   =BWZ.d.qtd_campanhas||1;
+  const qConj=BWZ.d.qtd_conjuntos||6;
+  const qCr  =BWZ.d.qtd_criativos||3;
+  const need =qConj*qCr;
+  const container=document.getElementById('bwz-camp-sections');
+  if(!container)return;
+  container.innerHTML='';
+  const sub=document.getElementById('bwz-step5-sub');
+  if(sub)sub.textContent=`${need} imagem${need!==1?'s':''} por campanha (${qConj} conjuntos × ${qCr} criativos) · copies compartilhadas.`;
+  for(let ci=0;ci<qC;ci++){
+    const cpLabel=`CP${String(ci+1).padStart(2,'0')}`;
+    const sec=document.createElement('div');
+    sec.style.cssText='margin-bottom:1.25rem;padding:.875rem;border:1px solid var(--border);border-radius:.625rem;background:var(--sec)';
+    sec.innerHTML=`
+      <div style="font-weight:600;font-size:.875rem;margin-bottom:.625rem;color:var(--accent)">${cpLabel} — ${need} imagens necessárias</div>
+      <div class="bwz-dropzone" id="bwz-dropzone-${ci}"
+        style="cursor:pointer"
+        ondragover="event.preventDefault();this.classList.add('over')"
+        ondragleave="this.classList.remove('over')"
+        ondrop="bwzDropzoneDrop(event,${ci})"
+        onclick="bwzOpenFilePicker(${ci})">
+        <div class="bwz-dropzone-ico">&#128444;&#65039;</div>
+        <div class="bwz-dropzone-lbl">Solte ${need} imagens ou clique</div>
+        <div class="bwz-dropzone-sub">JPEG · PNG · GIF · múltiplos arquivos</div>
+      </div>
+      <div class="bwz-limpar-row" id="bwz-limpar-row-${ci}" style="display:none">
+        <div id="bwz-limpar-confirm-wrap-${ci}"></div>
+        <button class="bwz-limpar-btn" onclick="bwzLimparCamp(${ci})">Limpar tudo</button>
+      </div>
+      <div class="bwz-drop-warn" id="bwz-drop-warn-${ci}"></div>
+      <div class="bwz-drop-progress" id="bwz-drop-progress-${ci}">
+        <div class="bwz-drop-prog-lbl" id="bwz-drop-prog-lbl-${ci}">Enviando…</div>
+        <div class="bwz-drop-prog-track"><div class="bwz-drop-prog-bar" id="bwz-drop-prog-bar-${ci}"></div></div>
+      </div>
+      <div class="bwz-drop-grid" id="bwz-drop-grid-${ci}"></div>
+    `;
+    container.appendChild(sec);
+    bwzRenderCampDropGrid(ci);
+  }
+};
+
+window.bwzOpenFilePicker=function(ci){
+  BWZ._activeCampIdx=ci;
+  const inp=document.getElementById('bwz-file-batch');
+  if(inp){inp.value='';inp.click();}
+};
+
+window.bwzDropzoneDrop=function(e,ci){
+  e.preventDefault();
+  document.getElementById(`bwz-dropzone-${ci}`)?.classList.remove('over');
+  bwzBatchFiles(e.dataTransfer.files,ci);
+};
+
+window.bwzBatchFilesInput=function(inp){
+  const ci=BWZ._activeCampIdx??0;
+  bwzBatchFiles(inp.files,ci);
+  inp.value='';
+};
+
+window.bwzRemoveImagemCamp=function(ci,idx){
+  BWZ.campDropItems[ci].splice(idx,1);
+  document.getElementById(`bwz-limpar-confirm-wrap-${ci}`)&&
+    (document.getElementById(`bwz-limpar-confirm-wrap-${ci}`).innerHTML='');
+  bwzRenderCampDropGrid(ci);
+  bwzSyncCampSlots(ci);
+};
+
+window.bwzLimparCamp=function(ci){
+  const wrap=document.getElementById(`bwz-limpar-confirm-wrap-${ci}`);
+  const n=BWZ.campDropItems[ci].length;
+  if(!n){if(wrap)wrap.innerHTML='';return;}
+  if(wrap)wrap.innerHTML=`<div class="bwz-limpar-confirm">Limpar as ${n} imagens de CP${String(ci+1).padStart(2,'0')}?&nbsp;<button class="btn-sim" onclick="bwzLimparCampConfirmado(${ci})">Sim</button><button class="btn-nao" onclick="document.getElementById('bwz-limpar-confirm-wrap-${ci}').innerHTML=''">Não</button></div>`;
+};
+window.bwzLimparCampConfirmado=function(ci){
+  const qConj=BWZ.d.qtd_conjuntos||6;
+  const qCr  =BWZ.d.qtd_criativos||3;
+  BWZ.campDropItems[ci]=[];
+  BWZ.campMediaSlots[ci]=Array.from({length:qConj},()=>Array.from({length:qCr},()=>({hash:null,preview_url:null})));
+  const wrap=document.getElementById(`bwz-limpar-confirm-wrap-${ci}`);
+  if(wrap)wrap.innerHTML='';
+  bwzRenderCampDropGrid(ci);
+};
+
+window.bwzRetryItemCamp=async function(ci,i){
+  const item=BWZ.campDropItems[ci]?.[i];
   if(!item||!item.file)return;
   item.status='loading';item.hash=null;item.preview_url=null;
-  bwzRenderDropGrid();
+  bwzRenderCampDropGrid(ci);
   const fd=new FormData();
   fd.append('file',item.file);fd.append('account_id',BWZ.d.account_id);
   try{
@@ -7806,36 +7980,12 @@ window.bwzRetryItem=async function(i){
     const data=await r.json();
     if(!r.ok||data.error)throw new Error(data.detail||data.error||'Erro no upload');
     item.hash=data.hash;item.preview_url=data.url||null;item.status='done';
-  }catch(e){
-    item.status='error';item.errMsg=e.message;
-  }
-  bwzRenderDropGrid();
-  bwzSyncSlots();
+  }catch(e){item.status='error';item.errMsg=e.message;}
+  bwzRenderCampDropGrid(ci);
+  bwzSyncCampSlots(ci);
 };
 
-// ── Ajuste 2: remove individual image ─────────────────────────────────────
-window.removeImagem=function(idx){
-  BWZ._dropItems.splice(idx,1);
-  document.getElementById('bwz-limpar-confirm-wrap').innerHTML='';
-  bwzRenderDropGrid();
-  bwzSyncSlots();
-};
-
-window.bwzLimparTudo=function(){
-  const wrap=document.getElementById('bwz-limpar-confirm-wrap');
-  const n=BWZ._dropItems.length;
-  if(!n){wrap.innerHTML='';return;}
-  wrap.innerHTML=`<div class="bwz-limpar-confirm">Limpar as ${n} imagens?&nbsp;<button class="btn-sim" onclick="bwzLimparConfirmado()">Sim</button><button class="btn-nao" onclick="bwzLimparNao()">Não</button></div>`;
-};
-window.bwzLimparConfirmado=function(){
-  BWZ._dropItems=[];
-  BWZ.mediaSlots=Array.from({length:6},()=>[{hash:null,preview_url:null},{hash:null,preview_url:null},{hash:null,preview_url:null}]);
-  document.getElementById('bwz-limpar-confirm-wrap').innerHTML='';
-  bwzRenderDropGrid();
-};
-window.bwzLimparNao=function(){
-  document.getElementById('bwz-limpar-confirm-wrap').innerHTML='';
-};
+// Funções legadas removidas — substituídas pelas versões por-campanha (bwzRetryItemCamp, bwzRemoveImagemCamp, bwzLimparCamp)
 
 // ── Ajuste 3: custom page dropdown ────────────────────────────────────────
 BWZ._pagesDom=[];
@@ -7935,7 +8085,7 @@ async function bwzLoadDominios(){
     const sel=document.getElementById('bwz-dom-select');
     const field=document.getElementById('bwz-dom-field');
     if(!doms||!doms.length){field.style.display='none';return;}
-    sel.innerHTML=doms.map(d=>`<option value="${esc(String(d.id))}" data-nome="${esc(d.nome)}">${esc(d.nome)}</option>`).join('');
+    sel.innerHTML=doms.map(d=>`<option value="${esc(String(d.id))}" data-nome="${esc(d.nome)}" data-prefixo="${esc(d.prefixo_campanha||'')}">${esc(d.nome)}</option>`).join('');
     field.style.display='';
     if(doms.length===1){
       bwzDomSelect(String(doms[0].id),doms[0].nome);
@@ -7947,11 +8097,14 @@ window.bwzDomSelect=function(id,nome){
   BWZ.d.dominio_id=id;
   const opt=document.querySelector(`#bwz-dom-select option[value="${id}"]`);
   BWZ.d.dominio_nome=nome||opt?.dataset?.nome||opt?.textContent||'';
+  BWZ.d.dominio_prefixo=opt?.dataset?.prefixo||'';
   document.getElementById('bwz-dom-select').value=id;
   // update step 3 info
   const info=document.getElementById('bwz-dom-step3-info');
   const nm=document.getElementById('bwz-dom-step3-nome');
   if(info&&nm){nm.textContent=BWZ.d.dominio_nome;info.style.display=BWZ.d.dominio_nome?'flex':'none';}
+  // refresh name preview se estiver no step 2
+  if(BWZ.step===2)bwzUpdateNamePreview(null,null);
 };
 
 // ── Ajuste 1 & 4: success state handlers ──────────────────────────────────
@@ -7963,7 +8116,7 @@ function bwzSaveLastState(publishData){
       pixel_id:BWZ.d.pixel_id,conversion_event:BWZ.d.conversion_event,
       daily_budget:BWZ.d.daily_budget,start_time:BWZ.d.start_time,end_time:BWZ.d.end_time,
       age_min:BWZ.d.age_min,age_max:BWZ.d.age_max,gender:BWZ.d.gender,
-      dominio_id:BWZ.d.dominio_id,dominio_nome:BWZ.d.dominio_nome,
+      dominio_id:BWZ.d.dominio_id,dominio_nome:BWZ.d.dominio_nome,dominio_prefixo:BWZ.d.dominio_prefixo,
       account_id:BWZ.d.account_id,account_nome:BWZ.d.account_nome,
       page_id:BWZ.d.page_id,page_name:BWZ.d.page_name,
       selCountries:BWZ.selCountries,selLocales:BWZ.selLocales,selInterests:BWZ.selInterests,
@@ -8022,6 +8175,7 @@ function bwzApplyRecall(state,outraIgual){
     daily_budget:state.daily_budget||7,start_time:state.start_time||'',end_time:state.end_time||null,
     age_min:state.age_min||18,age_max:state.age_max||45,gender:state.gender||0,
     dominio_id:state.dominio_id||'',dominio_nome:state.dominio_nome||'',
+    dominio_prefixo:state.dominio_prefixo||'',
   });
   botWizSetBudgetType(BWZ.d.budget_type);
   const pausedEl=document.getElementById('bwz-paused');if(pausedEl)pausedEl.checked=BWZ.d.paused;
@@ -8061,45 +8215,46 @@ document.addEventListener('click',function(e){
   if(!e.target.closest('#bwz-page-custom')){bwzPageDropClose();}
 });
 
-window.bwzBatchFiles=async function(fileList){
+window.bwzBatchFiles=async function(fileList,ci){
+  const ciIdx=ci??BWZ._activeCampIdx??0;
   const files=Array.from(fileList).filter(f=>f.type.startsWith('image/'));
   if(!files.length)return;
 
-  const N=Math.min(files.length,18);
+  const qConj=BWZ.d.qtd_conjuntos||6;
+  const qCr  =BWZ.d.qtd_criativos||3;
+  const maxImgs=qConj*qCr;
+
+  const N=Math.min(files.length,maxImgs);
   const used=files.slice(0,N);
 
-  const warnEl=document.getElementById('bwz-drop-warn');
-  if(files.length>18){
-    warnEl.textContent=`Apenas as primeiras 18 serão usadas (${files.length} selecionadas)`;
-    warnEl.className='bwz-drop-warn show warn';
-  }else if(N<18){
-    const perGroup=Math.max(1,Math.ceil(N/6));
-    warnEl.textContent=`${N} imagem${N!==1?'s':''} para 6 conjuntos — cada conjunto terá ${perGroup} criativo${perGroup!==1?'s':''}${N<6?' (distribuição cíclica)':''}`;
-    warnEl.className='bwz-drop-warn show info';
-  }else{
-    warnEl.className='bwz-drop-warn';warnEl.textContent='';
+  const warnEl=document.getElementById(`bwz-drop-warn-${ciIdx}`);
+  if(warnEl){
+    if(files.length>maxImgs){
+      warnEl.textContent=`Apenas as primeiras ${maxImgs} serão usadas (${files.length} selecionadas)`;
+      warnEl.className='bwz-drop-warn show warn';
+    }else if(N<maxImgs){
+      warnEl.textContent=`${N} imagem${N!==1?'s':''} para ${qConj} conjuntos × ${qCr} criativos — distribuição sequencial`;
+      warnEl.className='bwz-drop-warn show info';
+    }else{
+      warnEl.className='bwz-drop-warn';warnEl.textContent='';
+    }
   }
 
-  BWZ.mediaSlots=Array.from({length:6},()=>[
-    {hash:null,preview_url:null},{hash:null,preview_url:null},{hash:null,preview_url:null}
-  ]);
-
   // Build preview URLs synchronously before upload
-  BWZ._dropItems=used.map((file,i)=>({file,i,hash:null,preview_url:null,status:'loading'}));
-  // Attach local preview URLs
-  await Promise.all(BWZ._dropItems.map(item=>new Promise(res=>{
+  BWZ.campDropItems[ciIdx]=used.map((file,i)=>({file,i,hash:null,preview_url:null,status:'loading'}));
+  await Promise.all(BWZ.campDropItems[ciIdx].map(item=>new Promise(res=>{
     const fr=new FileReader();
     fr.onload=e=>{item.preview_url=e.target.result;res();};
     fr.readAsDataURL(item.file);
   })));
 
-  bwzRenderDropGrid();
-  const progEl=document.getElementById('bwz-drop-progress');
-  progEl.className='bwz-drop-progress show';
-  bwzUpdateProgress(0,N);
+  bwzRenderCampDropGrid(ciIdx);
+  const progEl=document.getElementById(`bwz-drop-progress-${ciIdx}`);
+  if(progEl)progEl.className='bwz-drop-progress show';
+  bwzUpdateCampProgress(ciIdx,0,N);
 
   let done=0;
-  await Promise.all(BWZ._dropItems.map(async item=>{
+  await Promise.all(BWZ.campDropItems[ciIdx].map(async item=>{
     const fd=new FormData();
     fd.append('file',item.file);fd.append('account_id',BWZ.d.account_id);
     try{
@@ -8111,13 +8266,13 @@ window.bwzBatchFiles=async function(fileList){
       item.status='error';item.errMsg=e.message;
     }
     done++;
-    bwzUpdateProgress(done,N);
-    bwzRenderDropGrid();
-    bwzSyncSlots();
+    bwzUpdateCampProgress(ciIdx,done,N);
+    bwzRenderCampDropGrid(ciIdx);
+    bwzSyncCampSlots(ciIdx);
   }));
 
   setTimeout(()=>{
-    if(BWZ._dropItems.every(it=>it.status!=='loading'))
+    if(BWZ.campDropItems[ciIdx].every(it=>it.status!=='loading')&&progEl)
       progEl.className='bwz-drop-progress';
   },1500);
 };
@@ -8126,24 +8281,46 @@ window.bwzBatchFiles=async function(fileList){
 function botWizRenderStep6(){
   const d=BWZ.d;
   const fmt=n=>`R$ ${(+n).toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
-  const names=bwzAdsetNames();
-  const totalAds=BWZ.mediaSlots.reduce((sum,vSlots)=>sum+vSlots.filter(s=>s.hash).length,0);
-  const totalFilled=BWZ.mediaSlots.flat().filter(s=>s.hash).length;
+  const prefixo=d.dominio_prefixo||'MKUKER';
+  const qC=d.qtd_campanhas||1;const qConj=d.qtd_conjuntos||6;const qCr=d.qtd_criativos||3;
+  const names=bwzAdsetNames(qConj);
+  const s=`${d.sigla_pais}_${d.tema}_${d.idioma}_BOT_${d.numero||'0001'}`;
+  let totalFilledAll=0;
+  const campRows=[];
+  for(let ci=0;ci<qC;ci++){
+    const cpLabel=`CP${String(ci+1).padStart(2,'0')}`;
+    const campName=`[${prefixo}] [${s}] [${d.page_slug||'PAGE'}] ${cpLabel}`;
+    const slots=BWZ.campMediaSlots[ci]||[];
+    const filled=slots.flat().filter(s=>s.hash).length;
+    totalFilledAll+=filled;
+    campRows.push(`<div class="bwz-summary-full" style="font-size:.78rem;background:var(--sec);border:1px solid var(--border);border-radius:.375rem;padding:.375rem .625rem;margin-top:.25rem"><b>${cpLabel}:</b> ${esc(campName)} · ${filled}/${qConj*qCr} imgs</div>`);
+  }
+  const totalAds=qC*qConj*qCr;
+  const startFmt=d.start_time?(()=>{const[y,m,day]=d.start_time.slice(0,10).split('-');return`${day}/${m}/${y}`;})():'—';
   document.getElementById('bwz-summary').innerHTML=`
     <div><b>Conta:</b> ${esc(d.account_nome)}</div>
     <div><b>Página:</b> ${esc(d.page_name)} (${esc(d.page_id)})</div>
-    <div class="bwz-summary-full"><b>Campanha:</b> ${esc(d.campaign_name)}</div>
-    <div class="bwz-summary-full"><b>Conjuntos:</b> ${esc(names[0])} … ${esc(names[5])}</div>
-    <div><b>Orçamento:</b> ${fmt(d.daily_budget)}/dia × 6 = ${fmt(d.daily_budget*6)}/dia total</div>
-    <div><b>Início:</b> ${d.start_time?(()=>{const[y,m,day]=d.start_time.slice(0,10).split('-');return`${day}/${m}/${y}`;})():'—'} às 00:00 (Brasília)</div>
-    <div><b>Mídias:</b> ${totalFilled} imagem${totalFilled!==1?'s':''} carregadas (${BWZ.mediaSlots.map(v=>v.filter(s=>s.hash).length).join('+')})</div>
-    <div class="bwz-summary-full" style="color:var(--accent);font-weight:700">Total de ads: ${totalAds} (6 conjuntos × imagens independentes)</div>`;
+    <div><b>Domínio:</b> ${esc(d.dominio_nome||'—')} <span style="color:var(--muted);font-size:.8em">[${esc(prefixo)}]</span></div>
+    <div><b>Conjuntos/camp.:</b> ${qConj} (${esc(names[0])} … ${esc(names[names.length-1])})</div>
+    <div><b>Orçamento:</b> ${fmt(d.daily_budget)}/dia × ${qConj} = ${fmt(d.daily_budget*qConj)}/dia/camp.</div>
+    <div><b>Início:</b> ${startFmt} às 00:00 (Brasília)</div>
+    ${campRows.join('')}
+    <div class="bwz-summary-full" style="color:var(--accent);font-weight:700;margin-top:.375rem">Total: ${qC} campanha${qC!==1?'s':''} × ${qConj} conjuntos × ${qCr} criativos = ${totalAds} ads</div>`;
+  const sub6=document.getElementById('bwz-step6-sub');
+  if(sub6)sub6.textContent=`Confirme os dados e crie ${totalAds} ads em ${qC} campanha${qC!==1?'s':''}.`;
+  const btnPub=document.getElementById('bwz-btn-publish');
+  if(btnPub)btnPub.textContent=`🚀 Criar ${totalAds} ads`;
 }
 
 /* ─── payload builder ────────────────────────────────────────────────────── */
 function botWizBuildPayload(){
   const d=BWZ.d;
   const genders=d.gender===1?[1]:d.gender===2?[2]:[];
+  const qC=d.qtd_campanhas||1;
+  const qConj=d.qtd_conjuntos||6;
+  const qCr=d.qtd_criativos||3;
+  const prefixo=d.dominio_prefixo||'MKUKER';
+  const s=`${(d.sigla_pais||'').toUpperCase()}_${(d.tema||'').toUpperCase()}_${(d.idioma||'').toUpperCase()}_BOT_${d.numero||'0001'}`;
 
   const adset_template={
     pixel_id:d.pixel_id,
@@ -8160,23 +8337,35 @@ function botWizBuildPayload(){
   if(BWZ.selInterests.length)adset_template.interests=BWZ.selInterests.map(i=>({id:i.id,name:i.name}));
   if(BWZ.selCA.length)adset_template.custom_audiences=BWZ.selCA.map(a=>({id:a.id}));
 
-  const adset_creatives=BWZ.mediaSlots.map(vSlots=>
-    vSlots.filter(s=>s.hash).map(s=>({name:d.page_suffix,image_hash:s.hash}))
-  );
-
   const readContainer=(cid)=>[...document.getElementById(cid)?.querySelectorAll('textarea,input')||[]].map(el=>el.value.trim()).filter(Boolean);
   const texts=readContainer('bwz-texts-container');
   const headlines=readContainer('bwz-hls-container');
   const descriptions=readContainer('bwz-descs-container');
-
   const conv=d.conversation_config;
+
+  // Monta array de campanhas (CP01..CPnn), cada uma com seus próprios criativos
+  const campanhas=[];
+  for(let ci=0;ci<qC;ci++){
+    const cpSuffix=`CP${String(ci+1).padStart(2,'0')}`;
+    const campName=`[${prefixo}] [${s}] [${d.page_slug||'PAGE'}] ${cpSuffix}`;
+    const adset_names=bwzAdsetNames(qConj);
+    // campMediaSlots[ci][conjIdx][slotIdx]
+    const campSlots=BWZ.campMediaSlots[ci]||[];
+    const adset_creatives=campSlots.map(conjSlots=>
+      (conjSlots||[]).filter(sl=>sl.hash).map(sl=>({name:d.page_suffix,image_hash:sl.hash}))
+    );
+    campanhas.push({
+      campaign:{name:campName,objective:'OUTCOME_SALES',status:d.paused?'PAUSED':'ACTIVE',budget_type:d.budget_type},
+      adset_names,
+      adset_creatives,
+    });
+  }
 
   return{
     account_id:d.account_id,
-    campaign:{name:d.campaign_name,objective:'OUTCOME_SALES',status:d.paused?'PAUSED':'ACTIVE',budget_type:d.budget_type},
+    dominio_id:d.dominio_id||null,
     adset_template,
-    adset_names:bwzAdsetNames(),
-    adset_creatives,
+    campanhas,
     copies:{texts,headlines,descriptions},
     page_id:d.page_id,
     ...(conv?{conversation_config:conv}:{}),
@@ -8201,16 +8390,19 @@ window.botWizDryRun=async function(){
 /* ─── confirm ────────────────────────────────────────────────────────────── */
 window.botWizShowConfirm=function(){
   const d=BWZ.d;
-  const totalAds=BWZ.mediaSlots.reduce((sum,vSlots)=>sum+vSlots.filter(s=>s.hash).length,0);
+  const qC=d.qtd_campanhas||1;const qConj=d.qtd_conjuntos||6;const qCr=d.qtd_criativos||3;
+  const totalAds=qC*qConj*qCr;
   const fmt=n=>`R$ ${(+n).toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+  const prefixo=d.dominio_prefixo||'MKUKER';
   document.getElementById('bwz-confirm-body').innerHTML=`
-    <p>Criar campanha pausada em <b>${esc(d.account_nome)}</b>?</p>
+    <p>Criar <b>${qC} campanha${qC!==1?'s':''} pausada${qC!==1?'s':''}</b> em <b>${esc(d.account_nome)}</b>?</p>
     <div style="background:var(--sec);border-radius:.5rem;padding:.75rem 1rem;margin-top:.75rem;font-size:.8125rem;line-height:2">
-      <b>Campanha:</b> ${esc(d.campaign_name)}<br>
-      <b>Conjuntos:</b> 6 (V1 a V6)<br>
-      <b>Imagens por conjunto:</b> ${BWZ.mediaSlots.map((v,i)=>`V${i+1}:${v.filter(s=>s.hash).length}`).join(' ')}<br>
+      <b>Domínio:</b> [${esc(prefixo)}] ${esc(d.dominio_nome||'')}<br>
+      <b>Campanhas:</b> ${qC} (CP01…CP${String(qC).padStart(2,'0')})<br>
+      <b>Conjuntos/camp.:</b> ${qConj} (V1…V${qConj})<br>
+      <b>Criativos/conj.:</b> ${qCr}<br>
       <b>Total de ads:</b> ${totalAds}<br>
-      <b>Orçamento:</b> ${fmt(d.daily_budget)}/dia × 6 = ${fmt(d.daily_budget*6)}/dia<br>
+      <b>Orçamento:</b> ${fmt(d.daily_budget)}/dia × ${qConj} = ${fmt(d.daily_budget*qConj)}/dia/camp.<br>
       <b>Início:</b> ${(()=>{const[y,m,day]=d.start_time.slice(0,10).split('-');return`${day}/${m}/${y}`;})() } às 00:00 (Brasília)
     </div>`;
   document.getElementById('bwz-confirm-overlay').classList.add('on');
@@ -8259,12 +8451,16 @@ window.botWizPublish=async function(){
           barFill.style.width='100%';
           progWrap.style.display='none';
           bwzSaveLastState(data);
+          const succs=data.successes||[{campaign_id:data.campaign_id,ad_count:data.ad_count,adset_count:data.adset_count,meta_url:data.meta_url,campaign_name:'Campanha'}];
+          const fails=data.failures||[];
+          const totalAds=data.total_ads||data.ad_count||0;
+          const successRows=succs.map(s=>`<div style="font-size:.8125rem;margin:.25rem 0">&#9989; <code>${esc(s.campaign_id)}</code> — ${s.ad_count} ads &nbsp;<a href="${esc(s.meta_url)}" target="_blank" style="color:var(--accent)">&#128279;</a></div>`).join('');
+          const failRows=fails.map(f=>`<div style="font-size:.8125rem;margin:.25rem 0;color:var(--danger)">&#10060; ${esc(f.campaign_name)}: ${esc(f.error)}</div>`).join('');
           resultDiv.innerHTML=`<div class="bwz-result-ok">
             <div style="font-size:1.5rem;margin-bottom:.5rem">&#127881;</div>
-            <div style="font-weight:700;font-size:1rem;color:var(--success);margin-bottom:.5rem">&#9989; ${data.ad_count} ads criados com sucesso!</div>
-            <div style="font-size:.8125rem;color:var(--muted);margin-bottom:.75rem">Campanha: <code>${esc(data.campaign_id)}</code> · ${data.adset_count} conjuntos</div>
-            <div class="bwz-success-btns">
-              <a href="${esc(data.meta_url)}" target="_blank" class="btn-outline" style="display:inline-flex;align-items:center;gap:.5rem;text-decoration:none;padding:.5rem 1rem">&#128279; Abrir no Ads Manager</a>
+            <div style="font-weight:700;font-size:1rem;color:var(--success);margin-bottom:.25rem">&#9989; ${totalAds} ads criados em ${succs.length} campanha${succs.length!==1?'s':''}!</div>
+            ${successRows}${failRows}
+            <div class="bwz-success-btns" style="margin-top:.875rem">
               <button class="btn-outline" onclick="bwzCriarOutraIgual()">Criar outra igual</button>
               <button class="btn-primary" onclick="bwzFinalizar()">Finalizar</button>
             </div>
@@ -8376,11 +8572,13 @@ function drzSlug(){
   const num=d.numero||'0001';
   return `${pais}_${tema}_DIRETO_${num}`;
 }
-function drzCampName(){
+function drzCampName(cpIdx){
   const d=DRZ.d;
   const slug=drzSlug();
   const pais=(d.sigla_pais||'NG').toUpperCase();
-  return `[MKUKER] [${slug}] [DIRETO${pais}] CP01`;
+  const prefixo=d.dominio_prefixo||'MKUKER';
+  const cpSuffix=`CP${String((cpIdx||0)+1).padStart(2,'0')}`;
+  return `[${prefixo}] [${slug}] [DIRETO${pais}] ${cpSuffix}`;
 }
 function drzAdsetNames(){
   const n=DRZ.d.n_conjuntos||2;
@@ -8394,6 +8592,32 @@ function drzCreativeName(conjIdx,slotIdx){
   return slotIdx===0 ? base : `${base}-${slotIdx+1}`;
 }
 
+// ── domínio ───────────────────────────────────────────────────────────────────
+async function drzLoadDominios(){
+  try{
+    const r=await fetch('/api/dominios');
+    const doms=await r.json();
+    const sel=document.getElementById('drz-dom-select');
+    const field=document.getElementById('drz-dom-field');
+    if(!doms||!doms.length){if(field)field.style.display='none';return;}
+    if(sel){
+      sel.innerHTML=doms.map(d=>`<option value="${esc(String(d.id))}" data-prefixo="${esc(d.prefixo_campanha||'')}" data-nome="${esc(d.nome)}">${esc(d.nome)}</option>`).join('');
+    }
+    if(field)field.style.display='';
+    if(doms.length===1)drzDomSelect(String(doms[0].id));
+    else if(sel)drzDomSelect(sel.value||String(doms[0].id));
+  }catch(e){console.error('[drz dom]',e.message);}
+}
+window.drzDomSelect=function(id){
+  DRZ.d.dominio_id=id;
+  const opt=document.querySelector(`#drz-dom-select option[value="${id}"]`);
+  DRZ.d.dominio_prefixo=opt?.dataset?.prefixo||'';
+  DRZ.d.dominio_nome=opt?.dataset?.nome||opt?.textContent||'';
+  if(document.getElementById('drz-dom-select'))
+    document.getElementById('drz-dom-select').value=id;
+  drzUpdatePreview();
+};
+
 // ── open / cancel ─────────────────────────────────────────────────────────────
 function drzOpen(){
   // reset state
@@ -8405,10 +8629,13 @@ function drzOpen(){
     pixel_id:'',custom_conversion_id:'1187119583443241',
     daily_budget:7,start_time:'',end_time:null,
     age_min:18,age_max:65,gender:0,url_destino:'',
+    dominio_id:'',dominio_prefixo:'',dominio_nome:'',
+    qtd_campanhas:1,qtd_criativos:3,
   });
   DRZ.selInterests=[];DRZ.selCountries=[{code:'BR',name:'Brasil'}];
   DRZ.selLocales=[{id:6,name:'Português (Brasil)'}];DRZ.selCA=[];
-  DRZ.mediaGroups=[];DRZ.pixels=[];DRZ.pages=[];DRZ.customAudiences=[];
+  DRZ.mediaGroups=[[]]; // [campanha][conjunto][slot] — 1 campanha vazia por default
+  DRZ.pixels=[];DRZ.pages=[];DRZ.customAudiences=[];
   DRZ._pagesReq=0;
 
   // populate accounts from BWZ accounts (shared)
@@ -8457,9 +8684,14 @@ function drzOpen(){
   drzAddCopyField('text');
   drzAddCopyField('headline');
 
+  // reset novos qty inputs
+  const dqcEl=document.getElementById('drz-qtd-campanhas');if(dqcEl)dqcEl.value=1;
+  const dqrEl=document.getElementById('drz-qtd-criativos');if(dqrEl)dqrEl.value=3;
+
   // rebuild media groups
   drzRebuildMediaGrid();
   drzUpdatePreview();
+  drzLoadDominios();
 
   drzGoStep(1);
   document.getElementById('drz-overlay').style.display='flex';
@@ -8525,6 +8757,8 @@ function drzValidateStep(s){
     if(!DRZ.d.sigla_pais) return 'SIGLA_PAIS é obrigatório';
     if(!DRZ.d.tema) return 'TEMA é obrigatório';
     if(!DRZ.d.n_conjuntos||DRZ.d.n_conjuntos<1) return 'N conjuntos deve ser ≥ 1';
+    if(!DRZ.d.qtd_campanhas||DRZ.d.qtd_campanhas<1) return 'Qtd campanhas deve ser ≥ 1';
+    if(!DRZ.d.qtd_criativos||DRZ.d.qtd_criativos<1) return 'Qtd criativos deve ser ≥ 1';
   }
   if(s===3){
     if(!DRZ.d.pixel_id) return 'Selecione um pixel';
@@ -8607,24 +8841,39 @@ function drzUpdatePreview(){
   const n=parseInt(nEl?.value)||2;
   DRZ.d.n_conjuntos=n;
 
-  const totalAds=n*3;
+  const qC=Math.max(1,parseInt(document.getElementById('drz-qtd-campanhas')?.value)||1);
+  const qCr=Math.max(1,parseInt(document.getElementById('drz-qtd-criativos')?.value)||3);
+  DRZ.d.qtd_campanhas=qC;
+  DRZ.d.qtd_criativos=qCr;
+
+  const totalAds=qC*n*qCr;
   const elTotal=document.getElementById('drz-total-ads');
   if(elTotal) elTotal.textContent=totalAds;
+  const sumEl=document.getElementById('drz-total-summary');
+  if(sumEl) sumEl.innerHTML=`${qC} × ${n} × ${qCr} = <strong id="drz-total-ads">${totalAds}</strong> ads`;
+  const imgsEl=document.getElementById('drz-imgs-label');
+  if(imgsEl) imgsEl.textContent=`${n*qCr} imagens/campanha`;
 
   const names=drzAdsetNames();
   const preview=document.getElementById('drz-naming-preview');
   if(preview){
-    const lines=[`Campanha: ${drzCampName()}`,'','Conjuntos:'];
-    names.forEach(nm=>lines.push('  '+nm));
+    const lines=[];
+    for(let ci=0;ci<Math.min(qC,2);ci++){
+      lines.push(`Campanha CP${String(ci+1).padStart(2,'0')}: ${drzCampName(ci)}`,'Conjuntos:');
+      names.forEach(nm=>lines.push('  '+nm));
+    }
+    if(qC>2) lines.push(`... +${qC-2} campanhas`);
     lines.push('','Criativos (ex conj.1):');
-    [0,1,2].forEach(j=>lines.push('  '+drzCreativeName(0,j)));
+    for(let j=0;j<Math.min(qCr,3);j++) lines.push('  '+drzCreativeName(0,j));
+    if(qCr>3) lines.push(`  ... +${qCr-3}`);
     preview.textContent=lines.join('\n');
   }
 
   if(!DRZ.d.campNameEdited){
     const el=document.getElementById('drz-campaign-name');
-    if(el) el.value=drzCampName();
-    DRZ.d.campaign_name=drzCampName();
+    const name=drzCampName(0);
+    if(el) el.value=name;
+    DRZ.d.campaign_name=name;
   }
 }
 
@@ -8815,21 +9064,38 @@ function drzAddCA(val){
 // ── Step 5: URL + media grid + copies ────────────────────────────────────────
 function drzLoadStep5(){
   const n=DRZ.d.n_conjuntos||2;
+  const qCr=DRZ.d.qtd_criativos||3;
   const countEl=document.getElementById('drz-grupos-count');
   const slotsEl=document.getElementById('drz-slots-count');
   if(countEl) countEl.textContent=n;
-  if(slotsEl) slotsEl.textContent=n*3;
+  if(slotsEl) slotsEl.textContent=n*qCr;
   drzRebuildMediaGrid();
   drzUpdateUrlPreview();
 }
 
 function drzRebuildMediaGrid(){
   const n=DRZ.d.n_conjuntos||2;
-  // extend mediaGroups to n groups, preserve existing data
-  while(DRZ.mediaGroups.length<n){
-    DRZ.mediaGroups.push([{hash:null,video_id:null,preview_url:null},{hash:null,video_id:null,preview_url:null},{hash:null,video_id:null,preview_url:null}]);
+  const qCr=DRZ.d.qtd_criativos||3;
+  const qC=DRZ.d.qtd_campanhas||1;
+  // mediaGroups agora é 3D: [campanha][conjunto][slot]
+  // Para backward compat, DRZ.mediaGroups continua acessível como [ci][gi][si]
+  while(DRZ.mediaGroups.length<qC){
+    DRZ.mediaGroups.push([]);
   }
-  DRZ.mediaGroups.length=n;
+  DRZ.mediaGroups.length=qC;
+  for(let ci=0;ci<qC;ci++){
+    if(!Array.isArray(DRZ.mediaGroups[ci]))DRZ.mediaGroups[ci]=[];
+    const grp=DRZ.mediaGroups[ci];
+    while(grp.length<n){
+      grp.push(Array.from({length:qCr},()=>({hash:null,video_id:null,preview_url:null})));
+    }
+    grp.length=n;
+    for(let g=0;g<n;g++){
+      if(!Array.isArray(grp[g]))grp[g]=[];
+      while(grp[g].length<qCr) grp[g].push({hash:null,video_id:null,preview_url:null});
+      grp[g].length=qCr;
+    }
+  }
   drzRenderGrid();
 }
 
@@ -8837,63 +9103,76 @@ function drzRenderGrid(){
   const grid=document.getElementById('drz-media-grid');
   if(!grid)return;
   grid.innerHTML='';
-  DRZ.mediaGroups.forEach((slots,gi)=>{
-    const adsetName=drzAdsetNames()[gi]||`Conjunto ${gi+1}`;
-    const grupo=document.createElement('div');
-    grupo.className='drz-grupo';
-    grupo.innerHTML=`<div class="drz-grupo-hdr">${adsetName}</div><div class="drz-slots-row" id="drz-slots-row-${gi}"></div>`;
-    grid.appendChild(grupo);
-    const row=document.getElementById(`drz-slots-row-${gi}`);
-    slots.forEach((slot,si)=>drzRenderSlot(row,gi,si,slot));
-  });
+  const qC=DRZ.d.qtd_campanhas||1;
+  for(let ci=0;ci<qC;ci++){
+    const cpLabel=`CP${String(ci+1).padStart(2,'0')}`;
+    const campDiv=document.createElement('div');
+    campDiv.style.cssText='margin-bottom:1rem;padding:.75rem;border:1px solid var(--border);border-radius:.5rem;background:var(--sec)';
+    campDiv.innerHTML=`<div style="font-weight:600;color:var(--accent);font-size:.875rem;margin-bottom:.5rem">${cpLabel}</div><div id="drz-grupos-${ci}"></div>`;
+    grid.appendChild(campDiv);
+    const grupContainer=document.getElementById(`drz-grupos-${ci}`);
+    const groups=DRZ.mediaGroups[ci]||[];
+    const names=drzAdsetNames();
+    groups.forEach((slots,gi)=>{
+      const adsetName=names[gi]||`Conjunto ${gi+1}`;
+      const grupo=document.createElement('div');
+      grupo.className='drz-grupo';
+      grupo.innerHTML=`<div class="drz-grupo-hdr">${adsetName}</div><div class="drz-slots-row" id="drz-slots-row-${ci}-${gi}"></div>`;
+      grupContainer.appendChild(grupo);
+      const row=document.getElementById(`drz-slots-row-${ci}-${gi}`);
+      slots.forEach((slot,si)=>drzRenderSlot(row,ci,gi,si,slot));
+    });
+  }
 }
 
-function drzRenderSlot(row,gi,si,slot){
+function drzRenderSlot(row,ci,gi,si,slot){
   const lbl=drzCreativeName(gi,si);
   const div=document.createElement('div');
   div.className='drz-slot'+(slot.hash||slot.video_id?' has-media':'');
-  div.id=`drz-slot-${gi}-${si}`;
+  div.id=`drz-slot-${ci}-${gi}-${si}`;
   div.title=lbl;
   if(slot.uploading){
     div.classList.add('uploading');
     div.innerHTML=`<div class="drz-spin"></div><div class="drz-slot-lbl">${lbl}</div>`;
   } else if(slot.preview_url){
     if(slot.video_id){
-      div.innerHTML=`<video src="${slot.preview_url}" muted></video><button class="drz-slot-rm" onclick="event.stopPropagation();drzRemoveSlot(${gi},${si})">×</button><div class="drz-slot-lbl" style="position:relative;z-index:1">${lbl}</div>`;
+      div.innerHTML=`<video src="${slot.preview_url}" muted></video><button class="drz-slot-rm" onclick="event.stopPropagation();drzRemoveSlot(${ci},${gi},${si})">×</button><div class="drz-slot-lbl" style="position:relative;z-index:1">${lbl}</div>`;
     } else {
-      div.innerHTML=`<img src="${slot.preview_url}"><button class="drz-slot-rm" onclick="event.stopPropagation();drzRemoveSlot(${gi},${si})">×</button><div class="drz-slot-lbl" style="position:relative;z-index:1">${lbl}</div>`;
+      div.innerHTML=`<img src="${slot.preview_url}"><button class="drz-slot-rm" onclick="event.stopPropagation();drzRemoveSlot(${ci},${gi},${si})">×</button><div class="drz-slot-lbl" style="position:relative;z-index:1">${lbl}</div>`;
     }
   } else {
     div.innerHTML=`<span style="font-size:1.5rem">+</span><div class="drz-slot-lbl">${lbl}</div>`;
   }
-  div.onclick=(e)=>{if(e.target.classList.contains('drz-slot-rm'))return;drzSlotClick(gi,si);};
+  div.onclick=(e)=>{if(e.target.classList.contains('drz-slot-rm'))return;drzSlotClick(ci,gi,si);};
   row.appendChild(div);
 }
 
-function drzSlotClick(gi,si){
+function drzSlotClick(ci,gi,si){
   const inp=document.createElement('input');
   inp.type='file';inp.accept='image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime';
-  inp.onchange=()=>{if(inp.files[0])drzUploadSlot(gi,si,inp.files[0]);};
+  inp.onchange=()=>{if(inp.files[0])drzUploadSlot(ci,gi,si,inp.files[0]);};
   inp.click();
 }
 
-function drzRemoveSlot(gi,si){
-  DRZ.mediaGroups[gi][si]={hash:null,video_id:null,preview_url:null};
-  const row=document.getElementById(`drz-slots-row-${gi}`);
+function drzRemoveSlot(ci,gi,si){
+  if(!DRZ.mediaGroups[ci])return;
+  DRZ.mediaGroups[ci][gi][si]={hash:null,video_id:null,preview_url:null};
+  const row=document.getElementById(`drz-slots-row-${ci}-${gi}`);
   if(row){
-    const existing=document.getElementById(`drz-slot-${gi}-${si}`);
+    const existing=document.getElementById(`drz-slot-${ci}-${gi}-${si}`);
     if(existing) existing.remove();
-    drzRenderSlot(row,gi,si,DRZ.mediaGroups[gi][si]);
+    drzRenderSlot(row,ci,gi,si,DRZ.mediaGroups[ci][gi][si]);
   }
 }
 
-function drzUploadSlot(gi,si,file){
-  DRZ.mediaGroups[gi][si]={hash:null,video_id:null,preview_url:null,uploading:true};
-  const row=document.getElementById(`drz-slots-row-${gi}`);
+function drzUploadSlot(ci,gi,si,file){
+  if(!DRZ.mediaGroups[ci])return;
+  DRZ.mediaGroups[ci][gi][si]={hash:null,video_id:null,preview_url:null,uploading:true};
+  const row=document.getElementById(`drz-slots-row-${ci}-${gi}`);
   if(row){
-    const existing=document.getElementById(`drz-slot-${gi}-${si}`);
+    const existing=document.getElementById(`drz-slot-${ci}-${gi}-${si}`);
     if(existing) existing.remove();
-    drzRenderSlot(row,gi,si,DRZ.mediaGroups[gi][si]);
+    drzRenderSlot(row,ci,gi,si,DRZ.mediaGroups[ci][gi][si]);
   }
   const isVideo=/^video\//.test(file.type);
   const endpoint=isVideo?'/api/meta-resources/upload-video':'/api/meta-resources/upload-image';
@@ -8905,21 +9184,21 @@ function drzUploadSlot(gi,si,file){
     .then(r=>r.json()).then(data=>{
       if(data.error){throw new Error(data.detail||data.error);}
       const preview=isVideo?(URL.createObjectURL(file)):data.url||URL.createObjectURL(file);
-      DRZ.mediaGroups[gi][si]={
+      DRZ.mediaGroups[ci][gi][si]={
         hash:isVideo?null:(data.hash||null),
         video_id:isVideo?(data.video_id||null):null,
         preview_url:preview,uploading:false,
       };
-      const r2=document.getElementById(`drz-slots-row-${gi}`);
-      const ex=document.getElementById(`drz-slot-${gi}-${si}`);
+      const r2=document.getElementById(`drz-slots-row-${ci}-${gi}`);
+      const ex=document.getElementById(`drz-slot-${ci}-${gi}-${si}`);
       if(ex) ex.remove();
-      if(r2) drzRenderSlot(r2,gi,si,DRZ.mediaGroups[gi][si]);
+      if(r2) drzRenderSlot(r2,ci,gi,si,DRZ.mediaGroups[ci][gi][si]);
     }).catch(err=>{
-      DRZ.mediaGroups[gi][si]={hash:null,video_id:null,preview_url:null,uploading:false};
-      const r2=document.getElementById(`drz-slots-row-${gi}`);
-      const ex=document.getElementById(`drz-slot-${gi}-${si}`);
+      DRZ.mediaGroups[ci][gi][si]={hash:null,video_id:null,preview_url:null,uploading:false};
+      const r2=document.getElementById(`drz-slots-row-${ci}-${gi}`);
+      const ex=document.getElementById(`drz-slot-${ci}-${gi}-${si}`);
       if(ex) ex.remove();
-      if(r2) drzRenderSlot(r2,gi,si,DRZ.mediaGroups[gi][si]);
+      if(r2) drzRenderSlot(r2,ci,gi,si,DRZ.mediaGroups[ci][gi][si]);
       alert('Erro ao enviar mídia: '+err.message);
     });
 }
@@ -8964,22 +9243,34 @@ function drzGetCopies(){
 function drzBuildSummary(){
   const d=DRZ.d;
   const copies=drzGetCopies();
-  // sync campaign name
   const cnEl=document.getElementById('drz-campaign-name');
   if(cnEl&&cnEl.value) d.campaign_name=cnEl.value.trim();
-  if(!d.campaign_name) d.campaign_name=drzCampName();
+  if(!d.campaign_name) d.campaign_name=drzCampName(0);
 
+  const qC=d.qtd_campanhas||1;
   const names=drzAdsetNames();
+  const qCr=d.qtd_criativos||3;
+  const totalAds=qC*names.length*qCr;
   let filled=0,total=0;
-  DRZ.mediaGroups.forEach(g=>g.forEach(s=>{total++;if(s.hash||s.video_id)filled++;}));
+  DRZ.mediaGroups.forEach(campGrps=>{
+    (campGrps||[]).forEach(g=>g.forEach(s=>{total++;if(s.hash||s.video_id)filled++;}));
+  });
+
+  const campRows=[];
+  for(let ci=0;ci<qC;ci++){
+    campRows.push(`<div class="bwz-sum-row"><span class="bwz-sum-k">CP${String(ci+1).padStart(2,'0')}</span><span class="bwz-sum-v" style="font-size:.78rem">${esc(drzCampName(ci))}</span></div>`);
+  }
 
   const html=`
 <div style="display:grid;gap:.5rem">
- <div class="bwz-sum-row"><span class="bwz-sum-k">Campanha</span><span class="bwz-sum-v">${d.campaign_name}</span></div>
  <div class="bwz-sum-row"><span class="bwz-sum-k">Conta</span><span class="bwz-sum-v">${d.account_nome||d.account_id}</span></div>
  <div class="bwz-sum-row"><span class="bwz-sum-k">Página</span><span class="bwz-sum-v">${d.page_name}</span></div>
- <div class="bwz-sum-row"><span class="bwz-sum-k">Conjuntos</span><span class="bwz-sum-v">${names.length}</span></div>
- <div class="bwz-sum-row"><span class="bwz-sum-k">Total ads</span><span class="bwz-sum-v">${names.length*3}</span></div>
+ <div class="bwz-sum-row"><span class="bwz-sum-k">Domínio</span><span class="bwz-sum-v">[${esc(d.dominio_prefixo||'?')}] ${esc(d.dominio_nome||'—')}</span></div>
+ ${campRows.join('')}
+ <div class="bwz-sum-row"><span class="bwz-sum-k">Campanhas</span><span class="bwz-sum-v">${qC}</span></div>
+ <div class="bwz-sum-row"><span class="bwz-sum-k">Conjuntos/camp.</span><span class="bwz-sum-v">${names.length}</span></div>
+ <div class="bwz-sum-row"><span class="bwz-sum-k">Criativos/conj.</span><span class="bwz-sum-v">${qCr}</span></div>
+ <div class="bwz-sum-row"><span class="bwz-sum-k">Total ads</span><span class="bwz-sum-v" style="color:var(--accent);font-weight:700">${totalAds}</span></div>
  <div class="bwz-sum-row"><span class="bwz-sum-k">Mídia</span><span class="bwz-sum-v">${filled}/${total} slots preenchidos</span></div>
  <div class="bwz-sum-row"><span class="bwz-sum-k">Pixel</span><span class="bwz-sum-v">${d.pixel_id}</span></div>
  <div class="bwz-sum-row"><span class="bwz-sum-k">Conv. ID</span><span class="bwz-sum-v">${d.custom_conversion_id||'1187119583443241'}</span></div>
@@ -8996,7 +9287,7 @@ function drzBuildPayload(status){
   const copies=drzGetCopies();
   const cnEl=document.getElementById('drz-campaign-name');
   if(cnEl&&cnEl.value) d.campaign_name=cnEl.value.trim();
-  if(!d.campaign_name) d.campaign_name=drzCampName();
+  if(!d.campaign_name) d.campaign_name=drzCampName(0);
 
   const budgetBRL=parseFloat(document.getElementById('drz-budget')?.value||d.daily_budget)||7;
   const budgetCents=Math.round(budgetBRL*100);
@@ -9026,32 +9317,42 @@ function drzBuildPayload(status){
     custom_audiences:DRZ.selCA.map(a=>({id:a.id})),
   };
 
+  const qC=d.qtd_campanhas||1;
   const names=drzAdsetNames();
-  const adset_creatives=DRZ.mediaGroups.map((slots,gi)=>
-    slots.map((slot,si)=>{
-      const cr={name:drzCreativeName(gi,si)};
-      if(slot.video_id) cr.video_id=slot.video_id;
-      else if(slot.hash) cr.image_hash=slot.hash;
-      return cr;
-    })
-  );
+
+  // Monta array de campanhas (CP01..CPnn), cada uma com seus próprios criativos
+  const campanhas=[];
+  for(let ci=0;ci<qC;ci++){
+    const adset_creatives=(DRZ.mediaGroups[ci]||[]).map((slots,gi)=>
+      slots.map((slot,si)=>{
+        const cr={name:drzCreativeName(gi,si)};
+        if(slot.video_id) cr.video_id=slot.video_id;
+        else if(slot.hash) cr.image_hash=slot.hash;
+        return cr;
+      })
+    );
+    campanhas.push({
+      campaign:{
+        name:drzCampName(ci),
+        objective:'OUTCOME_SALES',
+        buying_type:'AUCTION',
+        status:status||'PAUSED',
+        budget_type:d.budget_type,
+        daily_budget:d.budget_type==='CBO'?budgetCents:undefined,
+      },
+      adset_names:names,
+      adset_creatives,
+    });
+  }
 
   return{
     type:'DIRETO',
     account_id:d.account_id,
+    dominio_id:d.dominio_id||null,
     page_id:d.page_id,
     url_destino:urlDest,
-    campaign:{
-      name:d.campaign_name,
-      objective:'OUTCOME_SALES',
-      buying_type:'AUCTION',
-      status:status||'PAUSED',
-      budget_type:d.budget_type,
-      daily_budget:d.budget_type==='CBO'?budgetCents:undefined,
-    },
     adset_template,
-    adset_names:names,
-    adset_creatives,
+    campanhas,
     copies,
   };
 }
@@ -9077,16 +9378,20 @@ async function drzDryRun(){
 
 function drzShowConfirm(){
   const payload=drzBuildPayload(DRZ.d.paused?'PAUSED':'ACTIVE');
+  const qC=DRZ.d.qtd_campanhas||1;
   const names=drzAdsetNames();
+  const qCr=DRZ.d.qtd_criativos||3;
   let filled=0,total=0;
-  DRZ.mediaGroups.forEach(g=>g.forEach(s=>{total++;if(s.hash||s.video_id)filled++;}));
+  DRZ.mediaGroups.forEach(campGrps=>{
+    (campGrps||[]).forEach(g=>g.forEach(s=>{total++;if(s.hash||s.video_id)filled++;}));
+  });
 
   const confirmBody=document.getElementById('bwz-confirm-body');
   if(confirmBody){
     confirmBody.innerHTML=`
 <div style="display:grid;gap:.375rem;font-size:.875rem">
- <div><strong>Campanha:</strong> ${payload.campaign.name}</div>
- <div><strong>Conjuntos:</strong> ${names.length} · <strong>Ads:</strong> ${names.length*3}</div>
+ <div><strong>Campanhas:</strong> ${qC} · <strong>Conjuntos/camp.:</strong> ${names.length} · <strong>Criativos/conj.:</strong> ${qCr}</div>
+ <div><strong>Total ads:</strong> ${qC*names.length*qCr}</div>
  <div><strong>Mídia:</strong> ${filled}/${total} slots</div>
  <div><strong>URL:</strong> <span style="font-size:.8rem;word-break:break-all">${payload.url_destino||'—'}</span></div>
 </div>`;
@@ -9153,7 +9458,15 @@ async function drzPublish(payload){
           toast.style.display='none';
           const rawId=(payload.account_id||'').replace('act_','');
           const url=`https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=${rawId}`;
-          alert(`✅ Campanha criada!\nID: ${data.campaign_id}\nConjuntos: ${data.adset_count} · Ads: ${data.ad_count}\n\n${url}`);
+          const succs=data.successes||[];
+          const totalAds=data.total_ads||data.ad_count||0;
+          if(succs.length>1){
+            const ids=succs.map(s=>s.campaign_id).join(', ');
+            alert(`✅ ${succs.length} campanhas criadas!\nIDs: ${ids}\nTotal ads: ${totalAds}\n\n${url}`);
+          } else {
+            alert(`✅ Campanha criada!\nID: ${data.campaign_id}\nConjuntos: ${data.adset_count} · Ads: ${totalAds}\n\n${url}`);
+          }
+          if(data.failures?.length) alert(`⚠️ ${data.failures.length} campanha(s) com erro:\n${data.failures.map(f=>f.campaign_name+': '+f.error).join('\n')}`);
           return;
         } else if(ev==='error'){
           toast.style.display='none';
