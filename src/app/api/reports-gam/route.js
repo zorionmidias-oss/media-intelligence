@@ -51,9 +51,9 @@ async function saveToCache(hourly, utmCampaigns, utmSources, df, dt, prefix, dom
       dominio_id: did,
       updated_at: now,
     }));
-    await supabase.from('report_hora')
-      .upsert(horaRows, { onConflict: 'data,hora,dominio_id' })
-      .catch(e => console.warn('[reports-gam] hora upsert:', e.message));
+    const { error: horaErr } = await supabase.from('report_hora')
+      .upsert(horaRows, { onConflict: 'data,hora,dominio_id' });
+    if (horaErr) console.error('[reports-gam] hora upsert:', horaErr.message);
   }
 
   // Save UTM campaigns
@@ -71,9 +71,9 @@ async function saveToCache(hourly, utmCampaigns, utmSources, df, dt, prefix, dom
       dominio_id: did,
       updated_at: now,
     }));
-    await supabase.from('report_utm_campaign')
-      .upsert(rows, { onConflict: 'data,utm_campaign,dominio_id' })
-      .catch(e => console.warn('[reports-gam] utm_campaign upsert:', e.message));
+    const { error: campErr } = await supabase.from('report_utm_campaign')
+      .upsert(rows, { onConflict: 'data,utm_campaign,dominio_id' });
+    if (campErr) console.error('[reports-gam] utm_campaign upsert:', campErr.message);
   }
 
   // Save UTM sources
@@ -88,9 +88,9 @@ async function saveToCache(hourly, utmCampaigns, utmSources, df, dt, prefix, dom
       prefixo_ad_unit: pfx,
       updated_at: now,
     }));
-    await supabase.from('report_utm_source')
-      .upsert(rows, { onConflict: 'data,utm_source,prefixo_ad_unit' })
-      .catch(e => console.warn('[reports-gam] utm_source upsert:', e.message));
+    const { error: srcErr } = await supabase.from('report_utm_source')
+      .upsert(rows, { onConflict: 'data,utm_source,prefixo_ad_unit' });
+    if (srcErr) console.error('[reports-gam] utm_source upsert:', srcErr.message);
   }
 }
 

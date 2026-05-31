@@ -700,12 +700,13 @@ async function syncAll(dateRange) {
               ctr: h.ctr || 0,
               cliques: h.cliques || 0,
               cpc: h.cpc || 0,
-              prefixo_ad_unit: pfx,
+              prefixo_ad_unit: '',  // dominio_id=0 = global; prefixo não discrimina mais
+              dominio_id: 0,
               updated_at: now,
             })),
-            { onConflict: 'data,hora,prefixo_ad_unit' }
+            { onConflict: 'data,hora,dominio_id' }
           );
-        if (rHoraErr) console.warn('[sync] upsert report_hora:', rHoraErr.message);
+        if (rHoraErr) console.error('[sync] upsert report_hora:', rHoraErr.message);
         else console.log(`[sync] cache GAM: ${hourly.length} horas salvas`);
       }
 
