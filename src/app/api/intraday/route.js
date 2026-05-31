@@ -22,15 +22,9 @@ async function handler(req, res) {
     const horaAtual = spHoraAtual();
     const dataOntem = dateMinusDays(dataHoje, 1);
 
-    // Resolve domain filter — dominio_id=0 is the global aggregate
-    let did = 0;
-    const domain = req.query.domain;
-    if (domain && domain !== 'all' && domain !== '0' && domain !== '') {
-      const { data: d } = await supabase.from('dominios')
-        .select('id')
-        .eq('nome', domain).maybeSingle();
-      did = d?.id ?? 0;
-    }
+    // dados_hora é agregado global (fetchAndSaveHourly salva dominio_id=0 sempre)
+    // domain param é ignorado aqui — o gráfico mostra o negócio inteiro
+    const did = 0;
 
     const buildQuery = (data) =>
       supabase.from('dados_hora')
