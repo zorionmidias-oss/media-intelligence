@@ -98,11 +98,15 @@ function buildCampaignBody(campaign, status) {
 }
 
 function buildAdsetBody(acctId, template, name, campaign_id, page_id) {
+  const ageMin = template.age_min || 18;
+  const ageMax = template.age_max || 65;
   const targeting = {
     geo_locations: template.geo_locations || { countries: ['BR'] },
-    age_min: template.age_min || 18,
+    age_min:   ageMin,
+    age_max:   ageMax,
+    age_range: [ageMin, ageMax],
+    brand_safety_content_filter_levels: ['FACEBOOK_RELAXED', 'AN_RELAXED'],
   };
-  if (template.age_max && template.age_max < 65) targeting.age_max = template.age_max;
   if (template.locales?.length)       targeting.locales = template.locales;
   if (template.genders?.length)       targeting.genders = template.genders;
   if (template.interests?.length)
@@ -126,7 +130,13 @@ function buildAdsetBody(acctId, template, name, campaign_id, page_id) {
     optimization_goal: 'OFFSITE_CONVERSIONS',
     billing_event: 'IMPRESSIONS',
     bid_strategy: 'LOWEST_COST_WITHOUT_CAP',
-    targeting: { ...targeting, targeting_automation: { advantage_audience: 0 } },
+    targeting: {
+      ...targeting,
+      targeting_automation: {
+        advantage_audience: 1,
+        individual_setting: { age: 1, gender: 1 },
+      },
+    },
     status: 'PAUSED',
     start_time: template.start_time,
   };
