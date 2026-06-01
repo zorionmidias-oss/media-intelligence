@@ -26,8 +26,6 @@ async function handler(req, res) {
     const useDomain = domain && domain !== 'all';
 
     if (useDomain) {
-      // Domain-filtered: use report_hora (mesma fonte da Tabela Report Hora)
-      // investimento/roi são dados Meta globais — indisponíveis por domínio
       let dq = supabase.from('dominios').select('id');
       if (/^\d+$/.test(String(domain))) dq = dq.eq('id', Number(domain));
       else dq = dq.eq('nome', domain);
@@ -41,27 +39,49 @@ async function handler(req, res) {
         });
       }
 
-      const buildQ = (data) =>
+      // GAM: receita/ecpm/impressoes por domínio (report_hora)
+      const buildGamQ = (data) =>
         supabase.from('report_hora')
           .select('hora,receita,ecpm,impressoes')
           .eq('data', data)
           .eq('dominio_id', did)
           .order('hora', { ascending: true });
 
-      const [hojeRes, ontemRes] = await Promise.all([buildQ(dataHoje), buildQ(dataOntem)]);
+      // Meta: investimento por domínio (dados_hora populado pelo fetchAndSaveHourly)
+      const buildMetaQ = (data) =>
+        supabase.from('dados_hora')
+          .select('hora,investimento_brl')
+          .eq('data', data)
+          .eq('dominio_id', did)
+          .order('hora', { ascending: true });
 
-      const mapDom = (rows) => (rows || []).map(r => ({
-        hora:         r.hora,
-        receita:      +(r.receita * 0.9).toFixed(4),  // bruta→líquida, consistente com global
-        ecpm:         +(r.ecpm || 0),
-        investimento: null,
-        roi:          null,
-        impressoes:   r.impressoes || 0,
-      }));
+      const [hojeGamRes, ontemGamRes, hojeMetaRes, ontemMetaRes] = await Promise.all([
+        buildGamQ(dataHoje), buildGamQ(dataOntem),
+        buildMetaQ(dataHoje), buildMetaQ(dataOntem),
+      ]);
 
-      const rawHoje = mapDom(hojeRes.data);
+      const mapDom = (gamRows, metaRows) => {
+        const metaByHora = Object.fromEntries(
+          (metaRows || []).map(r => [r.hora, +(r.investimento_brl || 0)])
+        );
+        return (gamRows || []).map(r => {
+          const rec = +(r.receita * 0.9).toFixed(4);
+          const inv = +(metaByHora[r.hora] || 0).toFixed(4);
+          const roi = inv >= 1 ? +((rec - inv) / inv * 100).toFixed(4) : null;
+          return {
+            hora:         r.hora,
+            receita:      rec,
+            ecpm:         +(r.ecpm || 0),
+            investimento: inv,
+            roi,
+            impressoes:   r.impressoes || 0,
+          };
+        });
+      };
+
+      const rawHoje = mapDom(hojeGamRes.data, hojeMetaRes.data);
       const hoje    = rawHoje.filter(r => r.hora <= horaAtual);
-      const ontem   = mapDom(ontemRes.data);
+      const ontem   = mapDom(ontemGamRes.data, ontemMetaRes.data);
 
       return res.json({
         hoje, ontem, hora_atual: horaAtual,

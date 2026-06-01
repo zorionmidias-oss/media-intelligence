@@ -164,8 +164,9 @@ async function refreshMetaAccountInfo() {
 }
 
 // Hourly Meta spend: returns { [hora]: investimento_brl } for a given date.
-// Calls Meta API with hourly breakdown per account, converts to BRL with
-// imposto/câmbio, aggregates all accounts.
+// Calls Meta API with hourly breakdown per campaign, converts to BRL.
+// Returns { _global_: { hora→spend }, PREFIX: { hora→spend }, ... }
+// _global_ é a soma de todas as campanhas — igual ao antigo account-level.
 async function fetchMetaHourlySpend(date) {
   // Always get real currency from Meta API — never trust DB cache for moeda
   const apiInfo = await refreshMetaAccountInfo().catch(e => {
@@ -178,7 +179,8 @@ async function fetchMetaHourlySpend(date) {
     .select('ad_account_id,access_token,imposto_percentual,moeda')
     .eq('ativo', true);
 
-  const horaMap = {}; // hora (0-23) → total investimento_brl
+  const globalHoraMap = {}; // hora → total spend BRL (todas as campanhas)
+  const prefixHoraMap = {}; // prefixo → { hora → spend BRL }
 
   for (const acc of accounts || []) {
     const { ad_account_id, access_token: token, imposto_percentual } = acc;
@@ -199,53 +201,60 @@ async function fetchMetaHourlySpend(date) {
     const hourShift  = brtOffset - acctOffset; // e.g. +4 for LA → BRT
 
     try {
-      const res = await axios.get(`${BASE}/${accountId}/insights`, {
-        params: {
-          access_token: token,
-          level: 'account',
-          fields: 'spend',
-          time_range: JSON.stringify({ since: date, until: date }),
-          breakdowns: 'hourly_stats_aggregated_by_advertiser_time_zone',
-          limit: 50,
-        },
-        timeout: 30000,
-      });
-      for (const row of res.data?.data || []) {
-        const hStr = row.hourly_stats_aggregated_by_advertiser_time_zone || '';
-        // Format: "00:00:00 - 01:00:00" — extract leading hour in account TZ
-        const acctHour = parseInt(hStr.slice(0, 2), 10);
-        if (isNaN(acctHour) || acctHour < 0 || acctHour > 23) continue;
-        const brtHour = acctHour + hourShift;
-        // Skip hours that cross into the adjacent BRT day
-        if (brtHour < 0 || brtHour > 23) continue;
-        const spend = Number(row.spend || 0);
-        horaMap[brtHour] = (horaMap[brtHour] || 0) + spend * taxaUSD * fatorImposto;
-      }
+      let nextUrl = `${BASE}/${accountId}/insights`;
+      let params = {
+        access_token: token,
+        level: 'campaign',
+        fields: 'campaign_name,spend',
+        time_range: JSON.stringify({ since: date, until: date }),
+        breakdowns: 'hourly_stats_aggregated_by_advertiser_time_zone',
+        limit: 500,
+      };
       if (hourShift !== 0) {
         console.log(`[hourly Meta ${accountId}] tz=${accountTz} shift=${hourShift > 0 ? '+' : ''}${hourShift}h`);
+      }
+      while (nextUrl) {
+        const res = await axios.get(nextUrl, { params, timeout: 30000 });
+        params = undefined; // URL paginada já carrega os params — não reenviar
+        for (const row of res.data?.data || []) {
+          const hStr = row.hourly_stats_aggregated_by_advertiser_time_zone || '';
+          // Format: "00:00:00 - 01:00:00" — extract leading hour in account TZ
+          const acctHour = parseInt(hStr.slice(0, 2), 10);
+          if (isNaN(acctHour) || acctHour < 0 || acctHour > 23) continue;
+          const brtHour = acctHour + hourShift;
+          // Skip hours that cross into the adjacent BRT day
+          if (brtHour < 0 || brtHour > 23) continue;
+          const spend = Number(row.spend || 0) * taxaUSD * fatorImposto;
+          if (spend <= 0) continue;
+          // Global: soma de todas as campanhas — mantém o mesmo total de antes
+          globalHoraMap[brtHour] = (globalHoraMap[brtHour] || 0) + spend;
+          // Por prefixo: match exato de colchete ([EU] ≠ [EURO])
+          const prefix = extractDomainPrefix(row.campaign_name || '');
+          if (prefix) {
+            if (!prefixHoraMap[prefix]) prefixHoraMap[prefix] = {};
+            prefixHoraMap[prefix][brtHour] = (prefixHoraMap[prefix][brtHour] || 0) + spend;
+          }
+        }
+        nextUrl = res.data?.paging?.next || null;
       }
     } catch (e) {
       console.warn(`[hourly Meta ${accountId}]`, e.response?.data?.error?.message || e.message);
     }
   }
 
-  const totalHoras = Object.keys(horaMap).length;
-  const totalSpend = Object.values(horaMap).reduce((s, v) => s + v, 0);
-  console.log(`[hourly Meta] ${date}: ${totalHoras} horas, investimento total R$${totalSpend.toFixed(2)}`);
-  if (totalHoras > 0) {
-    console.log('[hourly Meta] spend por hora BRT:', JSON.stringify(
-      Object.fromEntries(Object.entries(horaMap).map(([h, v]) => [h, +v.toFixed(2)]))
-    ));
-  }
-  return horaMap;
+  const totalSpend = Object.values(globalHoraMap).reduce((s, v) => s + v, 0);
+  console.log(`[hourly Meta] ${date}: ${Object.keys(globalHoraMap).length} horas, total R$${totalSpend.toFixed(2)}, prefixos: [${Object.keys(prefixHoraMap).join(', ')}]`);
+  return { _global_: globalHoraMap, ...prefixHoraMap };
 }
 
 // Fetch GAM + Meta hourly data for one date and upsert into dados_hora.
 async function fetchAndSaveHourly(date) {
   const [gamRows, metaHoraMap] = await Promise.all([
     fetchGAMHourly({ since: date, until: date }).catch(e => { console.warn('[hourly GAM]', e.message); return []; }),
-    fetchMetaHourlySpend(date).catch(e => { console.warn('[hourly Meta]', e.message); return {}; }),
+    fetchMetaHourlySpend(date).catch(e => { console.warn('[hourly Meta]', e.message); return { _global_: {} }; }),
   ]);
+
+  const globalHoraMap = metaHoraMap._global_ || {};
 
   const gamMap = {};
   for (const h of gamRows) gamMap[h.hora] = h;
@@ -253,7 +262,7 @@ async function fetchAndSaveHourly(date) {
   const rows = [];
   for (let hora = 0; hora < 24; hora++) {
     const gam = gamMap[hora];
-    const inv = +(metaHoraMap[hora] || 0).toFixed(4);
+    const inv = +(globalHoraMap[hora] || 0).toFixed(4);
     const rec = gam?.receita || 0;
     const imp = gam?.impressoes || 0;
     if (rec === 0 && inv === 0 && imp === 0) continue;
@@ -270,6 +279,32 @@ async function fetchAndSaveHourly(date) {
       roi,
       atualizado_em:    new Date().toISOString(),
     });
+  }
+
+  // Linhas por domínio: só investimento Meta filtrado pelo prefixo da campanha
+  // receita/ecpm/impressoes ficam em report_hora (consultadas pela intraday route)
+  const { data: dominios } = await supabase
+    .from('dominios').select('id,prefixo_campanha').eq('ativo', true);
+  const domByPrefix = {};
+  for (const d of dominios || []) {
+    if (d.prefixo_campanha) domByPrefix[d.prefixo_campanha.toUpperCase()] = d.id;
+  }
+  for (const [prefix, horaMap] of Object.entries(metaHoraMap)) {
+    if (prefix === '_global_') continue;
+    const domId = domByPrefix[prefix.toUpperCase()];
+    if (!domId) continue; // prefixo sem domínio cadastrado — ignora
+    for (const [horaStr, spend] of Object.entries(horaMap)) {
+      const hora = Number(horaStr);
+      const inv = +spend.toFixed(4);
+      if (inv <= 0) continue;
+      rows.push({
+        data: date, hora, dominio_id: domId,
+        receita_bruta: 0, impressoes: 0, ecpm: 0,
+        investimento_brl: inv,
+        roi: 0,
+        atualizado_em: new Date().toISOString(),
+      });
+    }
   }
 
   if (rows.length === 0) {
