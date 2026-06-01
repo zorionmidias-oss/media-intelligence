@@ -22,8 +22,55 @@ async function handler(req, res) {
     const horaAtual = spHoraAtual();
     const dataOntem = dateMinusDays(dataHoje, 1);
 
-    // dados_hora é agregado global (fetchAndSaveHourly salva dominio_id=0 sempre)
-    // domain param é ignorado aqui — o gráfico mostra o negócio inteiro
+    const domain = req.query.domain;
+    const useDomain = domain && domain !== 'all';
+
+    if (useDomain) {
+      // Domain-filtered: use report_hora (mesma fonte da Tabela Report Hora)
+      // investimento/roi são dados Meta globais — indisponíveis por domínio
+      let dq = supabase.from('dominios').select('id');
+      if (/^\d+$/.test(String(domain))) dq = dq.eq('id', Number(domain));
+      else dq = dq.eq('nome', domain);
+      const { data: dom } = await dq.maybeSingle();
+      const did = dom?.id ?? null;
+
+      if (!did) {
+        return res.json({
+          hoje: [], ontem: [], hora_atual: horaAtual,
+          data_hoje: dataHoje, data_ontem: dataOntem, sem_dados: true,
+        });
+      }
+
+      const buildQ = (data) =>
+        supabase.from('report_hora')
+          .select('hora,receita,ecpm,impressoes')
+          .eq('data', data)
+          .eq('dominio_id', did)
+          .order('hora', { ascending: true });
+
+      const [hojeRes, ontemRes] = await Promise.all([buildQ(dataHoje), buildQ(dataOntem)]);
+
+      const mapDom = (rows) => (rows || []).map(r => ({
+        hora:         r.hora,
+        receita:      +(r.receita * 0.9).toFixed(4),  // bruta→líquida, consistente com global
+        ecpm:         +(r.ecpm || 0),
+        investimento: null,
+        roi:          null,
+        impressoes:   r.impressoes || 0,
+      }));
+
+      const rawHoje = mapDom(hojeRes.data);
+      const hoje    = rawHoje.filter(r => r.hora <= horaAtual);
+      const ontem   = mapDom(ontemRes.data);
+
+      return res.json({
+        hoje, ontem, hora_atual: horaAtual,
+        data_hoje: dataHoje, data_ontem: dataOntem,
+        sem_dados: hoje.length === 0 && ontem.length === 0,
+      });
+    }
+
+    // Global: dados_hora agregado global (dominio_id = 0)
     const did = 0;
 
     const buildQuery = (data) =>
