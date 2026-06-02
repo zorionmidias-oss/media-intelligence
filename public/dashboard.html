@@ -136,8 +136,18 @@
     .sec{display:flex;flex-direction:column;gap:1.5rem}
 
     /* ── GRIDS ── */
+    .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
     .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
     .g5{display:grid;grid-template-columns:repeat(5,1fr);gap:.75rem}
+    .pac-sec-lbl{font-size:.6875rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.5rem}
+    .pac-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:.875rem 1rem;position:relative}
+    .pac-card-lbl{font-size:.6875rem;color:var(--muted);font-weight:500;margin-bottom:.375rem;display:flex;align-items:center;gap:.375rem}
+    .pac-card-val{font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;font-size:1.25rem;font-weight:700;color:var(--fg);line-height:1.2;font-feature-settings:'tnum' 1}
+    .pac-card-val.over{color:var(--warn)}
+    .pac-card-sub{font-size:.75rem;color:var(--muted);margin-top:.35rem}
+    .pac-card-sub .pac-hoje{font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;font-weight:600;color:var(--fg)}
+    .pac-card-sub .pac-hoje.over{color:var(--warn)}
+    .pac-estimado{font-size:.6rem;color:var(--muted);opacity:.7;margin-top:.25rem}
     .gam-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:.875rem 1rem;position:relative}
     .gam-card-lbl{font-size:.6875rem;color:var(--muted);font-weight:500;margin-bottom:.375rem;display:flex;align-items:center;gap:.375rem}
     .gam-card-badge{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:var(--accent-soft);color:var(--accent);padding:.1rem .35rem;border-radius:.25rem}
@@ -306,7 +316,8 @@
     ::-webkit-scrollbar-track{background:transparent}
     ::-webkit-scrollbar-thumb{background:var(--sec);border-radius:2px}
 
-    @media(max-width:1280px){.g4{grid-template-columns:repeat(2,1fr)}.g5{grid-template-columns:repeat(3,1fr)}.g6{grid-template-columns:repeat(3,1fr)}.g-ch{grid-template-columns:1fr}}
+    @media(max-width:1280px){.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(2,1fr)}.g5{grid-template-columns:repeat(3,1fr)}.g6{grid-template-columns:repeat(3,1fr)}.g-ch{grid-template-columns:1fr}}
+    @media(max-width:900px){.g3{grid-template-columns:repeat(3,1fr)}}
     @media(max-width:768px){.g2,.ai-layout{grid-template-columns:1fr}.sb{width:72px}.main{margin-left:72px}}
 
     /* ── INLINE TABS (Bot / Direto) ── */
@@ -1170,6 +1181,28 @@
               <div class="meta-lbl-row"><span class="meta-lbl-cur" id="meta-cur-roas">—</span><span>Meta: <span id="meta-tgt-roas" style="color:#aaa">—</span></span><button class="meta-edit-btn" onclick="openMetaModal('roas_diario')" title="Editar meta">✏</button></div>
             </div>
             <button class="meta-edit-btn" id="meta-add-roas" onclick="openMetaModal('roas_diario')" title="Definir meta" style="font-size:.68rem;opacity:.3;margin-top:.5rem">+ meta</button>
+          </div>
+        </div>
+
+        <!-- Pacing do dia -->
+        <div id="pac-section">
+          <div class="pac-sec-lbl">Pacing do dia <span id="pac-meta-badge" style="display:none;font-size:.55rem;font-weight:700;padding:.1rem .4rem;border-radius:.25rem;background:var(--accent-soft);color:var(--accent);text-transform:uppercase;letter-spacing:.06em">META</span></div>
+          <div class="g3">
+            <div class="pac-card">
+              <div class="pac-card-lbl">Orçamento</div>
+              <div class="pac-card-val hideable-value" id="pac-orcamento">—</div>
+              <div class="pac-card-sub">Hoje: <span class="pac-hoje hideable-value" id="pac-orcamento-hoje">—</span> <span class="pac-estimado" id="pac-orcamento-est" style="display:none">(estimado: orçamento atual × dias)</span></div>
+            </div>
+            <div class="pac-card">
+              <div class="pac-card-lbl">Valor usado</div>
+              <div class="pac-card-val hideable-value" id="pac-usado">—</div>
+              <div class="pac-card-sub">Hoje: <span class="pac-hoje hideable-value" id="pac-usado-hoje">—</span></div>
+            </div>
+            <div class="pac-card">
+              <div class="pac-card-lbl">Falta gastar</div>
+              <div class="pac-card-val hideable-value" id="pac-falta">—</div>
+              <div class="pac-card-sub" id="pac-falta-sub">Hoje: <span class="pac-hoje hideable-value" id="pac-falta-hoje">—</span></div>
+            </div>
           </div>
         </div>
 
@@ -2477,6 +2510,55 @@ async function loadData(force=false){
   loadIntradayChart();
   loadGamKpis();
   loadPaises();
+  loadOrcamentoStatus(since,until);
+}
+
+/* ═══ PACING DO DIA ═══ */
+async function loadOrcamentoStatus(since,until){
+  try{
+    // v1: account-level — filtro de domínio não aplicado intencionalmente
+    const res=await fetch(`/api/orcamento-status?since=${since}&until=${until}`);
+    if(!res.ok)return;
+    const d=await res.json();
+    renderOrcamentoStatus(d);
+  }catch(e){console.warn('[pacing]',e);}
+}
+
+function renderOrcamentoStatus(d){
+  const fmt=v=>v!=null?'R$ '+Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
+  const p=d?.periodo||{};const h=d?.hoje||{};
+  const est=p.orcamento_estimado;
+
+  // Período
+  const elOrc=document.getElementById('pac-orcamento');
+  if(elOrc){elOrc.textContent=fmt(p.orcamento);}
+  const elOrcHoje=document.getElementById('pac-orcamento-hoje');
+  if(elOrcHoje){elOrcHoje.textContent=fmt(h.orcamento);}
+  const elEst=document.getElementById('pac-orcamento-est');
+  if(elEst){elEst.style.display=est?'':'none';}
+
+  const elUsado=document.getElementById('pac-usado');
+  if(elUsado){elUsado.textContent=fmt(p.usado);}
+  const elUsadoHoje=document.getElementById('pac-usado-hoje');
+  if(elUsadoHoje){elUsadoHoje.textContent=fmt(h.usado);}
+
+  // Falta gastar — negativo = acima do orçamento
+  const elFalta=document.getElementById('pac-falta');
+  if(elFalta){
+    const v=p.falta??0;
+    const over=v<0;
+    elFalta.textContent=over?'Acima do orçamento':fmt(v);
+    elFalta.className='pac-card-val hideable-value'+(over?' over':'');
+  }
+  const elFaltaHoje=document.getElementById('pac-falta-hoje');
+  if(elFaltaHoje){
+    const v=h.falta??0;
+    const over=v<0;
+    elFaltaHoje.textContent=over?'Acima':fmt(v);
+    elFaltaHoje.className='pac-hoje hideable-value'+(over?' over':'');
+  }
+
+  setTimeout(aplicarClasseHideable,50);
 }
 
 /* ═══ RENDER ALL ═══ */
@@ -4624,11 +4706,13 @@ function pagCard(p){
   const paisHtml=emUso&&p.pais_sigla
     ?`<span class="pag-country"><span class="country-pill">${esc(p.pais_sigla)}</span><span>${esc(p.pais_nome||p.pais_sigla)}</span></span>`
     :`<span class="pag-country" style="color:var(--muted)">—</span>`;
-  const contaHtml=p.conta_nome?`<div class="pag-conta">Conta: ${esc(p.conta_nome)}</div>`:'';
+  const n=(p.adsets_ativos??0);
+  const adsetsHtml=emUso&&n>0?`<span>${n} conjunto${n===1?'':'s'} ativo${n===1?'':'s'}</span>`:`<span style="color:var(--muted)">0 conjuntos ativos</span>`;
+  const contaSep=p.conta_nome?`<span style="color:var(--border)">·</span><span>Conta: ${esc(p.conta_nome)}</span>`:'';
   return`<div class="pag-card">
     <div class="pag-card-top">${fotoHtml}<span class="pag-nome" title="${esc(p.nome)}">${esc(p.nome)}</span></div>
     <div class="pag-card-row">${statusHtml}${paisHtml}</div>
-    ${contaHtml}
+    <div class="pag-footer">${adsetsHtml}${contaSep}</div>
   </div>`;
 }
 

@@ -26,6 +26,7 @@ const { dryRunHandler, criarHandler } = require('./src/app/api/campaigns/route')
 const convTemplatesHandler  = require('./src/app/api/conversation-templates/route');
 const adCopiesHandler       = require('./src/app/api/ad-copies-templates/route');
 const intradayHandler       = require('./src/app/api/intraday/route');
+const orcamentoStatusHandler = require('./src/app/api/orcamento-status/route');
 const supabase = require('./src/lib/supabase');
 const { syncAll, fetchAndSaveHourly, syncPaginas } = require('./src/lib/sync');
 const { resolveCountry } = require('./src/lib/parser');
@@ -92,6 +93,7 @@ app.post('/api/insights', requireAuth, insightsHandler);
 
 // ── Supabase-backed routes (fast — no external API calls) ──────────────────
 app.get('/api/overview', requireAuth, overviewHandler);
+app.get('/api/orcamento-status', requireAuth, orcamentoStatusHandler);
 app.get('/api/dashboard', requireAuth, dashboardHandler);
 app.get('/api/reports-gam', requireAuth, reportsGamHandler);
 app.get('/api/gam-status', requireAuth, gamStatusHandler);
@@ -275,7 +277,7 @@ app.get('/api/paginas', requireAuth, async (req, res) => {
     const { account_id } = req.query;
     let q = supabase
       .from('paginas')
-      .select('page_id,nome,foto_url,ad_account_id,status,pais_sigla,pais_nome,em_uso_desde,ultima_sync,meta_accounts(nome)')
+      .select('page_id,nome,foto_url,ad_account_id,status,pais_sigla,pais_nome,em_uso_desde,ultima_sync,adsets_ativos,meta_accounts(nome)')
       .order('nome');
     if (account_id) {
       const normalized = String(account_id).startsWith('act_') ? account_id : `act_${account_id}`;

@@ -38,3 +38,6 @@ CREATE TABLE IF NOT EXISTS taxas_cambio (
 INSERT INTO taxas_cambio (data, taxa, fonte)
 VALUES ('2026-05-16', 6.06, 'manual')
 ON CONFLICT (data) DO NOTHING;
+
+-- ── Páginas: coluna de adsets ativos ──────────────────────────────────────
+ALTER TABLE paginas ADD COLUMN IF NOT EXISTS adsets_ativos INTEGER DEFAULT 0;

@@ -843,7 +843,13 @@ async function syncPaginas() {
 
   const hoje = new Date().toISOString().slice(0, 10);
 
-  for (const acc of accounts || []) {
+  // page_id → { id, name, picture_url, sourceAccountId }
+  const allPagesMap = new Map();
+
+  // page_id → Map<accountId, Set<adset_id>>
+  const pageAccountAdsets = new Map();
+
+  for (const acc of accounts) {
     if (!acc.access_token) continue;
     const accountId = String(acc.ad_account_id).startsWith('act_')
       ? String(acc.ad_account_id)
@@ -889,50 +895,102 @@ async function syncPaginas() {
       console.log(`[syncPaginas] ${accountId}: /me/accounts→${fromMe.length} promote_pages→${fromPromote.length}`);
     }
 
-    if (!pages.length) {
-      console.warn(`[syncPaginas] ${accountId}: 0 páginas encontradas`);
-      continue;
+    for (const p of pages) {
+      if (!allPagesMap.has(p.id)) {
+        allPagesMap.set(p.id, {
+          id: p.id,
+          name: p.name,
+          picture_url: p.picture_url ?? p.picture?.data?.url ?? null,
+          sourceAccountId: acc.ad_account_id,
+        });
+      }
     }
 
-    // ── 2. Para cada página: detectar uso via ads_consolidados (últimos 3 dias) ─
-    let emUsoCount = 0;
-    for (const page of pages) {
-      const pictureUrl = page.picture_url ?? page.picture?.data?.url ?? null;
+    // ── 2. Buscar ads ATIVOS na Meta API e mapear page_ids ────────────────────
+    // BOT/Messenger: adset.promoted_object.page_id
+    // Direto:        creative.object_story_spec.page_id
+    try {
+      let nextUrl = `${BASE}/${accountId}/ads`;
+      let reqParams = {
+        effective_status: JSON.stringify(['ACTIVE']),
+        fields: 'adset_id,adset{effective_status,promoted_object{page_id}},creative{object_story_spec{page_id}}',
+        limit: 500,
+        access_token: acc.access_token,
+      };
 
-      const slug = page.name.trim().split(/\s+/)[0]
-        .toUpperCase()
-        .normalize('NFD')
-        .replace(/[̀-ͯ]/g, '');
+      while (nextUrl) {
+        const r = await axios.get(nextUrl, { params: reqParams, timeout: 30000 });
+        const ads = r.data?.data || [];
 
-      const { data: rows } = await supabase
-        .from('ads_consolidados')
-        .select('campanha_meta,pais_sigla,pais_nome')
-        .gte('data', hoje)
-        .ilike('campanha_meta', `%${slug}%`)
-        .limit(1);
+        for (const ad of ads) {
+          const adsetId = ad.adset_id;
+          const pageId = ad.adset?.promoted_object?.page_id
+                      || ad.creative?.object_story_spec?.page_id;
 
-      const emUso = rows && rows.length > 0;
-      if (emUso) emUsoCount++;
+          if (pageId && adsetId) {
+            if (!pageAccountAdsets.has(pageId)) pageAccountAdsets.set(pageId, new Map());
+            const acctMap = pageAccountAdsets.get(pageId);
+            if (!acctMap.has(accountId)) acctMap.set(accountId, new Set());
+            acctMap.get(accountId).add(adsetId);
+          }
+        }
 
-      console.log(`  ${page.name} → ${slug} → ${emUso ? `EM USO [${rows[0].pais_sigla}] ${rows[0].campanha_meta}` : 'DISPONÍVEL'}`);
+        nextUrl = r.data?.paging?.next || null;
+        reqParams = {};
+      }
 
-      const { error: uErr } = await supabase.from('paginas').upsert({
-        page_id:       page.id,
-        nome:          page.name,
-        foto_url:      pictureUrl,
-        ad_account_id: acc.ad_account_id,
-        status:        emUso ? 'em_uso' : 'disponivel',
-        pais_sigla:    emUso ? rows[0].pais_sigla : null,
-        pais_nome:     emUso ? rows[0].pais_nome  : null,
-        em_uso_desde:  emUso ? hoje : null,
-        ultima_sync:   new Date().toISOString(),
-      }, { onConflict: 'page_id' });
-      if (uErr) console.warn('[syncPaginas] upsert erro:', uErr.message, '| page_id:', page.id);
+      console.log(`[syncPaginas] ${accountId}: ads ativos processados`);
+    } catch (e) {
+      console.warn(`[syncPaginas] ${accountId} ads ACTIVE:`, e.response?.data?.error?.message || e.message);
     }
-
-    console.log(`[syncPaginas] ${accountId}: ${pages.length} páginas upseridas, ${emUsoCount} em uso`);
   }
-  console.log('[syncPaginas] concluído.');
+
+  if (!allPagesMap.size) {
+    console.warn('[syncPaginas] nenhuma página encontrada');
+    return;
+  }
+
+  // ── 3. Upsert cada página com status e adsets_ativos corretos ──────────────
+  let emUsoCount = 0;
+
+  for (const [pageId, page] of allPagesMap) {
+    const acctMap = pageAccountAdsets.get(pageId);
+    let adsets_ativos = 0;
+    let bestAccountId = page.sourceAccountId;
+
+    if (acctMap && acctMap.size > 0) {
+      let maxAdsets = 0;
+      for (const [accId, adsetIds] of acctMap) {
+        adsets_ativos += adsetIds.size;
+        if (adsetIds.size > maxAdsets) {
+          maxAdsets = adsetIds.size;
+          bestAccountId = accId;
+        }
+      }
+    }
+
+    const emUso = adsets_ativos > 0;
+    if (emUso) emUsoCount++;
+
+    console.log(`  ${page.name} → ${emUso ? `EM USO (${adsets_ativos} adsets) [${bestAccountId}]` : 'DISPONÍVEL'}`);
+
+    const { error: uErr } = await supabase.from('paginas').upsert({
+      page_id:       pageId,
+      nome:          page.name,
+      foto_url:      page.picture_url,
+      ad_account_id: bestAccountId,
+      status:        emUso ? 'em_uso' : 'disponivel',
+      adsets_ativos,
+      pais_sigla:    null,
+      pais_nome:     null,
+      em_uso_desde:  emUso ? hoje : null,
+      ultima_sync:   new Date().toISOString(),
+    }, { onConflict: 'page_id' });
+
+    if (uErr) console.warn('[syncPaginas] upsert erro:', uErr.message, '| page_id:', pageId);
+  }
+
+  console.log(`[syncPaginas] ${allPagesMap.size} páginas upseridas, ${emUsoCount} em uso.`);
 }
 
 module.exports = { syncAll, fetchAndSaveHourly, syncPaginas };
