@@ -1,5 +1,6 @@
 'use strict';
 const axios = require('axios');
+const { DateTime } = require('luxon');
 const supabase = require('./supabase');
 const { getBMConfigs, updateBMStatus } = require('./meta');
 const { fetchGAMReport, fetchGAMFunnelsByUTM, fetchGAMHourly, fetchGAMUtmCampaigns, fetchGAMUtmSources } = require('./gam');
@@ -20,7 +21,18 @@ async function fetchMetaAdsForSync(dateRange) {
   const configs = await getBMConfigs();
   const since = dateRange?.since || today();
   const until = dateRange?.until || today();
-  const timeParams = { time_range: JSON.stringify({ since, until }) };
+
+  // Buscar timezone_name de todas as contas — necessário para re-bucketing por fuso BR
+  const { data: tzRows } = await supabase
+    .from('meta_accounts')
+    .select('ad_account_id,timezone_name')
+    .eq('ativo', true);
+  const tzMap = {};
+  for (const r of tzRows || []) {
+    const k = String(r.ad_account_id).startsWith('act_')
+      ? String(r.ad_account_id) : `act_${r.ad_account_id}`;
+    tzMap[k] = r.timezone_name || null;
+  }
 
   const allAds = [];
   const budgetByAccount = {}; // accountId → Map(campaignId → budget)
@@ -29,6 +41,15 @@ async function fetchMetaAdsForSync(dateRange) {
     try {
       const { token, account } = config;
       const accountId = account.startsWith('act_') ? account : `act_${account}`;
+      const accountTz = tzMap[accountId] || 'America/Sao_Paulo';
+      const needsRebucket = accountTz !== 'America/Sao_Paulo';
+      // Range alargado para cobrir o dia BR completo quando a conta está em outro fuso
+      const fetchSince = needsRebucket
+        ? DateTime.fromISO(since, { zone: 'America/Sao_Paulo' }).minus({ days: 1 }).toISODate()
+        : since;
+      const fetchUntil = needsRebucket
+        ? DateTime.fromISO(until, { zone: 'America/Sao_Paulo' }).plus({ days: 1 }).toISODate()
+        : until;
 
       // Fetch campaign budgets (CBO: budget set at campaign level)
       const campBudgetRes = await axios.get(`${BASE}/${accountId}/campaigns`, {
@@ -73,7 +94,8 @@ async function fetchMetaAdsForSync(dateRange) {
       }
       budgetByAccount[accountId] = budgetMap;
 
-      // Paginated fetch of all ads — time_increment:1 gives one row per ad per day
+      // Paginated fetch de insights: breakdown horário para contas fora do BR,
+      // fetch diário simples para contas já em fuso BR (otimização Render free tier)
       let reqUrl = `${BASE}/${accountId}/insights`;
       let params = {
         access_token: token,
@@ -81,19 +103,63 @@ async function fetchMetaAdsForSync(dateRange) {
         fields: AD_FIELDS,
         time_increment: 1,
         limit: 500,
-        ...timeParams,
+        time_range: JSON.stringify({ since: fetchSince, until: fetchUntil }),
+        ...(needsRebucket ? { breakdowns: 'hourly_stats_aggregated_by_advertiser_time_zone' } : {}),
       };
       let hasMore = true;
+
+      // Acumulador para re-bucketing: `${ad_id}|${dataBR}` → row agregada por dia BR
+      const hourlyAccum = new Map();
 
       while (hasMore) {
         const res = await axios.get(reqUrl, { params, timeout: 60000 });
         const rows = res.data?.data || [];
+
         for (const r of rows) {
-          r._bmId = config.id;
-          r._accountId = accountId;
-          r._adsetBudget = budgetMap.get(r.adset_id) || 0;
+          if (!needsRebucket) {
+            r._bmId = config.id;
+            r._accountId = accountId;
+            r._adsetBudget = budgetMap.get(r.adset_id) || 0;
+            allAds.push(r);
+          } else {
+            const hStr = r.hourly_stats_aggregated_by_advertiser_time_zone || '';
+            const conv = converterHoraParaBR(r.date_start, hStr, accountTz);
+            if (!conv) continue;
+            const { dataBR } = conv;
+            // Descartar horas cujo dia BR cai fora do range solicitado
+            if (dataBR < since || dataBR > until) continue;
+
+            const key = `${r.ad_id}|${dataBR}`;
+            if (!hourlyAccum.has(key)) {
+              // Primeira hora deste (ad, dataBR): copiar campos fixos do ad
+              hourlyAccum.set(key, {
+                ...r,
+                date_start: dataBR,
+                spend: 0,
+                impressions: 0,
+                inline_link_clicks: 0,
+                outbound_clicks: 0,
+                clicks: 0,
+                ctr: 0,
+                cpc: 0,
+                _actionsMap: new Map(),
+                _bmId: config.id,
+                _accountId: accountId,
+                _adsetBudget: budgetMap.get(r.adset_id) || 0,
+              });
+            }
+            const acc = hourlyAccum.get(key);
+            acc.spend              += Number(r.spend              || 0);
+            acc.impressions        += Number(r.impressions        || 0);
+            acc.inline_link_clicks += Number(r.inline_link_clicks || 0);
+            acc.outbound_clicks    += Number(r.outbound_clicks    || 0);
+            acc.clicks             += Number(r.clicks             || 0);
+            for (const a of (r.actions || [])) {
+              const cur = acc._actionsMap.get(a.action_type) || 0;
+              acc._actionsMap.set(a.action_type, cur + Number(a.value || 0));
+            }
+          }
         }
-        allAds.push(...rows);
 
         const nextUrl = res.data?.paging?.next;
         if (nextUrl && rows.length > 0) {
@@ -104,6 +170,20 @@ async function fetchMetaAdsForSync(dateRange) {
           hasMore = false;
         }
       }
+
+      // Materializar acumulador: reconstruir actions por dia BR, empurrar para allAds
+      // actions somadas por dia BR — findAction/getResultadoMeta roda UMA vez por linha em syncAll
+      if (needsRebucket) {
+        for (const [, acc] of hourlyAccum) {
+          acc.actions = [...acc._actionsMap.entries()].map(([action_type, value]) => ({
+            action_type,
+            value: String(value),
+          }));
+          delete acc._actionsMap;
+          allAds.push(acc);
+        }
+      }
+
       await updateBMStatus(config.id, 'OK');
     } catch (e) {
       const detail = e.response?.data ? JSON.stringify(e.response.data) : e.message;
@@ -126,6 +206,18 @@ function tzOffsetHours(dateStr, timezone) {
     10
   );
   return (localHour === 24 ? 0 : localHour) - 12;
+}
+
+// Converte uma linha horária da Meta para { dataBR, horaBR } no fuso Brasil.
+// horaField: "HH:MM:SS - HH:MM:SS" (breakdown horário Meta) — usa só HH:MM:SS inicial.
+// Resolve DST automaticamente via IANA timezone (luxon) — nunca offset fixo.
+function converterHoraParaBR(dateStr, horaField, accountTz) {
+  const hh = (horaField || '').slice(0, 8);
+  if (!hh || hh.length < 5) return null;
+  const dt = DateTime.fromISO(`${dateStr}T${hh}`, { zone: accountTz });
+  if (!dt.isValid) return null;
+  const dtBR = dt.setZone('America/Sao_Paulo');
+  return { dataBR: dtBR.toISODate(), horaBR: dtBR.hour };
 }
 
 // ─────────────────────────────────────────────
@@ -196,43 +288,44 @@ async function fetchMetaHourlySpend(date) {
 
     // Compute shift: account TZ hour → BRT hour
     const accountTz = apiInfo[accountId]?.timezone_name || 'America/Sao_Paulo';
-    const acctOffset = tzOffsetHours(date, accountTz);        // e.g. -7 for LA PDT
-    const brtOffset  = tzOffsetHours(date, 'America/Sao_Paulo'); // e.g. -3 for BRT
-    const hourShift  = brtOffset - acctOffset; // e.g. +4 for LA → BRT
+    const needsRebucket = accountTz !== 'America/Sao_Paulo';
+    // Range alargado para cobrir o dia BR completo quando a conta está em outro fuso
+    const hrSince = needsRebucket
+      ? DateTime.fromISO(date, { zone: 'America/Sao_Paulo' }).minus({ days: 1 }).toISODate()
+      : date;
+    const hrUntil = needsRebucket
+      ? DateTime.fromISO(date, { zone: 'America/Sao_Paulo' }).plus({ days: 1 }).toISODate()
+      : date;
+    if (needsRebucket) {
+      console.log(`[hourly Meta ${accountId}] tz=${accountTz} — re-bucketing luxon para ${date}`);
+    }
 
     try {
       let nextUrl = `${BASE}/${accountId}/insights`;
       let params = {
         access_token: token,
         level: 'campaign',
-        fields: 'campaign_name,spend',
-        time_range: JSON.stringify({ since: date, until: date }),
+        fields: 'campaign_name,spend,date_start',
+        time_range: JSON.stringify({ since: hrSince, until: hrUntil }),
+        time_increment: 1,
         breakdowns: 'hourly_stats_aggregated_by_advertiser_time_zone',
         limit: 500,
       };
-      if (hourShift !== 0) {
-        console.log(`[hourly Meta ${accountId}] tz=${accountTz} shift=${hourShift > 0 ? '+' : ''}${hourShift}h`);
-      }
       while (nextUrl) {
         const res = await axios.get(nextUrl, { params, timeout: 30000 });
         params = undefined; // URL paginada já carrega os params — não reenviar
         for (const row of res.data?.data || []) {
           const hStr = row.hourly_stats_aggregated_by_advertiser_time_zone || '';
-          // Format: "00:00:00 - 01:00:00" — extract leading hour in account TZ
-          const acctHour = parseInt(hStr.slice(0, 2), 10);
-          if (isNaN(acctHour) || acctHour < 0 || acctHour > 23) continue;
-          const brtHour = acctHour + hourShift;
-          // Skip hours that cross into the adjacent BRT day
-          if (brtHour < 0 || brtHour > 23) continue;
+          const conv = converterHoraParaBR(row.date_start || date, hStr, accountTz);
+          if (!conv || conv.dataBR !== date) continue;
+          const { horaBR } = conv;
           const spend = Number(row.spend || 0) * taxaUSD * fatorImposto;
           if (spend <= 0) continue;
-          // Global: soma de todas as campanhas — mantém o mesmo total de antes
-          globalHoraMap[brtHour] = (globalHoraMap[brtHour] || 0) + spend;
-          // Por prefixo: match exato de colchete ([EU] ≠ [EURO])
+          globalHoraMap[horaBR] = (globalHoraMap[horaBR] || 0) + spend;
           const prefix = extractDomainPrefix(row.campaign_name || '');
           if (prefix) {
             if (!prefixHoraMap[prefix]) prefixHoraMap[prefix] = {};
-            prefixHoraMap[prefix][brtHour] = (prefixHoraMap[prefix][brtHour] || 0) + spend;
+            prefixHoraMap[prefix][horaBR] = (prefixHoraMap[prefix][horaBR] || 0) + spend;
           }
         }
         nextUrl = res.data?.paging?.next || null;

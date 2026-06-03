@@ -1,0 +1,3693 @@
+◇ injected env (1) from .env.local // tip: ⌘ override existing { override: true }
+2Junior's — Inteligência de Mídia running at http://localhost:3000
+[scheduler] Iniciando sync inicial…
+[scheduler] Agendado: a cada 30 min + diário às 06h
+[meta refresh] act_836584462796120: currency=USD tz=America/Los_Angeles
+[meta refresh] act_1545053014088416: currency=USD tz=America/Los_Angeles
+[meta refresh] act_2174411853395352: currency=USD tz=America/Los_Angeles
+[meta refresh] act_24292507563699876: currency=BRL tz=America/Sao_Paulo
+[sync] metaAccount key="act_836584462796120" moeda="USD" imposto=0%
+[sync] metaAccount key="act_1545053014088416" moeda="USD" imposto=0%
+[sync] metaAccount key="act_2174411853395352" moeda="USD" imposto=0%
+[sync] metaAccount key="act_24292507563699876" moeda="BRL" imposto=12.5%
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '2'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    { action_type: 'onsite_web_view_content', value: '2' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '2' },
+    { action_type: 'view_content', value: '2' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '2' },
+    { action_type: 'omni_view_content', value: '2' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '2'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 2,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [ { action_type: 'onsite_conversion.messaging_block', value: '1' } ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '4'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '5'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '26'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '13'
+    },
+    { action_type: 'onsite_web_view_content', value: '2' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '5'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '9'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '2' },
+    { action_type: 'view_content', value: '2' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '4'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_5_message_send',
+      value: '1'
+    },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '2' },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '9'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '6'
+    },
+    { action_type: 'omni_view_content', value: '2' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '2'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 2,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '4'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '3'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '2' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '4'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '4'
+    },
+    { action_type: 'onsite_web_view_content', value: '4' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '3'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '2'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '4' },
+    { action_type: 'view_content', value: '4' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '3'
+    },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '4' },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '3'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '3'
+    },
+    { action_type: 'omni_view_content', value: '4' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '4'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 4,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [ { action_type: 'onsite_conversion.messaging_block', value: '1' } ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.lead', value: '1' },
+    {
+      action_type: 'offsite_complete_registration_add_meta_leads',
+      value: '1'
+    },
+    { action_type: 'offsite_search_add_meta_leads', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '5'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '4'
+    },
+    { action_type: 'onsite_web_view_content', value: '2' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '2'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '2' },
+    { action_type: 'onsite_web_lead', value: '1' },
+    { action_type: 'view_content', value: '2' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '3'
+    },
+    { action_type: 'lead', value: '1' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '3' },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '2'
+    },
+    { action_type: 'onsite_conversion.lead_grouped', value: '1' },
+    { action_type: 'omni_view_content', value: '2' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '2'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 2,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '2' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '6'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '4'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '4'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '7'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    { action_type: 'onsite_web_view_content', value: '1' },
+    { action_type: 'onsite_web_app_view_content', value: '1' },
+    { action_type: 'view_content', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_5_message_send',
+      value: '3'
+    },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '1' },
+    { action_type: 'omni_view_content', value: '1' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 1,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '4'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '1' },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '2'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '3'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    { action_type: 'onsite_web_view_content', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '1' },
+    { action_type: 'view_content', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '1'
+    },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '1' },
+    { action_type: 'omni_view_content', value: '1' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 1,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_5_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    { action_type: 'onsite_web_view_content', value: '4' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '4' },
+    { action_type: 'view_content', value: '4' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '2'
+    },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '4' },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    },
+    { action_type: 'omni_view_content', value: '4' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '4'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 4,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_web_view_content', value: '2' },
+    { action_type: 'onsite_web_app_view_content', value: '2' },
+    { action_type: 'view_content', value: '2' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '2' },
+    { action_type: 'omni_view_content', value: '2' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '2'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 2,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '4'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '2'
+    },
+    { action_type: 'onsite_web_view_content', value: '2' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '2'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '2' },
+    { action_type: 'view_content', value: '2' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '2' },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '2'
+    },
+    { action_type: 'omni_view_content', value: '2' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '2'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 2,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    { action_type: 'onsite_web_view_content', value: '1' },
+    { action_type: 'onsite_web_app_view_content', value: '1' },
+    { action_type: 'view_content', value: '1' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '1' },
+    { action_type: 'omni_view_content', value: '1' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 1,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '3'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    { action_type: 'onsite_web_view_content', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '1' },
+    { action_type: 'view_content', value: '1' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '1' },
+    { action_type: 'omni_view_content', value: '1' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 1,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    { action_type: 'onsite_web_view_content', value: '1' },
+    { action_type: 'onsite_web_app_view_content', value: '1' },
+    { action_type: 'view_content', value: '1' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '1' },
+    { action_type: 'omni_view_content', value: '1' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 1,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.lead', value: '1' },
+    {
+      action_type: 'offsite_complete_registration_add_meta_leads',
+      value: '1'
+    },
+    { action_type: 'offsite_search_add_meta_leads', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '4'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '4'
+    },
+    { action_type: 'onsite_web_view_content', value: '6' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '5'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '2'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '6' },
+    { action_type: 'onsite_web_lead', value: '1' },
+    { action_type: 'view_content', value: '6' },
+    { action_type: 'lead', value: '1' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '7' },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '2'
+    },
+    { action_type: 'onsite_conversion.lead_grouped', value: '1' },
+    { action_type: 'omni_view_content', value: '6' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '6'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 6,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '14'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '8'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '4'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '3'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '4'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '3'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '2'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_web_view_content', value: '1' },
+    { action_type: 'onsite_web_app_view_content', value: '1' },
+    { action_type: 'view_content', value: '1' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '1' },
+    { action_type: 'omni_view_content', value: '1' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 1,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '2'
+    },
+    { action_type: 'onsite_web_view_content', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '1' },
+    { action_type: 'view_content', value: '1' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '1' },
+    { action_type: 'omni_view_content', value: '1' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 1,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_web_view_content', value: '1' },
+    { action_type: 'onsite_web_app_view_content', value: '1' },
+    { action_type: 'view_content', value: '1' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '1' },
+    { action_type: 'omni_view_content', value: '1' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 1,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '3'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '3'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_5_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '7'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '2'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '4'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    { action_type: 'onsite_web_view_content', value: '3' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '3' },
+    { action_type: 'view_content', value: '3' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '1'
+    },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '3' },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    },
+    { action_type: 'omni_view_content', value: '3' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '3'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 3,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '1' },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    { action_type: 'onsite_web_view_content', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '1' },
+    { action_type: 'view_content', value: '1' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '1' },
+    { action_type: 'omni_view_content', value: '1' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 1,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '2'
+    },
+    { action_type: 'onsite_web_view_content', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '1' },
+    { action_type: 'view_content', value: '1' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    },
+    { action_type: 'omni_view_content', value: '1' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 1,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_web_view_content', value: '1' },
+    { action_type: 'onsite_web_app_view_content', value: '1' },
+    { action_type: 'view_content', value: '1' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '1' },
+    { action_type: 'omni_view_content', value: '1' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 1,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '4'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '2'
+    },
+    { action_type: 'onsite_web_view_content', value: '3' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '2'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '3' },
+    { action_type: 'view_content', value: '3' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_5_message_send',
+      value: '1'
+    },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '3' },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '2'
+    },
+    { action_type: 'omni_view_content', value: '3' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '3'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 3,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '3'
+    },
+    { action_type: 'onsite_web_view_content', value: '2' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '2'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '2' },
+    { action_type: 'view_content', value: '2' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_5_message_send',
+      value: '2'
+    },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '2' },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '2'
+    },
+    { action_type: 'omni_view_content', value: '2' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '2'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 2,
+  custo_resultado_calculado: 0
+}
+[utm amafb 2026-05-28] spend=0.00, clicks=0, cpc=0.0000
+[utm zurifb 2026-05-28] spend=0.00, clicks=0, cpc=0.0000
+[utm yobannafb 2026-05-28] spend=0.00, clicks=0, cpc=0.0000
+[utm adamafb 2026-05-28] spend=0.00, clicks=0, cpc=0.0000
+[utm dalilafb 2026-05-28] spend=0.00, clicks=0, cpc=0.0000
+[utm amahlefb 2026-05-28] spend=0.00, clicks=0, cpc=0.0000
+[utm amafb 2026-05-29] spend=0.00, clicks=0, cpc=0.0000
+[utm zurifb 2026-05-29] spend=0.00, clicks=0, cpc=0.0000
+[utm yobannafb 2026-05-29] spend=0.00, clicks=0, cpc=0.0000
+[utm dalilafb 2026-05-29] spend=0.00, clicks=0, cpc=0.0000
+[utm amahlefb 2026-05-29] spend=0.00, clicks=0, cpc=0.0000
+[utm aishafb 2026-05-28] spend=0.00, clicks=0, cpc=0.0000
+[utm zainahfb 2026-05-28] spend=2.84, clicks=139, cpc=0.0204
+[utm afiafb 2026-05-28] spend=0.00, clicks=0, cpc=0.0000
+[utm yetundefb 2026-05-28] spend=0.00, clicks=0, cpc=0.0000
+[utm adamafb 2026-05-28] spend=7.11, clicks=1140, cpc=0.0062
+[utm dalilafb 2026-05-28] spend=14.23, clicks=2435, cpc=0.0058
+[utm janefb 2026-05-28] spend=0.00, clicks=0, cpc=0.0000
+[utm zurifb 2026-05-28] spend=0.00, clicks=0, cpc=0.0000
+[utm yobannafb 2026-05-28] spend=0.00, clicks=0, cpc=0.0000
+[utm nalidefb 2026-05-28] spend=0.00, clicks=0, cpc=0.0000
+[utm inanifb 2026-05-28] spend=14.45, clicks=1471, cpc=0.0098
+[utm amahlefb 2026-05-28] spend=16.35, clicks=3643, cpc=0.0045
+[utm aishafb 2026-05-29] spend=0.00, clicks=0, cpc=0.0000
+[utm zainahfb 2026-05-29] spend=1.44, clicks=108, cpc=0.0133
+[utm afiafb 2026-05-29] spend=0.00, clicks=0, cpc=0.0000
+[utm yetundefb 2026-05-29] spend=0.00, clicks=0, cpc=0.0000
+[utm adamafb 2026-05-29] spend=2.76, clicks=412, cpc=0.0067
+[utm dalilafb 2026-05-29] spend=3.95, clicks=575, cpc=0.0069
+[utm janefb 2026-05-29] spend=0.00, clicks=0, cpc=0.0000
+[utm zurifb 2026-05-29] spend=0.00, clicks=0, cpc=0.0000
+[utm yobannafb 2026-05-29] spend=0.00, clicks=0, cpc=0.0000
+[utm nalidefb 2026-05-29] spend=0.00, clicks=0, cpc=0.0000
+[utm inanifb 2026-05-29] spend=4.96, clicks=452, cpc=0.0110
+[utm amahlefb 2026-05-29] spend=4.28, clicks=1054, cpc=0.0041
+[utm naledifb 2026-05-29] spend=0.42, clicks=16, cpc=0.0262
+[utm direto-ng-01-fb 2026-05-28] spend=0.35, clicks=20, cpc=0.0175
+[utm direto-ng-02-fb 2026-05-28] spend=0.10, clicks=13, cpc=0.0077
+[utm adannafb 2026-05-29] spend=2.48, clicks=500, cpc=0.0050
+[utm aishafb 2026-05-29] spend=1.78, clicks=158, cpc=0.0113
+[utm naledifb 2026-05-29] spend=1.90, clicks=252, cpc=0.0075
+[budget] date=2026-05-28 utm="amafb" tipo=bot orcamento=R$12.00
+[budget] date=2026-05-28 utm="zurifb" tipo=bot orcamento=R$6.00
+[budget] date=2026-05-28 utm="yobannafb" tipo=bot orcamento=R$19.00
+[budget] date=2026-05-28 utm="adamafb" tipo=bot orcamento=R$24.00
+[budget] date=2026-05-28 utm="dalilafb" tipo=bot orcamento=R$30.00
+[budget] date=2026-05-28 utm="amahlefb" tipo=bot orcamento=R$6.00
+[budget] date=2026-05-29 utm="amafb" tipo=bot orcamento=R$12.00
+[budget] date=2026-05-29 utm="zurifb" tipo=bot orcamento=R$6.00
+[budget] date=2026-05-29 utm="yobannafb" tipo=bot orcamento=R$13.00
+[budget] date=2026-05-29 utm="dalilafb" tipo=bot orcamento=R$18.00
+[budget] date=2026-05-29 utm="amahlefb" tipo=bot orcamento=R$6.00
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: db/exchangerate-api)
+[sync aishafb] accountId="act_836584462796120" moeda="USD" spend=0 taxa=5.03 valorBRL=0.0000
+[budget] date=2026-05-28 utm="aishafb" tipo=bot orcamento=R$7.00
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[budget] date=2026-05-28 utm="zainahfb" tipo=bot orcamento=R$5.00
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[budget] date=2026-05-28 utm="afiafb" tipo=bot orcamento=R$7.00
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[budget] date=2026-05-28 utm="yetundefb" tipo=bot orcamento=R$7.00
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[budget] date=2026-05-28 utm="adamafb" tipo=bot orcamento=R$10.00
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[budget] date=2026-05-28 utm="dalilafb" tipo=bot orcamento=R$15.00
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[budget] date=2026-05-28 utm="janefb" tipo=bot orcamento=R$11.00
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[budget] date=2026-05-28 utm="zurifb" tipo=bot orcamento=R$18.00
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[budget] date=2026-05-28 utm="yobannafb" tipo=bot orcamento=R$19.00
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[budget] date=2026-05-28 utm="nalidefb" tipo=bot orcamento=R$36.00
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[budget] date=2026-05-28 utm="inanifb" tipo=bot orcamento=R$13.09
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[budget] date=2026-05-28 utm="amahlefb" tipo=bot orcamento=R$14.28
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: db/exchangerate-api)
+[sync aishafb] accountId="act_836584462796120" moeda="USD" spend=0 taxa=5.05 valorBRL=0.0000
+[budget] date=2026-05-29 utm="aishafb" tipo=bot orcamento=R$7.00
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="zainahfb" tipo=bot orcamento=R$5.00
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="afiafb" tipo=bot orcamento=R$6.00
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="yetundefb" tipo=bot orcamento=R$7.00
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="adamafb" tipo=bot orcamento=R$10.00
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="dalilafb" tipo=bot orcamento=R$14.00
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="janefb" tipo=bot orcamento=R$11.00
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="zurifb" tipo=bot orcamento=R$16.00
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="yobannafb" tipo=bot orcamento=R$19.00
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="nalidefb" tipo=bot orcamento=R$24.00
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="inanifb" tipo=bot orcamento=R$13.09
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="amahlefb" tipo=bot orcamento=R$14.28
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="naledifb" tipo=bot orcamento=R$1.19
+[DIRETO] date=2026-05-28 utm="direto-ng-01-fb" key="direto-ng-01-fb" noDireto="direto-ng-01-fb" GAMkeys=[adamafb,dalilafb,afiafb,yobannafb,zurifb,janefb,amafb,zainahfo,aishafb,amahlefb,yetundefb,zainahfb,naledifb,inanifb,120253280405150197] matched="NONE" fat=0.0000 imp=0
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[budget] date=2026-05-28 utm="direto-ng-01-fb" tipo=direto orcamento=R$1.00
+[DIRETO] date=2026-05-28 utm="direto-ng-02-fb" key="direto-ng-02-fb" noDireto="direto-ng-02-fb" GAMkeys=[adamafb,dalilafb,afiafb,yobannafb,zurifb,janefb,amafb,zainahfo,aishafb,amahlefb,yetundefb,zainahfb,naledifb,inanifb,120253280405150197] matched="NONE" fat=0.0000 imp=0
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[budget] date=2026-05-28 utm="direto-ng-02-fb" tipo=direto orcamento=R$1.00
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="adannafb" tipo=bot orcamento=R$6.00
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[sync aishafb] accountId="act_1545053014088416" moeda="USD" spend=1.7800000000000002 taxa=5.05 valorBRL=8.9890
+[budget] date=2026-05-29 utm="aishafb" tipo=bot orcamento=R$6.00
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="naledifb" tipo=bot orcamento=R$6.00
+[sync] removidas 6 linhas UTM sem investimento (shadow de outra conta)
+[sync] cleaned 35 ghost pais_sigla='' entries
+[sync] cache GAM: 14 horas salvas
+[sync] cache GAM: 15 UTMs salvas
+[sync] cache GAM: 8 sources salvas
+[meta refresh] act_836584462796120: currency=USD tz=America/Los_Angeles
+[meta refresh] act_24292507563699876: currency=BRL tz=America/Sao_Paulo
+[meta refresh] act_1545053014088416: currency=USD tz=America/Los_Angeles
+[meta refresh] act_2174411853395352: currency=USD tz=America/Los_Angeles
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[hourly Meta act_836584462796120] tz=America/Los_Angeles shift=+4h
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[hourly Meta act_1545053014088416] tz=America/Los_Angeles shift=+4h
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[hourly Meta act_2174411853395352] tz=America/Los_Angeles shift=+4h
+[hourly Meta] 2026-05-29: 13 horas, investimento total R$121.05
+[hourly Meta] spend por hora BRT: {"4":15.65,"5":8.03,"6":9.29,"7":12.27,"8":12.22,"9":12.52,"10":13.08,"11":10.35,"12":5.4,"13":6.82,"14":6.82,"15":8.58,"16":0}
+[hourly] 16 horas salvas → 2026-05-29
+[meta refresh] act_836584462796120: currency=USD tz=America/Los_Angeles
+[meta refresh] act_24292507563699876: currency=BRL tz=America/Sao_Paulo
+[meta refresh] act_1545053014088416: currency=USD tz=America/Los_Angeles
+[meta refresh] act_2174411853395352: currency=USD tz=America/Los_Angeles
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[hourly Meta act_836584462796120] tz=America/Los_Angeles shift=+4h
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[hourly Meta act_1545053014088416] tz=America/Los_Angeles shift=+4h
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[hourly Meta act_2174411853395352] tz=America/Los_Angeles shift=+4h
+[hourly Meta] 2026-05-28: 20 horas, investimento total R$256.58
+[hourly Meta] spend por hora BRT: {"4":23.39,"5":10.56,"6":8.1,"7":6.09,"8":5.78,"9":9.26,"10":12.93,"11":14.54,"12":15.59,"13":14.69,"14":15.54,"15":13.43,"16":12.42,"17":11.22,"18":14.64,"19":17.5,"20":16,"21":16.05,"22":11.92,"23":6.94}
+[hourly] 24 horas salvas → 2026-05-28
+[syncPaginas] iniciando...
+[sync] OK — 35 ads (2026-05-28→2026-05-29), 0 pending, 62495ms
+[syncPaginas] act_836584462796120: 15 páginas do cache
+  Práce v České republice → PRACE → DISPONÍVEL
+  Adanna Okoro → ADANNA → EM USO [TZ] [MKUKER] [TZ_RELA_EN_0001] [ADANNA]
+  Inani Sow → INANI → EM USO [SN] [MKUKER] [SN_RELA_EN_BOT_0001] [INANI] CP01
+  Naledi Khumalo → NALEDI → EM USO [NG] [MKUKER] [NG_RELA_EN_BOT_0002] [NALEDI]
+  Amahle → AMAHLE → EM USO [AFS] [MKUKER] [AFS_RELA_EN_BOT_0001] [AMAHLE] V3
+  Afia Osei → AFIA → EM USO [GH] [MKUKER] [GH_RELA_EN_BOT_0002] [AFIA]
+  Adama Ba → ADAMA → EM USO [SN] [MKUKER] [[SN_RELA_EN_BOT_0001][ADAMA] CP0
+  Yetunde Adebayo → YETUNDE → EM USO [NG] [MKUKER] [NG_RELA_EN_BOT_0003] [YETUNDE]
+  Zainab Okoro → ZAINAB → DISPONÍVEL
+  Aisha Nkosi → AISHA → EM USO [GH] [MKUKER] [GH_RELA_EN_BOT_0001] [AISHA]
+  Ama Grace → AMA → EM USO [AFS] [MKUKER] [AFS_RELA_EN_BOT_0001] [AMAHLE] V3
+  Yobanna Anenechukwu → YOBANNA → EM USO [GH] [MKUKER] [GH_RELA_EN_BOT_0002] [YOBANNA]
+  Zuri Ndlovu → ZURI → EM USO [NG] [MKUKER] [NG_RELA_EN_BOT_0001] [ZURI]
+  Jane Njeri → JANE → EM USO [UG] [MKUKER] [UG_RELA_EN_BOT_0001] [JANE]
+  Dalila → DALILA → EM USO [KN] [MKUKER] [KN_RELA_EN_BOT_0001] [DALILA] V2
+[syncPaginas] act_836584462796120: 15 páginas upseridas, 13 em uso
+[syncPaginas] act_24292507563699876: 14 páginas do cache
+  Adanna Okoro → ADANNA → EM USO [TZ] [MKUKER] [TZ_RELA_EN_0001] [ADANNA]
+  Inani Sow → INANI → EM USO [SN] [MKUKER] [SN_RELA_EN_BOT_0001] [INANI] CP01
+  Naledi Khumalo → NALEDI → EM USO [NG] [MKUKER] [NG_RELA_EN_BOT_0002] [NALEDI]
+  Amahle → AMAHLE → EM USO [AFS] [MKUKER] [AFS_RELA_EN_BOT_0001] [AMAHLE] V3
+  Afia Osei → AFIA → EM USO [GH] [MKUKER] [GH_RELA_EN_BOT_0002] [AFIA]
+  Adama Ba → ADAMA → EM USO [SN] [MKUKER] [[SN_RELA_EN_BOT_0001][ADAMA] CP0
+  Yetunde Adebayo → YETUNDE → EM USO [NG] [MKUKER] [NG_RELA_EN_BOT_0003] [YETUNDE]
+  Zainab Okoro → ZAINAB → DISPONÍVEL
+  Aisha Nkosi → AISHA → EM USO [GH] [MKUKER] [GH_RELA_EN_BOT_0001] [AISHA]
+  Ama Grace → AMA → EM USO [AFS] [MKUKER] [AFS_RELA_EN_BOT_0001] [AMAHLE] V3
+  Yobanna Anenechukwu → YOBANNA → EM USO [GH] [MKUKER] [GH_RELA_EN_BOT_0002] [YOBANNA]
+  Zuri Ndlovu → ZURI → EM USO [NG] [MKUKER] [NG_RELA_EN_BOT_0001] [ZURI]
+  Jane Njeri → JANE → EM USO [UG] [MKUKER] [UG_RELA_EN_BOT_0001] [JANE]
+  Dalila → DALILA → EM USO [KN] [MKUKER] [KN_RELA_EN_BOT_0001] [DALILA] V2
+[syncPaginas] act_24292507563699876: 14 páginas upseridas, 13 em uso
+[syncPaginas] act_1545053014088416: 14 páginas do cache
+  Adanna Okoro → ADANNA → EM USO [TZ] [MKUKER] [TZ_RELA_EN_0001] [ADANNA]
+  Inani Sow → INANI → EM USO [SN] [MKUKER] [SN_RELA_EN_BOT_0001] [INANI] CP01
+  Naledi Khumalo → NALEDI → EM USO [NG] [MKUKER] [NG_RELA_EN_BOT_0002] [NALEDI]
+  Amahle → AMAHLE → EM USO [AFS] [MKUKER] [AFS_RELA_EN_BOT_0001] [AMAHLE] V3
+  Afia Osei → AFIA → EM USO [GH] [MKUKER] [GH_RELA_EN_BOT_0002] [AFIA]
+  Adama Ba → ADAMA → EM USO [SN] [MKUKER] [[SN_RELA_EN_BOT_0001][ADAMA] CP0
+  Yetunde Adebayo → YETUNDE → EM USO [NG] [MKUKER] [NG_RELA_EN_BOT_0003] [YETUNDE]
+  Zainab Okoro → ZAINAB → DISPONÍVEL
+  Aisha Nkosi → AISHA → EM USO [GH] [MKUKER] [GH_RELA_EN_BOT_0001] [AISHA]
+  Ama Grace → AMA → EM USO [AFS] [MKUKER] [AFS_RELA_EN_BOT_0001] [AMAHLE] V3
+  Yobanna Anenechukwu → YOBANNA → EM USO [GH] [MKUKER] [GH_RELA_EN_BOT_0002] [YOBANNA]
+  Zuri Ndlovu → ZURI → EM USO [NG] [MKUKER] [NG_RELA_EN_BOT_0001] [ZURI]
+  Jane Njeri → JANE → EM USO [UG] [MKUKER] [UG_RELA_EN_BOT_0001] [JANE]
+  Dalila → DALILA → EM USO [KN] [MKUKER] [KN_RELA_EN_BOT_0001] [DALILA] V2
+[syncPaginas] act_1545053014088416: 14 páginas upseridas, 13 em uso
+[syncPaginas] act_2174411853395352: /me/accounts→15 promote_pages→1
+  Práce v České republice → PRACE → DISPONÍVEL
+  Adanna Okoro → ADANNA → EM USO [TZ] [MKUKER] [TZ_RELA_EN_0001] [ADANNA]
+  Inani Sow → INANI → EM USO [SN] [MKUKER] [SN_RELA_EN_BOT_0001] [INANI] CP01
+  Naledi Khumalo → NALEDI → EM USO [NG] [MKUKER] [NG_RELA_EN_BOT_0002] [NALEDI]
+  Amahle → AMAHLE → EM USO [AFS] [MKUKER] [AFS_RELA_EN_BOT_0001] [AMAHLE] V3
+  Afia Osei → AFIA → EM USO [GH] [MKUKER] [GH_RELA_EN_BOT_0002] [AFIA]
+  Adama Ba → ADAMA → EM USO [SN] [MKUKER] [[SN_RELA_EN_BOT_0001][ADAMA] CP0
+  Yetunde Adebayo → YETUNDE → EM USO [NG] [MKUKER] [NG_RELA_EN_BOT_0003] [YETUNDE]
+  Zainab Okoro → ZAINAB → DISPONÍVEL
+  Aisha Nkosi → AISHA → EM USO [GH] [MKUKER] [GH_RELA_EN_BOT_0001] [AISHA]
+  Ama Grace → AMA → EM USO [AFS] [MKUKER] [AFS_RELA_EN_BOT_0001] [AMAHLE] V3
+  Yobanna Anenechukwu → YOBANNA → EM USO [GH] [MKUKER] [GH_RELA_EN_BOT_0002] [YOBANNA]
+  Zuri Ndlovu → ZURI → EM USO [NG] [MKUKER] [NG_RELA_EN_BOT_0001] [ZURI]
+  Jane Njeri → JANE → EM USO [UG] [MKUKER] [UG_RELA_EN_BOT_0001] [JANE]
+  Dalila → DALILA → EM USO [KN] [MKUKER] [KN_RELA_EN_BOT_0001] [DALILA] V2
+[syncPaginas] act_2174411853395352: 15 páginas upseridas, 13 em uso
+[syncPaginas] concluído.
+[scheduler] Sync automático…
+[meta refresh] act_836584462796120: currency=USD tz=America/Los_Angeles
+[meta refresh] act_24292507563699876: currency=BRL tz=America/Sao_Paulo
+[meta refresh] act_1545053014088416: currency=USD tz=America/Los_Angeles
+[meta refresh] act_2174411853395352: currency=USD tz=America/Los_Angeles
+[sync] metaAccount key="act_836584462796120" moeda="USD" imposto=0%
+[sync] metaAccount key="act_24292507563699876" moeda="BRL" imposto=12.5%
+[sync] metaAccount key="act_1545053014088416" moeda="USD" imposto=0%
+[sync] metaAccount key="act_2174411853395352" moeda="USD" imposto=0%
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '2'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    { action_type: 'onsite_web_view_content', value: '2' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '2' },
+    { action_type: 'view_content', value: '2' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '2' },
+    { action_type: 'omni_view_content', value: '2' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '2'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 2,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [ { action_type: 'onsite_conversion.messaging_block', value: '1' } ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '4'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '5'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '26'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '13'
+    },
+    { action_type: 'onsite_web_view_content', value: '2' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '5'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '9'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '2' },
+    { action_type: 'view_content', value: '2' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '4'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_5_message_send',
+      value: '1'
+    },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '2' },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '9'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '6'
+    },
+    { action_type: 'omni_view_content', value: '2' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '2'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 2,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '4'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '3'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '2' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '4'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '4'
+    },
+    { action_type: 'onsite_web_view_content', value: '4' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '3'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '2'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '4' },
+    { action_type: 'view_content', value: '4' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '3'
+    },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '4' },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '3'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '3'
+    },
+    { action_type: 'omni_view_content', value: '4' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '4'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 4,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [ { action_type: 'onsite_conversion.messaging_block', value: '1' } ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.lead', value: '1' },
+    {
+      action_type: 'offsite_complete_registration_add_meta_leads',
+      value: '1'
+    },
+    { action_type: 'offsite_search_add_meta_leads', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '5'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '4'
+    },
+    { action_type: 'onsite_web_view_content', value: '2' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '2'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '2' },
+    { action_type: 'onsite_web_lead', value: '1' },
+    { action_type: 'view_content', value: '2' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '3'
+    },
+    { action_type: 'lead', value: '1' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '3' },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '2'
+    },
+    { action_type: 'onsite_conversion.lead_grouped', value: '1' },
+    { action_type: 'omni_view_content', value: '2' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '2'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 2,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '2' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '6'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '4'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '4'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '7'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    { action_type: 'onsite_web_view_content', value: '1' },
+    { action_type: 'onsite_web_app_view_content', value: '1' },
+    { action_type: 'view_content', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_5_message_send',
+      value: '3'
+    },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '1' },
+    { action_type: 'omni_view_content', value: '1' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 1,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '4'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '1' },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '2'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '3'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    { action_type: 'onsite_web_view_content', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '1' },
+    { action_type: 'view_content', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '1'
+    },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '1' },
+    { action_type: 'omni_view_content', value: '1' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 1,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_5_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    { action_type: 'onsite_web_view_content', value: '4' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '4' },
+    { action_type: 'view_content', value: '4' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '2'
+    },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '4' },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    },
+    { action_type: 'omni_view_content', value: '4' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '4'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 4,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_web_view_content', value: '2' },
+    { action_type: 'onsite_web_app_view_content', value: '2' },
+    { action_type: 'view_content', value: '2' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '2' },
+    { action_type: 'omni_view_content', value: '2' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '2'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 2,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '4'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '2'
+    },
+    { action_type: 'onsite_web_view_content', value: '2' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '2'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '2' },
+    { action_type: 'view_content', value: '2' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '2' },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '2'
+    },
+    { action_type: 'omni_view_content', value: '2' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '2'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 2,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    { action_type: 'onsite_web_view_content', value: '1' },
+    { action_type: 'onsite_web_app_view_content', value: '1' },
+    { action_type: 'view_content', value: '1' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '1' },
+    { action_type: 'omni_view_content', value: '1' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 1,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '3'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    { action_type: 'onsite_web_view_content', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '1' },
+    { action_type: 'view_content', value: '1' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '1' },
+    { action_type: 'omni_view_content', value: '1' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 1,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    { action_type: 'onsite_web_view_content', value: '1' },
+    { action_type: 'onsite_web_app_view_content', value: '1' },
+    { action_type: 'view_content', value: '1' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '1' },
+    { action_type: 'omni_view_content', value: '1' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 1,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.lead', value: '1' },
+    {
+      action_type: 'offsite_complete_registration_add_meta_leads',
+      value: '1'
+    },
+    { action_type: 'offsite_search_add_meta_leads', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '4'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '4'
+    },
+    { action_type: 'onsite_web_view_content', value: '6' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '5'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '2'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '6' },
+    { action_type: 'onsite_web_lead', value: '1' },
+    { action_type: 'view_content', value: '6' },
+    { action_type: 'lead', value: '1' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '7' },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '2'
+    },
+    { action_type: 'onsite_conversion.lead_grouped', value: '1' },
+    { action_type: 'omni_view_content', value: '6' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '6'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 6,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '14'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '8'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '4'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '3'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '4'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '3'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '2'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_web_view_content', value: '1' },
+    { action_type: 'onsite_web_app_view_content', value: '1' },
+    { action_type: 'view_content', value: '1' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '1' },
+    { action_type: 'omni_view_content', value: '1' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 1,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '2'
+    },
+    { action_type: 'onsite_web_view_content', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '1' },
+    { action_type: 'view_content', value: '1' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '1' },
+    { action_type: 'omni_view_content', value: '1' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 1,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_web_view_content', value: '1' },
+    { action_type: 'onsite_web_app_view_content', value: '1' },
+    { action_type: 'view_content', value: '1' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '1' },
+    { action_type: 'omni_view_content', value: '1' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 1,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '3'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '3'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_5_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '7'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '2'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '4'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    { action_type: 'onsite_web_view_content', value: '3' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '3' },
+    { action_type: 'view_content', value: '3' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '1'
+    },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '3' },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    },
+    { action_type: 'omni_view_content', value: '3' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '3'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 3,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '1' },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    { action_type: 'onsite_web_view_content', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '1' },
+    { action_type: 'view_content', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '1'
+    },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '1' },
+    { action_type: 'omni_view_content', value: '1' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 1,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '2'
+    },
+    { action_type: 'onsite_web_view_content', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '1' },
+    { action_type: 'view_content', value: '1' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    },
+    { action_type: 'omni_view_content', value: '1' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 1,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '2'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 0,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_web_view_content', value: '1' },
+    { action_type: 'onsite_web_app_view_content', value: '1' },
+    { action_type: 'view_content', value: '1' },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '1' },
+    { action_type: 'omni_view_content', value: '1' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '1'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 1,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '4'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '2'
+    },
+    { action_type: 'onsite_web_view_content', value: '3' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '2'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '3' },
+    { action_type: 'view_content', value: '3' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_5_message_send',
+      value: '1'
+    },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '3' },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '2'
+    },
+    { action_type: 'omni_view_content', value: '3' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '3'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 3,
+  custo_resultado_calculado: 0
+}
+[zurifb DEBUG] {
+  spend: 0,
+  clicks: 0,
+  actions: [
+    { action_type: 'onsite_conversion.messaging_block', value: '1' },
+    {
+      action_type: 'onsite_conversion.messaging_welcome_message_view',
+      value: '1'
+    },
+    {
+      action_type: 'onsite_conversion.total_messaging_connection',
+      value: '3'
+    },
+    { action_type: 'onsite_web_view_content', value: '2' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_2_message_send',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_first_reply',
+      value: '2'
+    },
+    { action_type: 'onsite_web_app_view_content', value: '2' },
+    { action_type: 'view_content', value: '2' },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_3_message_send',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_user_depth_5_message_send',
+      value: '2'
+    },
+    { action_type: 'offsite_content_view_add_meta_leads', value: '2' },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_started_7d',
+      value: '2'
+    },
+    {
+      action_type: 'onsite_conversion.messaging_conversation_replied_7d',
+      value: '2'
+    },
+    { action_type: 'omni_view_content', value: '2' },
+    {
+      action_type: 'offsite_conversion.fb_pixel_view_content',
+      value: '2'
+    }
+  ],
+  objetivo: 'OUTCOME_SALES',
+  resultado_calculado: 2,
+  custo_resultado_calculado: 0
+}
+[utm amafb 2026-05-28] spend=0.00, clicks=0, cpc=0.0000
+[utm zurifb 2026-05-28] spend=0.00, clicks=0, cpc=0.0000
+[utm yobannafb 2026-05-28] spend=0.00, clicks=0, cpc=0.0000
+[utm adamafb 2026-05-28] spend=0.00, clicks=0, cpc=0.0000
+[utm dalilafb 2026-05-28] spend=0.00, clicks=0, cpc=0.0000
+[utm amahlefb 2026-05-28] spend=0.00, clicks=0, cpc=0.0000
+[utm amafb 2026-05-29] spend=0.00, clicks=0, cpc=0.0000
+[utm zurifb 2026-05-29] spend=0.00, clicks=0, cpc=0.0000
+[utm yobannafb 2026-05-29] spend=0.00, clicks=0, cpc=0.0000
+[utm dalilafb 2026-05-29] spend=0.00, clicks=0, cpc=0.0000
+[utm amahlefb 2026-05-29] spend=0.00, clicks=0, cpc=0.0000
+[utm aishafb 2026-05-28] spend=0.00, clicks=0, cpc=0.0000
+[utm zainahfb 2026-05-28] spend=2.84, clicks=139, cpc=0.0204
+[utm afiafb 2026-05-28] spend=0.00, clicks=0, cpc=0.0000
+[utm yetundefb 2026-05-28] spend=0.00, clicks=0, cpc=0.0000
+[utm adamafb 2026-05-28] spend=7.12, clicks=1141, cpc=0.0062
+[utm dalilafb 2026-05-28] spend=14.23, clicks=2436, cpc=0.0058
+[utm janefb 2026-05-28] spend=0.00, clicks=0, cpc=0.0000
+[utm zurifb 2026-05-28] spend=0.00, clicks=0, cpc=0.0000
+[utm yobannafb 2026-05-28] spend=0.00, clicks=0, cpc=0.0000
+[utm nalidefb 2026-05-28] spend=0.00, clicks=0, cpc=0.0000
+[utm inanifb 2026-05-28] spend=14.46, clicks=1471, cpc=0.0098
+[utm amahlefb 2026-05-28] spend=16.37, clicks=3649, cpc=0.0045
+[utm aishafb 2026-05-29] spend=0.00, clicks=0, cpc=0.0000
+[utm zainahfb 2026-05-29] spend=1.58, clicks=116, cpc=0.0136
+[utm afiafb 2026-05-29] spend=0.00, clicks=0, cpc=0.0000
+[utm yetundefb 2026-05-29] spend=0.00, clicks=0, cpc=0.0000
+[utm adamafb 2026-05-29] spend=2.87, clicks=439, cpc=0.0065
+[utm dalilafb 2026-05-29] spend=4.14, clicks=598, cpc=0.0069
+[utm janefb 2026-05-29] spend=0.00, clicks=0, cpc=0.0000
+[utm zurifb 2026-05-29] spend=0.00, clicks=0, cpc=0.0000
+[utm yobannafb 2026-05-29] spend=0.00, clicks=0, cpc=0.0000
+[utm nalidefb 2026-05-29] spend=0.00, clicks=0, cpc=0.0000
+[utm inanifb 2026-05-29] spend=5.18, clicks=485, cpc=0.0107
+[utm amahlefb 2026-05-29] spend=4.52, clicks=1111, cpc=0.0041
+[utm naledifb 2026-05-29] spend=0.44, clicks=18, cpc=0.0244
+[utm direto-ng-01-fb 2026-05-28] spend=0.35, clicks=20, cpc=0.0175
+[utm direto-ng-02-fb 2026-05-28] spend=0.10, clicks=13, cpc=0.0077
+[utm adannafb 2026-05-29] spend=2.52, clicks=513, cpc=0.0049
+[utm aishafb 2026-05-29] spend=1.78, clicks=158, cpc=0.0113
+[utm naledifb 2026-05-29] spend=1.95, clicks=256, cpc=0.0076
+[budget] date=2026-05-28 utm="amafb" tipo=bot orcamento=R$12.00
+[budget] date=2026-05-28 utm="zurifb" tipo=bot orcamento=R$6.00
+[budget] date=2026-05-28 utm="yobannafb" tipo=bot orcamento=R$19.00
+[budget] date=2026-05-28 utm="adamafb" tipo=bot orcamento=R$24.00
+[budget] date=2026-05-28 utm="dalilafb" tipo=bot orcamento=R$30.00
+[budget] date=2026-05-28 utm="amahlefb" tipo=bot orcamento=R$6.00
+[budget] date=2026-05-29 utm="amafb" tipo=bot orcamento=R$12.00
+[budget] date=2026-05-29 utm="zurifb" tipo=bot orcamento=R$6.00
+[budget] date=2026-05-29 utm="yobannafb" tipo=bot orcamento=R$13.00
+[budget] date=2026-05-29 utm="dalilafb" tipo=bot orcamento=R$18.00
+[budget] date=2026-05-29 utm="amahlefb" tipo=bot orcamento=R$6.00
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[sync aishafb] accountId="act_836584462796120" moeda="USD" spend=0 taxa=5.03 valorBRL=0.0000
+[budget] date=2026-05-28 utm="aishafb" tipo=bot orcamento=R$7.00
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[budget] date=2026-05-28 utm="zainahfb" tipo=bot orcamento=R$5.00
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[budget] date=2026-05-28 utm="afiafb" tipo=bot orcamento=R$7.00
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[budget] date=2026-05-28 utm="yetundefb" tipo=bot orcamento=R$7.00
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[budget] date=2026-05-28 utm="adamafb" tipo=bot orcamento=R$10.00
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[budget] date=2026-05-28 utm="dalilafb" tipo=bot orcamento=R$15.00
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[budget] date=2026-05-28 utm="janefb" tipo=bot orcamento=R$11.00
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[budget] date=2026-05-28 utm="zurifb" tipo=bot orcamento=R$18.00
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[budget] date=2026-05-28 utm="yobannafb" tipo=bot orcamento=R$19.00
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[budget] date=2026-05-28 utm="nalidefb" tipo=bot orcamento=R$36.00
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[budget] date=2026-05-28 utm="inanifb" tipo=bot orcamento=R$13.09
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[budget] date=2026-05-28 utm="amahlefb" tipo=bot orcamento=R$14.28
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[sync aishafb] accountId="act_836584462796120" moeda="USD" spend=0 taxa=5.05 valorBRL=0.0000
+[budget] date=2026-05-29 utm="aishafb" tipo=bot orcamento=R$7.00
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="zainahfb" tipo=bot orcamento=R$5.00
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="afiafb" tipo=bot orcamento=R$6.00
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="yetundefb" tipo=bot orcamento=R$7.00
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="adamafb" tipo=bot orcamento=R$10.00
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="dalilafb" tipo=bot orcamento=R$14.00
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="janefb" tipo=bot orcamento=R$11.00
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="zurifb" tipo=bot orcamento=R$16.00
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="yobannafb" tipo=bot orcamento=R$19.00
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="nalidefb" tipo=bot orcamento=R$24.00
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="inanifb" tipo=bot orcamento=R$13.09
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="amahlefb" tipo=bot orcamento=R$14.28
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="naledifb" tipo=bot orcamento=R$1.19
+[DIRETO] date=2026-05-28 utm="direto-ng-01-fb" key="direto-ng-01-fb" noDireto="direto-ng-01-fb" GAMkeys=[adamafb,dalilafb,afiafb,yobannafb,zurifb,janefb,amafb,zainahfo,aishafb,amahlefb,yetundefb,zainahfb,naledifb,inanifb,120253280405150197] matched="NONE" fat=0.0000 imp=0
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[budget] date=2026-05-28 utm="direto-ng-01-fb" tipo=direto orcamento=R$1.00
+[DIRETO] date=2026-05-28 utm="direto-ng-02-fb" key="direto-ng-02-fb" noDireto="direto-ng-02-fb" GAMkeys=[adamafb,dalilafb,afiafb,yobannafb,zurifb,janefb,amafb,zainahfo,aishafb,amahlefb,yetundefb,zainahfb,naledifb,inanifb,120253280405150197] matched="NONE" fat=0.0000 imp=0
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[budget] date=2026-05-28 utm="direto-ng-02-fb" tipo=direto orcamento=R$1.00
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="adannafb" tipo=bot orcamento=R$6.00
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[sync aishafb] accountId="act_1545053014088416" moeda="USD" spend=1.7800000000000002 taxa=5.05 valorBRL=8.9890
+[budget] date=2026-05-29 utm="aishafb" tipo=bot orcamento=R$6.00
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[budget] date=2026-05-29 utm="naledifb" tipo=bot orcamento=R$6.00
+[sync] removidas 6 linhas UTM sem investimento (shadow de outra conta)
+[sync] cleaned 35 ghost pais_sigla='' entries
+[sync] cache GAM: 15 horas salvas
+[sync] cache GAM: 15 UTMs salvas
+[sync] cache GAM: 9 sources salvas
+[meta refresh] act_836584462796120: currency=USD tz=America/Los_Angeles
+[meta refresh] act_2174411853395352: currency=USD tz=America/Los_Angeles
+[meta refresh] act_24292507563699876: currency=BRL tz=America/Sao_Paulo
+[meta refresh] act_1545053014088416: currency=USD tz=America/Los_Angeles
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[hourly Meta act_836584462796120] tz=America/Los_Angeles shift=+4h
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[hourly Meta act_2174411853395352] tz=America/Los_Angeles shift=+4h
+[taxa USD→BRL] 2026-05-29: 5.05 (fonte: memory-cache)
+[hourly Meta act_1545053014088416] tz=America/Los_Angeles shift=+4h
+[hourly Meta] 2026-05-29: 13 horas, investimento total R$126.15
+[hourly Meta] spend por hora BRT: {"4":15.71,"5":8.03,"6":9.34,"7":12.37,"8":12.22,"9":12.52,"10":13.08,"11":10.35,"12":5.45,"13":6.82,"14":6.82,"15":9.49,"16":3.94}
+[hourly] 17 horas salvas → 2026-05-29
+[meta refresh] act_836584462796120: currency=USD tz=America/Los_Angeles
+[meta refresh] act_2174411853395352: currency=USD tz=America/Los_Angeles
+[meta refresh] act_24292507563699876: currency=BRL tz=America/Sao_Paulo
+[meta refresh] act_1545053014088416: currency=USD tz=America/Los_Angeles
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[hourly Meta act_836584462796120] tz=America/Los_Angeles shift=+4h
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[hourly Meta act_2174411853395352] tz=America/Los_Angeles shift=+4h
+[taxa USD→BRL] 2026-05-28: 5.03 (fonte: memory-cache)
+[hourly Meta act_1545053014088416] tz=America/Los_Angeles shift=+4h
+[hourly Meta] 2026-05-28: 20 horas, investimento total R$256.68
+[hourly Meta] spend por hora BRT: {"4":23.39,"5":10.56,"6":8.1,"7":6.09,"8":5.78,"9":9.26,"10":12.93,"11":14.54,"12":15.59,"13":14.69,"14":15.54,"15":13.43,"16":12.42,"17":11.22,"18":14.69,"19":17.5,"20":16,"21":16.05,"22":11.97,"23":6.94}
+[hourly] 24 horas salvas → 2026-05-28
+[syncPaginas] iniciando...
+[sync] OK — 35 ads (2026-05-28→2026-05-29), 0 pending, 62975ms
+[syncPaginas] act_836584462796120: 15 páginas do cache
+  Práce v České republice → PRACE → DISPONÍVEL
+  Adanna Okoro → ADANNA → EM USO [TZ] [MKUKER] [TZ_RELA_EN_0001] [ADANNA]
+  Inani Sow → INANI → EM USO [SN] [MKUKER] [SN_RELA_EN_BOT_0001] [INANI] CP01
+  Naledi Khumalo → NALEDI → EM USO [NG] [MKUKER] [NG_RELA_EN_BOT_0002] [NALEDI]
+  Amahle → AMAHLE → EM USO [AFS] [MKUKER] [AFS_RELA_EN_BOT_0001] [AMAHLE] V3
+  Afia Osei → AFIA → EM USO [GH] [MKUKER] [GH_RELA_EN_BOT_0002] [AFIA]
+  Adama Ba → ADAMA → EM USO [SN] [MKUKER] [[SN_RELA_EN_BOT_0001][ADAMA] CP0
+  Yetunde Adebayo → YETUNDE → EM USO [NG] [MKUKER] [NG_RELA_EN_BOT_0003] [YETUNDE]
+  Zainab Okoro → ZAINAB → DISPONÍVEL
+  Aisha Nkosi → AISHA → EM USO [GH] [MKUKER] [GH_RELA_EN_BOT_0001] [AISHA]
+  Ama Grace → AMA → EM USO [AFS] [MKUKER] [AFS_RELA_EN_BOT_0001] [AMAHLE] V3
+  Yobanna Anenechukwu → YOBANNA → EM USO [GH] [MKUKER] [GH_RELA_EN_BOT_0002] [YOBANNA]
+  Zuri Ndlovu → ZURI → EM USO [NG] [MKUKER] [NG_RELA_EN_BOT_0001] [ZURI]
+  Jane Njeri → JANE → EM USO [UG] [MKUKER] [UG_RELA_EN_BOT_0001] [JANE]
+  Dalila → DALILA → EM USO [KN] [MKUKER] [KN_RELA_EN_BOT_0001] [DALILA] V2
+[syncPaginas] act_836584462796120: 15 páginas upseridas, 13 em uso
+[syncPaginas] act_2174411853395352: /me/accounts→15 promote_pages→1
+  Práce v České republice → PRACE → DISPONÍVEL
+  Adanna Okoro → ADANNA → EM USO [TZ] [MKUKER] [TZ_RELA_EN_0001] [ADANNA]
+  Inani Sow → INANI → EM USO [SN] [MKUKER] [SN_RELA_EN_BOT_0001] [INANI] CP01
+  Naledi Khumalo → NALEDI → EM USO [NG] [MKUKER] [NG_RELA_EN_BOT_0002] [NALEDI]
+  Amahle → AMAHLE → EM USO [AFS] [MKUKER] [AFS_RELA_EN_BOT_0001] [AMAHLE] V3
+  Afia Osei → AFIA → EM USO [GH] [MKUKER] [GH_RELA_EN_BOT_0002] [AFIA]
+  Adama Ba → ADAMA → EM USO [SN] [MKUKER] [[SN_RELA_EN_BOT_0001][ADAMA] CP0
+  Yetunde Adebayo → YETUNDE → EM USO [NG] [MKUKER] [NG_RELA_EN_BOT_0003] [YETUNDE]
+  Zainab Okoro → ZAINAB → DISPONÍVEL
+  Aisha Nkosi → AISHA → EM USO [GH] [MKUKER] [GH_RELA_EN_BOT_0001] [AISHA]
+  Ama Grace → AMA → EM USO [AFS] [MKUKER] [AFS_RELA_EN_BOT_0001] [AMAHLE] V3
+  Yobanna Anenechukwu → YOBANNA → EM USO [GH] [MKUKER] [GH_RELA_EN_BOT_0002] [YOBANNA]
+  Zuri Ndlovu → ZURI → EM USO [NG] [MKUKER] [NG_RELA_EN_BOT_0001] [ZURI]
+  Jane Njeri → JANE → EM USO [UG] [MKUKER] [UG_RELA_EN_BOT_0001] [JANE]
+  Dalila → DALILA → EM USO [KN] [MKUKER] [KN_RELA_EN_BOT_0001] [DALILA] V2
+[syncPaginas] act_2174411853395352: 15 páginas upseridas, 13 em uso
+[syncPaginas] act_24292507563699876: 14 páginas do cache
+  Adanna Okoro → ADANNA → EM USO [TZ] [MKUKER] [TZ_RELA_EN_0001] [ADANNA]
+  Inani Sow → INANI → EM USO [SN] [MKUKER] [SN_RELA_EN_BOT_0001] [INANI] CP01
+  Naledi Khumalo → NALEDI → EM USO [NG] [MKUKER] [NG_RELA_EN_BOT_0002] [NALEDI]
+  Amahle → AMAHLE → EM USO [AFS] [MKUKER] [AFS_RELA_EN_BOT_0001] [AMAHLE] V3
+  Afia Osei → AFIA → EM USO [GH] [MKUKER] [GH_RELA_EN_BOT_0002] [AFIA]
+  Adama Ba → ADAMA → EM USO [SN] [MKUKER] [[SN_RELA_EN_BOT_0001][ADAMA] CP0
+  Yetunde Adebayo → YETUNDE → EM USO [NG] [MKUKER] [NG_RELA_EN_BOT_0003] [YETUNDE]
+  Zainab Okoro → ZAINAB → DISPONÍVEL
+  Aisha Nkosi → AISHA → EM USO [GH] [MKUKER] [GH_RELA_EN_BOT_0001] [AISHA]
+  Ama Grace → AMA → EM USO [AFS] [MKUKER] [AFS_RELA_EN_BOT_0001] [AMAHLE] V3
+  Yobanna Anenechukwu → YOBANNA → EM USO [GH] [MKUKER] [GH_RELA_EN_BOT_0002] [YOBANNA]
+  Zuri Ndlovu → ZURI → EM USO [NG] [MKUKER] [NG_RELA_EN_BOT_0001] [ZURI]
+  Jane Njeri → JANE → EM USO [UG] [MKUKER] [UG_RELA_EN_BOT_0001] [JANE]
+  Dalila → DALILA → EM USO [KN] [MKUKER] [KN_RELA_EN_BOT_0001] [DALILA] V2
+[syncPaginas] act_24292507563699876: 14 páginas upseridas, 13 em uso
+[syncPaginas] act_1545053014088416: 14 páginas do cache
+  Adanna Okoro → ADANNA → EM USO [TZ] [MKUKER] [TZ_RELA_EN_0001] [ADANNA]
+  Inani Sow → INANI → EM USO [SN] [MKUKER] [SN_RELA_EN_BOT_0001] [INANI] CP01
+  Naledi Khumalo → NALEDI → EM USO [NG] [MKUKER] [NG_RELA_EN_BOT_0002] [NALEDI]
+  Amahle → AMAHLE → EM USO [AFS] [MKUKER] [AFS_RELA_EN_BOT_0001] [AMAHLE] V3
+  Afia Osei → AFIA → EM USO [GH] [MKUKER] [GH_RELA_EN_BOT_0002] [AFIA]
+  Adama Ba → ADAMA → EM USO [SN] [MKUKER] [[SN_RELA_EN_BOT_0001][ADAMA] CP0
+  Yetunde Adebayo → YETUNDE → EM USO [NG] [MKUKER] [NG_RELA_EN_BOT_0003] [YETUNDE]
+  Zainab Okoro → ZAINAB → DISPONÍVEL
+  Aisha Nkosi → AISHA → EM USO [GH] [MKUKER] [GH_RELA_EN_BOT_0001] [AISHA]
+  Ama Grace → AMA → EM USO [AFS] [MKUKER] [AFS_RELA_EN_BOT_0001] [AMAHLE] V3
+  Yobanna Anenechukwu → YOBANNA → EM USO [GH] [MKUKER] [GH_RELA_EN_BOT_0002] [YOBANNA]
+  Zuri Ndlovu → ZURI → EM USO [NG] [MKUKER] [NG_RELA_EN_BOT_0001] [ZURI]
+  Jane Njeri → JANE → EM USO [UG] [MKUKER] [UG_RELA_EN_BOT_0001] [JANE]
+  Dalila → DALILA → EM USO [KN] [MKUKER] [KN_RELA_EN_BOT_0001] [DALILA] V2
+[syncPaginas] act_1545053014088416: 14 páginas upseridas, 13 em uso
+[syncPaginas] concluído.
