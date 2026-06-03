@@ -19,7 +19,8 @@ async function handler(req, res) {
 
     if (horaRow) {
       const ultimaHora = horaRow.hora;
-      const atraso = Math.max(0, horaAtual - ultimaHora - 1);
+      // sem -1: horaAtual e ultimaHora são inteiros SP; diferença = horas reais sem dados
+      const atraso = Math.max(0, horaAtual - ultimaHora);
       return res.json({
         ultima_hora_com_dados: ultimaHora,
         hora_atual: horaAtual,
@@ -43,7 +44,7 @@ async function handler(req, res) {
       const syncSP = new Date(syncTime.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
       const horaSyncSP = syncSP.getHours();
       const ultimaHoraEstimada = Math.max(0, horaSyncSP - 2);
-      const atraso = Math.max(0, horaAtual - ultimaHoraEstimada - 1);
+      const atraso = Math.max(0, horaAtual - ultimaHoraEstimada); // idem, sem -1
       return res.json({
         ultima_hora_com_dados: ultimaHoraEstimada,
         hora_atual: horaAtual,

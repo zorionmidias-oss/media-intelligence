@@ -213,6 +213,9 @@
     📅 <span id="date-btn-lbl">7 dias</span>
     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
   </button>
+  <select id="m-domain-sel" style="height:2rem;padding:0 .5rem;border-radius:.5rem;border:1px solid var(--border);background:var(--sec);color:var(--fg);font-size:11px;cursor:pointer;flex-shrink:0;min-width:60px;max-width:100px" onchange="onDomainChange()">
+    <option value="all">Todos</option>
+  </select>
   <span class="gam-badge" id="gam-delay-badge" style="display:none"></span>
   <div style="display:flex;align-items:center;gap:.375rem;flex-shrink:0">
     <button class="ico-btn" id="eye-btn" onclick="toggleValues()" title="Ocultar valores">
@@ -412,14 +415,16 @@
 let USD_RATE = null;
 let S = { busy: false, campsLoaded: false, paisesLoaded: false, gamLoaded: false };
 let _campAll = [], _noGamVisible = false;
+let _activeDomain = 'all';
 let _apData = [], _apFilter = 'all', _apUtmCache = {};
 let _ddCurrent = null;
 let _activePreset = '7d';
 let _intradayChart = null, _intradayMetric = 'receita', _intradayData = null;
 
 const PRESETS = [
-  {id:'hoje', lbl:'Hoje'},
-  {id:'7d',   lbl:'7 dias'},
+  {id:'hoje',  lbl:'Hoje'},
+  {id:'ontem', lbl:'Ontem'},
+  {id:'7d',    lbl:'7 dias'},
   {id:'14d',  lbl:'14 dias'},
   {id:'30d',  lbl:'30 dias'},
   {id:'mes',  lbl:'Este mês'},
@@ -567,6 +572,7 @@ function selectPreset(id){
   const si=document.getElementById('f-since'), ui=document.getElementById('f-until');
   ui.value=fmtDate(now);
   if(id==='hoje'){si.value=fmtDate(now);}
+  else if(id==='ontem'){const d=new Date(now);d.setDate(d.getDate()-1);si.value=fmtDate(d);ui.value=fmtDate(d);}
   else if(id==='7d'){const d=new Date(now);d.setDate(d.getDate()-6);si.value=fmtDate(d);}
   else if(id==='14d'){const d=new Date(now);d.setDate(d.getDate()-13);si.value=fmtDate(d);}
   else if(id==='30d'){const d=new Date(now);d.setDate(d.getDate()-29);si.value=fmtDate(d);}
@@ -595,6 +601,19 @@ function applyCustomDate(){
   refresh();
 }
 
+// ── Domain filter ─────────────────────────────────────────────────────────────
+function domainQ(){return _activeDomain&&_activeDomain!=='all'?`&domain=${encodeURIComponent(_activeDomain)}`:''}
+function onDomainChange(){_activeDomain=document.getElementById('m-domain-sel').value;refresh();}
+async function loadDomainOptions(){
+  try{
+    const r=await fetch('/api/dominios');if(!r.ok)return;
+    const doms=await r.json();
+    const sel=document.getElementById('m-domain-sel');if(!sel)return;
+    sel.innerHTML='<option value="all">Todos</option>';
+    for(const d of doms||[]){const o=document.createElement('option');o.value=d.nome;o.textContent=d.nome;sel.appendChild(o);}
+  }catch(e){}
+}
+
 // ── Refresh ───────────────────────────────────────────────────────────────────
 function refresh(){
   loadOverview();
@@ -610,7 +629,7 @@ async function loadOverview(){
   S.busy=true;showOverlay();
   const{since,until}=getDates();
   try{
-    const r=await fetch(`/api/overview?since=${since}&until=${until}`);
+    const r=await fetch(`/api/overview?since=${since}&until=${until}${domainQ()}`);
     if(!r.ok)throw new Error(r.statusText);
     renderOverview(await r.json());
     window.hideLoading();
@@ -649,7 +668,7 @@ function renderOverview(d){
 // ══ INTRADAY ══════════════════════════════════════════════════════════════════
 async function loadIntraday(){
   try{
-    const r=await fetch('/api/intraday');
+    const r=await fetch('/api/intraday'+(_activeDomain&&_activeDomain!=='all'?'?domain='+encodeURIComponent(_activeDomain):''));
     if(!r.ok)return;
     _intradayData=await r.json();
     renderIntradayChart(_intradayData,_intradayMetric);
@@ -749,7 +768,7 @@ async function loadCamps(){
   const tb=document.getElementById('camp-body');
   if(tb)tb.innerHTML='<tr><td colspan="4" class="empty">Carregando…</td></tr>';
   try{
-    const r=await fetch(`/api/dashboard?since=${since}&until=${until}`);
+    const r=await fetch(`/api/dashboard?since=${since}&until=${until}${domainQ()}`);
     if(!r.ok)throw new Error(r.statusText);
     const d=await r.json();
     _campAll=d.rows||[];_noGamVisible=false;
@@ -944,7 +963,7 @@ async function loadGAM(){
   S.gamLoaded=true;
   const{since,until}=getDates();
   try{
-    const r=await fetch(`/api/reports-gam?cached=true&since=${since}&until=${until}`);
+    const r=await fetch(`/api/reports-gam?cached=true&since=${since}&until=${until}${domainQ()}`);
     if(!r.ok)throw new Error(r.statusText);
     renderGAM(await r.json());
   }catch(e){console.error('[mobile/gam]',e);}
@@ -1031,6 +1050,7 @@ if('serviceWorker'in navigator){navigator.serviceWorker.register('/sw.js').catch
 initDates();
 initTheme();
 initEye();
+loadDomainOptions();
 loadOverview();
 loadIntraday();
 loadGamDelay();
