@@ -1339,13 +1339,17 @@
                 <label class="col-toggle-item"><input type="checkbox" data-col="imp-gam" onchange="toggleCol(this)"> Imp. GAM</label>
                 <label class="col-toggle-item"><input type="checkbox" data-col="ecpm" onchange="toggleCol(this)"> eCPM</label>
                 <label class="col-toggle-item"><input type="checkbox" data-col="rps" onchange="toggleCol(this)"> RPS</label>
+                <label class="col-toggle-item"><input type="checkbox" data-col="sessoes-meta" onchange="toggleCol(this)"> Sessões (Meta)</label>
+                <label class="col-toggle-item"><input type="checkbox" data-col="sessao-conv" onchange="toggleCol(this)"> Sessão/Conversa</label>
+                <label class="col-toggle-item"><input type="checkbox" data-col="breakeven" onchange="toggleCol(this)"> Breakeven</label>
+                <label class="col-toggle-item"><input type="checkbox" data-col="inicio" onchange="toggleCol(this)"> Início</label>
               </div>
             </div>
           </div>
           <table id="camp-table">
             <thead><tr>
               <th>UTM</th><th>Domínio</th><th>Investido</th><th>Fat. Real</th><th>Lucro</th><th>ROAS</th>
-              <th class="col-h" data-col="cpc">CPC</th><th class="col-h" data-col="custo-res">Custo/Result.</th><th class="col-h" data-col="resultados">Resultados</th><th class="col-h" data-col="imp-gam">Imp. GAM</th><th class="col-h" data-col="ecpm">eCPM <span title="eCPM atribuído por UTM campaign via relatórios GAM. O eCPM nos KPIs globais (aba GAM) vem de blocos_anuncio e pode divergir, pois agrega todos os blocos independente da campanha." style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="rps">RPS</th><th>Ações</th>
+              <th class="col-h" data-col="cpc">CPC</th><th class="col-h" data-col="custo-res">Custo/Result.</th><th class="col-h" data-col="resultados">Resultados</th><th class="col-h" data-col="imp-gam">Imp. GAM</th><th class="col-h" data-col="ecpm">eCPM <span title="eCPM atribuído por UTM campaign via relatórios GAM. O eCPM nos KPIs globais (aba GAM) vem de blocos_anuncio e pode divergir, pois agrega todos os blocos independente da campanha." style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="rps">RPS</th><th class="col-h" data-col="sessoes-meta">Sessões (Meta)</th><th class="col-h" data-col="sessao-conv">Sessão/Conversa</th><th class="col-h" data-col="breakeven">Breakeven</th><th class="col-h" data-col="inicio">Início</th><th>Ações</th>
             </tr></thead>
             <tbody id="camp-db-body"><tr><td colspan="13" class="empty">Carregando…</td></tr></tbody>
           </table>
@@ -2171,7 +2175,7 @@
 
 <script>
 /* ═══ STATE ═══ */
-const S={metrics:null,chat:[],busy:false,aiOk:null,sbCol:false,tab:'overview'};
+const S={metrics:null,chat:[],busy:false,aiOk:null,sbCol:false,tab:'overview',campKPIs:null};
 
 /* ═══ FORMAT ═══ */
 // loc, BRL, PCT, NUM definidas em /js/formatters.js (carregado no <head>)
@@ -3856,7 +3860,7 @@ async function loadCampaignsDB(tipo){
   const tb=document.getElementById('camp-db-body');
   const ct=document.getElementById('camp-db-count');
   const kpiStrip=document.getElementById('camp-kpis');
-  if(tb)tb.innerHTML='<tr><td colspan="13" class="empty">Carregando…</td></tr>';
+  if(tb)tb.innerHTML='<tr><td colspan="17" class="empty">Carregando…</td></tr>';
   if(kpiStrip)kpiStrip.style.display='none';
   const since=document.getElementById('f-since').value;
   const until=document.getElementById('f-until').value;
@@ -3868,10 +3872,11 @@ async function loadCampaignsDB(tipo){
     if(!res.ok)throw new Error((await res.json().catch(()=>({}))).error||res.statusText);
     const d=await res.json();
     S.campRows=d.rows||[];
+    S.campKPIs=d.kpis||{};
     renderCampKPIs(d.kpis||{},tipo);
     renderCampTable(S.campRows);
   }catch(e){
-    if(tb)tb.innerHTML=`<tr><td colspan="13" class="empty" style="color:var(--bad)">${esc(e.message)}</td></tr>`;
+    if(tb)tb.innerHTML=`<tr><td colspan="17" class="empty" style="color:var(--bad)">${esc(e.message)}</td></tr>`;
     if(ct)ct.textContent='Erro';
   }
 }
@@ -3907,7 +3912,7 @@ function renderCampTable(rows){
   const ct=document.getElementById('camp-db-count');
 
   if(!rows.length){
-    tb.innerHTML='<tr><td colspan="13" class="empty">Sem dados no banco para o período selecionado.</td></tr>';
+    tb.innerHTML='<tr><td colspan="17" class="empty">Sem dados no banco para o período selecionado.</td></tr>';
     ct.textContent='0 UTMs';
     return;
   }
@@ -3925,6 +3930,22 @@ function renderCampTable(rows){
     const paisBadge=r.pais_sigla
       ?`<span title="${esc(r.pais_nome||r.pais_sigla)}" style="display:inline-flex;align-items:center;gap:2px;background:var(--sec-strong);border-radius:4px;padding:1px 5px;font-size:.65rem;color:var(--muted);margin-right:4px;flex-shrink:0">${getPaisEmoji(r.pais_sigla)} ${esc(r.pais_sigla)}</span>`
       :'';
+
+    // Sessão/Conversa com pílula colorida comparando vs breakeven
+    const spc=r.sessao_por_conversa;
+    const be=r.breakeven;
+    let spcHtml;
+    if(spc===null||spc===undefined){spcHtml='<span style="color:var(--muted)">—</span>';}
+    else if(be===null||be===undefined){spcHtml=spc.toFixed(2);}
+    else{
+      const ok=spc>=be;
+      const sc=ok?'var(--success)':'var(--danger)';
+      const sb=ok?'var(--success-soft)':'var(--danger-soft)';
+      spcHtml=`<span class="variacao" style="background:${sb};color:${sc}">${spc.toFixed(2)}</span>`;
+    }
+
+    const inicio=r.data_inicio?r.data_inicio.split('-').reverse().join('/'):'—';
+
     return`<tr class="anim utm-row" style="animation-delay:${i*20}ms">
       <td><div class="td-av">
         <div class="t-av">${esc((r.ad_utm||'?').charAt(0).toUpperCase())}</div>
@@ -3941,6 +3962,10 @@ function renderCampTable(rows){
       <td class="mo col-h" data-col="imp-gam" data-sort="${r.impressoes_gam||0}">${r.impressoes_gam>0?NUM(r.impressoes_gam):'—'}</td>
       <td class="mo col-h" data-col="ecpm" data-sort="${r.ecpm||0}">${r.ecpm>0?BRL(r.ecpm):'—'}</td>
       <td class="mo col-h" data-col="rps" data-sort="${r.rps||0}">${r.rps>0?BRL(r.rps):'—'}</td>
+      <td class="mo col-h" data-col="sessoes-meta" data-sort="${r.sessoes||0}">${r.sessoes>0?NUM(r.sessoes):'—'}</td>
+      <td class="mo col-h" data-col="sessao-conv" data-sort="${spc!==null&&spc!==undefined?spc:-1}">${spcHtml}</td>
+      <td class="mo col-h" data-col="breakeven" data-sort="${be!==null&&be!==undefined?be:-1}">${be!==null&&be!==undefined?be.toFixed(2):'<span style="color:var(--muted)">—</span>'}</td>
+      <td class="mo col-h" data-col="inicio" data-sort="${r.data_inicio||''}">${inicio}</td>
       <td style="white-space:nowrap">
         <button class="act-btn" onclick="navToGerWithUtm('${esc(r.ad_utm||'')}')" title="Ver no Gerenciador">▦</button>
         <button class="act-btn" onclick="abrirHistorico('${esc(r.ad_utm||'')}')" title="Histórico">📜</button>
@@ -3948,7 +3973,48 @@ function renderCampTable(rows){
     </tr>`;
   }).join('');
 
-  tb.innerHTML=html;
+  // TOTAL row — derivadas recalculadas dos totais das linhas visíveis
+  const totInv=rows.reduce((s,r)=>s+r.valor_gasto,0);
+  const totFat=rows.reduce((s,r)=>s+r.faturamento_real,0);
+  const totLuc=rows.reduce((s,r)=>s+r.lucro,0);
+  const totSes=rows.reduce((s,r)=>s+(r.sessoes||0),0);
+  const totCon=rows.reduce((s,r)=>s+(r.conversas||0),0);
+  const totSpc=totSes>0&&totCon>0?totSes/totCon:null;
+  const totRps=totSes>0&&totFat>0?totFat/totSes:null;
+  const totBe=totCon>0&&totInv>0&&totRps!==null?(totInv/totCon)/totRps:null;
+  const totSpcOk=totSpc!==null&&totBe!==null;
+  let totSpcHtml;
+  if(totSpc===null){totSpcHtml='—';}
+  else if(totBe===null){totSpcHtml=totSpc.toFixed(2);}
+  else{
+    const ok=totSpc>=totBe;
+    const sc=ok?'var(--success)':'var(--danger)';
+    const sb=ok?'var(--success-soft)':'var(--danger-soft)';
+    totSpcHtml=`<span class="variacao" style="background:${sb};color:${sc}">${totSpc.toFixed(2)}</span>`;
+  }
+  const totLc=totLuc>=0?'var(--color-positive)':'var(--color-negative)';
+  const totRoas=totInv>0?totFat/totInv:0;
+  const totRc=totRoas>=1?'var(--color-positive)':'var(--color-warning)';
+  const totalRow=`<tr class="row-total">
+    <td colspan="2"><strong>TOTAL</strong></td>
+    <td class="mo"><strong>${BRL(totInv)}</strong></td>
+    <td class="mo" style="color:var(--color-info)"><strong>${BRL(totFat)}</strong></td>
+    <td class="mo" style="color:${totLc}"><strong>${BRL(totLuc)}</strong></td>
+    <td class="mo" style="color:${totRc}"><strong>${ROAS(totRoas)}</strong></td>
+    <td class="mo col-h" data-col="cpc"></td>
+    <td class="mo col-h" data-col="custo-res"></td>
+    <td class="mo col-h" data-col="resultados"></td>
+    <td class="mo col-h" data-col="imp-gam"></td>
+    <td class="mo col-h" data-col="ecpm"></td>
+    <td class="mo col-h" data-col="rps"></td>
+    <td class="mo col-h" data-col="sessoes-meta"><strong>${totSes>0?NUM(totSes):'—'}</strong></td>
+    <td class="mo col-h" data-col="sessao-conv"><strong>${totSpcHtml}</strong></td>
+    <td class="mo col-h" data-col="breakeven"><strong>${totBe!==null?totBe.toFixed(2):'—'}</strong></td>
+    <td class="mo col-h" data-col="inicio">—</td>
+    <td></td>
+  </tr>`;
+
+  tb.innerHTML=html+totalRow;
   ct.textContent=`${rows.length} UTM${rows.length!==1?'s':''}`;
   makeTableSortable('camp-table');
   applyDefaultSort('camp-table',2);
@@ -3956,7 +4022,7 @@ function renderCampTable(rows){
 }
 
 /* ── Column visibility ── */
-const CAMP_COLS=['cpc','custo-res','resultados','imp-gam','ecpm','rps'];
+const CAMP_COLS=['cpc','custo-res','resultados','imp-gam','ecpm','rps','sessoes-meta','sessao-conv','breakeven','inicio'];
 const COL_PREFS_KEY='camp_col_prefs';
 function loadColPrefs(){
   try{return JSON.parse(localStorage.getItem(COL_PREFS_KEY)||'{}');}catch(_){return{};}

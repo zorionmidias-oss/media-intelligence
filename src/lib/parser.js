@@ -105,7 +105,7 @@ function groupAdsByUTM(ads) {
         accountId: ad.accountId || null,
         paisSigla: pais,
         nicho: ad.nicho || null,
-        spend: 0, clicks: 0, impressions: 0, results: 0,
+        spend: 0, clicks: 0, impressions: 0, results: 0, sessoes_meta: 0, conversas_meta: 0,
         _cpcSum: 0, _cpcW: 0,
         _ctrSum: 0, _ctrW: 0,
         _adsetBudgets: new Map(),
@@ -118,6 +118,8 @@ function groupAdsByUTM(ads) {
     g.clicks += ad.clicks || 0;
     g.impressions += ad.impressions || 0;
     g.results += ad.results || 0;
+    g.sessoes_meta  += ad.sessoes_meta  || 0;
+    g.conversas_meta += ad.conversas_meta || 0;
 
     if ((ad.cpc || 0) > 0 && (ad.clicks || 0) > 0) {
       g._cpcSum += ad.cpc * ad.clicks;
@@ -149,6 +151,8 @@ function groupAdsByUTM(ads) {
       clicks: g.clicks,
       impressions: g.impressions,
       results: g.results,
+      sessoes_meta: g.sessoes_meta,
+      conversas_meta: g.conversas_meta,
       cpc,
       ctr,
       orcamentoTotal: [...g._adsetBudgets.values()].reduce((a, b) => a + b, 0),

@@ -495,6 +495,8 @@ async function syncAll(dateRange) {
       // BUG 2: tipo calculado ANTES de getResultadoMeta para usar a lógica correta por tipo
       const tipo = extractTipo(ad.campaign_name);
       const resultado = getResultadoMeta(ad, tipo);
+      const sessoes_meta_ad   = findAction(ad.actions, ['view_content', 'omni_view_content', 'offsite_conversion.fb_pixel_view_content']);
+      const conversas_meta_ad = findAction(ad.actions, ['onsite_conversion.messaging_conversation_started_7d', 'onsite_conversion.messaging_first_reply']);
 
       // BUG 2 DEBUG: logar todos os ads de amafb do dia 16/05 para diagnóstico
       if (adUTM.toLowerCase() === 'amafb' && adDate === '2026-05-16') {
@@ -537,6 +539,8 @@ async function syncAll(dateRange) {
         clicks: Number(ad.inline_link_clicks || 0),
         impressions: Number(ad.impressions || 0),
         results: resultado,
+        sessoes_meta: sessoes_meta_ad,
+        conversas_meta: conversas_meta_ad,
         cpc: Number(ad.cpc || 0),
         ctr: Number(ad.ctr || 0),
         adsetId: ad.adset_id || null,
@@ -672,6 +676,8 @@ async function syncAll(dateRange) {
         cpc_gam: +cpcGam.toFixed(4),
         ctr_gam: +ctrGam.toFixed(2),
         cliques_gam: cliquesGam,
+        sessoes_meta: g.sessoes_meta || 0,
+        conversas_meta: g.conversas_meta || 0,
         updated_at: new Date().toISOString(),
       });
     }
@@ -721,7 +727,7 @@ async function syncAll(dateRange) {
         .upsert(adsRows, { onConflict: 'data,dominio_id,ad_utm,account_id,pais_sigla' });
       if (uErr && uErr.message.toLowerCase().includes('could not find')) {
         // New columns not yet migrated — retry without them
-        const fallback = adsRows.map(({ cpc_gam, ctr_gam, cliques_gam, account_id, valor_gasto_original, imposto_aplicado, moeda_original, taxa_usd_aplicada, pais_sigla, pais_nome, pais_emoji, nicho, ...rest }) => rest);
+        const fallback = adsRows.map(({ cpc_gam, ctr_gam, cliques_gam, sessoes_meta, conversas_meta, account_id, valor_gasto_original, imposto_aplicado, moeda_original, taxa_usd_aplicada, pais_sigla, pais_nome, pais_emoji, nicho, ...rest }) => rest);
         ({ error: uErr } = await supabase
           .from('ads_consolidados')
           .upsert(fallback, { onConflict: 'data,dominio_id,ad_utm,account_id,pais_sigla' }));

@@ -18,7 +18,7 @@ async function handler(req, res) {
       domainId = d?.id || null;
     }
 
-    // Query ads_consolidados
+    // Main query — ads_consolidados within date range
     let query = supabase
       .from('ads_consolidados')
       .select('*,dominios(nome,prefixo_campanha)')
@@ -29,16 +29,32 @@ async function handler(req, res) {
     if (tipo && tipo !== 'all') query = query.eq('tipo', tipo);
     if (domainId) query = query.eq('dominio_id', domainId);
 
-    const { data: rows, error } = await query;
+    // data_inicio query — MIN(data) per UTM with any activity, NO date range filter
+    let inicioQ = supabase
+      .from('ads_consolidados')
+      .select('dominio_id,ad_utm,pais_sigla,data')
+      .or('valor_gasto.gt.0,faturamento_real.gt.0')
+      .order('data', { ascending: true });
+    if (tipo && tipo !== 'all') inicioQ = inicioQ.eq('tipo', tipo);
+    if (domainId) inicioQ = inicioQ.eq('dominio_id', domainId);
+
+    const [{ data: rows, error }, { data: inicioRows }] = await Promise.all([query, inicioQ]);
     if (error) return res.status(500).json({ error: error.message });
 
-    // Aggregate by (dominio_id, ad_utm) across date range — same UTM from
-    // multiple accounts merges into one row (prevents double-counting GAM revenue)
+    // Build data_inicio map: key → first date with activity
+    const inicioMap = {};
+    for (const r of inicioRows || []) {
+      const key = `${r.dominio_id}|${r.ad_utm}|${r.pais_sigla || ''}`;
+      if (!inicioMap[key]) inicioMap[key] = r.data;
+    }
+
+    // Aggregate by (dominio_id, ad_utm, pais_sigla) — merges multiple accounts
     const utmMap = {};
     for (const r of rows || []) {
       const key = `${r.dominio_id}|${r.ad_utm}|${r.pais_sigla || ''}`;
       if (!utmMap[key]) {
         utmMap[key] = {
+          _key: key,
           ad_utm: r.ad_utm,
           tipo: r.tipo,
           dominio: r.dominios?.nome || null,
@@ -52,6 +68,8 @@ async function handler(req, res) {
           cliques: 0,
           impressoes_gam: 0,
           resultado: 0,
+          sessoes_meta: 0,
+          conversas_meta: 0,
           orcamento_total: 0,
           // Weighted accumulation
           _cpcSum: 0, _cpcW: 0,
@@ -73,6 +91,8 @@ async function handler(req, res) {
       g.cliques += Number(r.cliques || 0);
       g.impressoes_gam += Number(r.impressoes_gam || 0);
       g.resultado += Number(r.resultado || 0);
+      g.sessoes_meta += Number(r.sessoes_meta || 0);
+      g.conversas_meta += Number(r.conversas_meta || 0);
       g.orcamento_total = Math.max(g.orcamento_total, Number(r.orcamento_total || 0));
 
       const cliques = Number(r.cliques || 0);
@@ -91,42 +111,82 @@ async function handler(req, res) {
       }
     }
 
-    const aggregated = Object.values(utmMap).map(g => ({
-      ad_utm: g.ad_utm,
-      tipo: g.tipo,
-      dominio: g.dominio,
-      campanha_meta: g.campanha_meta,
-      pais_sigla: g.pais_sigla,
-      pais_nome: g.pais_nome,
-      valor_gasto: +g.valor_gasto.toFixed(2),
-      faturamento_real: +g.faturamento_real.toFixed(2),
-      lucro: +g.lucro.toFixed(2),
-      roas: g.valor_gasto > 0 ? +(g.faturamento_real / g.valor_gasto).toFixed(4) : 0,
-      cpc: g._cpcW > 0 ? +(g._cpcSum / g._cpcW).toFixed(4) : 0,
-      ctr: g._ctrW > 0 ? +(g._ctrSum / g._ctrW).toFixed(2) : 0,
-      custo_resultado: g.resultado > 0 ? +(g.valor_gasto / g.resultado).toFixed(2) : 0,
-      resultado: g.resultado,
-      impressoes_gam: g.impressoes_gam,
-      ecpm: g._ecpmW > 0 ? +(g._ecpmSum / g._ecpmW).toFixed(2) : 0,
-      rps: g._rpsW > 0 ? +(g._rpsSum / g._rpsW).toFixed(4) : 0,
-      orcamento_total: +g.orcamento_total.toFixed(2),
-      previsao_impressoes: g.previsao_impressoes,
-      previsao_faturamento_real: +g.previsao_faturamento_real.toFixed(2),
-      previsao_lucro: +g.previsao_lucro.toFixed(2),
-      previsao_roas: +g.previsao_roas.toFixed(4),
-    })).sort((a, b) => b.valor_gasto - a.valor_gasto);
+    const aggregated = Object.values(utmMap)
+      // Filter: only UTMs with investimento > 0 OR faturamento > 0
+      .filter(g => g.valor_gasto > 0 || g.faturamento_real > 0)
+      .map(g => {
+        const sessoes   = g.sessoes_meta;
+        const conversas = g.conversas_meta;
+        const fat       = g.faturamento_real;
+        const inv       = g.valor_gasto;
+
+        const sessao_por_conversa = (sessoes > 0 && conversas > 0)
+          ? +(sessoes / conversas).toFixed(2)
+          : null;
+
+        const rps_sessao = (sessoes > 0 && fat > 0)
+          ? +(fat / sessoes).toFixed(4)
+          : null;
+
+        const breakeven = (conversas > 0 && rps_sessao !== null && inv > 0)
+          ? +((inv / conversas) / rps_sessao).toFixed(2)
+          : null;
+
+        return {
+          ad_utm: g.ad_utm,
+          tipo: g.tipo,
+          dominio: g.dominio,
+          campanha_meta: g.campanha_meta,
+          pais_sigla: g.pais_sigla,
+          pais_nome: g.pais_nome,
+          valor_gasto: +g.valor_gasto.toFixed(2),
+          faturamento_real: +g.faturamento_real.toFixed(2),
+          lucro: +g.lucro.toFixed(2),
+          roas: g.valor_gasto > 0 ? +(g.faturamento_real / g.valor_gasto).toFixed(4) : 0,
+          cpc: g._cpcW > 0 ? +(g._cpcSum / g._cpcW).toFixed(4) : 0,
+          ctr: g._ctrW > 0 ? +(g._ctrSum / g._ctrW).toFixed(2) : 0,
+          custo_resultado: g.resultado > 0 ? +(g.valor_gasto / g.resultado).toFixed(2) : 0,
+          resultado: g.resultado,
+          impressoes_gam: g.impressoes_gam,
+          ecpm: g._ecpmW > 0 ? +(g._ecpmSum / g._ecpmW).toFixed(2) : 0,
+          rps: g._rpsW > 0 ? +(g._rpsSum / g._rpsW).toFixed(4) : 0,
+          orcamento_total: +g.orcamento_total.toFixed(2),
+          previsao_impressoes: g.previsao_impressoes,
+          previsao_faturamento_real: +g.previsao_faturamento_real.toFixed(2),
+          previsao_lucro: +g.previsao_lucro.toFixed(2),
+          previsao_roas: +g.previsao_roas.toFixed(4),
+          // New fields
+          sessoes: sessoes,
+          conversas: conversas,
+          sessao_por_conversa,
+          rps_sessao,
+          breakeven,
+          data_inicio: inicioMap[g._key] || null,
+        };
+      })
+      .sort((a, b) => b.valor_gasto - a.valor_gasto);
 
     // Summary KPIs
     const kpis = aggregated.reduce((acc, r) => {
-      acc.faturamento += r.faturamento_real;
+      acc.faturamento  += r.faturamento_real;
       acc.investimento += r.valor_gasto;
-      acc.lucro += r.lucro;
-      acc.impressoes += r.impressoes_gam;
-      acc.cliques += r.resultado;
+      acc.lucro        += r.lucro;
+      acc.impressoes   += r.impressoes_gam;
+      acc.cliques      += r.resultado;
+      acc.sessoes      += r.sessoes  || 0;
+      acc.conversas    += r.conversas || 0;
       return acc;
-    }, { faturamento: 0, investimento: 0, lucro: 0, impressoes: 0, cliques: 0 });
-    kpis.roi = kpis.investimento > 0 ? kpis.lucro / kpis.investimento * 100 : 0;
+    }, { faturamento: 0, investimento: 0, lucro: 0, impressoes: 0, cliques: 0, sessoes: 0, conversas: 0 });
+    kpis.roi  = kpis.investimento > 0 ? kpis.lucro / kpis.investimento * 100 : 0;
     kpis.roas = kpis.investimento > 0 ? kpis.faturamento / kpis.investimento : 0;
+
+    // Totals for derived metrics — recalculated from sums, never avg of lines
+    const tS = kpis.sessoes, tC = kpis.conversas, tF = kpis.faturamento, tI = kpis.investimento;
+    kpis.sessao_por_conversa_total = (tS > 0 && tC > 0) ? +(tS / tC).toFixed(2) : null;
+    kpis.rps_sessao_total          = (tS > 0 && tF > 0) ? +(tF / tS).toFixed(4) : null;
+    kpis.breakeven_total           = (tC > 0 && tI > 0 && kpis.rps_sessao_total !== null)
+      ? +((tI / tC) / kpis.rps_sessao_total).toFixed(2)
+      : null;
 
     res.json({ kpis, rows: aggregated });
   } catch (err) {
