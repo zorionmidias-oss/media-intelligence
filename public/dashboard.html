@@ -1034,6 +1034,12 @@
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
       <span class="nav-lbl">Análise de Funil</span>
     </button>
+    <button class="nav-btn" onclick="nav('otimizacoes',this)" style="position:relative">
+      <span class="nav-ind"></span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"/></svg>
+      <span class="nav-lbl">Otimizações</span>
+      <span class="nav-badge" id="otim-nav-badge" style="display:none">0</span>
+    </button>
     <button class="nav-btn" id="nav-gerenciador" onclick="nav('gerenciador',this)">
       <span class="nav-ind"></span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -1726,6 +1732,57 @@
       </div>
     </div>
 
+    <!-- OTIMIZAÇÕES -->
+    <div id="tab-otimizacoes" class="tab-panel">
+      <div class="sec">
+        <div class="funil-inner-tabs">
+          <button class="funil-itab on" id="otim-itab-registrar" onclick="switchOtimTab('registrar',this)">📝 Registrar</button>
+          <button class="funil-itab" id="otim-itab-revisar" onclick="switchOtimTab('revisar',this)">🔍 Revisar Hoje</button>
+          <button class="funil-itab" id="otim-itab-prazos" onclick="switchOtimTab('prazos',this)">⚙ Prazos</button>
+        </div>
+
+        <!-- SUB-ABA: REGISTRAR -->
+        <div id="otim-sub-registrar">
+          <div class="otim-utm-bar">
+            <label style="font-size:.8125rem;font-weight:600;white-space:nowrap">UTM:</label>
+            <select id="otim-utm-sel" onchange="onOtimUtmSelect(this.value)">
+              <option value="">Selecione uma UTM…</option>
+            </select>
+          </div>
+          <div id="otim-camp-list" class="otim-campaign-list">
+            <p style="color:var(--muted);font-size:.875rem">Selecione uma UTM para ver as campanhas.</p>
+          </div>
+        </div>
+
+        <!-- SUB-ABA: REVISAR HOJE -->
+        <div id="otim-sub-revisar" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+            <h3 style="margin:0;font-size:1rem">Revisões pendentes/vencidas</h3>
+            <button class="otim-reg-btn" onclick="loadRevisarHoje()">↻ Atualizar</button>
+          </div>
+          <div id="otim-revisar-list" class="otim-revisar-list">
+            <p style="color:var(--muted);font-size:.875rem">Carregando…</p>
+          </div>
+        </div>
+
+        <!-- SUB-ABA: PRAZOS -->
+        <div id="otim-sub-prazos" style="display:none">
+          <h3 style="margin:0 0 1rem;font-size:1rem">Tipos de Ação e Prazos</h3>
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:1rem">
+            <table class="otim-prazos-table" id="otim-prazos-table">
+              <thead><tr><th>Nome</th><th>Prazo (horas)</th><th>Ativo</th><th>Ações</th></tr></thead>
+              <tbody id="otim-prazos-tbody"></tbody>
+            </table>
+            <div class="otim-add-row">
+              <input type="text" id="otim-new-nome" placeholder="Nome do tipo de ação…">
+              <input type="number" id="otim-new-prazo" placeholder="Horas" value="72" style="width:80px">
+              <button onclick="createTipoAcao()">+ Adicionar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- CRIAR CAMPANHA -->
     <div id="tab-criar-campanha" class="tab-panel">
       <div class="sec">
@@ -2352,7 +2409,7 @@ function toggleSb(){
 }
 
 /* ═══ NAV ═══ */
-const TITLES={overview:'Overview',campaigns:'Campanhas','analise-paises':'Análise de País',gam:'Reports GAM',funil:'Análise de Funil',gerenciador:'Gerenciador',ai:'Análise IA',domains:'Domínios',contas:'Contas Meta',paginas:'Páginas','criar-campanha':'Criar Campanha'};
+const TITLES={overview:'Overview',campaigns:'Campanhas','analise-paises':'Análise de País',gam:'Reports GAM',funil:'Análise de Funil',otimizacoes:'Otimizações',gerenciador:'Gerenciador',ai:'Análise IA',domains:'Domínios',contas:'Contas Meta',paginas:'Páginas','criar-campanha':'Criar Campanha'};
 function nav(id,btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('on'));
@@ -2370,6 +2427,7 @@ function nav(id,btn){
   if(id==='funil'){showOverlay('Carregando…');initFunilTab().finally(hideOverlay);}
   if(id==='gerenciador'){showOverlay('Carregando…');gerLoad().finally(hideOverlay);}
   if(id==='criar-campanha'){showOverlay('Carregando templates…');initCriarCampanha().finally(hideOverlay);}
+  if(id==='otimizacoes'){showOverlay('Carregando…');initOtimTab().finally(hideOverlay);}
 }
 
 /* ═══ DATES ═══ */
@@ -2466,6 +2524,8 @@ function applyTheme(theme){
   const light=document.getElementById('theme-icon-light');
   if(theme==='dark'){dark.style.display='inline';light.style.display='none';}
   else{dark.style.display='none';light.style.display='inline';}
+  // Re-render otimizações charts
+  Object.keys(_otimCharts||{}).forEach(id=>renderOtimChart(Number(id)));
   // Re-render chart with theme-correct colors
   if(_trendChart&&_trendChart.data.datasets.length){
     const t=theme||'dark';
@@ -5360,6 +5420,401 @@ async function abrirHistorico(utm){
   }
 }
 
+/* ══════════════════════════════════════════════════════════
+   OTIMIZAÇÕES
+══════════════════════════════════════════════════════════ */
+let _otimTipos=[];
+let _otimCharts={};   // id → Chart instance
+
+async function initOtimTab(){
+  await Promise.all([carregarTiposAcao(), loadOtimUtms()]);
+  atualizarBadgeNavOtim();
+}
+
+async function carregarTiposAcao(){
+  try{
+    const r=await fetch('/api/otimizacoes/tipos-acao');
+    _otimTipos=await r.json();
+  }catch(e){console.warn('[otim] tipos-acao:',e.message);}
+}
+
+async function loadOtimUtms(){
+  try{
+    const [rUtm, rPend] = await Promise.all([
+      fetch('/api/dashboard?since='+document.getElementById('f-since').value+'&until='+document.getElementById('f-until').value),
+      fetch('/api/otimizacoes/pendentes-por-utm'),
+    ]);
+    const dUtm = await rUtm.json();
+    const dPend = await rPend.json();
+    const sel = document.getElementById('otim-utm-sel');
+    sel.innerHTML='<option value="">Selecione uma UTM…</option>';
+    (dUtm.rows||[]).forEach(r=>{
+      const opt=document.createElement('option');
+      opt.value=r.ad_utm;
+      opt.textContent=r.ad_utm+(dPend[r.ad_utm]?` ⏳ (${dPend[r.ad_utm]})` : '');
+      sel.appendChild(opt);
+    });
+    atualizarBadgeNavOtim(dPend);
+  }catch(e){console.warn('[otim] utm load:',e.message);}
+}
+
+function atualizarBadgeNavOtim(pend){
+  fetch('/api/otimizacoes/pendentes-por-utm').then(r=>r.json()).then(d=>{
+    const total=Object.values(d).reduce((s,v)=>s+v,0);
+    const badge=document.getElementById('otim-nav-badge');
+    if(!badge)return;
+    badge.style.display=total>0?'flex':'none';
+    badge.textContent=total;
+  }).catch(()=>{});
+}
+
+function switchOtimTab(tab, btn){
+  ['registrar','revisar','prazos'].forEach(t=>{
+    document.getElementById('otim-sub-'+t).style.display=(t===tab?'block':'none');
+    document.getElementById('otim-itab-'+t)?.classList.toggle('on',t===tab);
+  });
+  if(tab==='revisar') loadRevisarHoje();
+  if(tab==='prazos')  loadPrazos();
+}
+
+async function onOtimUtmSelect(utm){
+  const el=document.getElementById('otim-camp-list');
+  if(!utm){el.innerHTML='<p style="color:var(--muted);font-size:.875rem">Selecione uma UTM para ver as campanhas.</p>';return;}
+  el.innerHTML='<p style="color:var(--muted)">Carregando…</p>';
+  try{
+    const since=document.getElementById('f-since').value;
+    const until=document.getElementById('f-until').value;
+    const [rDrill, rPend] = await Promise.all([
+      fetch(`/api/drilldown/${encodeURIComponent(utm)}?since=${since}&until=${until}`),
+      fetch('/api/otimizacoes/pendentes-por-utm'),
+    ]);
+    const drill=await rDrill.json();
+    const pend=await rPend.json();
+
+    const adsets=drill.adsets||[];
+    // Agrupar por campaign_name
+    const campMap={};
+    for(const a of adsets){
+      const cn=a.campaign_name||'(sem campanha)';
+      if(!campMap[cn]) campMap[cn]={name:cn,adsets:[]};
+      campMap[cn].adsets.push(a);
+    }
+
+    if(!Object.keys(campMap).length){
+      el.innerHTML='<p style="color:var(--muted);font-size:.875rem">Nenhuma campanha ativa encontrada para esta UTM.</p>';
+      return;
+    }
+
+    const pendCount=pend[utm]||0;
+    el.innerHTML=Object.values(campMap).map((c,ci)=>`
+      <div class="otim-camp-card">
+        <div class="otim-camp-header" onclick="toggleOtimCamp(${ci})">
+          <span class="otim-camp-name">${esc(c.name)}</span>
+          <div class="otim-camp-actions">
+            ${pendCount>0?`<span class="otim-badge">⏳ ${pendCount} pendente${pendCount>1?'s':''}</span>`:''}
+            <button class="otim-reg-btn" onclick="event.stopPropagation();abrirFormOtim('${esc(utm)}','${esc(c.adsets[0]?.campaign_id||'')}','${esc(c.name)}','','','${esc(c.adsets[0]?.account_id||'')}','camp-form-${ci}')">+ Registrar campanha</button>
+            <span style="color:var(--muted);font-size:.75rem">▾</span>
+          </div>
+        </div>
+        <div id="camp-form-${ci}"></div>
+        <div class="otim-camp-body" id="otim-camp-body-${ci}">
+          ${c.adsets.map((a,ai)=>`
+            <div class="otim-adset-row">
+              <span class="otim-adset-name">${esc(a.adset_name||'—')}</span>
+              <button class="otim-reg-btn" onclick="abrirFormOtim('${esc(utm)}','${esc(a.campaign_id||'')}','${esc(c.name)}','${esc(a.adset_id||'')}','${esc(a.adset_name||'')}','${esc(a.account_id||'')}','adset-form-${ci}-${ai}')">+ Registrar conjunto</button>
+            </div>
+            <div id="adset-form-${ci}-${ai}"></div>
+          `).join('')}
+        </div>
+      </div>
+    `).join('');
+  }catch(e){el.innerHTML=`<p style="color:var(--danger)">${esc(e.message)}</p>`;}
+}
+
+function toggleOtimCamp(ci){
+  const body=document.getElementById('otim-camp-body-'+ci);
+  if(body) body.classList.toggle('open');
+}
+
+async function abrirFormOtim(utm, campaignId, campaignName, adsetId, adsetName, accountId, containerId){
+  const container=document.getElementById(containerId);
+  if(!container)return;
+  if(container.innerHTML.trim()){container.innerHTML='';return;}
+  container.innerHTML='<p style="color:var(--muted);font-size:.8125rem;padding:.5rem 0">Carregando preview…</p>';
+  try{
+    const since=document.getElementById('f-since').value;
+    const until=document.getElementById('f-until').value;
+    // Preview snapshot via endpoint
+    const r=await fetch('/api/otimizacoes/snapshot-preview?'+new URLSearchParams({utm,campaign_name:campaignName,since,until}));
+    const snap=r.ok?await r.json():{};
+    const tiposOpts=_otimTipos.map(t=>`<option value="${t.id}">${esc(t.nome)} (${t.prazo_horas}h)</option>`).join('');
+    container.innerHTML=`
+      <div class="otim-form" id="form-${containerId}">
+        <div>
+          <label>Tipo de ação</label>
+          <select id="tipo-${containerId}">${tiposOpts}</select>
+        </div>
+        <div>
+          <label>Observação</label>
+          <textarea id="obs-${containerId}" placeholder="Descreva a otimização…"></textarea>
+        </div>
+        ${snap.investido!==undefined?`
+        <div>
+          <label>Preview snapshot (período atual: ${since} → ${until})</label>
+          <div class="otim-snapshot-preview">
+            <div class="otim-snap-item"><div class="otim-snap-lbl">Investido</div><div class="otim-snap-val hideable-value">R$ ${BRL(snap.investido)}</div></div>
+            <div class="otim-snap-item"><div class="otim-snap-lbl">Faturamento</div><div class="otim-snap-val hideable-value">R$ ${BRL(snap.faturamento)}</div></div>
+            <div class="otim-snap-item"><div class="otim-snap-lbl">Lucro</div><div class="otim-snap-val hideable-value" style="color:${snap.lucro>=0?'var(--success)':'var(--danger)'}">R$ ${BRL(snap.lucro)}</div></div>
+            <div class="otim-snap-item"><div class="otim-snap-lbl">ROAS</div><div class="otim-snap-val hideable-value">${snap.roas!==null?snap.roas+'x':'—'}</div></div>
+            <div class="otim-snap-item"><div class="otim-snap-lbl">Resultados</div><div class="otim-snap-val hideable-value">${NUM(snap.resultados)}</div></div>
+            <div class="otim-snap-item"><div class="otim-snap-lbl">Custo/Result.</div><div class="otim-snap-val hideable-value">${snap.custo_resultado!==null?'R$ '+BRL(snap.custo_resultado):'—'}</div></div>
+          </div>
+        </div>`:''}
+        <div class="otim-form-actions">
+          <button class="otim-cancel-btn" onclick="document.getElementById('${containerId}').innerHTML=''">Cancelar</button>
+          <button class="otim-save-btn" onclick="submitOtimizacao('${containerId}','${esc(utm)}','${esc(campaignId)}','${esc(campaignName)}','${esc(adsetId)}','${esc(adsetName)}','${esc(accountId)}')">Salvar otimização</button>
+        </div>
+        <div id="msg-${containerId}"></div>
+      </div>`;
+  }catch(e){container.innerHTML=`<p style="color:var(--danger);font-size:.8125rem">${esc(e.message)}</p>`;}
+}
+
+async function submitOtimizacao(containerId, utm, campaignId, campaignName, adsetId, adsetName, accountId){
+  const tipoId=document.getElementById('tipo-'+containerId)?.value;
+  const obs=document.getElementById('obs-'+containerId)?.value||'';
+  const msg=document.getElementById('msg-'+containerId);
+  if(!tipoId){if(msg)msg.innerHTML='<span style="color:var(--danger)">Selecione o tipo de ação.</span>';return;}
+  const since=document.getElementById('f-since').value;
+  const until=document.getElementById('f-until').value;
+  try{
+    const r=await fetch('/api/otimizacoes',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({utm,campaign_id:campaignId,campaign_name:campaignName,adset_id:adsetId||null,adset_name:adsetName||null,account_id:accountId||null,tipo_acao_id:Number(tipoId),observacao:obs,since,until}),
+    });
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||r.statusText);
+    if(msg)msg.innerHTML=`<span class="otim-success">✓ Otimização registrada! Revisão em ${new Date(d.revisar_em).toLocaleDateString('pt-BR')}.</span>`;
+    setTimeout(()=>{
+      document.getElementById(containerId).innerHTML='';
+      atualizarBadgeNavOtim();
+      loadOtimUtms();
+    },2500);
+  }catch(e){if(msg)msg.innerHTML=`<span style="color:var(--danger)">${esc(e.message)}</span>`;}
+}
+
+/* ─── Revisar Hoje ─── */
+async function loadRevisarHoje(){
+  const el=document.getElementById('otim-revisar-list');
+  el.innerHTML='<p style="color:var(--muted)">Carregando…</p>';
+  try{
+    const r=await fetch('/api/otimizacoes/revisar');
+    const items=await r.json();
+    if(!items.length){el.innerHTML='<p style="color:var(--muted);font-size:.875rem;text-align:center;padding:2rem 0">✓ Nenhuma revisão pendente no momento.</p>';return;}
+    el.innerHTML='';
+    for(const item of items){
+      const card=document.createElement('div');
+      card.className='otim-rev-card';
+      card.id='otim-rev-'+item.id;
+      const now=new Date();
+      const rev=new Date(item.revisar_em);
+      const vencido=rev<now;
+      const diffH=Math.round((now-rev)/3600000);
+      const prazoLabel=vencido?`Venceu há ${diffH}h`:'Vence hoje';
+      const prazoClass=vencido?'vencido':'hoje';
+      const snap=item.snapshot_metricas||{};
+      card.innerHTML=`
+        <div class="otim-rev-header">
+          <div>
+            <div class="otim-rev-title">${esc(item.utm)} · ${esc(item.tipo_acao_nome)}</div>
+            <div class="otim-rev-sub">${esc(item.campaign_name||'')}${item.adset_name?' › '+esc(item.adset_name):''} · ${new Date(item.criado_em).toLocaleDateString('pt-BR')}</div>
+            ${item.observacao?`<div style="font-size:.8rem;color:var(--muted);margin-top:.25rem;font-style:italic">"${esc(item.observacao)}"</div>`:''}
+          </div>
+          <span class="otim-rev-prazo ${prazoClass}">${prazoLabel}</span>
+        </div>
+        <div class="otim-metrics-grid" id="otim-snap-${item.id}">
+          ${renderSnapMetrics(snap,{})}
+        </div>
+        <div class="otim-chart-wrap">
+          <div class="otim-chart-toggles" id="otim-tgl-${item.id}">
+            ${['investido','faturamento','roas','custo_resultado','resultados'].map((m,i)=>`<button class="${i===0?'on':''}" data-metric="${m}" onclick="otimChartMetric(${item.id},this)">${metricLabel(m)}</button>`).join('')}
+          </div>
+          <canvas id="otim-chart-${item.id}" height="120"></canvas>
+        </div>
+        <div id="otim-fechar-${item.id}">
+          <button class="otim-reg-btn" onclick="abrirFecharForm(${item.id})">Fechar revisão →</button>
+        </div>`;
+      el.appendChild(card);
+      loadOtimTimelineCard(item.id, item.utm, item.campaign_name, 'investido');
+    }
+    setTimeout(aplicarClasseHideable,100);
+  }catch(e){el.innerHTML=`<p style="color:var(--danger)">${esc(e.message)}</p>`;}
+}
+
+function metricLabel(m){
+  return {investido:'Investido',faturamento:'Fat. Real',lucro:'Lucro',roas:'ROAS',cpc:'CPC',custo_resultado:'Custo/Result.',resultados:'Resultados',cliques:'Cliques',ecpm:'eCPM'}[m]||m;
+}
+
+function renderSnapMetrics(before,after){
+  const fields=['investido','faturamento','roas','custo_resultado','resultados'];
+  return fields.map(f=>{
+    const bv=before[f];
+    const av=after[f];
+    const fmt=v=>v===null||v===undefined?'—':['roas'].includes(f)?(Number(v).toFixed(2)+'x'):['investido','faturamento','custo_resultado'].includes(f)?'R$ '+BRL(Number(v)):NUM(Number(v));
+    let delta='';
+    if(av!==undefined&&av!==null&&bv!==null&&bv!==undefined&&bv!==0){
+      const pct=((Number(av)-Number(bv))/Math.abs(Number(bv))*100).toFixed(1);
+      const up=Number(pct)>=0;
+      const good=['faturamento','roas'].includes(f)?up:(['custo_resultado','investido'].includes(f)?!up:up);
+      delta=`<div class="otim-metric-delta ${good?'pos':'neg'}">${up?'+':''}${pct}%</div>`;
+    }
+    return `<div class="otim-metric-box">
+      <div class="otim-metric-lbl">${metricLabel(f)}</div>
+      ${av!==undefined?`<div class="otim-metric-before hideable-value">Antes: ${fmt(bv)}</div>`:''}
+      <div class="otim-metric-now hideable-value">${av!==undefined?fmt(av):fmt(bv)}</div>
+      ${delta}
+    </div>`;
+  }).join('');
+}
+
+async function loadOtimTimelineCard(id, utm, campaignName, activeMetric){
+  try{
+    const r=await fetch(`/api/otimizacoes/${id}/timeline`);
+    const d=await r.json();
+    _otimCharts[id]={data:d, metric:activeMetric};
+    renderOtimChart(id);
+  }catch(e){console.warn('[otim] timeline:',e.message);}
+}
+
+function otimChartMetric(id, btn){
+  document.querySelectorAll(`#otim-tgl-${id} button`).forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  _otimCharts[id].metric=btn.dataset.metric;
+  renderOtimChart(id);
+}
+
+function renderOtimChart(id){
+  const state=_otimCharts[id];
+  if(!state||!state.data)return;
+  const {dias,series}=state.data;
+  const metric=state.metric;
+  const vals=(series[metric]||[]);
+  const canvas=document.getElementById('otim-chart-'+id);
+  if(!canvas)return;
+  const isLight=document.documentElement.getAttribute('data-theme')==='light';
+  const gridColor=isLight?'rgba(0,0,0,.06)':'rgba(255,255,255,.06)';
+  const textColor=isLight?'#666':'#aaa';
+  const accentColor='#3b82f6';
+  if(state._chart){state._chart.destroy();}
+  state._chart=new Chart(canvas.getContext('2d'),{
+    type:'line',
+    data:{
+      labels:dias.map(d=>d.slice(5)),
+      datasets:[{
+        label:metricLabel(metric),data:vals,
+        borderColor:accentColor,backgroundColor:accentColor+'22',
+        tension:.35,fill:true,pointRadius:dias.length>14?0:3,
+        pointHoverRadius:5,borderWidth:2,
+      }],
+    },
+    options:{
+      responsive:true,animation:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{
+        const v=ctx.parsed.y;
+        return ['roas'].includes(metric)?(v===null?'—':(+v).toFixed(2)+'x'):
+               ['investido','faturamento','lucro','cpc','custo_resultado','ecpm'].includes(metric)?'R$ '+BRL(v):NUM(v);
+      }}}},
+      scales:{
+        x:{grid:{color:gridColor},ticks:{color:textColor,maxTicksLimit:12,font:{size:10}}},
+        y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:10}}},
+      },
+    },
+  });
+}
+
+function abrirFecharForm(id){
+  const el=document.getElementById('otim-fechar-'+id);
+  el.innerHTML=`
+    <div class="otim-fechar-form">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem">
+        <div>
+          <label style="font-size:.75rem;font-weight:600;color:var(--muted);display:block;margin-bottom:.25rem">Veredito</label>
+          <select id="otim-veredito-${id}" style="width:100%;background:var(--card);border:1px solid var(--border);color:var(--fg);border-radius:var(--r);padding:.4375rem .75rem;font-size:.8125rem;font-family:inherit">
+            <option value="melhorou">✅ Melhorou</option>
+            <option value="manteve">➡ Manteve</option>
+            <option value="piorou">❌ Piorou</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:.75rem;font-weight:600;color:var(--muted);display:block;margin-bottom:.25rem">Decisão</label>
+          <select id="otim-decisao-${id}" style="width:100%;background:var(--card);border:1px solid var(--border);color:var(--fg);border-radius:var(--r);padding:.4375rem .75rem;font-size:.8125rem;font-family:inherit">
+            <option value="mantive">Mantive a ação</option>
+            <option value="reverti">Reverti</option>
+            <option value="outra_acao">Outra ação</option>
+          </select>
+        </div>
+      </div>
+      <textarea id="otim-obs-fechar-${id}" placeholder="Observação de fechamento (opcional)…" style="width:100%;background:var(--card);border:1px solid var(--border);color:var(--fg);border-radius:var(--r);padding:.5rem .75rem;font-size:.8125rem;font-family:inherit;resize:vertical;min-height:56px;box-sizing:border-box;margin-bottom:.75rem"></textarea>
+      <div style="display:flex;gap:.5rem">
+        <button class="otim-cancel-btn" onclick="document.getElementById('otim-fechar-${id}').innerHTML='<button class=otim-reg-btn onclick=abrirFecharForm(${id})>Fechar revisão →</button>'">Cancelar</button>
+        <button class="otim-save-btn" onclick="submitFechar(${id})">Confirmar fechamento</button>
+      </div>
+      <div id="otim-fechar-msg-${id}"></div>
+    </div>`;
+}
+
+async function submitFechar(id){
+  const veredito=document.getElementById('otim-veredito-'+id)?.value;
+  const decisao=document.getElementById('otim-decisao-'+id)?.value;
+  const obs=document.getElementById('otim-obs-fechar-'+id)?.value||'';
+  const msg=document.getElementById('otim-fechar-msg-'+id);
+  try{
+    const r=await fetch(`/api/otimizacoes/${id}/fechar`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({veredito,decisao,observacao_fechamento:obs}),
+    });
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||r.statusText);
+    const card=document.getElementById('otim-rev-'+id);
+    if(card)card.style.opacity='.4';
+    if(msg)msg.innerHTML='<span class="otim-success">✓ Revisão fechada com sucesso.</span>';
+    setTimeout(()=>{if(card)card.remove(); atualizarBadgeNavOtim();},1800);
+  }catch(e){if(msg)msg.innerHTML=`<span style="color:var(--danger)">${esc(e.message)}</span>`;}
+}
+
+/* ─── Prazos CRUD ─── */
+async function loadPrazos(){
+  try{
+    const r=await fetch('/api/otimizacoes/tipos-acao');
+    const tipos=await r.json();
+    _otimTipos=tipos;
+    const tbody=document.getElementById('otim-prazos-tbody');
+    tbody.innerHTML=tipos.map(t=>`<tr>
+      <td><input class="otim-inline-input" style="width:160px;text-align:left" value="${esc(t.nome)}" onchange="updateTipoNome(${t.id},this.value)"></td>
+      <td><input type="number" class="otim-inline-input" value="${t.prazo_horas}" onchange="updateTipoPrazo(${t.id},this.value)"></td>
+      <td><input type="checkbox" ${t.ativo?'checked':''} onchange="updateTipoAtivo(${t.id},this.checked)"></td>
+      <td><button class="otim-cancel-btn" style="padding:2px 10px;font-size:.75rem" onclick="deleteTipoAcao(${t.id})">Remover</button></td>
+    </tr>`).join('');
+  }catch(e){console.warn('[otim] prazos:',e.message);}
+}
+
+async function createTipoAcao(){
+  const nome=document.getElementById('otim-new-nome')?.value?.trim();
+  const horas=document.getElementById('otim-new-prazo')?.value;
+  if(!nome)return;
+  await fetch('/api/otimizacoes/tipos-acao',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nome,prazo_horas:Number(horas)||72})});
+  document.getElementById('otim-new-nome').value='';
+  loadPrazos();
+}
+
+async function updateTipoNome(id,v){await fetch(`/api/otimizacoes/tipos-acao/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({nome:v})});}
+async function updateTipoPrazo(id,v){await fetch(`/api/otimizacoes/tipos-acao/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({prazo_horas:Number(v)||72})});}
+async function updateTipoAtivo(id,v){await fetch(`/api/otimizacoes/tipos-acao/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({ativo:v})});}
+async function deleteTipoAcao(id){
+  if(!confirm('Remover este tipo de ação?'))return;
+  await fetch(`/api/otimizacoes/tipos-acao/${id}`,{method:'DELETE'});
+  loadPrazos();
+}
+
 /* ═══ INIT ═══ */
 (async()=>{
   dpInit();
@@ -6345,6 +6800,69 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
 
 /* ── Camp-type slide-in animation ── */
 @keyframes wiz-slide-in{from{opacity:0;transform:translateY(.75rem) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+/* ══ OTIMIZAÇÕES ══════════════════════════════════════════════ */
+.otim-utm-bar{display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;flex-wrap:wrap}
+.otim-utm-bar select{flex:1;min-width:200px;max-width:340px;background:var(--card);border:1px solid var(--border);color:var(--fg);padding:.5rem .75rem;border-radius:var(--r);font-size:.875rem;font-family:inherit}
+.otim-campaign-list{display:flex;flex-direction:column;gap:.75rem}
+.otim-camp-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden}
+.otim-camp-header{display:flex;align-items:center;gap:.75rem;padding:.875rem 1rem;cursor:pointer;user-select:none}
+.otim-camp-header:hover{background:var(--sec)}
+.otim-camp-name{flex:1;font-size:.875rem;font-weight:600}
+.otim-camp-actions{display:flex;align-items:center;gap:.5rem}
+.otim-badge{background:var(--warning-soft);color:var(--warning);border:1px solid var(--warning);padding:1px 7px;border-radius:9999px;font-size:.65rem;font-weight:700;white-space:nowrap}
+.otim-reg-btn{background:var(--accent);color:var(--accent-fg);border:none;border-radius:var(--r);padding:.35rem .75rem;font-size:.75rem;font-weight:600;cursor:pointer;white-space:nowrap}
+.otim-reg-btn:hover{opacity:.85}
+.otim-camp-body{border-top:1px solid var(--border);padding:.75rem 1rem;display:none}
+.otim-camp-body.open{display:block}
+.otim-adset-row{display:flex;align-items:center;gap:.75rem;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.8125rem}
+.otim-adset-row:last-child{border-bottom:none}
+.otim-adset-name{flex:1;color:var(--muted)}
+.otim-form{background:var(--sec);border:1px solid var(--border);border-radius:var(--rl);padding:1rem;margin-top:.75rem;display:flex;flex-direction:column;gap:.75rem}
+.otim-form label{font-size:.75rem;font-weight:600;color:var(--muted);display:block;margin-bottom:.25rem}
+.otim-form select,.otim-form textarea,.otim-form input{width:100%;background:var(--card);border:1px solid var(--border);color:var(--fg);border-radius:var(--r);padding:.5rem .75rem;font-size:.8125rem;font-family:inherit;box-sizing:border-box}
+.otim-form textarea{resize:vertical;min-height:64px}
+.otim-snapshot-preview{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:.75rem 1rem;display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem}
+.otim-snap-item{text-align:center}
+.otim-snap-lbl{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.otim-snap-val{font-size:.9375rem;font-weight:700;font-family:ui-monospace,SFMono-Regular,monospace}
+.otim-form-actions{display:flex;gap:.5rem;justify-content:flex-end}
+.otim-save-btn{background:var(--accent);color:var(--accent-fg);border:none;border-radius:var(--r);padding:.5rem 1.25rem;font-weight:600;cursor:pointer;font-family:inherit;font-size:.8125rem}
+.otim-save-btn:hover{opacity:.85}
+.otim-cancel-btn{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:var(--r);padding:.5rem .875rem;font-weight:600;cursor:pointer;font-family:inherit;font-size:.8125rem}
+.otim-cancel-btn:hover{border-color:var(--fg);color:var(--fg)}
+.otim-success{color:var(--success);font-size:.8125rem;font-weight:600}
+/* Revisar */
+.otim-revisar-list{display:flex;flex-direction:column;gap:1.25rem}
+.otim-rev-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:1.25rem}
+.otim-rev-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.875rem;gap:.75rem}
+.otim-rev-title{font-weight:700;font-size:.9375rem}
+.otim-rev-sub{font-size:.75rem;color:var(--muted);margin-top:.2rem}
+.otim-rev-prazo{font-size:.75rem;font-weight:700;padding:2px 8px;border-radius:9999px;white-space:nowrap}
+.otim-rev-prazo.vencido{background:var(--danger-soft);color:var(--danger)}
+.otim-rev-prazo.hoje{background:var(--warning-soft);color:var(--warning)}
+.otim-metrics-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem;margin-bottom:1rem}
+.otim-metric-box{background:var(--sec);border-radius:var(--r);padding:.625rem;text-align:center}
+.otim-metric-lbl{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.otim-metric-before{font-size:.8125rem;color:var(--muted);font-family:ui-monospace,monospace}
+.otim-metric-now{font-size:.9375rem;font-weight:700;font-family:ui-monospace,monospace}
+.otim-metric-delta{font-size:.7rem;font-weight:700;padding:1px 5px;border-radius:4px}
+.otim-metric-delta.pos{background:var(--success-soft);color:var(--success)}
+.otim-metric-delta.neg{background:var(--danger-soft);color:var(--danger)}
+.otim-chart-wrap{background:var(--sec);border-radius:var(--r);padding:.75rem;margin-bottom:1rem}
+.otim-chart-toggles{display:flex;gap:.375rem;flex-wrap:wrap;margin-bottom:.5rem}
+.otim-chart-toggles button{background:var(--card);border:1px solid var(--border);color:var(--muted);border-radius:9999px;padding:2px 10px;font-size:.7rem;font-weight:600;cursor:pointer;transition:all .15s}
+.otim-chart-toggles button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.otim-fechar-form{border-top:1px solid var(--border);padding-top:.875rem;margin-top:.875rem}
+/* Prazos CRUD */
+.otim-prazos-table{width:100%;border-collapse:collapse}
+.otim-prazos-table th{text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:8px 10px;border-bottom:1px solid var(--border)}
+.otim-prazos-table td{padding:8px 10px;border-bottom:1px solid var(--border);font-size:.8125rem}
+.otim-prazos-table tr:last-child td{border-bottom:none}
+.otim-add-row{display:flex;gap:.5rem;align-items:flex-end;margin-top:.875rem;flex-wrap:wrap}
+.otim-add-row input{flex:1;min-width:160px;background:var(--card);border:1px solid var(--border);color:var(--fg);border-radius:var(--r);padding:.4375rem .75rem;font-size:.8125rem;font-family:inherit}
+.otim-add-row button{background:var(--accent);color:var(--accent-fg);border:none;border-radius:var(--r);padding:.4375rem 1rem;font-size:.8125rem;font-weight:600;cursor:pointer}
+.otim-inline-input{background:var(--sec);border:1px solid var(--border);color:var(--fg);border-radius:var(--r);padding:2px 6px;font-size:.8125rem;font-family:ui-monospace,monospace;width:5rem;text-align:center}
 </style>
 
 <!-- ═══ CAMP-TYPE MODAL ═══ -->

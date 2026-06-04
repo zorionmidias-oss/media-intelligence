@@ -27,6 +27,7 @@ const convTemplatesHandler  = require('./src/app/api/conversation-templates/rout
 const adCopiesHandler       = require('./src/app/api/ad-copies-templates/route');
 const intradayHandler       = require('./src/app/api/intraday/route');
 const orcamentoStatusHandler = require('./src/app/api/orcamento-status/route');
+const otimizacoesHandler = require('./src/app/api/otimizacoes/route');
 const supabase = require('./src/lib/supabase');
 const { syncAll, fetchAndSaveHourly, syncPaginas } = require('./src/lib/sync');
 const { resolveCountry } = require('./src/lib/parser');
@@ -426,6 +427,20 @@ app.get('/api/utms', requireAuth, async (req, res) => {
 
 // ── Drilldown ─────────────────────────────────────────────────────────────────
 app.get('/api/drilldown/:utm', requireAuth, drilldownHandler);
+
+// ── Otimizações ───────────────────────────────────────────────────────────────
+// Static routes must come BEFORE :id param routes to avoid capture
+app.get('/api/otimizacoes/tipos-acao',          requireAuth, otimizacoesHandler.listTipos);
+app.post('/api/otimizacoes/tipos-acao',         requireAuth, otimizacoesHandler.createTipo);
+app.put('/api/otimizacoes/tipos-acao/:id',      requireAuth, otimizacoesHandler.updateTipo);
+app.delete('/api/otimizacoes/tipos-acao/:id',   requireAuth, otimizacoesHandler.deleteTipo);
+app.get('/api/otimizacoes/snapshot-preview',     requireAuth, otimizacoesHandler.snapshotPreview);
+app.get('/api/otimizacoes/revisar',             requireAuth, otimizacoesHandler.revisarHoje);
+app.get('/api/otimizacoes/pendentes-por-utm',   requireAuth, otimizacoesHandler.pendentesPorUtm);
+app.get('/api/otimizacoes/:id/timeline',        requireAuth, otimizacoesHandler.timeline);
+app.post('/api/otimizacoes/:id/fechar',         requireAuth, otimizacoesHandler.fechar);
+app.get('/api/otimizacoes',                     requireAuth, otimizacoesHandler.listOtimizacoes);
+app.post('/api/otimizacoes',                    requireAuth, otimizacoesHandler.createOtimizacao);
 
 // ── Gerenciador ───────────────────────────────────────────────────────────────
 app.get('/api/gerenciador', requireAuth, gerenciadorHandler);
