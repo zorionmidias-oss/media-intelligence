@@ -342,6 +342,7 @@
     .sync-badge{display:inline-flex;align-items:center;gap:.375rem;height:2rem;padding:0 .75rem;border-radius:var(--r);font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;font-size:.7rem;white-space:nowrap;background:var(--sec);border:1px solid var(--border);color:var(--muted);cursor:default;transition:all .3s}
     .sync-badge.ok{color:var(--ok);border-color:color-mix(in oklch,var(--ok) 30%,transparent)}
     .sync-badge.err{color:var(--bad);border-color:color-mix(in oklch,var(--bad) 30%,transparent)}
+    .sync-badge.warn{color:var(--warning,#F59E0B);border-color:color-mix(in oklch,var(--warning,#F59E0B) 30%,transparent)}
 
     /* ── PENDING BADGE (topbar button) ── */
     .pend-badge{display:none;align-items:center;gap:.375rem;height:2rem;padding:0 .75rem;border-radius:var(--r);border:1px solid color-mix(in oklch,var(--warn) 40%,transparent);background:color-mix(in oklch,var(--warn) 12%,transparent);color:var(--warn);font-size:.75rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .2s;font-family:inherit}
@@ -1040,11 +1041,6 @@
       <span class="nav-lbl">Otimizações</span>
       <span class="nav-badge" id="otim-nav-badge" style="display:none">0</span>
     </button>
-    <button class="nav-btn" id="nav-gerenciador" onclick="nav('gerenciador',this)">
-      <span class="nav-ind"></span>
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-      <span class="nav-lbl">Gerenciador</span>
-    </button>
     <button class="nav-btn" onclick="nav('ai',this)">
       <span class="nav-ind"></span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>
@@ -1055,12 +1051,6 @@
       <span class="nav-ind"></span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
       <span class="nav-lbl">Contas Meta</span>
-    </button>
-    <button class="nav-btn" id="nav-paginas" onclick="nav('paginas',this)">
-      <span class="nav-ind"></span>
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      <span class="nav-lbl">Páginas</span>
-      <span class="nav-badge" id="nav-paginas-badge" style="display:none">0</span>
     </button>
   </nav>
   <div class="sb-foot">
@@ -1522,59 +1512,6 @@
     </div>
 
     <!-- GERENCIADOR -->
-    <div id="tab-gerenciador" class="tab-panel">
-      <div class="sec ger-sec">
-        <div class="ger-bar">
-          <select id="ger-acct-sel" class="ger-select" onchange="gerLoad()">
-            <option value="all">Todas as contas</option>
-          </select>
-          <div class="ger-tabs-row">
-            <button class="ger-tab on" data-level="campaigns" onclick="gerSwitchLevel(this,'campaigns')">Campanhas</button>
-            <button class="ger-tab" data-level="adsets" onclick="gerSwitchLevel(this,'adsets')">Conjuntos</button>
-            <button class="ger-tab" data-level="ads" onclick="gerSwitchLevel(this,'ads')">Anúncios</button>
-          </div>
-          <div class="ger-date-row">
-            <button class="ger-date-btn" data-preset="today" onclick="gerSetDatePreset('today')">Hoje</button>
-            <button class="ger-date-btn" data-preset="yesterday" onclick="gerSetDatePreset('yesterday')">Ontem</button>
-            <button class="ger-date-btn" data-preset="last_7d" onclick="gerSetDatePreset('last_7d')">7d</button>
-            <button class="ger-date-btn on" data-preset="last_30d" onclick="gerSetDatePreset('last_30d')">30d</button>
-            <button class="ger-date-btn" data-preset="last_90d" onclick="gerSetDatePreset('last_90d')">90d</button>
-          </div>
-          <div class="ger-right">
-            <input id="ger-search" class="ger-input" placeholder="Buscar nome…" oninput="gerFilter()">
-            <select id="ger-status-fil" class="ger-select" onchange="gerFilter()">
-              <option value="all">Todos</option>
-              <option value="ACTIVE">Ativo</option>
-              <option value="PAUSED">Pausado</option>
-            </select>
-            <div class="col-toggle-wrap">
-              <button class="col-toggle-btn" onclick="gerToggleColDD(this)">⚙ Colunas</button>
-              <div class="col-toggle-dd" id="ger-col-dd">
-                <label class="col-toggle-item"><input type="checkbox" data-gcol="roas" onchange="gerToggleCol(this)"> ROAS Meta</label>
-                <label class="col-toggle-item"><input type="checkbox" data-gcol="reach" onchange="gerToggleCol(this)"> Alcance</label>
-                <label class="col-toggle-item"><input type="checkbox" data-gcol="ctr" onchange="gerToggleCol(this)"> CTR</label>
-                <label class="col-toggle-item"><input type="checkbox" data-gcol="cpm" onchange="gerToggleCol(this)"> CPM</label>
-                <label class="col-toggle-item"><input type="checkbox" data-gcol="cpc" onchange="gerToggleCol(this)"> CPC</label>
-                <label class="col-toggle-item"><input type="checkbox" data-gcol="clicks" onchange="gerToggleCol(this)"> Cliques</label>
-                <label class="col-toggle-item"><input type="checkbox" data-gcol="inicio" onchange="gerToggleCol(this)"> Início</label>
-                <label class="col-toggle-item"><input type="checkbox" data-gcol="termino" onchange="gerToggleCol(this)"> Término</label>
-              </div>
-            </div>
-            <button class="col-toggle-btn" onclick="gerLoad()" title="Recarregar">↺</button>
-          </div>
-        </div>
-        <div id="ger-breadcrumb" style="display:none;align-items:center;gap:.5rem;padding:.5rem 1.5rem;background:var(--sec);border-bottom:1px solid var(--border);font-size:.8125rem;color:var(--muted)"></div>
-
-        <div class="ger-table-wrap">
-          <table class="data-table" id="ger-table">
-            <thead id="ger-thead"></thead>
-            <tbody id="ger-tbody"><tr><td class="empty" colspan="12">Selecione uma aba para carregar dados.</td></tr></tbody>
-            <tfoot id="ger-tfoot"></tfoot>
-          </table>
-        </div>
-      </div>
-    </div>
-
     <!-- ANÁLISE IA -->
     <div id="tab-ai" class="tab-panel">
       <div class="ai-layout">
@@ -1601,34 +1538,6 @@
             <tbody id="contas-body"><tr><td colspan="7" class="empty">Carregando…</td></tr></tbody>
           </table>
           <div class="tbl-foot"><span style="font-size:.875rem;color:var(--muted)" id="contas-count">—</span></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- PÁGINAS META -->
-    <div id="tab-paginas" class="tab-panel">
-      <div class="sec">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem">
-          <div>
-            <div class="chart-title">Páginas</div>
-            <div class="chart-sub" id="pag-subtitle">Páginas do Facebook vinculadas às contas Meta</div>
-          </div>
-          <button class="btn btn-p" onclick="syncPaginasManual()" id="pag-sync-btn" style="display:flex;align-items:center;gap:.375rem">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5"/></svg>
-            Sincronizar
-          </button>
-        </div>
-        <div class="pag-filter-pills">
-          <button class="pag-pill on" data-filter="todas" onclick="paginasFiltrar(this)">Todas</button>
-          <button class="pag-pill" data-filter="em_uso" onclick="paginasFiltrar(this)">Em uso</button>
-          <button class="pag-pill" data-filter="disponivel" onclick="paginasFiltrar(this)">Disponível</button>
-        </div>
-        <div class="pag-grid" id="pag-grid">
-          <div class="pag-empty" style="grid-column:1/-1">Carregando…</div>
-        </div>
-        <div class="pag-footer" id="pag-footer" style="margin-top:1rem">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          <span id="pag-sync-time">—</span>
         </div>
       </div>
     </div>
@@ -2409,7 +2318,7 @@ function toggleSb(){
 }
 
 /* ═══ NAV ═══ */
-const TITLES={overview:'Overview',campaigns:'Campanhas','analise-paises':'Análise de País',gam:'Reports GAM',funil:'Análise de Funil',otimizacoes:'Otimizações',gerenciador:'Gerenciador',ai:'Análise IA',domains:'Domínios',contas:'Contas Meta',paginas:'Páginas','criar-campanha':'Criar Campanha'};
+const TITLES={overview:'Overview',campaigns:'Campanhas','analise-paises':'Análise de País',gam:'Reports GAM',funil:'Análise de Funil',otimizacoes:'Otimizações',ai:'Análise IA',domains:'Domínios',contas:'Contas Meta','criar-campanha':'Criar Campanha'};
 function nav(id,btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('on'));
@@ -2423,9 +2332,7 @@ function nav(id,btn){
   if(id==='domains'){showOverlay('Carregando...');loadDominios().finally(hideOverlay);return;}
   if(id==='gam'){showOverlay('Carregando...');loadGAMReport().finally(hideOverlay);return;}
   if(id==='contas'){showOverlay('Carregando...');loadContas().finally(hideOverlay);}
-  if(id==='paginas'){showOverlay('Carregando...');loadPaginas().finally(hideOverlay);}
   if(id==='funil'){showOverlay('Carregando…');initFunilTab().finally(hideOverlay);}
-  if(id==='gerenciador'){showOverlay('Carregando…');gerLoad().finally(hideOverlay);}
   if(id==='criar-campanha'){showOverlay('Carregando templates…');initCriarCampanha().finally(hideOverlay);}
   if(id==='otimizacoes'){showOverlay('Carregando…');initOtimTab().finally(hideOverlay);}
 }
@@ -4027,7 +3934,6 @@ function renderCampTable(rows){
       <td class="mo col-h" data-col="breakeven" data-sort="${be!==null&&be!==undefined?be:-1}">${be!==null&&be!==undefined?be.toFixed(2):'<span style="color:var(--muted)">—</span>'}</td>
       <td class="mo col-h" data-col="inicio" data-sort="${r.data_inicio||''}">${inicio}</td>
       <td style="white-space:nowrap">
-        <button class="act-btn" onclick="navToGerWithUtm('${esc(r.ad_utm||'')}')" title="Ver no Gerenciador">▦</button>
         <button class="act-btn" onclick="abrirHistorico('${esc(r.ad_utm||'')}')" title="Histórico">📜</button>
       </td>
     </tr>`;
@@ -4115,438 +4021,6 @@ document.addEventListener('click',e=>{
     document.getElementById('col-toggle-dd')?.classList.remove('open');
 });
 
-/* ═══ GERENCIADOR ═══ */
-const GER = {
-  level:'campaigns', items:[], filtered:[], accts:[], _colPrefs:{},
-  datePreset:'last_30d',
-  parentFilter:null,   // {id, name, fromLevel}
-  _pendingSearch:null, // applied after gerLoad() renders
-};
-const GER_COL_KEY = 'ger_col_prefs';
-
-const GER_HEADS = {
-  campaigns: [
-    {k:'toggle',     l:'',             w:'48px'},
-    {k:'name',       l:'Nome',         w:''},
-    {k:'acct',       l:'Conta',        w:'120px'},
-    {k:'status',     l:'Status',       w:'100px'},
-    {k:'results',    l:'Resultados',   w:'100px'},
-    {k:'cpr',        l:'Custo/Result', w:'110px'},
-    {k:'budget',     l:'Orçamento',    w:'110px'},
-    {k:'spend',      l:'Valor Usado',  w:'110px'},
-    {k:'impressions',l:'Impressões',   w:'100px'},
-    {k:'roas',       l:'ROAS Meta',    w:'80px',  extra:true},
-    {k:'reach',      l:'Alcance',      w:'90px',  extra:true},
-    {k:'ctr',        l:'CTR',          w:'70px',  extra:true},
-    {k:'cpm',        l:'CPM',          w:'80px',  extra:true},
-    {k:'cpc',        l:'CPC',          w:'80px',  extra:true},
-    {k:'clicks',     l:'Cliques',      w:'80px',  extra:true},
-    {k:'inicio',     l:'Início',       w:'90px',  extra:true},
-    {k:'termino',    l:'Término',      w:'90px',  extra:true},
-    {k:'actions',    l:'Ações',        w:'56px'},
-  ],
-  adsets: [
-    {k:'toggle',     l:'',             w:'48px'},
-    {k:'name',       l:'Nome',         w:''},
-    {k:'parent',     l:'Campanha',     w:'160px'},
-    {k:'status',     l:'Status',       w:'100px'},
-    {k:'results',    l:'Resultados',   w:'100px'},
-    {k:'cpr',        l:'Custo/Result', w:'110px'},
-    {k:'budget',     l:'Orç./dia',     w:'110px'},
-    {k:'spend',      l:'Valor Usado',  w:'110px'},
-    {k:'impressions',l:'Impressões',   w:'100px'},
-    {k:'roas',       l:'ROAS Meta',    w:'80px',  extra:true},
-    {k:'reach',      l:'Alcance',      w:'90px',  extra:true},
-    {k:'ctr',        l:'CTR',          w:'70px',  extra:true},
-    {k:'cpm',        l:'CPM',          w:'80px',  extra:true},
-    {k:'cpc',        l:'CPC',          w:'80px',  extra:true},
-    {k:'clicks',     l:'Cliques',      w:'80px',  extra:true},
-    {k:'actions',    l:'Ações',        w:'56px'},
-  ],
-  ads: [
-    {k:'toggle',     l:'',             w:'48px'},
-    {k:'thumb',      l:'',             w:'56px'},
-    {k:'name',       l:'Nome',         w:''},
-    {k:'parent',     l:'Conjunto',     w:'140px'},
-    {k:'status',     l:'Status',       w:'100px'},
-    {k:'results',    l:'Resultados',   w:'100px'},
-    {k:'cpr',        l:'Custo/Result', w:'110px'},
-    {k:'spend',      l:'Valor Usado',  w:'110px'},
-    {k:'impressions',l:'Impressões',   w:'100px'},
-    {k:'roas',       l:'ROAS Meta',    w:'80px',  extra:true},
-    {k:'reach',      l:'Alcance',      w:'90px',  extra:true},
-    {k:'ctr',        l:'CTR',          w:'70px',  extra:true},
-    {k:'cpm',        l:'CPM',          w:'80px',  extra:true},
-    {k:'cpc',        l:'CPC',          w:'80px',  extra:true},
-    {k:'clicks',     l:'Cliques',      w:'80px',  extra:true},
-    {k:'actions',    l:'Ações',        w:'56px'},
-  ],
-};
-
-function gerLoadColPrefs(){
-  try{return JSON.parse(localStorage.getItem(GER_COL_KEY)||'{}');}catch(_){return{};}
-}
-function gerSaveColPrefs(p){localStorage.setItem(GER_COL_KEY,JSON.stringify(p));}
-
-function gerApplyCols(){
-  const prefs=gerLoadColPrefs();
-  document.querySelectorAll('#ger-col-dd input[data-gcol]').forEach(cb=>{
-    const col=cb.dataset.gcol;
-    const on=!!prefs[GER.level+'_'+col];
-    cb.checked=on;
-    document.querySelectorAll(`#ger-table [data-gcol="${col}"]`).forEach(el=>el.classList.toggle('gcol-on',on));
-  });
-}
-function gerToggleCol(cb){
-  const col=cb.dataset.gcol;const prefs=gerLoadColPrefs();
-  prefs[GER.level+'_'+col]=cb.checked;gerSaveColPrefs(prefs);
-  document.querySelectorAll(`#ger-table [data-gcol="${col}"]`).forEach(el=>el.classList.toggle('gcol-on',cb.checked));
-}
-function gerToggleColDD(btn){
-  const dd=document.getElementById('ger-col-dd');
-  if(!dd)return;
-  const wasOpen=dd.classList.contains('open');
-  document.querySelectorAll('.col-toggle-dd.open').forEach(d=>d.classList.remove('open'));
-  if(!wasOpen)dd.classList.add('open');
-}
-
-function gerSetDatePreset(preset){
-  GER.datePreset=preset;
-  document.querySelectorAll('.ger-date-btn').forEach(b=>b.classList.toggle('on',b.dataset.preset===preset));
-  gerLoad();
-}
-
-function gerRenderBreadcrumb(){
-  const el=document.getElementById('ger-breadcrumb');
-  if(!el)return;
-  if(!GER.parentFilter){el.style.display='none';el.innerHTML='';return;}
-  const fromLabel=GER.parentFilter.fromLevel==='campaigns'?'Campanhas':'Conjuntos';
-  el.style.display='flex';
-  el.innerHTML=`<button class="act-btn" style="color:var(--accent);font-size:.8125rem" onclick="gerClearParentFilter()">← Voltar</button>
-    <span style="color:var(--border)">|</span>
-    <span>${fromLabel}</span>
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-    <span style="color:var(--fg);font-weight:500">${esc(GER.parentFilter.name)}</span>`;
-}
-
-function gerClearParentFilter(){
-  const prevLevel=GER.parentFilter?.fromLevel||'campaigns';
-  GER.parentFilter=null;
-  GER.level=prevLevel;
-  document.querySelectorAll('.ger-tab').forEach(b=>b.classList.toggle('on',b.dataset.level===prevLevel));
-  document.getElementById('ger-search').value='';
-  gerLoad();
-}
-
-async function gerLoad(){
-  const acctSel=document.getElementById('ger-acct-sel');
-  const accountId=acctSel?.value||'all';
-  let url=`/api/gerenciador?level=${GER.level}&account_id=${encodeURIComponent(accountId)}&date_preset=${GER.datePreset}`;
-  if(GER.parentFilter){
-    if(GER.level==='adsets')url+=`&campaign_id=${encodeURIComponent(GER.parentFilter.id)}`;
-    else if(GER.level==='ads')url+=`&adset_id=${encodeURIComponent(GER.parentFilter.id)}`;
-  }
-  if((GER.level==='adsets'||GER.level==='ads')&&!GER.parentFilter){
-    document.getElementById('ger-tbody').innerHTML=
-      `<tr><td colspan="12" class="empty" style="color:var(--muted);padding:2rem;text-align:center">
-        ${GER.level==='adsets'
-          ? '← Clique em uma campanha para ver seus conjuntos'
-          : '← Clique em um conjunto para ver seus anúncios'}
-      </td></tr>`;
-    gerRenderTotals({});
-    hideOverlay();
-    return;
-  }
-  try{
-    showOverlay('Carregando Gerenciador…');
-    const d=await apiFetch(url);
-    if(!d)return;
-    GER.items=d.items||[];
-    GER.accts=d.accounts||[];
-    if(GER.accts.length&&acctSel){
-      acctSel.innerHTML='<option value="all">Todas as contas</option>'+
-        GER.accts.map(a=>`<option value="${esc(a.id)}">${esc(a.name)}</option>`).join('');
-      acctSel.value=accountId;
-    }
-    if(GER._pendingSearch!==null){
-      const searchEl=document.getElementById('ger-search');
-      if(searchEl)searchEl.value=GER._pendingSearch;
-      GER._pendingSearch=null;
-    }
-    gerRenderBreadcrumb();
-    gerFilter();
-    gerRenderTotals(d.totals||{});
-  }catch(e){
-    document.getElementById('ger-tbody').innerHTML=`<tr><td colspan="12" class="empty" style="color:var(--color-negative)">${esc(e.message)}</td></tr>`;
-  }finally{hideOverlay();}
-}
-
-function gerFilter(){
-  const q=(document.getElementById('ger-search')?.value||'').toLowerCase().trim();
-  const st=document.getElementById('ger-status-fil')?.value||'all';
-  GER.filtered=GER.items.filter(item=>{
-    const nameMatch=!q||(item.name||'').toLowerCase().includes(q);
-    const stMatch=st==='all'||item.status===st||item.status==='CAMPAIGN_'+st;
-    return nameMatch&&stMatch;
-  });
-  gerRenderTable();
-}
-
-function gerSwitchLevel(btn,level){
-  document.querySelectorAll('.ger-tab').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
-  GER.level=level;
-  GER.parentFilter=null;
-  document.getElementById('ger-search').value='';
-  gerLoad();
-}
-
-function gerRenderTable(){
-  const heads=GER_HEADS[GER.level]||[];
-  const prefs=gerLoadColPrefs();
-  const th=document.getElementById('ger-thead');
-  if(th)th.innerHTML='<tr>'+heads.map(h=>{
-    const extra=h.extra?`data-gcol="${h.k}" class="gcol-h${prefs[GER.level+'_'+h.k]?' gcol-on':''}"`:'' ;
-    return`<th ${extra} style="${h.w?'width:'+h.w:''}">${h.l}</th>`;
-  }).join('')+'</tr>';
-
-  const tbody=document.getElementById('ger-tbody');
-  if(!tbody)return;
-  if(!GER.filtered.length){
-    tbody.innerHTML='<tr><td class="empty" colspan="'+heads.length+'">Sem resultados para o filtro atual.</td></tr>';
-    return;
-  }
-  tbody.innerHTML=GER.filtered.map((item,i)=>gerRenderRow(item,heads,prefs,i)).join('');
-  makeTableSortable('ger-table');
-  gerApplyCols();
-}
-
-function gerStatusBadge(s){
-  if(s==='ACTIVE'||s==='CAMPAIGN_ACTIVE')return`<span class="ger-status active">● Ativo</span>`;
-  if(s==='PAUSED'||s==='CAMPAIGN_PAUSED')return`<span class="ger-status paused">⏸ Pausado</span>`;
-  if(s==='UNKNOWN')return`<span class="ger-status unknown">—</span>`;
-  return`<span class="ger-status paused">${esc(s)}</span>`;
-}
-
-function gerBudgetCell(item){
-  let label;
-  if(item.daily_budget!=null) label=BRL(item.daily_budget);
-  else if(item.lifetime_budget!=null) label=BRL(item.lifetime_budget)+'<span style="color:var(--muted);font-size:.7rem"> vita</span>';
-  else label=GER.level==='campaigns'
-    ?'<span style="color:var(--muted);font-size:.75rem">ABO</span>'
-    :'<span style="color:var(--muted);font-size:.75rem">—</span>';
-
-  if(!item.id)return label;
-  const type=GER.level==='campaigns'?'campaign':'adset';
-  const currentBudget=item.daily_budget??item.lifetime_budget??0;
-  return`<span class="ger-bud-disp" id="bud-disp-${item.id}" style="cursor:pointer;text-decoration:underline dotted;text-underline-offset:2px" onclick="gerStartEditBudget('${esc(item.id)}',${currentBudget},'${type}')" title="Clique para editar orçamento">${label}</span>`;
-}
-
-function gerRenderRow(item,heads,prefs,i){
-  const isActive=item.status==='ACTIVE'||item.status==='CAMPAIGN_ACTIVE';
-  const toggleType=GER.level==='campaigns'?'campaign':GER.level==='adsets'?'adset':'ad';
-  const idSafe=esc(item.id||'');
-  const nameSafe=esc(item.name||'');
-  const newStatus=isActive?'PAUSED':'ACTIVE';
-  const roasColor=(item.roas||0)>=1?'var(--color-positive)':'var(--color-warning)';
-
-  const cells={
-    toggle: item.id
-      ?`<label class="ios-switch" title="${isActive?'Pausar':'Ativar'}"><input type="checkbox" ${isActive?'checked':''} onchange="gerToggleStatus('${idSafe}','${newStatus}','${toggleType}',this)"><span class="ios-slider"></span></label>`
-      :'',
-    thumb: GER.level==='ads'
-      ?(item.thumbnail_url
-        ?`<img class="ger-thumb" src="${esc(item.thumbnail_url)}" alt="">`
-        :`<div class="ger-thumb-ph">IMG</div>`)
-      :'',
-    name:    `<span title="${nameSafe}">${esc(item.name||'—')}</span>`,
-    acct:    `<span style="color:var(--muted);font-size:.75rem">${esc(item.account_name||'')}</span>`,
-    parent: GER.level==='adsets'
-      ?`<span style="font-size:.75rem;color:var(--muted)" title="${esc(item.campaign_name||'')}">${esc((item.campaign_name||'—').slice(0,30))}</span>`
-      :`<span style="font-size:.75rem;color:var(--muted)" title="${esc(item.adset_name||'')}">${esc((item.adset_name||'—').slice(0,30))}</span>`,
-    status:      gerStatusBadge(item.status),
-    results:     `<span style="font-weight:500">${NUM(item.results)}</span>`,
-    cpr:         item.cost_per_result>0?BRL(item.cost_per_result):'—',
-    budget:      gerBudgetCell(item),
-    spend:       BRL(item.spend),
-    impressions: NUM(item.impressions),
-    roas:        item.roas>0?`<span style="color:${roasColor}">${item.roas.toFixed(2)}x</span>`:'—',
-    reach:       NUM(item.reach),
-    ctr:         item.ctr>0?item.ctr.toFixed(2)+'%':'—',
-    cpm:         item.cpm>0?BRL(item.cpm):'—',
-    cpc:         item.cpc>0?BRL(item.cpc):'—',
-    clicks:      NUM(item.clicks),
-    inicio:      item.start_time?item.start_time.slice(0,10):'—',
-    termino:     item.end_time?item.end_time.slice(0,10):'—',
-    actions: `<div class="acct-menu-wrap" style="display:inline-block">
-      <button class="acct-menu-btn" onclick="toggleAcctMenu(this)">⋯</button>
-      <div class="acct-menu-dd">
-        ${item.id?`<button class="acct-menu-item" onclick="gerDuplicate('${idSafe}','${nameSafe}','${toggleType}',this)">Duplicar</button>`:''}
-        ${GER.level==='campaigns'?`<button class="acct-menu-item" onclick="gerViewChildren('${nameSafe}','${idSafe}','adsets')">Ver conjuntos</button>`:''}
-        ${GER.level==='adsets'?`<button class="acct-menu-item" onclick="gerViewChildren('${nameSafe}','${idSafe}','ads')">Ver anúncios</button>`:''}
-        ${item.id?`<button class="acct-menu-item danger" onclick="gerDelete('${idSafe}','${nameSafe}','${toggleType}',this)">Excluir</button>`:''}
-      </div>
-    </div>`,
-  };
-
-  return'<tr class="anim" style="animation-delay:'+i*10+'ms">'+
-    heads.map(h=>{
-      const extra=h.extra?`data-gcol="${h.k}" class="gcol-h${prefs[GER.level+'_'+h.k]?' gcol-on':''}"`:'' ;
-      const val=cells[h.k]??'';
-      return`<td ${extra} style="${h.w?'min-width:'+h.w:''}">${val}</td>`;
-    }).join('')+
-  '</tr>';
-}
-
-function gerRenderTotals(t){
-  const tfoot=document.getElementById('ger-tfoot');
-  if(!tfoot)return;
-  const heads=GER_HEADS[GER.level]||[];
-  const prefs=gerLoadColPrefs();
-  const cells={
-    toggle:'',thumb:'',
-    name:`<span style="font-weight:600">Total (${GER.filtered.length} itens)</span>`,
-    acct:'',parent:'',status:'',
-    results:NUM(t.results),
-    cpr:t.results>0?BRL(t.spend/t.results):'—',
-    budget:'',
-    spend:BRL(t.spend),
-    impressions:NUM(t.impressions),
-    roas:'',reach:NUM(t.reach),ctr:'',cpm:'',cpc:'',clicks:NUM(t.clicks),
-    inicio:'',termino:'',actions:'',
-  };
-  tfoot.innerHTML='<tr style="font-weight:600;border-top:2px solid var(--border)">'+
-    heads.map(h=>{
-      const extra=h.extra?`data-gcol="${h.k}" class="gcol-h${prefs[GER.level+'_'+h.k]?' gcol-on':''}"`:'' ;
-      return`<td ${extra}>${cells[h.k]??''}</td>`;
-    }).join('')+
-  '</tr>';
-}
-
-async function gerToggleStatus(id,newStatus,type,cb){
-  cb.disabled=true;
-  const prev=cb.checked;
-  try{
-    const r=await fetch(`/api/meta/${type}/${id}/toggle`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:newStatus})});
-    const d=await r.json();
-    if(!r.ok||!d.ok)throw new Error(d.error||'Erro');
-    const item=GER.items.find(it=>it.id===id);
-    if(item)item.status=newStatus;
-    showToast('ok',`${type==='campaign'?'Campanha':type==='adset'?'Conjunto':'Anúncio'} ${newStatus==='PAUSED'?'pausado':'ativado'}`);
-  }catch(e){
-    cb.checked=prev;
-    showToast('err','Erro: '+e.message);
-  }finally{cb.disabled=false;}
-}
-
-function gerStartEditBudget(id,currentBudget,type){
-  const dispEl=document.getElementById(`bud-disp-${id}`);
-  if(!dispEl)return;
-  const cell=dispEl.closest('td');
-  if(!cell)return;
-  cell.innerHTML=`<div class="ger-bud-wrap">
-    <input class="ger-bud-input" id="bud-inp-${id}" type="number" min="1" step="0.01" value="${currentBudget||''}" placeholder="R$/dia" onkeydown="if(event.key==='Enter')gerSaveBudget('${esc(id)}',${currentBudget||0},'${esc(type)}');if(event.key==='Escape')gerCancelEditBudget('${esc(id)}',${currentBudget||0})">
-    <button class="ger-bud-save" onclick="gerSaveBudget('${esc(id)}',${currentBudget||0},'${esc(type)}')">✓</button>
-    <button class="ger-bud-cancel" onclick="gerCancelEditBudget('${esc(id)}',${currentBudget||0})">✗</button>
-  </div>`;
-  document.getElementById(`bud-inp-${id}`)?.select();
-}
-function gerCancelEditBudget(id,current){
-  const inp=document.getElementById(`bud-inp-${id}`);
-  const cell=inp?.closest('td');
-  if(!cell)return;
-  const item=GER.items.find(it=>it.id===id)||{id,daily_budget:current>0?current:null,lifetime_budget:null};
-  cell.innerHTML=gerBudgetCell(item);
-}
-async function gerSaveBudget(id,budgetBefore,type){
-  const inp=document.getElementById(`bud-inp-${id}`);
-  if(!inp)return;
-  const val=parseFloat(inp.value)||0;
-  if(val<1){showToast('err','Orçamento mínimo é R$1,00');return;}
-  inp.disabled=true;
-  try{
-    const r=await fetch(`/api/meta/${type}/${id}/budget`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({daily_budget:val,budget_antes:budgetBefore})});
-    const d=await r.json();
-    if(!r.ok||!d.ok)throw new Error(d.error||'Erro');
-    const item=GER.items.find(it=>it.id===id);
-    if(item){item.daily_budget=val;item.lifetime_budget=null;}
-    showToast('ok','Orçamento atualizado: '+BRL(val));
-    gerCancelEditBudget(id,val);
-  }catch(e){
-    inp.disabled=false;
-    showToast('err','Erro: '+e.message);
-  }
-}
-
-async function gerDelete(id,name,type,btn){
-  if(!confirm(`Excluir "${name}"?\nEssa ação não pode ser desfeita no Meta.`))return;
-  btn.disabled=true;
-  try{
-    const r=await fetch(`/api/meta/${type}/${id}`,{method:'DELETE'});
-    const d=await r.json();
-    if(!r.ok||!d.ok)throw new Error(d.error||'Erro');
-    GER.items=GER.items.filter(it=>it.id!==id);
-    gerFilter();
-    showToast('ok','Excluído com sucesso.');
-  }catch(e){
-    btn.disabled=false;
-    showToast('err','Erro: '+e.message);
-  }
-}
-
-async function gerDuplicate(id,name,type,btn){
-  if(type!=='campaign'){showToast('err','Duplicar via wizard está disponível apenas para campanhas por enquanto.');return;}
-  showOverlay('Carregando dados da campanha…');
-  try{
-    const r=await fetch(`/api/meta/campaign/${id}`);
-    const camp=await r.json();
-    if(!r.ok)throw new Error(camp.error||'Erro ao buscar campanha');
-    BWZ.d={};
-    BWZ.d.account_id=camp.account_id;
-    BWZ.d.campaign_name=`${camp.name} — Cópia`;
-    BWZ.d.campNameEdited=true;
-    BWZ.d.budget_type=camp.daily_budget?'CBO':'ABO';
-    BWZ.d.paused=true;
-    const firstAdset=camp.adsets?.data?.[0];
-    if(firstAdset?.targeting){
-      const t=firstAdset.targeting;
-      if(t.geo_locations?.countries?.length)BWZ.d.selCountries=[...t.geo_locations.countries];
-      if(t.age_min)BWZ.d.age_min=t.age_min;
-      if(t.age_max)BWZ.d.age_max=t.age_max;
-    }
-    hideOverlay();
-    botWizOpen();
-    await new Promise(r=>setTimeout(r,100));
-    const row=document.querySelector(`#bwz-acct-list .bwz-acct-row[data-id="${esc(camp.account_id)}"]`);
-    if(row)row.click();
-    showToast('ok','Dados pré-preenchidos — verifique antes de criar.');
-  }catch(e){
-    hideOverlay();
-    showToast('err','Erro: '+e.message);
-  }
-}
-
-function gerViewChildren(name,id,targetLevel){
-  GER.parentFilter={id,name,fromLevel:GER.level};
-  GER.level=targetLevel;
-  document.querySelectorAll('.ger-tab').forEach(b=>b.classList.toggle('on',b.dataset.level===targetLevel));
-  document.getElementById('ger-search').value='';
-  gerLoad();
-}
-function gerFilterByParent(name,id,targetLevel){
-  gerViewChildren(name,id,targetLevel);
-}
-
-function navToGerWithUtm(utm){
-  const btn=document.getElementById('nav-gerenciador');
-  if(btn)nav('gerenciador',btn);
-  GER.level='adsets';
-  GER.parentFilter=null;
-  GER._pendingSearch=utm;
-  document.querySelectorAll('.ger-tab').forEach(b=>b.classList.toggle('on',b.dataset.level==='adsets'));
-  gerLoad();
-}
-
 /* ═══ DOMÍNIOS ═══ */
 async function loadDominios(){
   try{
@@ -4619,6 +4093,10 @@ async function checkSyncStatus(){
       badge.className='sync-badge err';
       txt.textContent=`sync erro · ${diffStr}`;
       badge.title=last.message||'Erro desconhecido';
+    }else if(last.status==='partial'){
+      badge.className='sync-badge warn';
+      txt.textContent=`sync parcial · ${diffStr}`;
+      badge.title=last.message||'Falha parcial em conta Meta';
     }else{
       badge.className='sync-badge ok';
       txt.textContent=`sync ${diffStr}`;
@@ -4758,99 +4236,6 @@ async function loadContas(){
   }catch(e){
     if(tbody)tbody.innerHTML=`<tr><td colspan="6" class="empty">Erro: ${esc(e.message)}</td></tr>`;
   }
-}
-
-/* ═══ PÁGINAS META ═══ */
-let _paginasData = [];
-let _paginasFiltro = 'todas';
-
-async function loadPaginas(){
-  try{
-    const res=await fetch('/api/paginas');
-    if(!res.ok)return;
-    const d=await res.json();
-    _paginasData=d.paginas||[];
-    // Update nav badge (disponíveis)
-    const badge=document.getElementById('nav-paginas-badge');
-    if(badge){
-      if(d.disponivel>0){badge.textContent=d.disponivel;badge.style.display='flex';}
-      else badge.style.display='none';
-    }
-    // Update subtitle
-    const sub=document.getElementById('pag-subtitle');
-    if(sub)sub.textContent=`${d.total} página(s) · ${d.em_uso} em uso · ${d.disponivel} disponível`;
-    // Sync time
-    const ft=document.getElementById('pag-sync-time');
-    if(ft&&d.ultima_sync){
-      const dt=new Date(d.ultima_sync);
-      ft.textContent=`Atualizado às ${dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} · sincroniza a cada 30min`;
-    }
-    renderPaginas();
-  }catch(e){console.warn('[paginas]',e);}
-}
-
-function paginasFiltrar(btn){
-  document.querySelectorAll('.pag-pill').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
-  _paginasFiltro=btn.dataset.filter;
-  renderPaginas();
-}
-
-function renderPaginas(){
-  const grid=document.getElementById('pag-grid');
-  if(!grid)return;
-  let rows=_paginasData;
-  if(_paginasFiltro==='em_uso')rows=rows.filter(p=>p.status==='em_uso');
-  else if(_paginasFiltro==='disponivel')rows=rows.filter(p=>p.status==='disponivel');
-
-  if(!rows.length){grid.innerHTML='<div class="pag-empty" style="grid-column:1/-1">Nenhuma página encontrada.</div>';return;}
-
-  const emUso=rows.filter(p=>p.status==='em_uso');
-  const disp=rows.filter(p=>p.status==='disponivel');
-
-  let html='';
-  if(emUso.length&&disp.length&&_paginasFiltro==='todas'){
-    html+=`<div class="pag-divider"><span class="pag-divider-lbl">Em uso (${emUso.length})</span></div>`;
-    html+=emUso.map(pagCard).join('');
-    html+=`<div class="pag-divider"><span class="pag-divider-lbl">Disponível (${disp.length})</span></div>`;
-    html+=disp.map(pagCard).join('');
-  }else{
-    html+=rows.map(pagCard).join('');
-  }
-  grid.innerHTML=html;
-}
-
-function pagCard(p){
-  const emUso=p.status==='em_uso';
-  const fotoHtml=p.foto_url
-    ?`<img class="pag-avatar" src="${esc(p.foto_url)}" width="40" height="40" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-       <div class="pag-avatar-fb" style="display:none">${esc((p.nome||'?')[0].toUpperCase())}</div>`
-    :`<div class="pag-avatar-fb">${esc((p.nome||'?')[0].toUpperCase())}</div>`;
-  const statusHtml=emUso
-    ?`<span class="pag-status em-uso"><svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="var(--ok)"/></svg>Em uso</span>`
-    :`<span class="pag-status disponivel"><svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="var(--muted)"/></svg>Disponível</span>`;
-  const paisHtml=emUso&&p.pais_sigla
-    ?`<span class="pag-country"><span class="country-pill">${esc(p.pais_sigla)}</span><span>${esc(p.pais_nome||p.pais_sigla)}</span></span>`
-    :`<span class="pag-country" style="color:var(--muted)">—</span>`;
-  const n=(p.adsets_ativos??0);
-  const adsetsHtml=emUso&&n>0?`<span>${n} conjunto${n===1?'':'s'} ativo${n===1?'':'s'}</span>`:`<span style="color:var(--muted)">0 conjuntos ativos</span>`;
-  const contaSep=p.conta_nome?`<span style="color:var(--border)">·</span><span>Conta: ${esc(p.conta_nome)}</span>`:'';
-  return`<div class="pag-card">
-    <div class="pag-card-top">${fotoHtml}<span class="pag-nome" title="${esc(p.nome)}">${esc(p.nome)}</span></div>
-    <div class="pag-card-row">${statusHtml}${paisHtml}</div>
-    <div class="pag-footer">${adsetsHtml}${contaSep}</div>
-  </div>`;
-}
-
-async function syncPaginasManual(){
-  const btn=document.getElementById('pag-sync-btn');
-  if(btn){btn.disabled=true;btn.textContent='Sincronizando…';}
-  try{
-    await fetch('/api/paginas/sync',{method:'POST'});
-    await new Promise(r=>setTimeout(r,3000));
-    await loadPaginas();
-  }catch(e){console.warn('[syncPaginas]',e);}
-  finally{if(btn){btn.disabled=false;btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5"/></svg> Sincronizar';}}
 }
 
 function openModalAddConta(){
@@ -5536,6 +4921,14 @@ function toggleOtimCamp(ci){
   if(body) body.classList.toggle('open');
 }
 
+function badgeDecisao(dec){
+  if(!dec)return'';
+  const cls={ESCALA:'escala',MANTÉM:'mantem',LIMA:'lima',AGUARDAR:'aguardar'}[dec.veredito]||'aguardar';
+  const lbl={ESCALA:'↑ ESCALA',MANTÉM:'→ MANTÉM',LIMA:'✕ LIMA',AGUARDAR:'⏳ AGUARDAR'}[dec.veredito]||dec.veredito;
+  const extra=dec.motivo?` (${dec.motivo})`:dec.roas_maduro!==null?` ROAS ${dec.roas_maduro}x`:'';
+  return`<span class="otim-decisao-badge ${cls}">${lbl}${extra}</span>`;
+}
+
 async function abrirFormOtim(utm, campaignId, campaignName, adsetId, adsetName, accountId, containerId){
   const container=document.getElementById(containerId);
   if(!container)return;
@@ -5544,10 +4937,12 @@ async function abrirFormOtim(utm, campaignId, campaignName, adsetId, adsetName, 
   try{
     const since=document.getElementById('f-since').value;
     const until=document.getElementById('f-until').value;
-    // Preview snapshot via endpoint
-    const r=await fetch('/api/otimizacoes/snapshot-preview?'+new URLSearchParams({utm,campaign_name:campaignName,since,until}));
-    const snap=r.ok?await r.json():{};
+    const r=await fetch('/api/otimizacoes/preview?'+new URLSearchParams({utm,campaign_name:campaignName,adset_name:adsetName||'',since,until}));
+    const pv=r.ok?await r.json():{};
+    const snap=pv.snapshot||{};
+    const dec=pv.decisao||null;
     const tiposOpts=_otimTipos.map(t=>`<option value="${t.id}">${esc(t.nome)} (${t.prazo_horas}h)</option>`).join('');
+    const lucroColor=dec?.veredito==='AGUARDAR'?'var(--fg)':(snap.lucro>=0?'var(--success)':'var(--danger)');
     container.innerHTML=`
       <div class="otim-form" id="form-${containerId}">
         <div>
@@ -5560,14 +4955,18 @@ async function abrirFormOtim(utm, campaignId, campaignName, adsetId, adsetName, 
         </div>
         ${snap.investido!==undefined?`
         <div>
-          <label>Preview snapshot (período atual: ${since} → ${until})</label>
+          <label style="display:flex;align-items:center;gap:.5rem">Preview snapshot (${since} → ${until}) ${badgeDecisao(dec)}</label>
           <div class="otim-snapshot-preview">
-            <div class="otim-snap-item"><div class="otim-snap-lbl">Investido</div><div class="otim-snap-val hideable-value">R$ ${BRL(snap.investido)}</div></div>
-            <div class="otim-snap-item"><div class="otim-snap-lbl">Faturamento</div><div class="otim-snap-val hideable-value">R$ ${BRL(snap.faturamento)}</div></div>
-            <div class="otim-snap-item"><div class="otim-snap-lbl">Lucro</div><div class="otim-snap-val hideable-value" style="color:${snap.lucro>=0?'var(--success)':'var(--danger)'}">R$ ${BRL(snap.lucro)}</div></div>
+            <div class="otim-snap-item"><div class="otim-snap-lbl">Investido</div><div class="otim-snap-val hideable-value">${BRL(snap.investido)}</div></div>
+            <div class="otim-snap-item"><div class="otim-snap-lbl">Faturamento</div><div class="otim-snap-val hideable-value">${BRL(snap.faturamento)}</div></div>
+            <div class="otim-snap-item"><div class="otim-snap-lbl">Lucro</div><div class="otim-snap-val hideable-value" style="color:${lucroColor}">${BRL(snap.lucro)}</div></div>
             <div class="otim-snap-item"><div class="otim-snap-lbl">ROAS</div><div class="otim-snap-val hideable-value">${snap.roas!==null?snap.roas+'x':'—'}</div></div>
+            <div class="otim-snap-item"><div class="otim-snap-lbl">CPC</div><div class="otim-snap-val hideable-value">${snap.cpc!==null?BRL(snap.cpc):'—'}</div></div>
+            <div class="otim-snap-item"><div class="otim-snap-lbl">Custo/Result.</div><div class="otim-snap-val hideable-value">${snap.custo_resultado!==null?BRL(snap.custo_resultado):'—'}</div></div>
             <div class="otim-snap-item"><div class="otim-snap-lbl">Resultados</div><div class="otim-snap-val hideable-value">${NUM(snap.resultados)}</div></div>
-            <div class="otim-snap-item"><div class="otim-snap-lbl">Custo/Result.</div><div class="otim-snap-val hideable-value">${snap.custo_resultado!==null?'R$ '+BRL(snap.custo_resultado):'—'}</div></div>
+            <div class="otim-snap-item"><div class="otim-snap-lbl">Cliques</div><div class="otim-snap-val hideable-value">${NUM(snap.cliques)}</div></div>
+            <div class="otim-snap-item"><div class="otim-snap-lbl">Impressões</div><div class="otim-snap-val hideable-value">${NUM(snap.impressoes)}</div></div>
+            <div class="otim-snap-item"><div class="otim-snap-lbl">eCPM</div><div class="otim-snap-val hideable-value">${snap.ecpm!==null?BRL(snap.ecpm):'—'}</div></div>
           </div>
         </div>`:''}
         <div class="otim-form-actions">
@@ -5628,6 +5027,10 @@ async function loadRevisarHoje(){
             <div class="otim-rev-title">${esc(item.utm)} · ${esc(item.tipo_acao_nome)}</div>
             <div class="otim-rev-sub">${esc(item.campaign_name||'')}${item.adset_name?' › '+esc(item.adset_name):''} · ${new Date(item.criado_em).toLocaleDateString('pt-BR')}</div>
             ${item.observacao?`<div style="font-size:.8rem;color:var(--muted);margin-top:.25rem;font-style:italic">"${esc(item.observacao)}"</div>`:''}
+            <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;margin-top:.4rem">
+              ${item.decisao_momento?`<span style="font-size:.7rem;color:var(--muted)">Registro:</span>${badgeDecisao({veredito:item.decisao_momento})}`:'' }
+              ${item.decisao_atual?`<span style="font-size:.7rem;color:var(--muted)">Agora:</span>${badgeDecisao(item.decisao_atual)}`:''}
+            </div>
           </div>
           <span class="otim-rev-prazo ${prazoClass}">${prazoLabel}</span>
         </div>
@@ -5651,7 +5054,7 @@ async function loadRevisarHoje(){
 }
 
 function metricLabel(m){
-  return {investido:'Investido',faturamento:'Fat. Real',lucro:'Lucro',roas:'ROAS',cpc:'CPC',custo_resultado:'Custo/Result.',resultados:'Resultados',cliques:'Cliques',ecpm:'eCPM'}[m]||m;
+  return {investido:'Investido',faturamento:'Fat. Real',lucro:'Lucro',roas:'ROAS',cpc:'CPC',custo_resultado:'Custo/Result.',resultados:'Resultados',cliques:'Cliques',impressoes:'Impressões',ecpm:'eCPM'}[m]||m;
 }
 
 function renderSnapMetrics(before,after){
@@ -5659,7 +5062,7 @@ function renderSnapMetrics(before,after){
   return fields.map(f=>{
     const bv=before[f];
     const av=after[f];
-    const fmt=v=>v===null||v===undefined?'—':['roas'].includes(f)?(Number(v).toFixed(2)+'x'):['investido','faturamento','custo_resultado'].includes(f)?'R$ '+BRL(Number(v)):NUM(Number(v));
+    const fmt=v=>v===null||v===undefined?'—':['roas'].includes(f)?(Number(v).toFixed(2)+'x'):['investido','faturamento','lucro','cpc','custo_resultado','ecpm'].includes(f)?BRL(Number(v)):NUM(Number(v));
     let delta='';
     if(av!==undefined&&av!==null&&bv!==null&&bv!==undefined&&bv!==0){
       const pct=((Number(av)-Number(bv))/Math.abs(Number(bv))*100).toFixed(1);
@@ -5721,7 +5124,7 @@ function renderOtimChart(id){
       plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{
         const v=ctx.parsed.y;
         return ['roas'].includes(metric)?(v===null?'—':(+v).toFixed(2)+'x'):
-               ['investido','faturamento','lucro','cpc','custo_resultado','ecpm'].includes(metric)?'R$ '+BRL(v):NUM(v);
+               ['investido','faturamento','lucro','cpc','custo_resultado','ecpm'].includes(metric)?BRL(v):NUM(v);
       }}}},
       scales:{
         x:{grid:{color:gridColor},ticks:{color:textColor,maxTicksLimit:12,font:{size:10}}},
@@ -5847,12 +5250,20 @@ async function initFunilTab(){
   if(_funilLoaded)return;
   _funilLoaded=true;
   try{
-    const r=await fetch('/api/utms');
+    const [r,rc]=await Promise.all([
+      fetch('/api/utms'),
+      fetch('/api/utms/conjuntos-ativos').catch(()=>null),
+    ]);
     if(!r.ok)throw new Error(r.statusText);
     const utms=await r.json();
+    const conj=rc&&rc.ok?await rc.json():{};
     const sel=document.getElementById('funil-utm');
     sel.innerHTML='<option value="">Selecione uma UTM…</option>'+
-      utms.map(u=>`<option value="${esc(u.ad_utm)}">${esc(u.ad_utm)}${u.tipo?' ('+esc(u.tipo)+')':''}</option>`).join('');
+      utms.map(u=>{
+        const n=conj[u.ad_utm]||0;
+        const cnt=` · ${n} conj. ativo${n===1?'':'s'}`;
+        return`<option value="${esc(u.ad_utm)}">${esc(u.ad_utm)}${u.tipo?' ('+esc(u.tipo)+')':''}${cnt}</option>`;
+      }).join('');
   }catch(e){console.error('[funil] initFunilTab:',e.message);}
 }
 
@@ -6822,7 +6233,12 @@ input[type=range].bwz-range::-moz-range-thumb{width:20px;height:20px;border-radi
 .otim-form label{font-size:.75rem;font-weight:600;color:var(--muted);display:block;margin-bottom:.25rem}
 .otim-form select,.otim-form textarea,.otim-form input{width:100%;background:var(--card);border:1px solid var(--border);color:var(--fg);border-radius:var(--r);padding:.5rem .75rem;font-size:.8125rem;font-family:inherit;box-sizing:border-box}
 .otim-form textarea{resize:vertical;min-height:64px}
-.otim-snapshot-preview{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:.75rem 1rem;display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem}
+.otim-snapshot-preview{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:.75rem 1rem;display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem}
+.otim-decisao-badge{display:inline-block;padding:2px 8px;border-radius:9999px;font-size:.65rem;font-weight:700;white-space:nowrap}
+.otim-decisao-badge.escala{background:color-mix(in oklch,var(--success) 15%,transparent);color:var(--success)}
+.otim-decisao-badge.mantem{background:var(--warning-soft);color:var(--warning)}
+.otim-decisao-badge.lima{background:var(--danger-soft);color:var(--danger)}
+.otim-decisao-badge.aguardar{background:var(--sec);color:var(--muted);border:1px solid var(--border)}
 .otim-snap-item{text-align:center}
 .otim-snap-lbl{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
 .otim-snap-val{font-size:.9375rem;font-weight:700;font-family:ui-monospace,SFMono-Regular,monospace}

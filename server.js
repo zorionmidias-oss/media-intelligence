@@ -30,7 +30,7 @@ const orcamentoStatusHandler = require('./src/app/api/orcamento-status/route');
 const otimizacoesHandler = require('./src/app/api/otimizacoes/route');
 const supabase = require('./src/lib/supabase');
 const { syncAll, fetchAndSaveHourly, syncPaginas } = require('./src/lib/sync');
-const { resolveCountry } = require('./src/lib/parser');
+const { resolveCountry, extractAdUTM } = require('./src/lib/parser');
 const { startScheduler } = require('./src/lib/scheduler');
 const { hashPassword, verifyPassword, generateToken, requireAuth, COOKIE_NAME } = require('./src/lib/auth');
 const { registrarHistorico } = require('./src/lib/historico');
@@ -425,6 +425,58 @@ app.get('/api/utms', requireAuth, async (req, res) => {
   res.json(utms);
 });
 
+// ── Conjuntos ativos por UTM (ads ACTIVE na Meta → adset_ids distintos) ───────
+let _conjAtivosCache = { ts: 0, data: null };
+app.get('/api/utms/conjuntos-ativos', requireAuth, async (_req, res) => {
+  try {
+    if (_conjAtivosCache.data && Date.now() - _conjAtivosCache.ts < 60000) {
+      return res.json(_conjAtivosCache.data);
+    }
+    const { data: accounts } = await supabase
+      .from('meta_accounts')
+      .select('ad_account_id,access_token')
+      .eq('ativo', true);
+
+    const adsetsPorUtm = {}; // utm → Set(adset_id)
+    for (const acc of accounts || []) {
+      if (!acc.access_token) continue;
+      const accountId = String(acc.ad_account_id).startsWith('act_')
+        ? String(acc.ad_account_id) : `act_${acc.ad_account_id}`;
+      try {
+        let nextUrl = `${META_BASE}/${accountId}/ads`;
+        let params = {
+          access_token: acc.access_token,
+          fields: 'name,adset_id',
+          effective_status: JSON.stringify(['ACTIVE']),
+          limit: 500,
+        };
+        while (nextUrl) {
+          const r = await axios.get(nextUrl, { params, timeout: 30000 });
+          for (const ad of r.data?.data || []) {
+            const utm = extractAdUTM(ad.name);
+            if (!utm || !ad.adset_id) continue;
+            if (!adsetsPorUtm[utm]) adsetsPorUtm[utm] = new Set();
+            adsetsPorUtm[utm].add(ad.adset_id);
+          }
+          nextUrl = (r.data?.data || []).length > 0 ? (r.data?.paging?.next || null) : null;
+          params = undefined;
+        }
+      } catch (e) {
+        console.warn(`[conjuntos-ativos] ${accountId}:`, e.response?.data?.error?.message || e.message);
+      }
+    }
+
+    const out = Object.fromEntries(
+      Object.entries(adsetsPorUtm).map(([utm, set]) => [utm, set.size])
+    );
+    _conjAtivosCache = { ts: Date.now(), data: out };
+    res.json(out);
+  } catch (err) {
+    console.error('[conjuntos-ativos]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Drilldown ─────────────────────────────────────────────────────────────────
 app.get('/api/drilldown/:utm', requireAuth, drilldownHandler);
 
@@ -434,6 +486,7 @@ app.get('/api/otimizacoes/tipos-acao',          requireAuth, otimizacoesHandler.
 app.post('/api/otimizacoes/tipos-acao',         requireAuth, otimizacoesHandler.createTipo);
 app.put('/api/otimizacoes/tipos-acao/:id',      requireAuth, otimizacoesHandler.updateTipo);
 app.delete('/api/otimizacoes/tipos-acao/:id',   requireAuth, otimizacoesHandler.deleteTipo);
+app.get('/api/otimizacoes/preview',              requireAuth, otimizacoesHandler.previewDecisao);
 app.get('/api/otimizacoes/snapshot-preview',     requireAuth, otimizacoesHandler.snapshotPreview);
 app.get('/api/otimizacoes/revisar',             requireAuth, otimizacoesHandler.revisarHoje);
 app.get('/api/otimizacoes/pendentes-por-utm',   requireAuth, otimizacoesHandler.pendentesPorUtm);
