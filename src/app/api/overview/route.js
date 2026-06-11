@@ -284,14 +284,33 @@ async function handler(req, res) {
     // Previsão: query direta para hoje (respeita filtro de domínio; null se hoje não está no range)
     const todayStr = new Date().toISOString().slice(0, 10);
     let previsao = null;
+    let delayHours = 0;
     if (todayStr >= df && todayStr <= dt) {
       let prevQ = supabase
         .from('ads_consolidados')
-        .select('orcamento_total,valor_gasto,resultado,impressoes_gam,ecpm')
+        .select('orcamento_total,valor_gasto,resultado,impressoes_gam,ecpm,account_id,updated_at')
         .eq('data', todayStr);
       if (domainId) prevQ = prevQ.eq('dominio_id', domainId);
       const { data: prevData } = await prevQ;
       const dados = prevData || [];
+
+      // Atraso de dados: a conta mais defasada define o delay (sync de uma conta pode
+      // falhar e deixar o gasto congelado enquanto as outras seguem atualizando)
+      const lastByAcc = {};
+      for (const r of dados) {
+        if (!r.updated_at) continue;
+        const iso = /Z$|[+-]\d{2}:?\d{2}$/.test(r.updated_at) ? r.updated_at : r.updated_at + 'Z';
+        const ts = Date.parse(iso);
+        if (!Number.isFinite(ts)) continue;
+        const acc = r.account_id || '_';
+        if (ts > (lastByAcc[acc] || 0)) lastByAcc[acc] = ts;
+      }
+      const stamps = Object.values(lastByAcc);
+      if (stamps.length > 0) {
+        const h = (Date.now() - Math.min(...stamps)) / 3600000;
+        // < 1h é cadência normal de sync — só sinalizar atraso real
+        delayHours = h >= 1 ? +h.toFixed(1) : 0;
+      }
       if (dados.length > 0) {
         const orcamento_total    = dados.reduce((s, r) => s + Number(r.orcamento_total || 0), 0);
         const gasto_atual        = dados.reduce((s, r) => s + Number(r.valor_gasto     || 0), 0);
@@ -349,7 +368,7 @@ async function handler(req, res) {
         taxaProgramatica: +taxaProgramatica.toFixed(2),
         cpc: totSpend > 0 && totClicks > 0 ? +(totSpend / totClicks).toFixed(4) : 0,
         cpaIdeal: rps / 1000,
-        delayHours: 0,
+        delayHours,
         usdToBrl: await getUSDtoBRL(),
         roas: totSpend > 0 ? +(totFat / totSpend).toFixed(4) : 0,
       },

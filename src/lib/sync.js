@@ -10,9 +10,55 @@ const { extractDomainPrefix, extractAdUTM, extractTipo, groupAdsByUTM, extractPa
 
 const BASE = 'https://graph.facebook.com/v19.0';
 const AD_FIELDS = 'ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name,spend,impressions,inline_link_clicks,outbound_clicks,clicks,ctr,cpc,actions,objective,optimization_goal';
+// A Meta rejeita `actions` combinado com breakdown horário em contas com muitos ads
+// (400 subcode 1504038 "Sua solicitação expirou") — versão sem actions para essas queries
+const AD_FIELDS_NO_ACTIONS = AD_FIELDS.replace(',actions', '');
 
 function today() {
   return new Date().toISOString().slice(0, 10);
+}
+
+// Busca paginada de insights da Meta; lança em caso de erro HTTP.
+async function fetchInsightsPaginated(url, params) {
+  const rows = [];
+  let reqUrl = url;
+  let reqParams = params;
+  while (reqUrl) {
+    const res = await axios.get(reqUrl, { params: reqParams, timeout: 60000 });
+    const page = res.data?.data || [];
+    rows.push(...page);
+    reqUrl = page.length > 0 ? (res.data?.paging?.next || null) : null;
+    reqParams = undefined; // URL paginada já carrega os params
+  }
+  return rows;
+}
+
+// Busca o range completo em uma chamada; se a Meta rejeitar por volume (400 "Sua solicitação
+// expirou"), cai para uma chamada por dia com um retry. Tudo-ou-nada: se um dia falhar mesmo
+// após retry, lança — quem chama aborta a conta inteira para não gravar gasto parcial.
+async function fetchInsightsWithDayFallback(accountId, params, { since, until }) {
+  const url = `${BASE}/${accountId}/insights`;
+  try {
+    return await fetchInsightsPaginated(url, { ...params, time_range: JSON.stringify({ since, until }) });
+  } catch (e) {
+    if (e.response?.status !== 400) throw e;
+    const sub = e.response?.data?.error?.error_subcode;
+    console.warn(`[sync Meta ${accountId}] range ${since}→${until} rejeitado (400/${sub}) — fallback dia a dia`);
+    const rows = [];
+    let cur = DateTime.fromISO(since);
+    const end = DateTime.fromISO(until);
+    while (cur <= end) {
+      const dayParams = { ...params, time_range: JSON.stringify({ since: cur.toISODate(), until: cur.toISODate() }) };
+      try {
+        rows.push(...await fetchInsightsPaginated(url, dayParams));
+      } catch {
+        await new Promise(r => setTimeout(r, 3000));
+        rows.push(...await fetchInsightsPaginated(url, dayParams));
+      }
+      cur = cur.plus({ days: 1 });
+    }
+    return rows;
+  }
 }
 
 
@@ -35,6 +81,7 @@ async function fetchMetaAdsForSync(dateRange) {
   }
 
   const allAds = [];
+  const failedBMs = []; // contas cujo fetch falhou — dados delas ficam defasados no banco
   const budgetByAccount = {}; // accountId → Map(campaignId → budget)
 
   for (const config of configs) {
@@ -78,8 +125,15 @@ async function fetchMetaAdsForSync(dateRange) {
         console.warn(`[sync Meta BM${config.id}] adsets fetch failed (${e.response?.status ?? e.code}): ${e.message} — budgets will be 0`);
         return { data: { data: [] } };
       });
+      const adsetRows = adsetBudgetRes.data?.data || [];
+      // CBO: orçamento é da campanha — dividir igualmente entre os adsets para a soma
+      // por adset não multiplicar o budget da campanha
+      const adsetsPorCampanha = {};
+      for (const a of adsetRows) {
+        adsetsPorCampanha[a.campaign_id] = (adsetsPorCampanha[a.campaign_id] || 0) + 1;
+      }
       const budgetMap = new Map();
-      for (const a of adsetBudgetRes.data?.data || []) {
+      for (const a of adsetRows) {
         const rawDaily = Number(a.daily_budget || 0);
         const rawLt = Number(a.lifetime_budget || 0);
         let budget = 0;
@@ -88,7 +142,8 @@ async function fetchMetaAdsForSync(dateRange) {
         } else if (rawLt > 0) {
           budget = (rawLt / 100) / 30; // lifetime ÷ 30d estimate
         } else {
-          budget = campBudgetMap.get(a.campaign_id) || 0; // CBO fallback
+          const campBudget = campBudgetMap.get(a.campaign_id) || 0; // CBO fallback
+          budget = campBudget / (adsetsPorCampanha[a.campaign_id] || 1);
         }
         if (budget > 0) budgetMap.set(a.id, budget);
       }
@@ -96,90 +151,87 @@ async function fetchMetaAdsForSync(dateRange) {
 
       // Paginated fetch de insights: breakdown horário para contas fora do BR,
       // fetch diário simples para contas já em fuso BR (otimização Render free tier)
-      let reqUrl = `${BASE}/${accountId}/insights`;
-      let params = {
-        access_token: token,
-        level: 'ad',
-        fields: AD_FIELDS,
-        time_increment: 1,
-        limit: 500,
-        time_range: JSON.stringify({ since: fetchSince, until: fetchUntil }),
-        ...(needsRebucket ? { breakdowns: 'hourly_stats_aggregated_by_advertiser_time_zone' } : {}),
-      };
-      let hasMore = true;
+      const baseParams = { access_token: token, level: 'ad', time_increment: 1, limit: 500 };
+      const fetchRange = { since: fetchSince, until: fetchUntil };
+
+      let insightRows;          // métricas (horárias p/ rebucket, diárias caso contrário)
+      let actionsByAdDay = null; // `${ad_id}|${date}` → actions[] (só rebucket)
+      if (needsRebucket) {
+        // A Meta rejeita `actions` + breakdown horário nesta escala → duas queries:
+        // 1) métricas horárias sem actions (re-bucketing exato de gasto/cliques/impressões)
+        insightRows = await fetchInsightsWithDayFallback(accountId, {
+          ...baseParams,
+          fields: AD_FIELDS_NO_ACTIONS,
+          breakdowns: 'hourly_stats_aggregated_by_advertiser_time_zone',
+        }, fetchRange);
+        // 2) actions em granularidade diária (leve). Aproximação: o dia do fuso do anunciante
+        //    é atribuído ao mesmo rótulo de data BR (20 das 24h coincidem em contas LA)
+        const actionRows = await fetchInsightsWithDayFallback(accountId, {
+          ...baseParams,
+          fields: 'ad_id,actions',
+        }, fetchRange);
+        actionsByAdDay = {};
+        for (const r of actionRows) {
+          if (r.actions) actionsByAdDay[`${r.ad_id}|${r.date_start}`] = r.actions;
+        }
+      } else {
+        insightRows = await fetchInsightsWithDayFallback(accountId, {
+          ...baseParams,
+          fields: AD_FIELDS,
+        }, fetchRange);
+      }
 
       // Acumulador para re-bucketing: `${ad_id}|${dataBR}` → row agregada por dia BR
       const hourlyAccum = new Map();
 
-      while (hasMore) {
-        const res = await axios.get(reqUrl, { params, timeout: 60000 });
-        const rows = res.data?.data || [];
-
-        for (const r of rows) {
-          if (!needsRebucket) {
-            r._bmId = config.id;
-            r._accountId = accountId;
-            r._adsetBudget = budgetMap.get(r.adset_id) || 0;
-            allAds.push(r);
-          } else {
-            const hStr = r.hourly_stats_aggregated_by_advertiser_time_zone || '';
-            const conv = converterHoraParaBR(r.date_start, hStr, accountTz);
-            if (!conv) continue;
-            const { dataBR } = conv;
-            // Descartar horas cujo dia BR cai fora do range solicitado
-            if (dataBR < since || dataBR > until) continue;
-
-            const key = `${r.ad_id}|${dataBR}`;
-            if (!hourlyAccum.has(key)) {
-              // Primeira hora deste (ad, dataBR): copiar campos fixos do ad
-              hourlyAccum.set(key, {
-                ...r,
-                date_start: dataBR,
-                spend: 0,
-                impressions: 0,
-                inline_link_clicks: 0,
-                outbound_clicks: 0,
-                clicks: 0,
-                ctr: 0,
-                cpc: 0,
-                _actionsMap: new Map(),
-                _bmId: config.id,
-                _accountId: accountId,
-                _adsetBudget: budgetMap.get(r.adset_id) || 0,
-              });
-            }
-            const acc = hourlyAccum.get(key);
-            acc.spend              += Number(r.spend              || 0);
-            acc.impressions        += Number(r.impressions        || 0);
-            acc.inline_link_clicks += Number(r.inline_link_clicks || 0);
-            acc.outbound_clicks    += Number(r.outbound_clicks    || 0);
-            acc.clicks             += Number(r.clicks             || 0);
-            for (const a of (r.actions || [])) {
-              const cur = acc._actionsMap.get(a.action_type) || 0;
-              acc._actionsMap.set(a.action_type, cur + Number(a.value || 0));
-            }
-          }
-        }
-
-        const nextUrl = res.data?.paging?.next;
-        if (nextUrl && rows.length > 0) {
-          reqUrl = nextUrl;
-          params = {}; // next URL already has all params
-          hasMore = true;
+      for (const r of insightRows) {
+        if (!needsRebucket) {
+          r._bmId = config.id;
+          r._accountId = accountId;
+          r._adsetBudget = budgetMap.get(r.adset_id) || 0;
+          allAds.push(r);
         } else {
-          hasMore = false;
+          const hStr = r.hourly_stats_aggregated_by_advertiser_time_zone || '';
+          const conv = converterHoraParaBR(r.date_start, hStr, accountTz);
+          if (!conv) continue;
+          const { dataBR } = conv;
+          // Descartar horas cujo dia BR cai fora do range solicitado
+          if (dataBR < since || dataBR > until) continue;
+
+          const key = `${r.ad_id}|${dataBR}`;
+          if (!hourlyAccum.has(key)) {
+            // Primeira hora deste (ad, dataBR): copiar campos fixos do ad
+            hourlyAccum.set(key, {
+              ...r,
+              date_start: dataBR,
+              spend: 0,
+              impressions: 0,
+              inline_link_clicks: 0,
+              outbound_clicks: 0,
+              clicks: 0,
+              ctr: 0,
+              cpc: 0,
+              _bmId: config.id,
+              _accountId: accountId,
+              _adsetBudget: budgetMap.get(r.adset_id) || 0,
+            });
+          }
+          const acc = hourlyAccum.get(key);
+          acc.spend              += Number(r.spend              || 0);
+          acc.impressions        += Number(r.impressions        || 0);
+          acc.inline_link_clicks += Number(r.inline_link_clicks || 0);
+          acc.outbound_clicks    += Number(r.outbound_clicks    || 0);
+          acc.clicks             += Number(r.clicks             || 0);
         }
       }
 
-      // Materializar acumulador: reconstruir actions por dia BR, empurrar para allAds
-      // actions somadas por dia BR — findAction/getResultadoMeta roda UMA vez por linha em syncAll
+      // Materializar acumulador: anexar actions (da query diária) por dia BR, empurrar para allAds
+      // findAction/getResultadoMeta roda UMA vez por linha em syncAll
       if (needsRebucket) {
-        for (const [, acc] of hourlyAccum) {
-          acc.actions = [...acc._actionsMap.entries()].map(([action_type, value]) => ({
-            action_type,
-            value: String(value),
-          }));
-          delete acc._actionsMap;
+        for (const [key, acc] of hourlyAccum) {
+          const adId = key.slice(0, key.indexOf('|'));
+          const dataBR = key.slice(key.indexOf('|') + 1);
+          acc.actions = actionsByAdDay[`${adId}|${dataBR}`] || [];
           allAds.push(acc);
         }
       }
@@ -188,11 +240,12 @@ async function fetchMetaAdsForSync(dateRange) {
     } catch (e) {
       const detail = e.response?.data ? JSON.stringify(e.response.data) : e.message;
       console.error(`[sync Meta BM${config.id}] status=${e.response?.status ?? 'N/A'} ${detail}`);
+      failedBMs.push(`${config.nome || `BM${config.id}`} (${config.account}): ${e.response?.data?.error?.message || e.message}`);
       await updateBMStatus(config.id, `ERR_${e.response?.status ?? 'N/A'}`, detail);
     }
   }
 
-  return allAds;
+  return { ads: allAds, failedBMs };
 }
 
 // Returns the UTC offset (in whole hours) for an IANA timezone on a given date.
@@ -460,11 +513,14 @@ async function syncAll(dateRange) {
     }
 
     // Fetch Meta ads, GAM report, GAM UTM funnels — all in parallel
-    const [metaAds, gamReport, gamFunnels] = await Promise.all([
-      fetchMetaAdsForSync(dr).catch(e => { console.error('[sync] Meta:', e.message); return []; }),
+    const [metaRes, gamReport, gamFunnels] = await Promise.all([
+      fetchMetaAdsForSync(dr).catch(e => { console.error('[sync] Meta:', e.message); return { ads: [], failedBMs: [`fetch geral: ${e.message}`] }; }),
       fetchGAMReport(dr).catch(e => { console.error('[sync] GAM report:', e.message); return null; }),
       fetchGAMFunnelsByUTM(null, dr).catch(e => { console.error('[sync] GAM UTM:', e.message); return { campaigns: [] }; }),
     ]);
+
+    const metaAds = metaRes.ads;
+    const metaFailedBMs = metaRes.failedBMs;
 
     // GAM UTM lookup by day: byDay['yyyy-mm-dd']['utm'] → { revenue, impressions, ecpm }
     const gamByDay = gamFunnels?.byDay || {};
@@ -618,20 +674,25 @@ async function syncAll(dateRange) {
       const ctrGam = gam.ctr_gam || 0;
       const cpcGam = gam.cpc_gam || 0;
 
+      // Orçamento vem da Meta na moeda da conta — converter para BRL com imposto,
+      // como o valor_gasto, para previsão/pacing compararem na mesma unidade
+      const orcamentoBRL = (g.orcamentoTotal || 0) * (moeda === 'USD' ? taxaAplicada : 1) * fatorImposto;
+
       // Previsão: only for today when we have partial data and a known budget
       const isThisToday = g.date === today();
       let prevImp = 0, prevFat = 0, prevFatReal = 0, prevLucro = 0, prevRoas = 0;
       if (isThisToday && g.clicks > 0 && g.cpc > 0 && g.orcamentoTotal > 0 && impressoesGam > 0) {
+        // orçamento/cpc na moeda da conta — razão adimensional, não precisa converter
         const cliquesPrevistos = g.orcamentoTotal / g.cpc;
         const proporcao = impressoesGam / g.clicks;
         prevImp = Math.round(cliquesPrevistos * proporcao);
         prevFat = prevImp * (ecpm / 1000);
         prevFatReal = prevFat * 0.9;
-        prevLucro = prevFatReal - g.orcamentoTotal;
-        prevRoas = g.orcamentoTotal > 0 ? prevFatReal / g.orcamentoTotal : 0;
+        prevLucro = prevFatReal - orcamentoBRL;
+        prevRoas = orcamentoBRL > 0 ? prevFatReal / orcamentoBRL : 0;
       }
 
-      if (g.orcamentoTotal > 0) console.log(`[budget] date=${g.date} utm="${g.adUTM}" tipo=${g.tipo} orcamento=R$${(g.orcamentoTotal || 0).toFixed(2)}`);
+      if (g.orcamentoTotal > 0) console.log(`[budget] date=${g.date} utm="${g.adUTM}" tipo=${g.tipo} orcamento=${moeda} ${(g.orcamentoTotal || 0).toFixed(2)} -> R$${orcamentoBRL.toFixed(2)}`);
       const cpcComImposto = g.clicks > 0 ? valorGastoComImposto / g.clicks : 0;
       const gPaisSigla = g.paisSigla || '';
       const country = gPaisSigla ? resolveCountry(gPaisSigla) : null;
@@ -667,7 +728,7 @@ async function syncAll(dateRange) {
         lucro: +lucro.toFixed(2),
         roas: +roas.toFixed(4),
         // fallback upsert ignores unknown cols via try/catch in the block below
-        orcamento_total: +(g.orcamentoTotal || 0).toFixed(2),
+        orcamento_total: +orcamentoBRL.toFixed(2),
         previsao_impressoes: prevImp,
         previsao_faturamento: +prevFat.toFixed(2),
         previsao_faturamento_real: +prevFatReal.toFixed(2),
@@ -897,21 +958,23 @@ async function syncAll(dateRange) {
       console.warn('[sync] hourly save:', e.message);
     }
 
-    // ── Sync páginas Meta ────────────────────────────────────────────────────
-    syncPaginas().catch(e => console.warn('[sync] syncPaginas:', e.message));
+    // Sync de páginas removido do cron — o wizard de Criar Campanha dispara
+    // /api/paginas/sync sob demanda; evita chamadas Meta extras a cada ciclo
 
     // ── Log success ───────────────────────────────
     const duration = Date.now() - startMs;
+    const syncStatus = metaFailedBMs.length > 0 ? 'partial' : 'success';
+    const failNote = metaFailedBMs.length > 0 ? ` | FALHA Meta: ${metaFailedBMs.join('; ')}` : '';
     await supabase.from('sync_log').insert({
       source: 'syncAll',
-      status: 'success',
-      message: `${adsRows.length} ads upserted, ${pendingPrefixes.size} domínios pendentes`,
+      status: syncStatus,
+      message: `${adsRows.length} ads upserted, ${pendingPrefixes.size} domínios pendentes${failNote}`.slice(0, 500),
       rows_processed: rowsProcessed,
       duration_ms: duration,
     });
 
-    console.log(`[sync] OK — ${adsRows.length} ads (${since}→${until}), ${pendingPrefixes.size} pending, ${duration}ms`);
-    return { success: true, rowsProcessed, pendingDomains: [...pendingPrefixes.keys()], durationMs: duration };
+    console.log(`[sync] ${syncStatus.toUpperCase()} — ${adsRows.length} ads (${since}→${until}), ${pendingPrefixes.size} pending, ${duration}ms${failNote}`);
+    return { success: true, rowsProcessed, pendingDomains: [...pendingPrefixes.keys()], failedBMs: metaFailedBMs, durationMs: duration };
 
   } catch (err) {
     const duration = Date.now() - startMs;
