@@ -106,6 +106,7 @@ async function handler(req, res) {
             adsetsMap.set(aid, {
               adset_id: aid,
               adset_name: ad.adset.name,
+              campaign_id: ad.adset.campaign?.id || '',
               campaign_name: ad.adset.campaign?.name || '',
               campaign_objective: ad.adset.campaign?.objective || '',
               status: ad.adset.status,
