@@ -1732,6 +1732,9 @@
                   <span style="color:var(--muted)">→</span>
                   <input type="date" id="rel-until" class="rel-in">
                 </div>
+                <label class="rel-chk" style="margin-top:.5rem" title="Adiciona colunas com o período anterior de mesma duração e a variação">
+                  <input type="checkbox" id="rel-comparar">Comparar com período anterior
+                </label>
               </div>
               <div class="rel-group">
                 <label class="rel-lbl">Dimensões (agrupar por)</label>
@@ -2513,6 +2516,7 @@ async function relGerar(){
   try{
     _relResult=await apiFetch('/api/relatorios/custom',{method:'POST',body:JSON.stringify({
       since,until,dimensoes:dims,metricas:mets,filtros,
+      comparar:document.getElementById('rel-comparar').checked,
       ordenarPor:document.getElementById('rel-ordenar').value||undefined
     })});
     _relSortState={key:null,dir:-1};
@@ -2526,9 +2530,16 @@ function relFmtVal(v,fmtType){
   if(v==null)return'—';
   if(fmtType==='moeda')return BRL(v);
   if(fmtType==='pct')return PCT(v);
+  if(fmtType==='pp')return loc(v,2)+' p.p.';
   if(fmtType==='int')return NUM(v);
   if(fmtType==='num')return loc(v,2);
   return String(v);
+}
+
+// Célula formatada: colunas Δ (_var) ganham sinal "+" quando positivas
+function relFmtCell(c,v){
+  const s=relFmtVal(v,c.fmt);
+  return c.key.endsWith('_var')&&v>0?'+'+s:s;
 }
 
 function relRender(){
@@ -2538,20 +2549,28 @@ function relRender(){
     `<th onclick="relSort('${c.key}')">${c.label}${_relSortState.key===c.key?(_relSortState.dir===1?' ▲':' ▼'):''}</th>`
   ).join('')+'</tr>';
   const corClass=(c,v)=>{
-    if(v==null||!['lucro','roi','roas'].includes(c.key))return'';
-    const neg=c.key==='roas'?v<1:v<0;
+    if(v==null)return'';
+    const base=c.key.replace(/_(ant|var)$/,'');
+    if(c.key.endsWith('_var')){
+      if(v===0)return'';
+      return` style="color:var(--color-${v<0?'negative':'positive'});font-weight:600"`;
+    }
+    if(!['lucro','roi','roas'].includes(base)||c.key.endsWith('_ant'))return'';
+    const neg=base==='roas'?v<1:v<0;
     return` style="color:var(--color-${neg?'negative':'positive'});font-weight:600"`;
   };
   document.getElementById('rel-tbody').innerHTML=r.rows.length?r.rows.map(row=>
     '<tr>'+cols.map(c=>c.tipo==='dim'
       ?`<td>${row[c.key]??'—'}</td>`
-      :`<td${corClass(c,row[c.key])}>${relFmtVal(row[c.key],c.fmt)}</td>`
+      :`<td${corClass(c,row[c.key])}>${relFmtCell(c,row[c.key])}</td>`
     ).join('')+'</tr>'
   ).join(''):`<tr><td colspan="${cols.length}" class="empty">Nenhum dado no período/filtros selecionados.</td></tr>`;
   const nDims=cols.filter(c=>c.tipo==='dim').length;
   document.getElementById('rel-tfoot').innerHTML=r.rows.length?'<tr><td colspan="'+nDims+'">TOTAL ('+r.total_linhas+' linhas)</td>'+
-    cols.filter(c=>c.tipo==='met').map(c=>`<td>${relFmtVal(r.totais[c.key],c.fmt)}</td>`).join('')+'</tr>':'';
-  document.getElementById('rel-info').textContent=`${r.total_linhas} linha(s) · ${_fmtBR(r.periodo.since)} a ${_fmtBR(r.periodo.until)}`;
+    cols.filter(c=>c.tipo==='met').map(c=>`<td${corClass(c,r.totais[c.key])}>${relFmtCell(c,r.totais[c.key])}</td>`).join('')+'</tr>':'';
+  let info=`${r.total_linhas} linha(s) · ${_fmtBR(r.periodo.since)} a ${_fmtBR(r.periodo.until)}`;
+  if(r.periodo_anterior)info+=` (vs ${_fmtBR(r.periodo_anterior.since)} a ${_fmtBR(r.periodo_anterior.until)})`;
+  document.getElementById('rel-info').textContent=info;
 }
 
 function relSort(key){
@@ -2576,8 +2595,8 @@ function relMatrix(formatted){
   const cols=_relResult.colunas;
   return{
     head:cols.map(c=>c.label),
-    body:_relResult.rows.map(row=>cols.map(c=>c.tipo==='dim'?(row[c.key]??'—'):(formatted?relFmtVal(row[c.key],c.fmt):row[c.key]))),
-    foot:cols.map((c,i)=>c.tipo==='dim'?(i===0?'TOTAL':''):(formatted?relFmtVal(_relResult.totais[c.key],c.fmt):_relResult.totais[c.key])),
+    body:_relResult.rows.map(row=>cols.map(c=>c.tipo==='dim'?(row[c.key]??'—'):(formatted?relFmtCell(c,row[c.key]):row[c.key]))),
+    foot:cols.map((c,i)=>c.tipo==='dim'?(i===0?'TOTAL':''):(formatted?relFmtCell(c,_relResult.totais[c.key]):_relResult.totais[c.key])),
   };
 }
 
