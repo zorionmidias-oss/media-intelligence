@@ -133,6 +133,27 @@
     .content{flex:1;overflow-y:auto;padding:1.5rem}
     .tab-panel{display:none}
     .tab-panel.on{display:block}
+    /* ═══ RELATÓRIOS CUSTOM ═══ */
+    .rel-builder{display:flex;flex-direction:column;gap:1.25rem}
+    .rel-row{display:flex;flex-wrap:wrap;gap:1.5rem}
+    .rel-group{flex:1;min-width:260px}
+    .rel-lbl{display:block;font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem}
+    .rel-chips{display:flex;flex-wrap:wrap;gap:.4rem}
+    .rel-chk{display:inline-flex;align-items:center;gap:.4rem;font-size:.8125rem;font-weight:500;padding:.3rem .65rem;border:1px solid var(--border);border-radius:999px;cursor:pointer;user-select:none;color:var(--muted);background:transparent;transition:all .15s}
+    .rel-chk:hover{color:var(--fg);border-color:var(--accent)}
+    .rel-chk input{accent-color:var(--accent);margin:0;cursor:pointer}
+    .rel-chk:has(input:checked){color:var(--fg);border-color:var(--accent);background:rgba(0,229,180,.1)}
+    .rel-in{background:var(--card);border:1px solid var(--border);border-radius:var(--r);color:var(--fg);font-family:inherit;font-size:.8125rem;padding:.45rem .6rem;min-width:130px}
+    .rel-in:focus{outline:none;border-color:var(--accent)}
+    .rel-actions{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+    .rel-btn{display:inline-flex;align-items:center;gap:.45rem;padding:.5rem 1rem;border-radius:var(--r);border:1px solid var(--border);background:var(--card);color:var(--fg);font-family:inherit;font-size:.8125rem;font-weight:600;cursor:pointer;transition:all .15s}
+    .rel-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+    .rel-btn:disabled{opacity:.4;cursor:not-allowed}
+    .rel-btn.primary{background:var(--accent);border-color:var(--accent);color:#06281f}
+    .rel-btn.primary:hover{filter:brightness(1.1);color:#06281f}
+    #rel-table tfoot td{font-weight:700;border-top:2px solid var(--border);background:color-mix(in oklch,var(--sec) 50%,transparent)}
+    #rel-table th{cursor:pointer;white-space:nowrap}
+    .rel-meta-info{font-size:.75rem;color:var(--muted)}
     .sec{display:flex;flex-direction:column;gap:1.5rem}
 
     /* ── GRIDS ── */
@@ -1046,6 +1067,11 @@
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>
       <span class="nav-lbl">Análise IA</span>
     </button>
+    <button class="nav-btn" onclick="nav('relatorios',this)">
+      <span class="nav-ind"></span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+      <span class="nav-lbl">Relatórios</span>
+    </button>
     <div class="sb-sep"></div>
     <button class="nav-btn" id="nav-contas" onclick="nav('contas',this)">
       <span class="nav-ind"></span>
@@ -1692,6 +1718,100 @@
       </div>
     </div>
 
+    <!-- RELATÓRIOS CUSTOM -->
+    <div id="tab-relatorios" class="tab-panel">
+      <div class="sec">
+        <div class="card" style="margin-bottom:1rem">
+          <div class="sec-h" style="margin-bottom:1rem">📋 Montar Relatório</div>
+          <div class="rel-builder">
+            <div class="rel-row">
+              <div class="rel-group" style="flex:0 0 auto">
+                <label class="rel-lbl">Período</label>
+                <div style="display:flex;gap:.5rem;align-items:center">
+                  <input type="date" id="rel-since" class="rel-in">
+                  <span style="color:var(--muted)">→</span>
+                  <input type="date" id="rel-until" class="rel-in">
+                </div>
+              </div>
+              <div class="rel-group">
+                <label class="rel-lbl">Dimensões (agrupar por)</label>
+                <div class="rel-chips" id="rel-dims">
+                  <label class="rel-chk"><input type="checkbox" value="data">Data</label>
+                  <label class="rel-chk"><input type="checkbox" value="pais" checked>País</label>
+                  <label class="rel-chk"><input type="checkbox" value="utm" checked>UTM</label>
+                  <label class="rel-chk"><input type="checkbox" value="campanha">Campanha</label>
+                  <label class="rel-chk"><input type="checkbox" value="dominio">Domínio</label>
+                  <label class="rel-chk"><input type="checkbox" value="conta">Conta Meta</label>
+                  <label class="rel-chk"><input type="checkbox" value="tipo">Tipo</label>
+                  <label class="rel-chk"><input type="checkbox" value="nicho">Nicho</label>
+                </div>
+              </div>
+            </div>
+            <div class="rel-group">
+              <label class="rel-lbl">Métricas (valores)</label>
+              <div class="rel-chips" id="rel-mets">
+                <label class="rel-chk"><input type="checkbox" value="valor_gasto" checked>Gasto</label>
+                <label class="rel-chk"><input type="checkbox" value="faturamento_real" checked>Faturamento</label>
+                <label class="rel-chk"><input type="checkbox" value="lucro" checked>Lucro</label>
+                <label class="rel-chk"><input type="checkbox" value="roi" checked>ROI %</label>
+                <label class="rel-chk"><input type="checkbox" value="roas">ROAS</label>
+                <label class="rel-chk"><input type="checkbox" value="dias_ativos">Dias Ativos</label>
+                <label class="rel-chk"><input type="checkbox" value="cliques">Cliques</label>
+                <label class="rel-chk"><input type="checkbox" value="impressoes_gam">Impressões GAM</label>
+                <label class="rel-chk"><input type="checkbox" value="resultado">Resultados</label>
+                <label class="rel-chk"><input type="checkbox" value="sessoes_meta">Sessões</label>
+                <label class="rel-chk"><input type="checkbox" value="conversas_meta">Conversas</label>
+                <label class="rel-chk"><input type="checkbox" value="cpc">CPC</label>
+                <label class="rel-chk"><input type="checkbox" value="ecpm">eCPM</label>
+                <label class="rel-chk"><input type="checkbox" value="rps">RPS</label>
+                <label class="rel-chk"><input type="checkbox" value="custo_resultado">Custo/Resultado</label>
+                <label class="rel-chk"><input type="checkbox" value="orcamento_total">Orçamento</label>
+              </div>
+            </div>
+            <div class="rel-row">
+              <div class="rel-group">
+                <label class="rel-lbl">Filtros (opcional)</label>
+                <div style="display:flex;flex-wrap:wrap;gap:.5rem">
+                  <input type="text" id="rel-f-pais" class="rel-in" placeholder="País: BR,SN…" style="width:130px" title="Siglas separadas por vírgula">
+                  <input type="text" id="rel-f-utm" class="rel-in" placeholder="UTM contém…" style="width:140px">
+                  <select id="rel-f-dominio" class="rel-in"><option value="">Todos os domínios</option></select>
+                  <select id="rel-f-conta" class="rel-in"><option value="">Todas as contas</option></select>
+                  <select id="rel-f-tipo" class="rel-in" style="min-width:110px">
+                    <option value="">Bot + Direto</option>
+                    <option value="bot">Só Bot</option>
+                    <option value="direto">Só Direto</option>
+                  </select>
+                </div>
+              </div>
+              <div class="rel-group" style="flex:0 0 auto">
+                <label class="rel-lbl">Ordenar por</label>
+                <select id="rel-ordenar" class="rel-in">
+                  <option value="">1ª métrica (maior→menor)</option>
+                </select>
+              </div>
+            </div>
+            <div class="rel-actions">
+              <button class="rel-btn primary" onclick="relGerar()">⚡ Gerar Relatório</button>
+              <span class="rel-meta-info" id="rel-info"></span>
+              <span style="flex:1"></span>
+              <button class="rel-btn" id="rel-exp-csv" onclick="relExportCSV()" disabled>⬇ CSV</button>
+              <button class="rel-btn" id="rel-exp-xlsx" onclick="relExportXLSX()" disabled>⬇ Excel</button>
+              <button class="rel-btn" id="rel-exp-pdf" onclick="relExportPDF()" disabled>⬇ PDF</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="tbl-wrap scroll">
+            <table id="rel-table">
+              <thead id="rel-thead"><tr><th>—</th></tr></thead>
+              <tbody id="rel-tbody"><tr><td class="empty">Configure o relatório acima e clique em "Gerar Relatório".</td></tr></tbody>
+              <tfoot id="rel-tfoot"></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- CRIAR CAMPANHA -->
     <div id="tab-criar-campanha" class="tab-panel">
       <div class="sec">
@@ -2318,7 +2438,7 @@ function toggleSb(){
 }
 
 /* ═══ NAV ═══ */
-const TITLES={overview:'Overview',campaigns:'Campanhas','analise-paises':'Análise de País',gam:'Reports GAM',funil:'Análise de Funil',otimizacoes:'Otimizações',ai:'Análise IA',domains:'Domínios',contas:'Contas Meta','criar-campanha':'Criar Campanha'};
+const TITLES={overview:'Overview',campaigns:'Campanhas','analise-paises':'Análise de País',gam:'Reports GAM',funil:'Análise de Funil',otimizacoes:'Otimizações',ai:'Análise IA',relatorios:'Relatórios',domains:'Domínios',contas:'Contas Meta','criar-campanha':'Criar Campanha'};
 function nav(id,btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('on'));
@@ -2335,6 +2455,197 @@ function nav(id,btn){
   if(id==='funil'){showOverlay('Carregando…');initFunilTab().finally(hideOverlay);}
   if(id==='criar-campanha'){showOverlay('Carregando templates…');initCriarCampanha().finally(hideOverlay);}
   if(id==='otimizacoes'){showOverlay('Carregando…');initOtimTab().finally(hideOverlay);}
+  if(id==='relatorios'){initRelTab();}
+}
+
+/* ═══ RELATÓRIOS CUSTOM ═══ */
+let _relInit=false,_relResult=null,_relSortState={key:null,dir:-1};
+
+async function initRelTab(){
+  if(_relInit)return;_relInit=true;
+  const fmt=d=>d.toISOString().slice(0,10);
+  const hoje=new Date(),ini=new Date();ini.setDate(ini.getDate()-6);
+  document.getElementById('rel-since').value=fmt(ini);
+  document.getElementById('rel-until').value=fmt(hoje);
+  relSyncOrdenar();
+  document.getElementById('rel-mets').addEventListener('change',relSyncOrdenar);
+  try{
+    const doms=await apiFetch('/api/dominios');
+    const sel=document.getElementById('rel-f-dominio');
+    (doms||[]).forEach(d=>sel.add(new Option(d.nome,d.id)));
+  }catch(e){}
+  try{
+    const contas=await apiFetch('/api/contas');
+    const sel=document.getElementById('rel-f-conta');
+    (contas||[]).forEach(c=>{
+      const id=String(c.ad_account_id).startsWith('act_')?String(c.ad_account_id):'act_'+c.ad_account_id;
+      sel.add(new Option(c.nome||id,id));
+    });
+  }catch(e){}
+}
+
+function relSyncOrdenar(){
+  const sel=document.getElementById('rel-ordenar'),cur=sel.value;
+  sel.innerHTML='<option value="">1ª métrica (maior→menor)</option>';
+  document.querySelectorAll('#rel-mets input:checked').forEach(i=>sel.add(new Option(i.parentElement.textContent.trim(),i.value)));
+  sel.value=[...sel.options].some(o=>o.value===cur)?cur:'';
+}
+
+async function relGerar(){
+  const dims=[...document.querySelectorAll('#rel-dims input:checked')].map(i=>i.value);
+  const mets=[...document.querySelectorAll('#rel-mets input:checked')].map(i=>i.value);
+  const since=document.getElementById('rel-since').value,until=document.getElementById('rel-until').value;
+  if(!dims.length)return showToast('err','Selecione pelo menos uma dimensão.');
+  if(!mets.length)return showToast('err','Selecione pelo menos uma métrica.');
+  if(!since||!until)return showToast('err','Informe o período.');
+  const filtros={};
+  const pais=document.getElementById('rel-f-pais').value.trim();
+  if(pais)filtros.pais=pais.split(',').map(p=>p.trim().toUpperCase()).filter(Boolean);
+  const utm=document.getElementById('rel-f-utm').value.trim();
+  if(utm)filtros.utm=utm;
+  const dom=document.getElementById('rel-f-dominio').value;
+  if(dom)filtros.dominio_id=+dom;
+  const conta=document.getElementById('rel-f-conta').value;
+  if(conta)filtros.account_id=conta;
+  const tipo=document.getElementById('rel-f-tipo').value;
+  if(tipo)filtros.tipo=tipo;
+  showOverlay('Gerando relatório…');
+  try{
+    _relResult=await apiFetch('/api/relatorios/custom',{method:'POST',body:JSON.stringify({
+      since,until,dimensoes:dims,metricas:mets,filtros,
+      ordenarPor:document.getElementById('rel-ordenar').value||undefined
+    })});
+    _relSortState={key:null,dir:-1};
+    relRender();
+    ['rel-exp-csv','rel-exp-xlsx','rel-exp-pdf'].forEach(id=>document.getElementById(id).disabled=false);
+  }catch(e){showToast('err','Erro ao gerar relatório: '+e.message);}
+  finally{hideOverlay();}
+}
+
+function relFmtVal(v,fmtType){
+  if(v==null)return'—';
+  if(fmtType==='moeda')return BRL(v);
+  if(fmtType==='pct')return PCT(v);
+  if(fmtType==='int')return NUM(v);
+  if(fmtType==='num')return loc(v,2);
+  return String(v);
+}
+
+function relRender(){
+  const r=_relResult;if(!r)return;
+  const cols=r.colunas;
+  document.getElementById('rel-thead').innerHTML='<tr>'+cols.map(c=>
+    `<th onclick="relSort('${c.key}')">${c.label}${_relSortState.key===c.key?(_relSortState.dir===1?' ▲':' ▼'):''}</th>`
+  ).join('')+'</tr>';
+  const corClass=(c,v)=>{
+    if(v==null||!['lucro','roi','roas'].includes(c.key))return'';
+    const neg=c.key==='roas'?v<1:v<0;
+    return` style="color:var(--color-${neg?'negative':'positive'});font-weight:600"`;
+  };
+  document.getElementById('rel-tbody').innerHTML=r.rows.length?r.rows.map(row=>
+    '<tr>'+cols.map(c=>c.tipo==='dim'
+      ?`<td>${row[c.key]??'—'}</td>`
+      :`<td${corClass(c,row[c.key])}>${relFmtVal(row[c.key],c.fmt)}</td>`
+    ).join('')+'</tr>'
+  ).join(''):`<tr><td colspan="${cols.length}" class="empty">Nenhum dado no período/filtros selecionados.</td></tr>`;
+  const nDims=cols.filter(c=>c.tipo==='dim').length;
+  document.getElementById('rel-tfoot').innerHTML=r.rows.length?'<tr><td colspan="'+nDims+'">TOTAL ('+r.total_linhas+' linhas)</td>'+
+    cols.filter(c=>c.tipo==='met').map(c=>`<td>${relFmtVal(r.totais[c.key],c.fmt)}</td>`).join('')+'</tr>':'';
+  document.getElementById('rel-info').textContent=`${r.total_linhas} linha(s) · ${_fmtBR(r.periodo.since)} a ${_fmtBR(r.periodo.until)}`;
+}
+
+function relSort(key){
+  if(!_relResult)return;
+  _relSortState.dir=_relSortState.key===key?-_relSortState.dir:-1;
+  _relSortState.key=key;
+  const dir=_relSortState.dir;
+  _relResult.rows.sort((a,b)=>{
+    const va=a[key],vb=b[key];
+    if(va==null)return 1;
+    if(vb==null)return-1;
+    if(typeof va==='string')return va.localeCompare(vb)*dir;
+    return(va-vb)*dir;
+  });
+  relRender();
+}
+
+/* ── Exportações ── */
+function relFileName(ext){return`relatorio_${_relResult.periodo.since}_a_${_relResult.periodo.until}.${ext}`;}
+
+function relMatrix(formatted){
+  const cols=_relResult.colunas;
+  return{
+    head:cols.map(c=>c.label),
+    body:_relResult.rows.map(row=>cols.map(c=>c.tipo==='dim'?(row[c.key]??'—'):(formatted?relFmtVal(row[c.key],c.fmt):row[c.key]))),
+    foot:cols.map((c,i)=>c.tipo==='dim'?(i===0?'TOTAL':''):(formatted?relFmtVal(_relResult.totais[c.key],c.fmt):_relResult.totais[c.key])),
+  };
+}
+
+function relDownload(blob,name){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=name;a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+}
+
+function relExportCSV(){
+  if(!_relResult)return;
+  const{head,body,foot}=relMatrix(false);
+  const cell=v=>{
+    if(v==null)return'';
+    if(typeof v==='number')return String(v).replace('.',',');
+    const s=String(v);
+    return/[;"\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
+  };
+  const csv='\uFEFF'+[head,...body,foot].map(r=>r.map(cell).join(';')).join('\r\n');
+  relDownload(new Blob([csv],{type:'text/csv;charset=utf-8'}),relFileName('csv'));
+}
+
+function relLoadScript(src){
+  return new Promise((ok,err)=>{
+    if(document.querySelector(`script[src="${src}"]`))return ok();
+    const s=document.createElement('script');
+    s.src=src;s.onload=ok;s.onerror=()=>err(new Error('Falha ao carregar biblioteca. Verifique a conexão.'));
+    document.head.appendChild(s);
+  });
+}
+
+async function relExportXLSX(){
+  if(!_relResult)return;
+  showOverlay('Gerando Excel…');
+  try{
+    await relLoadScript('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
+    const{head,body,foot}=relMatrix(false);
+    const ws=XLSX.utils.aoa_to_sheet([head,...body,foot]);
+    ws['!cols']=head.map(h=>({wch:Math.max(h.length+2,12)}));
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Relatório');
+    XLSX.writeFile(wb,relFileName('xlsx'));
+  }catch(e){showToast('err','Erro no Excel: '+e.message);}
+  finally{hideOverlay();}
+}
+
+async function relExportPDF(){
+  if(!_relResult)return;
+  showOverlay('Gerando PDF…');
+  try{
+    await relLoadScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js');
+    await relLoadScript('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js');
+    const{head,body,foot}=relMatrix(true);
+    const doc=new jspdf.jsPDF({orientation:head.length>6?'landscape':'portrait',unit:'mm',format:'a4'});
+    doc.setFontSize(14);
+    doc.text("Relatório — 2Junior's",14,15);
+    doc.setFontSize(9);doc.setTextColor(110);
+    doc.text(`Período: ${_fmtBR(_relResult.periodo.since)} a ${_fmtBR(_relResult.periodo.until)} · ${_relResult.total_linhas} linha(s) · gerado em ${new Date().toLocaleString('pt-BR')}`,14,21);
+    doc.autoTable({
+      head:[head],body,foot:[foot],startY:26,
+      styles:{fontSize:7.5,cellPadding:1.5},
+      headStyles:{fillColor:[0,150,120],textColor:255,fontStyle:'bold'},
+      footStyles:{fillColor:[235,235,235],textColor:30,fontStyle:'bold'},
+      alternateRowStyles:{fillColor:[248,250,249]},
+    });
+    doc.save(relFileName('pdf'));
+  }catch(e){showToast('err','Erro no PDF: '+e.message);}
+  finally{hideOverlay();}
 }
 
 /* ═══ DATES ═══ */

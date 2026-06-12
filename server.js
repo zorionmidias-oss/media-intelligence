@@ -28,6 +28,7 @@ const adCopiesHandler       = require('./src/app/api/ad-copies-templates/route')
 const intradayHandler       = require('./src/app/api/intraday/route');
 const orcamentoStatusHandler = require('./src/app/api/orcamento-status/route');
 const otimizacoesHandler = require('./src/app/api/otimizacoes/route');
+const { customHandler: relatorioCustomHandler } = require('./src/app/api/relatorios/route');
 const supabase = require('./src/lib/supabase');
 const { syncAll, fetchAndSaveHourly, syncPaginas } = require('./src/lib/sync');
 const { resolveCountry, extractAdUTM } = require('./src/lib/parser');
@@ -99,6 +100,7 @@ app.get('/api/dashboard', requireAuth, dashboardHandler);
 app.get('/api/reports-gam', requireAuth, reportsGamHandler);
 app.get('/api/gam-status', requireAuth, gamStatusHandler);
 app.get('/api/intraday', requireAuth, intradayHandler);
+app.post('/api/relatorios/custom', requireAuth, relatorioCustomHandler);
 
 // ── Contas Meta ──────────────────────────────────────────────────────────────
 app.get('/api/contas', requireAuth, async (_req, res) => {
