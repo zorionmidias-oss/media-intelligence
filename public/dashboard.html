@@ -150,6 +150,10 @@
     .rel-chk:has(input:checked){color:var(--fg);border-color:var(--accent);background:var(--accent-soft)}
     .rel-period{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
     .rel-period .rel-sep{color:var(--muted-light)}
+    .rel-period input[type="date"]{width:148px;min-width:0;font-family:inherit;letter-spacing:.01em}
+    .rel-in::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.55;filter:invert(1);transition:opacity .15s}
+    .rel-in::-webkit-calendar-picker-indicator:hover{opacity:.95}
+    :root[data-theme="light"] .rel-in::-webkit-calendar-picker-indicator{filter:none;opacity:.6}
     .rel-filters{display:flex;flex-wrap:wrap;gap:.5rem}
     .rel-in{height:2.25rem;background:var(--sec);border:1px solid var(--border);border-radius:var(--r);color:var(--fg);font-family:inherit;font-size:.8125rem;padding:0 .65rem;min-width:130px}
     .rel-in:focus{outline:none;border-color:var(--accent)}
