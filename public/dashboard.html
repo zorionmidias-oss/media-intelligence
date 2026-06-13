@@ -134,26 +134,40 @@
     .tab-panel{display:none}
     .tab-panel.on{display:block}
     /* ═══ RELATÓRIOS CUSTOM ═══ */
-    .rel-builder{display:flex;flex-direction:column;gap:1.25rem}
-    .rel-row{display:flex;flex-wrap:wrap;gap:1.5rem}
-    .rel-group{flex:1;min-width:260px}
-    .rel-lbl{display:block;font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem}
-    .rel-chips{display:flex;flex-wrap:wrap;gap:.4rem}
-    .rel-chk{display:inline-flex;align-items:center;gap:.4rem;font-size:.8125rem;font-weight:500;padding:.3rem .65rem;border:1px solid var(--border);border-radius:999px;cursor:pointer;user-select:none;color:var(--muted);background:transparent;transition:all .15s}
+    .rel-card{padding:0;overflow:visible}
+    .rel-card-hd{display:flex;align-items:center;gap:.6rem;padding:1.1rem 1.5rem;border-bottom:1px solid var(--border)}
+    .rel-card-hd .sec-h{margin:0}
+    .rel-card-hd-sub{font-size:.75rem;color:var(--muted);margin-left:auto}
+    .rel-builder{display:flex;flex-direction:column;padding:0 1.5rem}
+    .rel-section{display:grid;grid-template-columns:168px minmax(0,1fr);gap:1.5rem;padding:1.15rem 0;border-top:1px solid var(--border);align-items:start}
+    .rel-section:first-child{border-top:none}
+    .rel-lbl{display:block;font-size:.72rem;font-weight:700;color:var(--fg-soft);text-transform:uppercase;letter-spacing:.06em;padding-top:.45rem;line-height:1.35}
+    .rel-lbl small{display:block;font-size:.66rem;font-weight:500;letter-spacing:.01em;text-transform:none;color:var(--muted);margin-top:.2rem}
+    .rel-chips{display:flex;flex-wrap:wrap;gap:.45rem}
+    .rel-chk{display:inline-flex;align-items:center;gap:.4rem;font-size:.8125rem;font-weight:500;padding:.4rem .75rem;border:1px solid var(--border);border-radius:999px;cursor:pointer;user-select:none;color:var(--muted);background:transparent;transition:all .15s}
     .rel-chk:hover{color:var(--fg);border-color:var(--accent)}
     .rel-chk input{accent-color:var(--accent);margin:0;cursor:pointer}
-    .rel-chk:has(input:checked){color:var(--fg);border-color:var(--accent);background:rgba(0,229,180,.1)}
-    .rel-in{background:var(--card);border:1px solid var(--border);border-radius:var(--r);color:var(--fg);font-family:inherit;font-size:.8125rem;padding:.45rem .6rem;min-width:130px}
+    .rel-chk:has(input:checked){color:var(--fg);border-color:var(--accent);background:var(--accent-soft)}
+    .rel-period{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
+    .rel-period .rel-sep{color:var(--muted-light)}
+    .rel-filters{display:flex;flex-wrap:wrap;gap:.5rem}
+    .rel-in{height:2.25rem;background:var(--sec);border:1px solid var(--border);border-radius:var(--r);color:var(--fg);font-family:inherit;font-size:.8125rem;padding:0 .65rem;min-width:130px}
     .rel-in:focus{outline:none;border-color:var(--accent)}
-    .rel-actions{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
-    .rel-btn{display:inline-flex;align-items:center;gap:.45rem;padding:.5rem 1rem;border-radius:var(--r);border:1px solid var(--border);background:var(--card);color:var(--fg);font-family:inherit;font-size:.8125rem;font-weight:600;cursor:pointer;transition:all .15s}
+    .rel-actions{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;padding:1.15rem 0;border-top:1px solid var(--border)}
+    .rel-btn{display:inline-flex;align-items:center;gap:.45rem;height:2.25rem;padding:0 1rem;border-radius:var(--r);border:1px solid var(--border);background:var(--sec);color:var(--fg);font-family:inherit;font-size:.8125rem;font-weight:600;cursor:pointer;transition:all .15s}
     .rel-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
     .rel-btn:disabled{opacity:.4;cursor:not-allowed}
-    .rel-btn.primary{background:var(--accent);border-color:var(--accent);color:#06281f}
-    .rel-btn.primary:hover{filter:brightness(1.1);color:#06281f}
+    .rel-btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+    .rel-btn.primary:hover{filter:brightness(1.1);color:var(--accent-fg)}
+    .rel-exports{display:flex;gap:.4rem;align-items:center}
     #rel-table tfoot td{font-weight:700;border-top:2px solid var(--border);background:color-mix(in oklch,var(--sec) 50%,transparent)}
-    #rel-table th{cursor:pointer;white-space:nowrap}
+    #rel-table thead th{cursor:pointer;white-space:nowrap;transition:color .15s}
+    #rel-table thead th:hover{color:var(--fg)}
+    #rel-table tbody td{white-space:nowrap}
+    #rel-table td.mo{text-align:right;font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;font-size:.8125rem;font-feature-settings:'tnum' 1}
+    #rel-table thead th.r{text-align:right}
     .rel-meta-info{font-size:.75rem;color:var(--muted)}
+    @media(max-width:760px){.rel-section{grid-template-columns:1fr;gap:.55rem;padding:1rem 0}.rel-lbl{padding-top:0}}
     .sec{display:flex;flex-direction:column;gap:1.5rem}
 
     /* ── GRIDS ── */
@@ -1721,37 +1735,40 @@
     <!-- RELATÓRIOS CUSTOM -->
     <div id="tab-relatorios" class="tab-panel">
       <div class="sec">
-        <div class="card" style="margin-bottom:1rem">
-          <div class="sec-h" style="margin-bottom:1rem">📋 Montar Relatório</div>
+        <div class="card rel-card">
+          <div class="rel-card-hd">
+            <div class="sec-h">📋 Montar Relatório</div>
+            <span class="rel-card-hd-sub">Selecione dimensões e métricas e gere o relatório</span>
+          </div>
           <div class="rel-builder">
-            <div class="rel-row">
-              <div class="rel-group" style="flex:0 0 auto">
-                <label class="rel-lbl">Período</label>
-                <div style="display:flex;gap:.5rem;align-items:center">
-                  <input type="date" id="rel-since" class="rel-in">
-                  <span style="color:var(--muted)">→</span>
-                  <input type="date" id="rel-until" class="rel-in">
-                </div>
-                <label class="rel-chk" style="margin-top:.5rem" title="Adiciona colunas com o período anterior de mesma duração e a variação">
-                  <input type="checkbox" id="rel-comparar">Comparar com período anterior
-                </label>
-              </div>
-              <div class="rel-group">
-                <label class="rel-lbl">Dimensões (agrupar por)</label>
-                <div class="rel-chips" id="rel-dims">
-                  <label class="rel-chk"><input type="checkbox" value="data">Data</label>
-                  <label class="rel-chk"><input type="checkbox" value="pais" checked>País</label>
-                  <label class="rel-chk"><input type="checkbox" value="utm" checked>UTM</label>
-                  <label class="rel-chk"><input type="checkbox" value="campanha">Campanha</label>
-                  <label class="rel-chk"><input type="checkbox" value="dominio">Domínio</label>
-                  <label class="rel-chk"><input type="checkbox" value="conta">Conta Meta</label>
-                  <label class="rel-chk"><input type="checkbox" value="tipo">Tipo</label>
-                  <label class="rel-chk"><input type="checkbox" value="nicho">Nicho</label>
+            <div class="rel-section">
+              <label class="rel-lbl">Período</label>
+              <div>
+                <div class="rel-period">
+                  <input type="date" id="rel-since" class="rel-in" style="min-width:0">
+                  <span class="rel-sep">→</span>
+                  <input type="date" id="rel-until" class="rel-in" style="min-width:0">
+                  <label class="rel-chk" title="Adiciona colunas com o período anterior de mesma duração e a variação">
+                    <input type="checkbox" id="rel-comparar">Comparar com período anterior
+                  </label>
                 </div>
               </div>
             </div>
-            <div class="rel-group">
-              <label class="rel-lbl">Métricas (valores)</label>
+            <div class="rel-section">
+              <label class="rel-lbl">Dimensões<small>Agrupar por</small></label>
+              <div class="rel-chips" id="rel-dims">
+                <label class="rel-chk"><input type="checkbox" value="data">Data</label>
+                <label class="rel-chk"><input type="checkbox" value="pais" checked>País</label>
+                <label class="rel-chk"><input type="checkbox" value="utm" checked>UTM</label>
+                <label class="rel-chk"><input type="checkbox" value="campanha">Campanha</label>
+                <label class="rel-chk"><input type="checkbox" value="dominio">Domínio</label>
+                <label class="rel-chk"><input type="checkbox" value="conta">Conta Meta</label>
+                <label class="rel-chk"><input type="checkbox" value="tipo">Tipo</label>
+                <label class="rel-chk"><input type="checkbox" value="nicho">Nicho</label>
+              </div>
+            </div>
+            <div class="rel-section">
+              <label class="rel-lbl">Métricas<small>Valores</small></label>
               <div class="rel-chips" id="rel-mets">
                 <label class="rel-chk"><input type="checkbox" value="valor_gasto" checked>Gasto</label>
                 <label class="rel-chk"><input type="checkbox" value="faturamento_real" checked>Faturamento</label>
@@ -1771,35 +1788,39 @@
                 <label class="rel-chk"><input type="checkbox" value="orcamento_total">Orçamento</label>
               </div>
             </div>
-            <div class="rel-row">
-              <div class="rel-group">
-                <label class="rel-lbl">Filtros (opcional)</label>
-                <div style="display:flex;flex-wrap:wrap;gap:.5rem">
-                  <input type="text" id="rel-f-pais" class="rel-in" placeholder="País: BR,SN…" style="width:130px" title="Siglas separadas por vírgula">
-                  <input type="text" id="rel-f-utm" class="rel-in" placeholder="UTM contém…" style="width:140px">
-                  <select id="rel-f-dominio" class="rel-in"><option value="">Todos os domínios</option></select>
-                  <select id="rel-f-conta" class="rel-in"><option value="">Todas as contas</option></select>
-                  <select id="rel-f-tipo" class="rel-in" style="min-width:110px">
-                    <option value="">Bot + Direto</option>
-                    <option value="bot">Só Bot</option>
-                    <option value="direto">Só Direto</option>
-                  </select>
-                </div>
+            <div class="rel-section">
+              <label class="rel-lbl">Filtros<small>Opcional</small></label>
+              <div class="rel-filters">
+                <input type="text" id="rel-f-pais" class="rel-in" placeholder="País: BR,SN…" style="width:130px;min-width:0" title="Siglas separadas por vírgula">
+                <input type="text" id="rel-f-utm" class="rel-in" placeholder="UTM contém…" style="width:140px;min-width:0">
+                <select id="rel-f-dominio" class="rel-in"><option value="">Todos os domínios</option></select>
+                <select id="rel-f-conta" class="rel-in"><option value="">Todas as contas</option></select>
+                <select id="rel-f-tipo" class="rel-in" style="min-width:120px">
+                  <option value="">Bot + Direto</option>
+                  <option value="bot">Só Bot</option>
+                  <option value="direto">Só Direto</option>
+                </select>
               </div>
-              <div class="rel-group" style="flex:0 0 auto">
-                <label class="rel-lbl">Ordenar por</label>
-                <select id="rel-ordenar" class="rel-in">
+            </div>
+            <div class="rel-section">
+              <label class="rel-lbl">Ordenar por</label>
+              <div>
+                <select id="rel-ordenar" class="rel-in" style="min-width:240px">
                   <option value="">1ª métrica (maior→menor)</option>
                 </select>
               </div>
             </div>
+          </div>
+          <div class="rel-builder">
             <div class="rel-actions">
               <button class="rel-btn primary" onclick="relGerar()">⚡ Gerar Relatório</button>
               <span class="rel-meta-info" id="rel-info"></span>
               <span style="flex:1"></span>
-              <button class="rel-btn" id="rel-exp-csv" onclick="relExportCSV()" disabled>⬇ CSV</button>
-              <button class="rel-btn" id="rel-exp-xlsx" onclick="relExportXLSX()" disabled>⬇ Excel</button>
-              <button class="rel-btn" id="rel-exp-pdf" onclick="relExportPDF()" disabled>⬇ PDF</button>
+              <div class="rel-exports">
+                <button class="rel-btn" id="rel-exp-csv" onclick="relExportCSV()" disabled>⬇ CSV</button>
+                <button class="rel-btn" id="rel-exp-xlsx" onclick="relExportXLSX()" disabled>⬇ Excel</button>
+                <button class="rel-btn" id="rel-exp-pdf" onclick="relExportPDF()" disabled>⬇ PDF</button>
+              </div>
             </div>
           </div>
         </div>
@@ -2546,7 +2567,7 @@ function relRender(){
   const r=_relResult;if(!r)return;
   const cols=r.colunas;
   document.getElementById('rel-thead').innerHTML='<tr>'+cols.map(c=>
-    `<th onclick="relSort('${c.key}')">${c.label}${_relSortState.key===c.key?(_relSortState.dir===1?' ▲':' ▼'):''}</th>`
+    `<th class="${c.tipo==='met'?'r':''}" onclick="relSort('${c.key}')">${c.label}${_relSortState.key===c.key?(_relSortState.dir===1?' ▲':' ▼'):''}</th>`
   ).join('')+'</tr>';
   const corClass=(c,v)=>{
     if(v==null)return'';
@@ -2562,12 +2583,12 @@ function relRender(){
   document.getElementById('rel-tbody').innerHTML=r.rows.length?r.rows.map(row=>
     '<tr>'+cols.map(c=>c.tipo==='dim'
       ?`<td>${row[c.key]??'—'}</td>`
-      :`<td${corClass(c,row[c.key])}>${relFmtCell(c,row[c.key])}</td>`
+      :`<td class="mo"${corClass(c,row[c.key])}>${relFmtCell(c,row[c.key])}</td>`
     ).join('')+'</tr>'
   ).join(''):`<tr><td colspan="${cols.length}" class="empty">Nenhum dado no período/filtros selecionados.</td></tr>`;
   const nDims=cols.filter(c=>c.tipo==='dim').length;
   document.getElementById('rel-tfoot').innerHTML=r.rows.length?'<tr><td colspan="'+nDims+'">TOTAL ('+r.total_linhas+' linhas)</td>'+
-    cols.filter(c=>c.tipo==='met').map(c=>`<td${corClass(c,r.totais[c.key])}>${relFmtCell(c,r.totais[c.key])}</td>`).join('')+'</tr>':'';
+    cols.filter(c=>c.tipo==='met').map(c=>`<td class="mo"${corClass(c,r.totais[c.key])}>${relFmtCell(c,r.totais[c.key])}</td>`).join('')+'</tr>':'';
   let info=`${r.total_linhas} linha(s) · ${_fmtBR(r.periodo.since)} a ${_fmtBR(r.periodo.until)}`;
   if(r.periodo_anterior)info+=` (vs ${_fmtBR(r.periodo_anterior.since)} a ${_fmtBR(r.periodo_anterior.until)})`;
   document.getElementById('rel-info').textContent=info;
