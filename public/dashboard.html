@@ -2626,7 +2626,8 @@ function relMetCols(r){return r.colunas.filter(c=>c.tipo==='met'&&!/_(ant|var)$/
 function relDimCols(r){return r.colunas.filter(c=>c.tipo==='dim');}
 function relDimLabel(r,row){return relDimCols(r).map(c=>row[c.key]).filter(v=>v!=null&&v!=='—').join(' · ')||'—';}
 
-function relRenderInsights(r){
+// Fonte única dos insights — usada na tela e em todas as exportações
+function relComputeInsights(r){
   const t=r.totais||{},mc=relMetCols(r),has=k=>mc.some(c=>c.key===k);
   const cards=[];
   const dias=Math.round((new Date(r.periodo.until)-new Date(r.periodo.since))/86400000)+1;
@@ -2652,7 +2653,11 @@ function relRenderInsights(r){
     cards.push({l:'Melhor · '+rkLbl,v:relFmtVal(top[rk],rkCol.fmt),sub:relDimLabel(r,top),c:'pos'});
     cards.push({l:'Pior · '+rkLbl,v:relFmtVal(bot[rk],rkCol.fmt),sub:relDimLabel(r,bot),c:'neg'});
   }
-  document.getElementById('rel-insights').innerHTML=cards.map(c=>
+  return cards;
+}
+
+function relRenderInsights(r){
+  document.getElementById('rel-insights').innerHTML=relComputeInsights(r).map(c=>
     `<div class="rel-ins"><div class="rel-ins-lbl" title="${esc(c.l)}">${esc(c.l)}</div>`+
     `<div class="rel-ins-val ${c.c||'neu'}">${c.v}</div>`+
     (c.sub?`<div class="rel-ins-sub" title="${esc(c.sub)}">${esc(c.sub)}</div>`:'')+`</div>`
@@ -2816,7 +2821,15 @@ function relExportCSV(){
     const s=String(v);
     return/[;"\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
   };
-  const csv='\uFEFF'+[head,...body,foot].map(r=>r.map(cell).join(';')).join('\r\n');
+  // Bloco de resumo (insights) no topo do CSV
+  const resumo=[
+    ['Relat\u00F3rio \u2014 2Junior\'s'],
+    ['Per\u00EDodo',`${_fmtBR(_relResult.periodo.since)} a ${_fmtBR(_relResult.periodo.until)}`],
+    ['Gerado em',new Date().toLocaleString('pt-BR')],
+    ...relComputeInsights(_relResult).map(c=>[c.l,c.v+(c.sub?` (${c.sub})`:'')]),
+    [],
+  ];
+  const csv='\uFEFF'+[...resumo,head,...body,foot].map(r=>r.map(cell).join(';')).join('\r\n');
   relDownload(new Blob([csv],{type:'text/csv;charset=utf-8'}),relFileName('csv'));
 }
 
@@ -2834,14 +2847,46 @@ async function relExportXLSX(){
   showOverlay('Gerando Excel…');
   try{
     await relLoadScript('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
+    const wb=XLSX.utils.book_new();
+    // Aba 1: Resumo (insights)
+    const resumoAoa=[
+      ['Relatório — 2Junior\'s'],
+      ['Período',`${_fmtBR(_relResult.periodo.since)} a ${_fmtBR(_relResult.periodo.until)}`],
+      ['Gerado em',new Date().toLocaleString('pt-BR')],
+      [],
+      ['Indicador','Valor','Detalhe'],
+      ...relComputeInsights(_relResult).map(c=>[c.l,c.v,c.sub||'']),
+    ];
+    const wsR=XLSX.utils.aoa_to_sheet(resumoAoa);
+    wsR['!cols']=[{wch:22},{wch:24},{wch:40}];
+    XLSX.utils.book_append_sheet(wb,wsR,'Resumo');
+    // Aba 2: Dados
     const{head,body,foot}=relMatrix(false);
     const ws=XLSX.utils.aoa_to_sheet([head,...body,foot]);
     ws['!cols']=head.map(h=>({wch:Math.max(h.length+2,12)}));
-    const wb=XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb,ws,'Relatório');
+    XLSX.utils.book_append_sheet(wb,ws,'Dados');
     XLSX.writeFile(wb,relFileName('xlsx'));
   }catch(e){showToast('err','Erro no Excel: '+e.message);}
   finally{hideOverlay();}
+}
+
+// Desenha a faixa de cards de insights no PDF e retorna o novo y
+function relPdfInsights(doc,cards,M,y,pageW){
+  const COR={pos:[22,150,80],neg:[200,55,55],info:[40,110,210],neu:[40,40,45]};
+  const avail=pageW-2*M, per=pageW>200?6:4, gap=3;
+  const bw=(avail-gap*(per-1))/per, bh=18;
+  cards.forEach((c,i)=>{
+    const x=M+(i%per)*(bw+gap), by=y+Math.floor(i/per)*(bh+gap);
+    doc.setDrawColor(222);doc.setFillColor(249,250,251);
+    doc.roundedRect(x,by,bw,bh,1.5,1.5,'FD');
+    doc.setFont(undefined,'normal');doc.setFontSize(6.2);doc.setTextColor(120);
+    doc.text((doc.splitTextToSize(String(c.l).toUpperCase(),bw-4)[0]||''),x+2.2,by+4.2);
+    doc.setFont(undefined,'bold');doc.setFontSize(9.5);doc.setTextColor(...(COR[c.c]||COR.neu));
+    doc.text((doc.splitTextToSize(String(c.v),bw-4)[0]||''),x+2.2,by+10.2);
+    if(c.sub){doc.setFont(undefined,'normal');doc.setFontSize(5.4);doc.setTextColor(140);
+      doc.text((doc.splitTextToSize(String(c.sub),bw-4)[0]||''),x+2.2,by+14.4);}
+  });
+  return y+Math.ceil(cards.length/per)*(bh+gap)+3;
 }
 
 async function relExportPDF(){
@@ -2852,12 +2897,32 @@ async function relExportPDF(){
     await relLoadScript('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js');
     const{head,body,foot}=relMatrix(true);
     const doc=new jspdf.jsPDF({orientation:head.length>6?'landscape':'portrait',unit:'mm',format:'a4'});
-    doc.setFontSize(14);
-    doc.text("Relatório — 2Junior's",14,15);
-    doc.setFontSize(9);doc.setTextColor(110);
-    doc.text(`Período: ${_fmtBR(_relResult.periodo.since)} a ${_fmtBR(_relResult.periodo.until)} · ${_relResult.total_linhas} linha(s) · gerado em ${new Date().toLocaleString('pt-BR')}`,14,21);
+    const pageW=doc.internal.pageSize.getWidth(), M=14;
+    doc.setFont(undefined,'bold');doc.setFontSize(15);doc.setTextColor(20);
+    doc.text("Relatório — 2Junior's",M,15);
+    doc.setFont(undefined,'normal');doc.setFontSize(9);doc.setTextColor(110);
+    doc.text(`Período: ${_fmtBR(_relResult.periodo.since)} a ${_fmtBR(_relResult.periodo.until)} · ${_relResult.total_linhas} linha(s) · gerado em ${new Date().toLocaleString('pt-BR')}`,M,21);
+    let y=27;
+    // Insights
+    y=relPdfInsights(doc,relComputeInsights(_relResult),M,y,pageW);
+    // Gráfico (imagem do canvas sobre fundo escuro, como na tela)
+    if(_relChart){
+      try{
+        const img=_relChart.toBase64Image('image/png',1);
+        const cw=pageW-2*M, ch=pageW>200?72:62;
+        const metLbl=document.getElementById('rel-chart-metric').selectedOptions[0]?.textContent||'';
+        const grpLbl=document.getElementById('rel-chart-group').selectedOptions[0]?.textContent||'';
+        doc.setFont(undefined,'bold');doc.setFontSize(8.5);doc.setTextColor(60);
+        doc.text(`Visualização — ${metLbl} por ${grpLbl}`,M,y+1);
+        y+=3;
+        doc.setFillColor(18,18,24);doc.roundedRect(M,y,cw,ch,2,2,'F');
+        doc.addImage(img,'PNG',M+3,y+3,cw-6,ch-6);
+        y+=ch+5;
+      }catch(_){/* canvas indisponível — segue sem gráfico */}
+    }
+    // Tabela (quebra de página automática)
     doc.autoTable({
-      head:[head],body,foot:[foot],startY:26,
+      head:[head],body,foot:[foot],startY:y,
       styles:{fontSize:7.5,cellPadding:1.5},
       headStyles:{fillColor:[0,150,120],textColor:255,fontStyle:'bold'},
       footStyles:{fillColor:[235,235,235],textColor:30,fontStyle:'bold'},
