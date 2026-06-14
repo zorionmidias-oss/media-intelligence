@@ -136,6 +136,33 @@
     .gam-list-rev{font-variant-numeric:tabular-nums;text-align:right;min-width:70px}
     .gam-list-ecpm{font-size:12px;color:var(--muted);text-align:right;min-width:52px}
 
+    /* ── GAM sub-tabs (segmented) ── */
+    .gam-subtabs{display:flex;gap:.25rem;margin-bottom:.875rem;background:var(--sec);padding:.25rem;border-radius:.75rem}
+    .gsub{flex:1;height:2.125rem;border:none;background:transparent;color:var(--muted);font-size:13px;font-weight:600;border-radius:.5rem;cursor:pointer;transition:background .15s,color .15s;display:flex;align-items:center;justify-content:center;gap:.25rem}
+    .gsub:active{background:color-mix(in srgb,var(--border) 40%,transparent)}
+    .gsub.act{background:var(--card);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+    .gam-sub-badge{font-size:10px;font-weight:700;background:var(--warn-soft);color:var(--warn);padding:.05rem .3rem;border-radius:.25rem;line-height:1.4}
+
+    /* ── Atraso chip ── */
+    .atraso-chip{display:flex;align-items:center;gap:.625rem;padding:.625rem .75rem;border-radius:.75rem;font-size:13px;margin-bottom:.75rem;border:1px solid;line-height:1.25}
+    .atraso-chip-ico{font-size:1.05rem;flex-shrink:0}
+    .atraso-chip.ok{background:var(--ok-soft);color:var(--ok);border-color:color-mix(in srgb,var(--ok) 35%,transparent)}
+    .atraso-chip.late{background:var(--warn-soft);color:var(--warn);border-color:color-mix(in srgb,var(--warn) 35%,transparent)}
+    .atraso-chip.very-late{background:var(--bad-soft);color:var(--bad);border-color:color-mix(in srgb,var(--bad) 35%,transparent)}
+    .atraso-chip-sub{color:var(--muted);font-size:11px;margin-top:.1rem}
+
+    /* ── Hora table (header + 1ª coluna fixos, scroll horizontal) ── */
+    .hora-wrap{max-height:62vh;overflow:auto}
+    .hora-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
+    .hora-table th{position:sticky;top:0;z-index:1;background:var(--sec);text-align:right;color:var(--muted);font-weight:600;padding:.5rem .6rem;white-space:nowrap;border-bottom:1px solid var(--border);font-size:11px}
+    .hora-table th:first-child{text-align:left;left:0;z-index:2}
+    .hora-table td{padding:.5rem .6rem;border-bottom:1px solid color-mix(in srgb,var(--border) 45%,transparent);white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
+    .hora-table td:first-child{position:sticky;left:0;background:var(--card);text-align:left;font-weight:700;border-right:1px solid var(--border)}
+    .hora-table td.empty{position:static;text-align:center;border-right:none;color:var(--muted)}
+    .hora-table tr:last-child td{border-bottom:none}
+    .hora-table tr.hora-total td{font-weight:700;background:color-mix(in srgb,var(--sec-strong) 55%,var(--card));border-top:2px solid var(--border);position:sticky;bottom:0}
+    .hora-table tr.hora-total td:first-child{background:color-mix(in srgb,var(--sec-strong) 55%,var(--card));z-index:2}
+
     /* ── Modals ── */
     .modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6);display:none;align-items:flex-end;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
     .modal.on{display:flex}
@@ -327,10 +354,35 @@
       <div class="gam-kpi-card"><div class="gam-kpi-lbl">CPC</div><div class="gam-kpi-val hv" id="gg-cpc">—</div></div>
       <div class="gam-kpi-card"><div class="gam-kpi-lbl">Impressões</div><div class="gam-kpi-val hv" id="gg-imp">—</div></div>
     </div>
-    <div class="sec-title">Top UTM Campaigns</div>
-    <div class="gam-list" id="gam-utms"><div class="empty">Carregando…</div></div>
-    <div class="sec-title" style="margin-top:.875rem">Blocos de Anúncio</div>
-    <div class="gam-list" id="gam-blocks"><div class="empty">Carregando…</div></div>
+    <div class="gam-subtabs">
+      <button class="gsub act" data-g="hora" onclick="gamSub('hora',this)">Report Hora<span class="gam-sub-badge" id="gam-hora-badge" style="display:none"></span></button>
+      <button class="gsub" data-g="utm" onclick="gamSub('utm',this)">UTM</button>
+      <button class="gsub" data-g="blocos" onclick="gamSub('blocos',this)">Blocos</button>
+    </div>
+
+    <!-- Sub: Report Hora -->
+    <div class="gam-sub" id="gam-sub-hora">
+      <div class="atraso-chip" id="hora-atraso" style="display:none"></div>
+      <div class="intraday-sub" style="margin-top:0;margin-bottom:.625rem">Performance por hora · Horário de Brasília · só horas com dados</div>
+      <div class="tbl-wrap hora-wrap">
+        <table class="hora-table">
+          <thead><tr><th>Hora</th><th>Impr.</th><th>Não Pr.</th><th>Taxa</th><th>Receita</th><th>eCPM</th><th>CTR</th><th>CPC</th><th>Cliq.</th></tr></thead>
+          <tbody id="hora-body"><tr><td colspan="9" class="empty">Carregando…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Sub: UTM Campaigns -->
+    <div class="gam-sub" id="gam-sub-utm" style="display:none">
+      <div class="sec-title">Top UTM Campaigns</div>
+      <div class="gam-list" id="gam-utms"><div class="empty">Carregando…</div></div>
+    </div>
+
+    <!-- Sub: Blocos -->
+    <div class="gam-sub" id="gam-sub-blocos" style="display:none">
+      <div class="sec-title">Blocos de Anúncio</div>
+      <div class="gam-list" id="gam-blocks"><div class="empty">Carregando…</div></div>
+    </div>
   </section>
 
 </main>
@@ -991,6 +1043,77 @@ function renderGAM(d){
     <span class="gam-list-rev hv">${NUM(b.impressions||0)}</span>
     <span class="gam-list-ecpm">${(b.ecpm||0)>0?BRL(b.ecpm):'—'}</span>
   </div>`).join(''):'<div class="empty">Sem dados</div>';
+  renderHora(d.hourly||[]);
+  renderHoraAtraso(d.atraso_gam||null);
+}
+
+// ── GAM sub-tabs ──
+function gamSub(which,btn){
+  document.querySelectorAll('.gsub').forEach(b=>b.classList.remove('act'));
+  btn.classList.add('act');
+  ['hora','utm','blocos'].forEach(s=>{const el=document.getElementById('gam-sub-'+s);if(el)el.style.display=s===which?'':'none';});
+}
+
+// ── Report Hora (GAM por hora do período) ──
+function renderHora(hourly){
+  const tb=document.getElementById('hora-body');if(!tb)return;
+  const dados=(hourly||[]).filter(h=>(h.impressoes||0)>0||(h.nao_preenchidas||0)>0);
+  if(!dados.length){tb.innerHTML='<tr><td colspan="9" class="empty">Sem dados de hora</td></tr>';return;}
+  tb.innerHTML=dados.map(h=>{
+    const total=(h.impressoes||0)+(h.nao_preenchidas||0);
+    const taxa=total>0?((h.impressoes||0)/total*100):0;
+    return`<tr>
+      <td>${String(h.hora).padStart(2,'0')}h</td>
+      <td class="hv">${NUM(h.impressoes)}</td>
+      <td style="color:var(--muted)">${NUM(h.nao_preenchidas||0)}</td>
+      <td>${taxa.toFixed(1)}%</td>
+      <td class="hv">${BRL(h.receita)}</td>
+      <td class="hv">${BRL(h.ecpm)}</td>
+      <td>${(+(h.ctr)||0).toFixed(2)}%</td>
+      <td class="hv">${BRL(h.cpc||0)}</td>
+      <td>${NUM(h.cliques)}</td>
+    </tr>`;
+  }).join('');
+  const tot=dados.reduce((a,h)=>({
+    imp:a.imp+(h.impressoes||0),naoP:a.naoP+(h.nao_preenchidas||0),
+    rec:a.rec+(h.receita||0),cliq:a.cliq+(h.cliques||0),
+    ecpmS:a.ecpmS+(h.ecpm||0)*(h.impressoes||0),
+    ctrS:a.ctrS+(h.ctr||0)*(h.impressoes||0),
+    cpcS:a.cpcS+(h.cpc||0)*(h.cliques||0),
+  }),{imp:0,naoP:0,rec:0,cliq:0,ecpmS:0,ctrS:0,cpcS:0});
+  const ecpmM=tot.imp>0?tot.ecpmS/tot.imp:0, ctrM=tot.imp>0?tot.ctrS/tot.imp:0, cpcM=tot.cliq>0?tot.cpcS/tot.cliq:0;
+  const taxaT=(tot.imp+tot.naoP)>0?tot.imp/(tot.imp+tot.naoP)*100:0;
+  tb.innerHTML+=`<tr class="hora-total">
+    <td>TOTAL</td>
+    <td class="hv">${NUM(tot.imp)}</td>
+    <td style="color:var(--muted)">${NUM(tot.naoP)}</td>
+    <td>${taxaT.toFixed(1)}%</td>
+    <td class="hv">${BRL(tot.rec)}</td>
+    <td class="hv">${BRL(ecpmM)}</td>
+    <td>${ctrM.toFixed(2)}%</td>
+    <td class="hv">${BRL(cpcM)}</td>
+    <td>${NUM(tot.cliq)}</td>
+  </tr>`;
+}
+
+function renderHoraAtraso(a){
+  const chip=document.getElementById('hora-atraso');
+  const badge=document.getElementById('gam-hora-badge');
+  const hideBadge=()=>{if(badge)badge.style.display='none';};
+  if(!chip)return;
+  if(!a||a.motivo==='periodo_passado'){chip.style.display='none';hideBadge();return;}
+  if(!a.tem_atraso){
+    chip.style.display='';chip.className='atraso-chip ok';
+    const ult=a.ultima_hora_com_dados!=null?String(a.ultima_hora_com_dados).padStart(2,'0')+'h':'—';
+    chip.innerHTML=`<span class="atraso-chip-ico">✓</span><div><div style="font-weight:600">GAM atualizado</div><div class="atraso-chip-sub">Última hora com dados: ${ult}</div></div>`;
+    hideBadge();return;
+  }
+  const horas=a.horas_atraso, muito=horas>=3;
+  chip.style.display='';chip.className='atraso-chip '+(muito?'very-late':'late');
+  const ult=a.ultima_hora_com_dados!=null?String(a.ultima_hora_com_dados).padStart(2,'0')+'h':'—';
+  const atual=a.hora_atual!=null?String(a.hora_atual).padStart(2,'0')+'h':'—';
+  chip.innerHTML=`<span class="atraso-chip-ico">${muito?'⚠️':'🕐'}</span><div><div style="font-weight:600">GAM com ${horas}h de atraso</div><div class="atraso-chip-sub">Última: ${ult} · Agora: ${atual}</div></div>`;
+  if(badge){badge.style.display='';badge.textContent=horas+'h';}
 }
 
 // ── Force sync ────────────────────────────────────────────────────────────────
