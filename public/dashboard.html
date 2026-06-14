@@ -800,7 +800,7 @@
 
     /* ── LIGHT THEME ── */
     :root[data-theme="light"]{
-      --bg:#F8FAFC;--card:#FFFFFF;--sec:#F1F3F6;--sec-strong:#E5E8EC;
+      --bg:#F8FAFC;--card:#FFFFFF;--sec:#F3F6FA;--sec-strong:#EAEEF3;
       --border:#E2E5EA;--border-strong:#D2D6DD;
       --fg:#1C1C1E;--fg-soft:#6B6B6B;--muted:#6B6B6B;--muted-light:#AEAEB2;
       --accent:#007AFF;--accent-hover:#0066DD;--accent-soft:rgba(0,122,255,0.10);--accent-fg:#FFFFFF;
@@ -878,6 +878,27 @@
     :root[data-theme="light"] .card{box-shadow:var(--shadow-card)}
     :root[data-theme="light"] .tbl-wrap{box-shadow:var(--shadow-card)}
     :root[data-theme="light"] .modal,.wizard-modal,.adset-card{box-shadow:var(--shadow-md)}
+
+    /* ── LIGHT: campos de formulário brancos com borda (adeus cinza "sujo") ── */
+    :root[data-theme="light"] input[type="date"],
+    :root[data-theme="light"] input[type="number"],
+    :root[data-theme="light"] select,
+    :root[data-theme="light"] input[type="text"].search-in,
+    :root[data-theme="light"] .rel-in,
+    :root[data-theme="light"] .wz-input,:root[data-theme="light"] .wz-select,:root[data-theme="light"] .wz-textarea,
+    :root[data-theme="light"] .wiz-input,:root[data-theme="light"] .wiz-select,
+    :root[data-theme="light"] textarea.chat-in,
+    :root[data-theme="light"] .ger-input,:root[data-theme="light"] .ger-select,
+    :root[data-theme="light"] .utm-search,
+    :root[data-theme="light"] .field input,:root[data-theme="light"] .field textarea,
+    :root[data-theme="light"] .otim-form select,:root[data-theme="light"] .otim-form textarea,:root[data-theme="light"] .otim-form input,
+    :root[data-theme="light"] #custom-range{background:var(--card)}
+    /* botões/abas secundárias: branco com borda em vez de preenchido cinza */
+    :root[data-theme="light"] .btn-s,
+    :root[data-theme="light"] .preset-btn:not(.act),
+    :root[data-theme="light"] .rel-btn:not(.primary),
+    :root[data-theme="light"] .col-toggle-btn{background:var(--card)}
+    :root[data-theme="light"] .btn-s{border:1px solid var(--border)}
 
     /* ── LIGHT THEME ACTIVE STATES (override hardcoded dark greens) ── */
     :root[data-theme="light"] .nav-btn.on{color:var(--accent)}
