@@ -197,11 +197,16 @@
 
     /* ── Light theme ── */
     :root[data-theme="light"]{
-      --bg:#F2F2F7;--card:#FFFFFF;--sec:#F5F5F7;--sec-strong:#E5E5EA;
-      --border:#D1D1D6;--border-strong:#C7C7CC;--fg:#1C1C1E;--fg-soft:#6B6B6B;--muted:#6B6B6B;
+      --bg:#F4F5F7;--card:#FFFFFF;--sec:#EDEEF1;--sec-strong:#E2E3E8;
+      --border:#DCDDE3;--border-strong:#CDCED5;--fg:#1C1C1E;--fg-soft:#6B6B6B;--muted:#6B6B6B;
       --accent:#007AFF;--accent-fg:#FFFFFF;--ok:#00A862;--warn:#FF9500;--bad:#E5384B;--info:#007AFF;
       --ok-soft:rgba(0,168,98,0.12);--warn-soft:rgba(255,149,0,0.12);--bad-soft:rgba(229,56,75,0.12);
     }
+    /* Tema claro: cards ganham elevação suave (no escuro a borda já basta) */
+    :root[data-theme="light"] .kpi-card,:root[data-theme="light"] .gam-card,
+    :root[data-theme="light"] .gam-kpi-card,:root[data-theme="light"] .intraday-wrap,
+    :root[data-theme="light"] .tbl-wrap,:root[data-theme="light"] .ap-item,
+    :root[data-theme="light"] .gam-list{box-shadow:0 1px 2px rgba(16,24,40,.04),0 2px 8px rgba(16,24,40,.05)}
 
     /* ── Loading overlay ── */
     .loading-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:99999;transition:opacity .3s,visibility .3s}
