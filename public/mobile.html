@@ -13,18 +13,21 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
   <style>
     :root{
-      --bg:#0A0A0F;--card:#14141A;--sec:#1C1C24;--sec-strong:#25252E;
-      --border:#2A2A35;
-      --fg:#F5F5F7;--fg-soft:#D1D1D6;--muted:#86868B;
-      --accent:#00E5B4;--accent-fg:#000;
-      --ok:#00E5B4;--warn:#FFB830;--bad:#FF4D6A;
-      --ok-soft:rgba(0,229,180,.12);--warn-soft:rgba(255,184,48,.12);--bad-soft:rgba(255,77,106,.12);
+      /* Paleta unificada com o desktop (fonte canônica = dashboard.html) */
+      --bg:#0A0A0F;--card:#14141A;--sec:#1A1A22;--sec-strong:#22222E;
+      --border:#1E1E28;--border-strong:#2A2A38;
+      --fg:#F1F5F9;--fg-soft:#CBD5E1;--muted:#94A3B8;
+      --accent:#00E5B4;--accent-fg:#0A0A0F;
+      --ok:#4ADE80;--warn:#FB923C;--bad:#F87171;--info:#60A5FA;
+      --ok-soft:rgba(74,222,128,.12);--warn-soft:rgba(251,146,60,.12);--bad-soft:rgba(248,113,113,.12);
       --safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px);
       --r:.625rem;
     }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
     *{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter",system-ui,sans-serif!important}
     html,body{height:100%;background:var(--bg);color:var(--fg);font-size:15px;overscroll-behavior:none;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+    :focus-visible{outline:2px solid color-mix(in srgb,var(--accent) 70%,transparent);outline-offset:2px}
+    :focus:not(:focus-visible){outline:none}
     body{display:flex;flex-direction:column;overflow:hidden;transition:background .25s,color .25s}
     @keyframes spin{to{transform:rotate(360deg)}}
     @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
@@ -194,10 +197,10 @@
 
     /* ── Light theme ── */
     :root[data-theme="light"]{
-      --bg:#F5F5F7;--card:#FFFFFF;--sec:#FAFAFA;--sec-strong:#EEEEF1;
-      --border:#E5E5EA;--fg:#1D1D1F;--fg-soft:#424245;--muted:#86868B;
-      --accent:#007AFF;--accent-fg:#FFF;--ok:#00A862;--warn:#FF9500;--bad:#FF3B30;
-      --ok-soft:#D7F2E3;--warn-soft:#FFF4E5;--bad-soft:#FFE9E8;
+      --bg:#F2F2F7;--card:#FFFFFF;--sec:#F5F5F7;--sec-strong:#E5E5EA;
+      --border:#D1D1D6;--border-strong:#C7C7CC;--fg:#1C1C1E;--fg-soft:#6B6B6B;--muted:#6B6B6B;
+      --accent:#007AFF;--accent-fg:#FFFFFF;--ok:#00A862;--warn:#FF9500;--bad:#E5384B;--info:#007AFF;
+      --ok-soft:rgba(0,168,98,0.12);--warn-soft:rgba(255,149,0,0.12);--bad-soft:rgba(229,56,75,0.12);
     }
 
     /* ── Loading overlay ── */
