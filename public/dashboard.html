@@ -39,7 +39,8 @@
       --shadow-lg:0 4px 12px rgba(0,0,0,.35),0 16px 40px rgba(0,0,0,.45);--shadow-card:0 1px 3px rgba(0,0,0,.3);
       --logo-color:#FFFFFF;
       --acc-fg:var(--accent-fg);--sb:#0D0D14;--sb-b:var(--border);
-      --sw:260px;--th:64px;--r:.5rem;--rl:.75rem;
+      --sw:260px;--th:64px;--r-sm:.375rem;--r:.5rem;--rl:.75rem;--r-xl:1rem;--r-pill:999px;
+      --ease:cubic-bezier(.4,0,.2,1);--ease-out:cubic-bezier(.16,1,.3,1);
     }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     *{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Inter","Helvetica Neue",system-ui,sans-serif!important}
@@ -249,9 +250,9 @@
 
     /* ── CARD ── */
     .card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:1.25rem;position:relative;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
-    .card-hv{transition:border-color .3s;cursor:default}
+    .card-hv{transition:border-color .3s var(--ease),transform .35s var(--ease-out),box-shadow .35s var(--ease);cursor:default}
     .card-hv::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,color-mix(in oklch,var(--accent) 5%,transparent),transparent);opacity:0;transition:opacity .5s;pointer-events:none}
-    .card-hv:hover{border-color:color-mix(in oklch,var(--accent) 50%,transparent)}
+    .card-hv:hover{border-color:color-mix(in oklch,var(--accent) 50%,transparent);transform:translateY(-2px);box-shadow:var(--shadow-md)}
     .card-hv:hover::before{opacity:1}
 
     /* ── KPI ── */
@@ -402,9 +403,11 @@
     textarea.chat-in:focus{border-color:var(--accent)}
 
     .empty{text-align:center;padding:2rem;color:var(--muted);font-size:.875rem}
-    ::-webkit-scrollbar{width:4px;height:4px}
+    ::-webkit-scrollbar{width:6px;height:6px}
     ::-webkit-scrollbar-track{background:transparent}
-    ::-webkit-scrollbar-thumb{background:var(--sec);border-radius:2px}
+    ::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:99px;transition:background .2s}
+    ::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+    *{scrollbar-width:thin;scrollbar-color:var(--border-strong) transparent}
 
     @media(max-width:1280px){.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(2,1fr)}.g5{grid-template-columns:repeat(3,1fr)}.g6{grid-template-columns:repeat(3,1fr)}.g-ch{grid-template-columns:1fr}}
     @media(max-width:900px){.g3{grid-template-columns:repeat(3,1fr)}}
@@ -727,8 +730,8 @@
     .sub-tab:hover{color:var(--fg)}
     .sub-tab.on{color:var(--accent);border-bottom-color:var(--accent)}
     .templates-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem}
-    .template-card{background:var(--card);border:1px solid var(--border);border-radius:.75rem;padding:1.25rem;display:flex;flex-direction:column;gap:.875rem;transition:border-color .2s,box-shadow .2s;cursor:default}
-    .template-card:hover{border-color:var(--accent);box-shadow:0 0 0 1px color-mix(in oklch,var(--accent) 30%,transparent)}
+    .template-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:1.25rem;display:flex;flex-direction:column;gap:.875rem;transition:border-color .2s var(--ease),box-shadow .3s var(--ease),transform .3s var(--ease-out);cursor:default}
+    .template-card:hover{border-color:color-mix(in oklch,var(--accent) 55%,transparent);box-shadow:var(--shadow-md);transform:translateY(-2px)}
     .template-header{display:flex;align-items:flex-start;gap:.75rem}
     .template-icon{width:2.5rem;height:2.5rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0}
     .template-icon.bot{background:color-mix(in oklch,var(--c1) 15%,var(--card))}
@@ -983,8 +986,8 @@
     .pais-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.875rem}
     @media(max-width:900px){.pais-grid{grid-template-columns:repeat(2,1fr)}}
     @media(max-width:600px){.pais-grid{grid-template-columns:1fr}}
-    .pais-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem;cursor:pointer;transition:border-color .15s,box-shadow .15s;display:flex;flex-direction:column;gap:.625rem}
-    .pais-card:hover{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+    .pais-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:1rem;cursor:pointer;transition:border-color .2s var(--ease),box-shadow .3s var(--ease),transform .3s var(--ease-out);display:flex;flex-direction:column;gap:.625rem}
+    .pais-card:hover{border-color:color-mix(in oklch,var(--accent) 55%,transparent);box-shadow:var(--shadow-md);transform:translateY(-2px)}
     .pais-card-hd{display:flex;align-items:center;gap:.5rem}
     .pais-flag{font-size:1.5rem;line-height:1}
     .pais-card-name{font-size:.875rem;font-weight:600;color:var(--fg)}
