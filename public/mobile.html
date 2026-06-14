@@ -1014,11 +1014,17 @@ function renderApUtms(sig,utms){
 async function loadGAM(){
   S.gamLoaded=true;
   const{since,until}=getDates();
+  const q=`since=${since}&until=${until}${domainQ()}`;
+  // 1) Cache (rápido) — pode estar acumulado/desatualizado
   try{
-    const r=await fetch(`/api/reports-gam?cached=true&since=${since}&until=${until}${domainQ()}`);
-    if(!r.ok)throw new Error(r.statusText);
-    renderGAM(await r.json());
+    const r=await fetch(`/api/reports-gam?cached=true&${q}`);
+    if(r.ok)renderGAM(await r.json());
   }catch(e){console.error('[mobile/gam]',e);}
+  // 2) Ao vivo — recalcula respeitando o período selecionado (Report Hora correto)
+  fetch(`/api/reports-gam?cached=false&${q}`)
+    .then(r=>r.ok?r.json():null)
+    .then(fresh=>{if(fresh&&!fresh.error)renderGAM(fresh);})
+    .catch(e=>console.warn('[mobile/gam live]',e));
 }
 
 function renderGAM(d){
