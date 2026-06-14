@@ -89,7 +89,7 @@
     .sb.col .sb-foot-lbl{opacity:0;width:0;overflow:hidden}
 
     /* ── MAIN ── */
-    .main{flex:1;margin-left:var(--sw);display:flex;flex-direction:column;height:100vh;transition:margin-left .3s ease}
+    .main{flex:1;min-width:0;margin-left:var(--sw);display:flex;flex-direction:column;height:100vh;transition:margin-left .3s ease}
     .main.col{margin-left:72px}
 
     /* ── HEADER ── */
@@ -130,7 +130,7 @@
     .avatar:hover{border-color:color-mix(in oklch,var(--accent) 50%,transparent)}
 
     /* ── CONTENT ── */
-    .content{flex:1;overflow-y:auto;padding:1.5rem}
+    .content{flex:1;min-width:0;overflow-y:auto;padding:1.5rem}
     .tab-panel{display:none}
     .tab-panel.on{display:block}
     /* ═══ RELATÓRIOS CUSTOM ═══ */
@@ -164,14 +164,51 @@
     .rel-btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
     .rel-btn.primary:hover{filter:brightness(1.1);color:var(--accent-fg)}
     .rel-exports{display:flex;gap:.4rem;align-items:center}
-    #rel-table tfoot td{font-weight:700;border-top:2px solid var(--border);background:color-mix(in oklch,var(--sec) 50%,transparent)}
-    #rel-table thead th{cursor:pointer;white-space:nowrap;transition:color .15s}
-    #rel-table thead th:hover{color:var(--fg)}
-    #rel-table tbody td{white-space:nowrap}
-    #rel-table td.mo{text-align:right;font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;font-size:.8125rem;font-feature-settings:'tnum' 1}
-    #rel-table thead th.r{text-align:right}
     .rel-meta-info{font-size:.75rem;color:var(--muted)}
     @media(max-width:760px){.rel-section{grid-template-columns:1fr;gap:.55rem;padding:1rem 0}.rel-lbl{padding-top:0}}
+
+    /* ── Tabela do relatório (grandes volumes: header/coluna fixos + scroll) ── */
+    /* flex item precisa de min-width:0 senão o card expande até o conteúdo e o scroll horizontal não ativa */
+    #tab-relatorios .sec>.card{min-width:0;max-width:100%}
+    .rel-table-wrap{overflow:auto;max-height:68vh;border:1px solid var(--border);border-radius:var(--rl)}
+    #rel-table{width:auto;min-width:100%;border-collapse:separate;border-spacing:0}
+    #rel-table th,#rel-table td{border-bottom:1px solid var(--border)}
+    #rel-table thead th{position:sticky;top:0;z-index:3;cursor:pointer;white-space:nowrap;transition:color .15s;background:color-mix(in oklch,var(--sec) 65%,var(--card));padding:.7rem 1rem;font-size:.6875rem;letter-spacing:.05em}
+    #rel-table thead th:hover{color:var(--fg)}
+    #rel-table thead th.r{text-align:right}
+    #rel-table tbody td{white-space:nowrap;padding:.7rem 1rem;font-size:.8125rem}
+    #rel-table td.mo{text-align:right;font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;font-size:.8125rem;font-feature-settings:'tnum' 1}
+    /* primeira coluna (dimensão) fixa à esquerda + nomes longos truncados */
+    #rel-table th:first-child,#rel-table td:first-child{position:sticky;left:0;border-right:1px solid var(--border-strong)}
+    #rel-table thead th:first-child{z-index:4}
+    #rel-table tbody td:first-child,#rel-table tfoot td:first-child{z-index:2;background:var(--card);max-width:280px;overflow:hidden;text-overflow:ellipsis}
+    #rel-table tbody tr:nth-child(even) td{background:color-mix(in oklch,var(--sec) 13%,transparent)}
+    #rel-table tbody tr:nth-child(even) td:first-child{background:color-mix(in oklch,var(--sec) 13%,var(--card))}
+    #rel-table tbody tr:hover td{background:color-mix(in oklch,var(--sec) 26%,transparent)}
+    #rel-table tbody tr:hover td:first-child{background:color-mix(in oklch,var(--sec) 26%,var(--card))}
+    #rel-table tfoot td{position:sticky;bottom:0;z-index:3;font-weight:700;border-top:2px solid var(--border-strong);border-bottom:none;background:color-mix(in oklch,var(--sec) 70%,var(--card));padding:.7rem 1rem}
+    #rel-table tfoot td:first-child{z-index:4}
+    #rel-table tbody td.empty{position:static;max-width:none;overflow:visible;text-align:center;background:transparent;white-space:normal}
+
+    /* ── Insights (resumo executivo) ── */
+    .rel-insights{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:.75rem}
+    .rel-ins{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:.85rem .95rem;min-width:0}
+    .rel-ins-lbl{font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.4rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .rel-ins-val{font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;font-size:1.2rem;font-weight:700;line-height:1.15;font-feature-settings:'tnum' 1}
+    .rel-ins-val.pos{color:var(--color-positive)}.rel-ins-val.neg{color:var(--color-negative)}
+    .rel-ins-val.info{color:var(--color-info)}.rel-ins-val.neu{color:var(--fg)}
+    .rel-ins-sub{font-size:.7rem;color:var(--muted);margin-top:.3rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+    /* ── Gráfico ── */
+    .rel-chart-hd{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-bottom:1rem}
+    .rel-chart-hd .sec-h{margin:0;margin-right:auto}
+    .rel-chart-ctl{display:flex;align-items:center;gap:.4rem}
+    .rel-chart-ctl label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+    .rel-chart-body{height:340px;position:relative}
+    .rel-seg{display:inline-flex;border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+    .rel-seg button{padding:.4rem .7rem;border:none;background:transparent;color:var(--muted);font-family:inherit;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s}
+    .rel-seg button.on{background:var(--accent-soft);color:var(--accent)}
+    .rel-seg button:not(.on):hover{color:var(--fg)}
     .sec{display:flex;flex-direction:column;gap:1.5rem}
 
     /* ── GRIDS ── */
@@ -1828,8 +1865,28 @@
             </div>
           </div>
         </div>
+        <div id="rel-insights" class="rel-insights" style="display:none"></div>
+        <div id="rel-chart-card" class="card" style="display:none">
+          <div class="rel-chart-hd">
+            <div class="sec-h">📊 Visualização</div>
+            <div class="rel-chart-ctl">
+              <label>Métrica</label>
+              <select id="rel-chart-metric" class="rel-in" style="min-width:150px;height:2rem" onchange="relRenderChart()"></select>
+            </div>
+            <div class="rel-chart-ctl">
+              <label>Agrupar</label>
+              <select id="rel-chart-group" class="rel-in" style="min-width:130px;height:2rem" onchange="relRenderChart()"></select>
+            </div>
+            <div class="rel-seg" id="rel-chart-type">
+              <button data-t="auto" class="on" onclick="relChartType('auto',this)">Auto</button>
+              <button data-t="bar" onclick="relChartType('bar',this)">Barras</button>
+              <button data-t="line" onclick="relChartType('line',this)">Linha</button>
+            </div>
+          </div>
+          <div class="rel-chart-body"><canvas id="rel-chart-canvas"></canvas></div>
+        </div>
         <div class="card">
-          <div class="tbl-wrap scroll">
+          <div class="rel-table-wrap">
             <table id="rel-table">
               <thead id="rel-thead"><tr><th>—</th></tr></thead>
               <tbody id="rel-tbody"><tr><td class="empty">Configure o relatório acima e clique em "Gerar Relatório".</td></tr></tbody>
@@ -2546,9 +2603,128 @@ async function relGerar(){
     })});
     _relSortState={key:null,dir:-1};
     relRender();
+    relRenderExtras();
     ['rel-exp-csv','rel-exp-xlsx','rel-exp-pdf'].forEach(id=>document.getElementById(id).disabled=false);
   }catch(e){showToast('err','Erro ao gerar relatório: '+e.message);}
   finally{hideOverlay();}
+}
+
+/* ── Insights + Gráfico ── */
+let _relChart=null,_relChartType='auto';
+
+function relRenderExtras(){
+  const r=_relResult;
+  const ins=document.getElementById('rel-insights'),cc=document.getElementById('rel-chart-card');
+  if(!r||!r.rows.length){ins.style.display='none';cc.style.display='none';if(_relChart){_relChart.destroy();_relChart=null;}return;}
+  ins.style.display='';cc.style.display='';
+  relRenderInsights(r);
+  relSetupChartControls(r);
+  relRenderChart();
+}
+
+function relMetCols(r){return r.colunas.filter(c=>c.tipo==='met'&&!/_(ant|var)$/.test(c.key));}
+function relDimCols(r){return r.colunas.filter(c=>c.tipo==='dim');}
+function relDimLabel(r,row){return relDimCols(r).map(c=>row[c.key]).filter(v=>v!=null&&v!=='—').join(' · ')||'—';}
+
+function relRenderInsights(r){
+  const t=r.totais||{},mc=relMetCols(r),has=k=>mc.some(c=>c.key===k);
+  const cards=[];
+  const dias=Math.round((new Date(r.periodo.until)-new Date(r.periodo.since))/86400000)+1;
+  cards.push({l:'Linhas',v:NUM(r.total_linhas),c:'neu'});
+  cards.push({l:'Período',v:dias+(dias>1?' dias':' dia'),c:'neu'});
+  if(has('valor_gasto'))cards.push({l:'Gasto total',v:BRL(t.valor_gasto),c:'neu'});
+  if(has('faturamento_real'))cards.push({l:'Faturamento total',v:BRL(t.faturamento_real),c:'info'});
+  if(has('valor_gasto')&&has('faturamento_real')){
+    const lucro=(t.faturamento_real||0)-(t.valor_gasto||0);
+    cards.push({l:'Lucro total',v:BRL(lucro),c:lucro>=0?'pos':'neg'});
+    const roi=t.valor_gasto>0?(lucro/t.valor_gasto)*100:null;
+    cards.push({l:'ROI médio',v:roi==null?'—':PCT(roi),c:roi>=0?'pos':'neg'});
+    const roas=t.valor_gasto>0?(t.faturamento_real/t.valor_gasto):null;
+    cards.push({l:'ROAS médio',v:roas==null?'—':loc(roas,2)+'×',c:(roas??0)>=1?'pos':'neg'});
+  }
+  // Melhor / pior pela métrica de ranqueamento (lucro, ou a 1ª métrica)
+  const rk=has('lucro')?'lucro':mc[0].key;
+  const rkCol=r.colunas.find(c=>c.key===rk)||{},rkLbl=(rkCol.label||rk).replace(/\s*\(.*\)/,'');
+  const valid=r.rows.filter(x=>x[rk]!=null);
+  if(valid.length>1){
+    const sorted=[...valid].sort((a,b)=>b[rk]-a[rk]);
+    const top=sorted[0],bot=sorted[sorted.length-1];
+    cards.push({l:'Melhor · '+rkLbl,v:relFmtVal(top[rk],rkCol.fmt),sub:relDimLabel(r,top),c:'pos'});
+    cards.push({l:'Pior · '+rkLbl,v:relFmtVal(bot[rk],rkCol.fmt),sub:relDimLabel(r,bot),c:'neg'});
+  }
+  document.getElementById('rel-insights').innerHTML=cards.map(c=>
+    `<div class="rel-ins"><div class="rel-ins-lbl" title="${esc(c.l)}">${esc(c.l)}</div>`+
+    `<div class="rel-ins-val ${c.c||'neu'}">${c.v}</div>`+
+    (c.sub?`<div class="rel-ins-sub" title="${esc(c.sub)}">${esc(c.sub)}</div>`:'')+`</div>`
+  ).join('');
+}
+
+function relChartType(t,btn){
+  _relChartType=t;
+  document.querySelectorAll('#rel-chart-type button').forEach(b=>b.classList.toggle('on',b===btn));
+  relRenderChart();
+}
+
+function relSetupChartControls(r){
+  const mSel=document.getElementById('rel-chart-metric'),mc=relMetCols(r),curM=mSel.value;
+  mSel.innerHTML=mc.map(c=>`<option value="${c.key}">${esc(c.label)}</option>`).join('');
+  if([...mSel.options].some(o=>o.value===curM))mSel.value=curM;
+  const gSel=document.getElementById('rel-chart-group'),dc=relDimCols(r),curG=gSel.value;
+  gSel.innerHTML=dc.map(c=>`<option value="${c.key}">${esc(c.label)}</option>`).join('');
+  if([...gSel.options].some(o=>o.value===curG))gSel.value=curG;
+  else gSel.value=(dc.find(c=>c.key==='data')||dc[0]).key;
+}
+
+function relRenderChart(){
+  const r=_relResult;if(!r)return;
+  const canvas=document.getElementById('rel-chart-canvas');if(!canvas)return;
+  const metKey=document.getElementById('rel-chart-metric').value;
+  const groupKey=document.getElementById('rel-chart-group').value;
+  const metCol=r.colunas.find(c=>c.key===metKey)||{fmt:'num'};
+  const summable=['moeda','int'].includes(metCol.fmt); // razões (%, x) usam média
+  const map=new Map();
+  r.rows.forEach(row=>{
+    const v=row[metKey];if(v==null)return;
+    const k=String(row[groupKey]??'—');
+    const e=map.get(k)||{sum:0,n:0};e.sum+=v;e.n++;map.set(k,e);
+  });
+  let entries=[...map.entries()].map(([k,e])=>[k,summable?e.sum:e.sum/e.n]);
+  const isDate=groupKey==='data';
+  const type=_relChartType==='auto'?(isDate?'line':'bar'):_relChartType;
+  if(type==='line'&&isDate)entries.sort((a,b)=>a[0]<b[0]?-1:1);
+  else if(type==='line')entries.sort((a,b)=>a[0]<b[0]?-1:1);
+  else {entries.sort((a,b)=>b[1]-a[1]);entries=entries.slice(0,15);}
+  const labels=entries.map(e=>isDate?e[0].slice(5):e[0]);
+  const data=entries.map(e=>e[1]);
+  const isLight=document.documentElement.getAttribute('data-theme')==='light';
+  const grid=isLight?'rgba(0,0,0,0.07)':'rgba(255,255,255,0.07)';
+  const tick=isLight?'rgba(0,0,0,0.55)':'rgba(255,255,255,0.5)';
+  const font={family:'ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace',size:11};
+  const semNeg=['lucro','roi'].includes(metKey)||metKey==='roas';
+  const cPos=isLight?'#16A34A':'#4ADE80',cNeg=isLight?'#DC2626':'#F87171',cInfo=isLight?'#3B82F6':'#60A5FA';
+  const barColor=v=>semNeg?((metKey==='roas'?v>=1:v>=0)?cPos:cNeg):cInfo;
+  const fmtTick=v=>document.body.classList.contains('values-hidden')?'••':relFmtVal(v,metCol.fmt);
+  let datasets;
+  if(type==='line'){
+    datasets=[{label:metCol.label,data,borderColor:cInfo,backgroundColor:cInfo+'22',borderWidth:2,pointRadius:entries.length>40?0:3,pointHoverRadius:5,tension:.3,fill:true}];
+  }else{
+    datasets=[{label:metCol.label,data,backgroundColor:data.map(barColor),borderWidth:0,borderRadius:4,maxBarThickness:46}];
+  }
+  if(_relChart){_relChart.destroy();_relChart=null;}
+  _relChart=new Chart(canvas,{type:type==='line'?'line':'bar',data:{labels,datasets},options:{
+    responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:false},tooltip:{
+      backgroundColor:isLight?'rgba(255,255,255,0.95)':'rgba(15,15,25,0.92)',
+      borderColor:isLight?'rgba(0,0,0,0.12)':'rgba(255,255,255,0.12)',borderWidth:1,
+      titleColor:isLight?'#1D1D1F':'#fff',bodyColor:isLight?'rgba(0,0,0,0.7)':'rgba(255,255,255,0.7)',padding:10,
+      callbacks:{label:item=>` ${metCol.label}: ${document.body.classList.contains('values-hidden')?'••••':relFmtVal(item.raw,metCol.fmt)}`}
+    }},
+    scales:{
+      x:{grid:{display:false},ticks:{color:tick,font,autoSkip:true,maxRotation:isDate?0:38,minRotation:0,callback:function(v){const l=this.getLabelForValue(v);return(typeof l==='string'&&l.length>16)?l.slice(0,15)+'…':l;}}},
+      y:{grid:{color:grid},ticks:{color:tick,font,callback:fmtTick}}
+    }
+  }});
 }
 
 function relFmtVal(v,fmtType){
@@ -2586,7 +2762,7 @@ function relRender(){
   };
   document.getElementById('rel-tbody').innerHTML=r.rows.length?r.rows.map(row=>
     '<tr>'+cols.map(c=>c.tipo==='dim'
-      ?`<td>${row[c.key]??'—'}</td>`
+      ?`<td title="${esc(String(row[c.key]??'—'))}">${esc(String(row[c.key]??'—'))}</td>`
       :`<td class="mo"${corClass(c,row[c.key])}>${relFmtCell(c,row[c.key])}</td>`
     ).join('')+'</tr>'
   ).join(''):`<tr><td colspan="${cols.length}" class="empty">Nenhum dado no período/filtros selecionados.</td></tr>`;
