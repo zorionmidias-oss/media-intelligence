@@ -323,12 +323,17 @@
     .tbl-wrap{border:1px solid var(--border);border-radius:var(--rl);overflow:hidden}
     .tbl-wrap.scroll{overflow-x:auto}
     table{width:100%;border-collapse:collapse}
-    thead th{background:color-mix(in oklch,var(--sec) 50%,transparent);padding:.75rem 1rem;text-align:left;font-size:.6875rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);white-space:nowrap}
+    thead th{background:var(--sec);padding:.75rem 1rem;text-align:left;font-size:.6875rem;font-weight:700;color:var(--fg-soft);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border-strong);white-space:nowrap}
     tbody td{padding:.875rem 1rem;border-bottom:1px solid var(--border);font-size:.875rem;color:var(--fg)}
-    tbody td.mo{font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;font-size:.8125rem}
+    tbody td:first-child{font-weight:600}
+    tbody td.mo{font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;font-size:.8125rem;color:var(--fg-soft);font-feature-settings:'tnum' 1}
+    tbody td.mo.pos{color:var(--ok);font-weight:600}
+    tbody td.mo.neg{color:var(--bad);font-weight:600}
     tbody tr:last-child td{border-bottom:none}
     tbody tr{transition:background .15s;cursor:pointer}
     tbody tr:hover td{background:color-mix(in oklch,var(--sec) 30%,transparent)}
+    .tbl-wrap tbody tr:nth-child(even) td{background:color-mix(in oklch,var(--sec) 22%,transparent)}
+    .tbl-wrap tbody tr:hover td{background:color-mix(in oklch,var(--sec) 48%,transparent)}
     .td-av{display:flex;align-items:center;gap:.75rem}
     .t-av{width:2rem;height:2rem;border-radius:.375rem;background:var(--sec);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:600;color:var(--muted);flex-shrink:0;transition:background .2s,color .2s}
     tr:hover .t-av{background:color-mix(in oklch,var(--accent) 10%,transparent);color:var(--accent)}
