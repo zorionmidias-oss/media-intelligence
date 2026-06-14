@@ -204,6 +204,9 @@
     .rel-chart-hd .sec-h{margin:0;margin-right:auto}
     .rel-chart-ctl{display:flex;align-items:center;gap:.4rem}
     .rel-chart-ctl label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+    .rel-chart-metrics{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
+    .rel-chart-metrics-lbl{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;flex-shrink:0}
+    .rel-chart-metrics .rel-chk{padding:.3rem .65rem;font-size:.78rem}
     .rel-chart-body{height:340px;position:relative}
     .rel-seg{display:inline-flex;border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
     .rel-seg button{padding:.4rem .7rem;border:none;background:transparent;color:var(--muted);font-family:inherit;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s}
@@ -1870,18 +1873,21 @@
           <div class="rel-chart-hd">
             <div class="sec-h">📊 Visualização</div>
             <div class="rel-chart-ctl">
-              <label>Métrica</label>
-              <select id="rel-chart-metric" class="rel-in" style="min-width:150px;height:2rem" onchange="relRenderChart()"></select>
-            </div>
-            <div class="rel-chart-ctl">
               <label>Agrupar</label>
               <select id="rel-chart-group" class="rel-in" style="min-width:130px;height:2rem" onchange="relRenderChart()"></select>
             </div>
+            <label class="rel-chk" id="rel-chart-prev-wrap" style="display:none" title="Mostra o período anterior em linha pontilhada">
+              <input type="checkbox" id="rel-chart-prev" checked onchange="relRenderChart()">Período anterior
+            </label>
             <div class="rel-seg" id="rel-chart-type">
               <button data-t="auto" class="on" onclick="relChartType('auto',this)">Auto</button>
               <button data-t="bar" onclick="relChartType('bar',this)">Barras</button>
               <button data-t="line" onclick="relChartType('line',this)">Linha</button>
             </div>
+          </div>
+          <div class="rel-chart-metrics">
+            <span class="rel-chart-metrics-lbl">Métricas</span>
+            <div class="rel-chips" id="rel-chart-metrics"></div>
           </div>
           <div class="rel-chart-body"><canvas id="rel-chart-canvas"></canvas></div>
         </div>
@@ -2670,64 +2676,101 @@ function relChartType(t,btn){
   relRenderChart();
 }
 
+// Paleta para múltiplas métricas
+const REL_CHART_PALETTE=['#60A5FA','#4ADE80','#A78BFA','#FB923C','#F472B6','#38BDF8','#FBBF24','#34D399','#F87171','#C084FC'];
+const relIsRatio=fmt=>['pct','num','pp'].includes(fmt);
+
 function relSetupChartControls(r){
-  const mSel=document.getElementById('rel-chart-metric'),mc=relMetCols(r),curM=mSel.value;
-  mSel.innerHTML=mc.map(c=>`<option value="${c.key}">${esc(c.label)}</option>`).join('');
-  if([...mSel.options].some(o=>o.value===curM))mSel.value=curM;
+  const mc=relMetCols(r),box=document.getElementById('rel-chart-metrics');
+  const prev=new Set([...box.querySelectorAll('input:checked')].map(i=>i.value));
+  box.innerHTML=mc.map((c,i)=>`<label class="rel-chk"><input type="checkbox" value="${c.key}" onchange="relRenderChart()"${(prev.size?prev.has(c.key):i===0)?' checked':''}>${esc(c.label)}</label>`).join('');
   const gSel=document.getElementById('rel-chart-group'),dc=relDimCols(r),curG=gSel.value;
   gSel.innerHTML=dc.map(c=>`<option value="${c.key}">${esc(c.label)}</option>`).join('');
   if([...gSel.options].some(o=>o.value===curG))gSel.value=curG;
   else gSel.value=(dc.find(c=>c.key==='data')||dc[0]).key;
+  // Toggle "período anterior" só faz sentido quando há comparação
+  document.getElementById('rel-chart-prev-wrap').style.display=r.periodo_anterior?'':'none';
 }
 
 function relRenderChart(){
   const r=_relResult;if(!r)return;
   const canvas=document.getElementById('rel-chart-canvas');if(!canvas)return;
-  const metKey=document.getElementById('rel-chart-metric').value;
+  let metKeys=[...document.querySelectorAll('#rel-chart-metrics input:checked')].map(i=>i.value);
+  const mc=relMetCols(r);
+  if(!metKeys.length)metKeys=mc.length?[mc[0].key]:[];
+  if(!metKeys.length){if(_relChart){_relChart.destroy();_relChart=null;}return;}
   const groupKey=document.getElementById('rel-chart-group').value;
-  const metCol=r.colunas.find(c=>c.key===metKey)||{fmt:'num'};
-  const summable=['moeda','int'].includes(metCol.fmt); // razões (%, x) usam média
-  const map=new Map();
-  r.rows.forEach(row=>{
-    const v=row[metKey];if(v==null)return;
-    const k=String(row[groupKey]??'—');
-    const e=map.get(k)||{sum:0,n:0};e.sum+=v;e.n++;map.set(k,e);
-  });
-  let entries=[...map.entries()].map(([k,e])=>[k,summable?e.sum:e.sum/e.n]);
+  const showPrev=!!r.periodo_anterior&&document.getElementById('rel-chart-prev').checked;
+  const colOf=k=>r.colunas.find(c=>c.key===k)||{fmt:'num',label:k};
   const isDate=groupKey==='data';
   const type=_relChartType==='auto'?(isDate?'line':'bar'):_relChartType;
-  if(type==='line'&&isDate)entries.sort((a,b)=>a[0]<b[0]?-1:1);
-  else if(type==='line')entries.sort((a,b)=>a[0]<b[0]?-1:1);
-  else {entries.sort((a,b)=>b[1]-a[1]);entries=entries.slice(0,15);}
-  const labels=entries.map(e=>isDate?e[0].slice(5):e[0]);
-  const data=entries.map(e=>e[1]);
+
+  // Agrega por grupo: soma p/ métricas absolutas, média p/ razões. Guarda atual e anterior.
+  const groups=new Map();
+  r.rows.forEach(row=>{
+    const gk=String(row[groupKey]??'—');
+    let g=groups.get(gk);if(!g){g={cur:{},ant:{}};groups.set(gk,g);}
+    metKeys.forEach(k=>{
+      const v=row[k];if(v!=null){(g.cur[k]=g.cur[k]||{s:0,n:0}).s+=v;g.cur[k].n++;}
+      if(showPrev){const va=row[k+'_ant'];if(va!=null){(g.ant[k]=g.ant[k]||{s:0,n:0}).s+=va;g.ant[k].n++;}}
+    });
+  });
+  const val=(cell,fmt)=>cell?(relIsRatio(fmt)?cell.s/cell.n:cell.s):null;
+
+  // Ordenação dos grupos: data → cronológica; senão top 15 pela 1ª métrica
+  let gkeys=[...groups.keys()];
+  if(isDate||type==='line')gkeys.sort((a,b)=>a<b?-1:1);
+  else{const f=metKeys[0],ff=colOf(f).fmt;gkeys.sort((a,b)=>(val(groups.get(b).cur[f],ff)||0)-(val(groups.get(a).cur[f],ff)||0));gkeys=gkeys.slice(0,15);}
+  const labels=gkeys.map(k=>isDate?k.slice(5):k);
+
   const isLight=document.documentElement.getAttribute('data-theme')==='light';
   const grid=isLight?'rgba(0,0,0,0.07)':'rgba(255,255,255,0.07)';
   const tick=isLight?'rgba(0,0,0,0.55)':'rgba(255,255,255,0.5)';
   const font={family:'ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace',size:11};
-  const semNeg=['lucro','roi'].includes(metKey)||metKey==='roas';
-  const cPos=isLight?'#16A34A':'#4ADE80',cNeg=isLight?'#DC2626':'#F87171',cInfo=isLight?'#3B82F6':'#60A5FA';
-  const barColor=v=>semNeg?((metKey==='roas'?v>=1:v>=0)?cPos:cNeg):cInfo;
-  const fmtTick=v=>document.body.classList.contains('values-hidden')?'••':relFmtVal(v,metCol.fmt);
-  let datasets;
-  if(type==='line'){
-    datasets=[{label:metCol.label,data,borderColor:cInfo,backgroundColor:cInfo+'22',borderWidth:2,pointRadius:entries.length>40?0:3,pointHoverRadius:5,tension:.3,fill:true}];
-  }else{
-    datasets=[{label:metCol.label,data,backgroundColor:data.map(barColor),borderWidth:0,borderRadius:4,maxBarThickness:46}];
-  }
+  const vh=()=>document.body.classList.contains('values-hidden');
+  const cPos=isLight?'#16A34A':'#4ADE80',cNeg=isLight?'#DC2626':'#F87171';
+
+  // Colore por sinal só quando há 1 métrica de lucro/ROI/ROAS
+  const single=metKeys.length===1;
+  const semNeg=single&&(['lucro','roi'].includes(metKeys[0])||metKeys[0]==='roas');
+
+  const datasets=[];
+  metKeys.forEach((k,idx)=>{
+    const col=colOf(k),fmt=col.fmt,color=REL_CHART_PALETTE[idx%REL_CHART_PALETTE.length];
+    const axis=relIsRatio(fmt)?'yR':'yL';
+    const data=gkeys.map(g=>val(groups.get(g).cur[k],fmt));
+    if(type==='line'){
+      datasets.push({label:col.label,_fmt:fmt,data,borderColor:color,backgroundColor:color+'22',borderWidth:2,pointRadius:gkeys.length>40?0:3,pointHoverRadius:5,tension:.3,fill:single&&!showPrev,yAxisID:axis,order:1});
+      if(showPrev)datasets.push({label:col.label+' (ant.)',_fmt:fmt,data:gkeys.map(g=>val(groups.get(g).ant[k],fmt)),borderColor:color,backgroundColor:'transparent',borderWidth:1.5,borderDash:[5,4],pointRadius:0,pointHoverRadius:4,tension:.3,fill:false,yAxisID:axis,order:2});
+    }else{
+      const bg=semNeg?data.map(v=>(metKeys[0]==='roas'?v>=1:v>=0)?cPos:cNeg):color;
+      datasets.push({label:col.label,_fmt:fmt,data,backgroundColor:bg,borderWidth:0,borderRadius:3,maxBarThickness:42,yAxisID:axis});
+      if(showPrev)datasets.push({label:col.label+' (ant.)',_fmt:fmt,data:gkeys.map(g=>val(groups.get(g).ant[k],fmt)),backgroundColor:color+'55',borderWidth:0,borderRadius:3,maxBarThickness:42,yAxisID:axis});
+    }
+  });
+
+  const fmts=metKeys.map(k=>colOf(k).fmt);
+  const hasLeft=fmts.some(f=>!relIsRatio(f)),hasRight=fmts.some(relIsRatio);
+  const leftMoeda=fmts.includes('moeda');
+  const showLegend=datasets.length>1;
+
   if(_relChart){_relChart.destroy();_relChart=null;}
   _relChart=new Chart(canvas,{type:type==='line'?'line':'bar',data:{labels,datasets},options:{
     responsive:true,maintainAspectRatio:false,
     interaction:{mode:'index',intersect:false},
-    plugins:{legend:{display:false},tooltip:{
-      backgroundColor:isLight?'rgba(255,255,255,0.95)':'rgba(15,15,25,0.92)',
-      borderColor:isLight?'rgba(0,0,0,0.12)':'rgba(255,255,255,0.12)',borderWidth:1,
-      titleColor:isLight?'#1D1D1F':'#fff',bodyColor:isLight?'rgba(0,0,0,0.7)':'rgba(255,255,255,0.7)',padding:10,
-      callbacks:{label:item=>` ${metCol.label}: ${document.body.classList.contains('values-hidden')?'••••':relFmtVal(item.raw,metCol.fmt)}`}
-    }},
+    plugins:{
+      legend:{display:showLegend,position:'top',align:'end',labels:{color:tick,boxWidth:12,boxHeight:12,usePointStyle:true,font:{size:11}}},
+      tooltip:{
+        backgroundColor:isLight?'rgba(255,255,255,0.95)':'rgba(15,15,25,0.92)',
+        borderColor:isLight?'rgba(0,0,0,0.12)':'rgba(255,255,255,0.12)',borderWidth:1,
+        titleColor:isLight?'#1D1D1F':'#fff',bodyColor:isLight?'rgba(0,0,0,0.7)':'rgba(255,255,255,0.7)',padding:10,
+        callbacks:{label:item=>` ${item.dataset.label}: ${vh()?'••••':relFmtVal(item.raw,item.dataset._fmt)}`}
+      }
+    },
     scales:{
       x:{grid:{display:false},ticks:{color:tick,font,autoSkip:true,maxRotation:isDate?0:38,minRotation:0,callback:function(v){const l=this.getLabelForValue(v);return(typeof l==='string'&&l.length>16)?l.slice(0,15)+'…':l;}}},
-      y:{grid:{color:grid},ticks:{color:tick,font,callback:fmtTick}}
+      yL:{display:hasLeft,position:'left',grid:{color:grid},ticks:{color:tick,font,callback:v=>vh()?'••':(leftMoeda?BRL(v):NUM(v))}},
+      yR:{display:hasRight,position:'right',grid:{drawOnChartArea:false},ticks:{color:tick,font,callback:v=>vh()?'•':loc(v,2)}}
     }
   }});
 }
@@ -2910,10 +2953,11 @@ async function relExportPDF(){
       try{
         const img=_relChart.toBase64Image('image/png',1);
         const cw=pageW-2*M, ch=pageW>200?72:62;
-        const metLbl=document.getElementById('rel-chart-metric').selectedOptions[0]?.textContent||'';
+        const metLbl=[...document.querySelectorAll('#rel-chart-metrics input:checked')].map(i=>i.parentElement.textContent.trim()).join(', ')||'—';
         const grpLbl=document.getElementById('rel-chart-group').selectedOptions[0]?.textContent||'';
+        const prevTxt=(_relResult.periodo_anterior&&document.getElementById('rel-chart-prev').checked)?' · com período anterior':'';
         doc.setFont(undefined,'bold');doc.setFontSize(8.5);doc.setTextColor(60);
-        doc.text(`Visualização — ${metLbl} por ${grpLbl}`,M,y+1);
+        doc.text(`Visualização — ${metLbl} por ${grpLbl}${prevTxt}`,M,y+1);
         y+=3;
         doc.setFillColor(18,18,24);doc.roundedRect(M,y,cw,ch,2,2,'F');
         doc.addImage(img,'PNG',M+3,y+3,cw-6,ch-6);
