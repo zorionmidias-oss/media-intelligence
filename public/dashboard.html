@@ -5778,6 +5778,9 @@ async function saveBudget(adsetId,utm,adsetName,budgetAntes){
 window._adsetMapInline=window._adsetMapInline||{};
 const escA=s=>esc(s).replace(/"/g,'&quot;');
 
+// Formata valor na moeda da conta: USD → "USD x,xx", senão "R$ x,xx"
+function fmtMoeda(v,m){return String(m||'').toUpperCase()==='USD'?'USD '+loc(v,2):BRL(v);}
+
 // Semáforo: Sessão/Lead (SPL) vs Break Even (BE). ótimo≥BE×1.2 · bom≥BE · ruim<BE
 function corSPL(spl,be){
   if(spl==null||be==null||be<=0)return'';
@@ -5810,7 +5813,7 @@ async function toggleUtmExpand(utm,btn){
   try{
     const since=document.getElementById('f-since').value;
     const until=document.getElementById('f-until').value;
-    const r=await fetch(`/api/drilldown/${encodeURIComponent(utm)}?since=${since}&until=${until}`);
+    const r=await fetch(`/api/drilldown/${encodeURIComponent(utm)}?since=${since}&until=${until}&adsets_only=1`);
     if(!r.ok)throw new Error((await r.json()).error||r.statusText);
     const d=await r.json();
     renderUtmAdsets(box,utm,d,rps);
@@ -5832,7 +5835,7 @@ function renderUtmAdsets(box,utm,d,rps){
     const conversas=+(a.conversas||0);
     const spend=+(a.spend||0);
     const custoRes=resultado>0?spend/resultado:0;
-    const spl=resultado>0?conversas/resultado:null;
+    const spl=conversas>0?resultado/conversas:null;
     const be=(custoRes>0&&rps>0)?custoRes/rps:null;
     const cls=corSPL(spl,be);
     const nmFull=escA(a.adset_name||'');
@@ -5853,8 +5856,8 @@ function renderUtmAdsets(box,utm,d,rps){
       <td class="mo">${NUM(conversas)}</td>
       <td class="mo"><span class="ud-pill ${cls}">${spl!=null?spl.toFixed(2):'—'}</span></td>
       <td class="mo">${be!=null?be.toFixed(2):'—'}</td>
-      <td class="ud-bud" data-aid="${aid}" data-utm="${utmS}" data-nome="${nmFull}" data-bud="${bud}" data-min="${+(a.min_budget||1)}">
-        <span class="ud-bud-val">${bud>0?BRL(bud):'—'}</span>
+      <td class="ud-bud" data-aid="${aid}" data-utm="${utmS}" data-nome="${nmFull}" data-bud="${bud}" data-min="${+(a.min_budget||1)}" data-moeda="${a.moeda||'BRL'}">
+        <span class="ud-bud-val">${bud>0?fmtMoeda(bud,a.moeda):'—'}</span>
         <button class="ud-bud-edit" title="Editar orçamento" onclick="editarOrcamento(this)">✎</button>
         <span class="ud-bud-ctrls" style="display:none">
           <button class="ud-bud-btn down" title="Diminuir 20%" onclick="ajustarOrcamento20(this,0.8)">−20%</button>
@@ -5872,7 +5875,7 @@ function renderUtmAdsets(box,utm,d,rps){
     </div>
     <div class="ud-table-wrap"><table class="ud-table"><thead><tr>
       <th>Conjunto</th><th>Gasto</th><th>Resultado</th><th>Custo/Res.</th><th>Conversas</th>
-      <th title="Conversas iniciadas ÷ Resultado">Sessão/Lead</th><th title="Custo por resultado ÷ RPS">Break Even</th><th>Orçamento/dia</th>
+      <th title="Resultado ÷ Conversas iniciadas">Sessão/Lead</th><th title="Custo por resultado ÷ RPS">Break Even</th><th>Orçamento/dia</th>
     </tr></thead><tbody>${rowsHtml}</tbody></table></div>`;
 }
 
@@ -5890,7 +5893,7 @@ function editarOrcamento(btn){
     const down=cell.querySelector('.ud-bud-btn.down');
     const blocked=+(bud*0.8).toFixed(2)<min;
     down.disabled=blocked;
-    down.title=blocked?`No mínimo da Meta (${BRL(min)}/dia)`:'Diminuir 20%';
+    down.title=blocked?`No mínimo da Meta (${fmtMoeda(min,cell.dataset.moeda)}/dia)`:'Diminuir 20%';
   }
   ctrls.style.display=open?'inline-flex':'none';
   edit.style.display=open?'none':'inline-flex';
@@ -5901,18 +5904,19 @@ async function ajustarOrcamento20(btn,fator){
   const adsetId=cell.dataset.aid, utm=cell.dataset.utm, nome=cell.dataset.nome;
   const atual=+cell.dataset.bud;
   const min=+(cell.dataset.min||1);
+  const moeda=cell.dataset.moeda||'BRL';
   if(!atual||atual<=0){showToast('err','Conjunto sem orçamento próprio (CBO?) — ajuste pela campanha');return;}
   const novo=+(atual*fator).toFixed(2);
-  if(fator<1&&novo<min){showToast('err',`Mínimo da Meta: ${BRL(min)}/dia — não dá pra reduzir mais`);return;}
-  if(!confirm(`Confirmar: ${fator>1?'aumentar':'diminuir'} 20% o orçamento de "${nome}"?\n\nR$ ${atual.toFixed(2)} → R$ ${novo.toFixed(2)}/dia`))return;
+  if(fator<1&&novo<min){showToast('err',`Mínimo da Meta: ${fmtMoeda(min,moeda)}/dia — não dá pra reduzir mais`);return;}
+  if(!confirm(`Confirmar: ${fator>1?'aumentar':'diminuir'} 20% o orçamento de "${nome}"?\n\n${fmtMoeda(atual,moeda)} → ${fmtMoeda(novo,moeda)}/dia`))return;
   cell.querySelectorAll('.ud-bud-btn').forEach(b=>b.disabled=true);
   try{
     const r=await fetch(`/api/meta/adset/${adsetId}/budget`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({daily_budget:novo,utm,adset_name:nome,budget_antes:atual})});
     const dd=await r.json();
     if(!r.ok)throw new Error(dd.error||r.statusText);
-    showToast('ok',`Orçamento → R$ ${novo.toFixed(2)}/dia`);
+    showToast('ok',`Orçamento → ${fmtMoeda(novo,moeda)}/dia`);
     cell.dataset.bud=novo;
-    cell.querySelector('.ud-bud-val').textContent=BRL(novo);
+    cell.querySelector('.ud-bud-val').textContent=fmtMoeda(novo,moeda);
     if(window._adsetMapInline[adsetId])window._adsetMapInline[adsetId].daily_budget=novo;
     // colapsa de volta para a visão "valor + lápis"
     cell.querySelector('.ud-bud-ctrls').style.display='none';

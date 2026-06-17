@@ -44,8 +44,10 @@ async function handler(req, res) {
     const since = req.query.since || new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
     const until = req.query.until || new Date().toISOString().slice(0, 10);
     const noCache = req.query.nocache === '1';
+    // adsets_only: pula insights por anúncio (expand inline não mostra criativos) → bem mais rápido
+    const adsetsOnly = req.query.adsets_only === '1';
 
-    const cacheKey = `${utm}:${since}:${until}`;
+    const cacheKey = `${utm}:${since}:${until}:${adsetsOnly ? 'a' : 'f'}`;
     if (!noCache) {
       const hit = getCached(cacheKey);
       if (hit) {
@@ -176,6 +178,8 @@ async function handler(req, res) {
         }).catch(() => {})
       );
 
+      if (adsetsOnly) continue; // expand inline não precisa de dados por anúncio
+
       for (const ad of adset.ads) {
         insightJobs.push(
           axios.get(`${META_BASE}/${ad.ad_id}/insights`, {
@@ -233,7 +237,9 @@ async function handler(req, res) {
     // USD → 1.00; BRL → 1 USD convertido pela taxa do dia.
     for (const adset of adsetsMap.values()) {
       const cfg = accountCfgMap[adset.account_id] || { moeda: 'BRL' };
-      if (cfg.moeda === 'USD') {
+      adset.moeda = cfg.moeda === 'USD' ? 'USD' : 'BRL';
+      // Piso = 1 USD: contas USD → 1.00 (própria moeda); contas BRL → 1 USD na taxa do dia
+      if (adset.moeda === 'USD') {
         adset.min_budget = 1;
       } else {
         if (!_usdRate) _usdRate = await getUSDtoBRLByDate(until);
