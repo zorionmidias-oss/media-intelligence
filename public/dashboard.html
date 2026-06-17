@@ -677,6 +677,25 @@
     .ud-bud-btn:disabled:hover{border-color:var(--border);color:var(--fg)}
     .ud-bud-cancel{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.78rem;padding:.1rem .2rem;border-radius:.3rem;line-height:1}
     .ud-bud-cancel:hover{color:var(--bad)}
+    /* Diretório de links */
+    .dir-empty{text-align:center;padding:3rem 1rem;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:.75rem}
+    .dir-group{margin-bottom:1.5rem}
+    .dir-group-hd{display:flex;align-items:center;gap:.5rem;font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.6rem}
+    .dir-group-n{background:var(--sec-strong);color:var(--muted);border-radius:999px;padding:0 .5rem;font-size:.7rem;font-weight:700}
+    .dir-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.75rem}
+    .dir-card{display:flex;align-items:stretch;background:var(--card);border:1px solid var(--border);border-radius:.75rem;transition:border-color .15s,box-shadow .15s,transform .15s;overflow:hidden}
+    .dir-card:hover{border-color:var(--accent);box-shadow:0 6px 18px -10px rgba(0,0,0,.5);transform:translateY(-1px)}
+    .dir-card-main{display:flex;align-items:center;gap:.7rem;padding:.8rem .9rem;flex:1;min-width:0;text-decoration:none;color:inherit}
+    .dir-card-ic{font-size:1.4rem;flex-shrink:0;line-height:1}
+    .dir-card-txt{display:flex;flex-direction:column;gap:1px;min-width:0}
+    .dir-card-title{font-weight:600;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .dir-card-desc{font-size:.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .dir-card-host{font-size:.68rem;color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+    .dir-card-acts{display:flex;flex-direction:column;border-left:1px solid var(--border)}
+    .dir-act{flex:1;background:none;border:none;color:var(--muted);cursor:pointer;font-size:.8rem;padding:0 .6rem;transition:all .15s}
+    .dir-act:hover{background:var(--sec);color:var(--accent)}
+    .dir-act.danger:hover{background:var(--danger-soft);color:var(--danger)}
+    .dir-act+.dir-act{border-top:1px solid var(--border)}
     /* utm selector */
     .drill-title-row{position:relative;display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem}
     .utm-selector{display:inline-flex;align-items:center;gap:.5rem;cursor:pointer;padding:.4rem .875rem;background:var(--sec);border:1px solid var(--border);border-radius:.625rem;transition:all .15s;user-select:none}
@@ -1217,6 +1236,11 @@
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
       <span class="nav-lbl">Contas Meta</span>
     </button>
+    <button class="nav-btn" id="nav-diretorio" onclick="nav('diretorio',this)">
+      <span class="nav-ind"></span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span class="nav-lbl">Diretório</span>
+    </button>
   </nav>
   <div class="sb-foot">
     <button class="nav-btn" id="nav-domains" onclick="nav('domains',this)" style="width:100%">
@@ -1703,6 +1727,22 @@
             <tbody id="contas-body"><tr><td colspan="7" class="empty">Carregando…</td></tr></tbody>
           </table>
           <div class="tbl-foot"><span style="font-size:.875rem;color:var(--muted)" id="contas-count">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIRETÓRIO -->
+    <div id="tab-diretorio" class="tab-panel">
+      <div class="sec">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+          <div>
+            <div class="chart-title">Diretório</div>
+            <div class="chart-sub">Links importantes — planilhas, documentos, pastas e mais</div>
+          </div>
+          <button class="btn btn-p" onclick="openModalAddLink()">+ Adicionar Link</button>
+        </div>
+        <div id="diretorio-body" style="margin-top:1rem">
+          <div class="empty" style="padding:2rem">Carregando…</div>
         </div>
       </div>
     </div>
@@ -2301,6 +2341,34 @@
   </div>
 </div>
 
+<!-- MODAL DIRETÓRIO (adicionar/editar link) -->
+<div class="modal-bg" id="modal-diretorio" onclick="if(event.target===this)closeModal('modal-diretorio')">
+  <div class="modal" style="width:min(480px,95vw)">
+    <div class="modal-hd">
+      <span class="modal-title" id="modal-diretorio-title">Adicionar Link</span>
+      <button class="modal-close" onclick="closeModal('modal-diretorio')">✕</button>
+    </div>
+    <input type="hidden" id="dir-edit-id" />
+    <div class="field"><label>Título *</label><input type="text" id="dir-titulo" placeholder="ex: Planilha de Resultados" /></div>
+    <div class="field"><label>URL *</label><input type="text" id="dir-url" placeholder="https://docs.google.com/…" /></div>
+    <div class="field">
+      <label>Categoria</label>
+      <select id="dir-categoria">
+        <option value="Planilha">📊 Planilha</option>
+        <option value="Documento">📄 Documento</option>
+        <option value="Pasta">📁 Pasta</option>
+        <option value="Link" selected>🔗 Link</option>
+        <option value="Outro">📌 Outro</option>
+      </select>
+    </div>
+    <div class="field"><label>Descrição <span style="color:var(--muted)">(opcional)</span></label><input type="text" id="dir-descricao" placeholder="ex: atualizada toda segunda" /></div>
+    <div class="modal-actions">
+      <button class="btn btn-s" onclick="closeModal('modal-diretorio')">Cancelar</button>
+      <button class="btn btn-p" id="btn-salvar-link" onclick="salvarLink()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL IMPOSTO -->
 <div class="modal-bg" id="modal-imposto" onclick="if(event.target===this)closeModal('modal-imposto')">
   <div class="modal" style="width:min(400px,95vw)">
@@ -2613,7 +2681,7 @@ function toggleSb(){
 }
 
 /* ═══ NAV ═══ */
-const TITLES={overview:'Overview',campaigns:'Campanhas','analise-paises':'Análise de País',gam:'Reports GAM',funil:'Análise de Funil',otimizacoes:'Otimizações',ai:'Análise IA',relatorios:'Relatórios',domains:'Domínios',contas:'Contas Meta','criar-campanha':'Criar Campanha'};
+const TITLES={overview:'Overview',campaigns:'Campanhas','analise-paises':'Análise de País',gam:'Reports GAM',funil:'Análise de Funil',otimizacoes:'Otimizações',ai:'Análise IA',relatorios:'Relatórios',domains:'Domínios',contas:'Contas Meta',diretorio:'Diretório','criar-campanha':'Criar Campanha'};
 function nav(id,btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('on'));
@@ -2627,6 +2695,7 @@ function nav(id,btn){
   if(id==='domains'){showOverlay('Carregando...');loadDominios().finally(hideOverlay);return;}
   if(id==='gam'){showOverlay('Carregando...');loadGAMReport().finally(hideOverlay);return;}
   if(id==='contas'){showOverlay('Carregando...');loadContas().finally(hideOverlay);}
+  if(id==='diretorio'){showOverlay('Carregando…');loadDiretorio().finally(hideOverlay);}
   if(id==='funil'){showOverlay('Carregando…');initFunilTab().finally(hideOverlay);}
   if(id==='criar-campanha'){showOverlay('Carregando templates…');initCriarCampanha().finally(hideOverlay);}
   if(id==='otimizacoes'){showOverlay('Carregando…');initOtimTab().finally(hideOverlay);}
@@ -5043,6 +5112,129 @@ async function loadContas(){
   }catch(e){
     if(tbody)tbody.innerHTML=`<tr><td colspan="6" class="empty">Erro: ${esc(e.message)}</td></tr>`;
   }
+}
+
+/* ═══ DIRETÓRIO ═══ */
+const DIR_CATS=[
+  {key:'Planilha',icon:'📊'},{key:'Documento',icon:'📄'},
+  {key:'Pasta',icon:'📁'},{key:'Link',icon:'🔗'},{key:'Outro',icon:'📌'},
+];
+const DIR_ICON=Object.fromEntries(DIR_CATS.map(c=>[c.key,c.icon]));
+window._dirLinks=window._dirLinks||[];
+
+async function loadDiretorio(){
+  const box=document.getElementById('diretorio-body');
+  if(!box)return;
+  try{
+    const res=await fetch('/api/diretorio');
+    if(res.status===401){window.location.href='/login.html';return;}
+    if(!res.ok)throw new Error((await res.json().catch(()=>({}))).error||res.statusText);
+    const links=await res.json();
+    renderDiretorio(links);
+  }catch(e){
+    box.innerHTML=`<div class="empty" style="padding:2rem;color:var(--bad)">Erro: ${esc(e.message)}</div>`;
+  }
+}
+
+function renderDiretorio(links){
+  const box=document.getElementById('diretorio-body');
+  window._dirLinks=links||[];
+  if(!links||!links.length){
+    box.innerHTML=`<div class="dir-empty">
+      <div style="font-size:2.2rem">🗂️</div>
+      <p>Nenhum link ainda. Adicione planilhas, documentos e pastas que você acessa sempre.</p>
+      <button class="btn btn-p" onclick="openModalAddLink()">+ Adicionar o primeiro</button>
+    </div>`;
+    return;
+  }
+  const grupos={};
+  for(const l of links){(grupos[l.categoria]=grupos[l.categoria]||[]).push(l);}
+  const order=DIR_CATS.map(c=>c.key).filter(k=>grupos[k]);
+  for(const k of Object.keys(grupos))if(!order.includes(k))order.push(k);
+
+  box.innerHTML=order.map(cat=>{
+    const icon=DIR_ICON[cat]||'📌';
+    const cards=grupos[cat].map(l=>{
+      const desc=l.descricao?`<span class="dir-card-desc">${esc(l.descricao)}</span>`:'';
+      let host='';try{host=new URL(l.url).hostname.replace(/^www\./,'');}catch(_){host=l.url;}
+      return `<div class="dir-card">
+        <a class="dir-card-main" href="${esc(l.url)}" target="_blank" rel="noopener">
+          <span class="dir-card-ic">${icon}</span>
+          <span class="dir-card-txt">
+            <span class="dir-card-title">${esc(l.titulo)}</span>
+            ${desc}
+            <span class="dir-card-host">${esc(host)} ↗</span>
+          </span>
+        </a>
+        <div class="dir-card-acts">
+          <button class="dir-act" title="Editar" onclick="editarLink(${l.id})">✎</button>
+          <button class="dir-act danger" title="Excluir" onclick="deletarLink(${l.id})">🗑</button>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="dir-group">
+      <div class="dir-group-hd"><span>${icon} ${esc(cat)}</span><span class="dir-group-n">${grupos[cat].length}</span></div>
+      <div class="dir-grid">${cards}</div>
+    </div>`;
+  }).join('');
+}
+
+function openModalAddLink(){
+  document.getElementById('modal-diretorio-title').textContent='Adicionar Link';
+  document.getElementById('dir-edit-id').value='';
+  document.getElementById('dir-titulo').value='';
+  document.getElementById('dir-url').value='';
+  document.getElementById('dir-categoria').value='Link';
+  document.getElementById('dir-descricao').value='';
+  openModal('modal-diretorio');
+  setTimeout(()=>document.getElementById('dir-titulo').focus(),50);
+}
+
+function editarLink(id){
+  const link=(window._dirLinks||[]).find(l=>l.id===id);
+  if(!link){showToast('err','Link não encontrado');return;}
+  document.getElementById('modal-diretorio-title').textContent='Editar Link';
+  document.getElementById('dir-edit-id').value=link.id;
+  document.getElementById('dir-titulo').value=link.titulo||'';
+  document.getElementById('dir-url').value=link.url||'';
+  document.getElementById('dir-categoria').value=link.categoria||'Link';
+  document.getElementById('dir-descricao').value=link.descricao||'';
+  openModal('modal-diretorio');
+  setTimeout(()=>document.getElementById('dir-titulo').focus(),50);
+}
+
+async function salvarLink(){
+  const id=document.getElementById('dir-edit-id').value;
+  const titulo=document.getElementById('dir-titulo').value.trim();
+  const url=document.getElementById('dir-url').value.trim();
+  const categoria=document.getElementById('dir-categoria').value;
+  const descricao=document.getElementById('dir-descricao').value.trim();
+  if(!titulo||!url){showToast('err','Preencha título e URL');return;}
+  const btn=document.getElementById('btn-salvar-link');btn.disabled=true;
+  try{
+    const r=await fetch(id?`/api/diretorio/${id}`:'/api/diretorio',{
+      method:id?'PUT':'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({titulo,url,categoria,descricao}),
+    });
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||r.statusText);
+    showToast('ok',id?'Link atualizado':'Link adicionado');
+    closeModal('modal-diretorio');
+    loadDiretorio();
+  }catch(e){showToast('err','Erro: '+e.message);}
+  finally{btn.disabled=false;}
+}
+
+async function deletarLink(id){
+  const link=(window._dirLinks||[]).find(l=>l.id===id);
+  if(!confirm(`Excluir o link "${link?link.titulo:'este link'}"?`))return;
+  try{
+    const r=await fetch(`/api/diretorio/${id}`,{method:'DELETE'});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||r.statusText);
+    showToast('ok','Link excluído');
+    loadDiretorio();
+  }catch(e){showToast('err','Erro: '+e.message);}
 }
 
 function openModalAddConta(){

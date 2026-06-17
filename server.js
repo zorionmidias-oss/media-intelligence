@@ -400,6 +400,52 @@ app.post('/api/metas', requireAuth, metasHandler);
 app.put('/api/metas/:id', requireAuth, (req, res) => metasHandler(req, res));
 app.delete('/api/metas/:id', requireAuth, (req, res) => metasHandler(req, res));
 
+// ── Diretório (links importantes: sheets, docs, pastas) ─────────────────────────
+app.get('/api/diretorio', requireAuth, async (_req, res) => {
+  const { data, error } = await supabase.from('diretorio_links').select('*').order('categoria').order('ordem').order('id');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
+});
+
+app.post('/api/diretorio', requireAuth, async (req, res) => {
+  const { titulo, url, categoria, descricao } = req.body || {};
+  if (!titulo || !url) return res.status(400).json({ error: 'titulo e url são obrigatórios' });
+  let link = String(url).trim();
+  if (!/^https?:\/\//i.test(link)) link = `https://${link}`;
+  const { data, error } = await supabase.from('diretorio_links').insert({
+    titulo: String(titulo).trim(),
+    url: link,
+    categoria: categoria || 'Link',
+    descricao: descricao ? String(descricao).trim() : null,
+  }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.put('/api/diretorio/:id', requireAuth, async (req, res) => {
+  const id = Number(req.params.id);
+  const update = {};
+  if (req.body.titulo !== undefined)    update.titulo = String(req.body.titulo).trim();
+  if (req.body.categoria !== undefined) update.categoria = req.body.categoria || 'Link';
+  if (req.body.descricao !== undefined) update.descricao = req.body.descricao ? String(req.body.descricao).trim() : null;
+  if (req.body.url !== undefined) {
+    let link = String(req.body.url).trim();
+    if (link && !/^https?:\/\//i.test(link)) link = `https://${link}`;
+    update.url = link;
+  }
+  if (!Object.keys(update).length) return res.status(400).json({ error: 'Nada para atualizar' });
+  update.updated_at = new Date().toISOString();
+  const { data, error } = await supabase.from('diretorio_links').update(update).eq('id', id).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.delete('/api/diretorio/:id', requireAuth, async (req, res) => {
+  const { error } = await supabase.from('diretorio_links').delete().eq('id', Number(req.params.id));
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
 // ── Notificações ──────────────────────────────────────────────────────────────
 app.get('/api/notificacoes', requireAuth, notifHandler);
 app.post('/api/notificacoes/:id/marcar-lida', requireAuth, marcarLida);
