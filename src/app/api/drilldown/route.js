@@ -2,7 +2,8 @@
 const axios = require('axios');
 const supabase = require('../../../lib/supabase');
 const { getUSDtoBRLByDate } = require('../../../lib/gam');
-const { extractAdUTM } = require('../../../lib/parser');
+const { extractAdUTM, extractTipo } = require('../../../lib/parser');
+const { getResultadoMeta, findAction } = require('../../../services/attribution.service');
 
 const META_BASE = 'https://graph.facebook.com/v19.0';
 
@@ -116,6 +117,7 @@ async function handler(req, res) {
               ads: [],
               spend: 0, clicks: 0, cpc: 0, ctr: 0, cpm: 0,
               impressions: 0, results: 0, cost_per_result: 0,
+              resultado_vc: 0, conversas: 0,
             });
           }
           adsetsMap.get(aid).ads.push({
@@ -166,6 +168,11 @@ async function handler(req, res) {
           adset.impressions = +d.impressions || 0;
           adset.results     = ra ? +ra.value : 0;
           adset.cost_per_result = cpa ? +cpa.value : (adset.results > 0 ? adset.spend / adset.results : 0);
+          // Otimização rápida: resultado = view_content (funil bot) / objetivo (direto),
+          // conversas = mensagens iniciadas. Mesma lógica do sync (ads_consolidados).
+          const tipo = extractTipo(adset.campaign_name);
+          adset.resultado_vc = getResultadoMeta({ actions: d.actions, objective: obj }, tipo);
+          adset.conversas    = findAction(d.actions, ['onsite_conversion.messaging_conversation_started_7d', 'onsite_conversion.messaging_first_reply']);
         }).catch(() => {})
       );
 
@@ -219,6 +226,18 @@ async function handler(req, res) {
         ad.spend = +(ad.spend * fator).toFixed(2);
         ad.cpc   = ad.clicks > 0 ? +(ad.spend / ad.clicks).toFixed(4) : 0;
         ad.cost_per_result = ad.results > 0 ? +(ad.spend / ad.results).toFixed(2) : 0;
+      }
+    }
+
+    // Piso de orçamento = 1 USD na moeda da conta (bloqueia -20% abaixo do mínimo Meta).
+    // USD → 1.00; BRL → 1 USD convertido pela taxa do dia.
+    for (const adset of adsetsMap.values()) {
+      const cfg = accountCfgMap[adset.account_id] || { moeda: 'BRL' };
+      if (cfg.moeda === 'USD') {
+        adset.min_budget = 1;
+      } else {
+        if (!_usdRate) _usdRate = await getUSDtoBRLByDate(until);
+        adset.min_budget = _usdRate ? +(+_usdRate).toFixed(2) : 1;
       }
     }
 

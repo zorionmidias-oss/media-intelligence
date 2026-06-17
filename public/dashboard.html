@@ -637,6 +637,46 @@
     .budget-input:focus{outline:none;border-color:var(--c1)}
     .budget-save-btn{background:var(--accent);border:none;border-radius:.375rem;padding:.25rem .625rem;font-size:.68rem;color:var(--accent-fg);cursor:pointer;font-weight:700}
     .drill-no-meta{color:var(--muted);font-size:.8125rem;padding:1rem 0;font-style:italic}
+    /* Otimização rápida — expand inline de conjuntos na tabela de campanhas */
+    .utm-exp-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.7rem;padding:0 .25rem;margin-right:.1rem;transition:transform .18s,color .18s;line-height:1}
+    .utm-exp-btn:hover{color:var(--accent)}
+    .utm-exp-btn.open{transform:rotate(90deg);color:var(--accent)}
+    .utm-detail-row>td{padding:0!important;background:var(--bg)}
+    .utm-detail{padding:.6rem .75rem .85rem;border-bottom:2px solid var(--accent);box-shadow:inset 0 8px 14px -10px rgba(0,0,0,.45)}
+    .utm-detail-load{color:var(--muted);font-size:.78rem;padding:.6rem .25rem}
+    .ud-head{display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap;margin-bottom:.5rem;font-size:.72rem;color:var(--muted)}
+    .ud-head b{color:var(--fg)}
+    .ud-rps b{color:var(--color-info)}
+    .ud-legend{display:inline-flex;align-items:center;gap:.2rem;margin-left:auto}
+    .ud-legend i{width:9px;height:9px;border-radius:50%;display:inline-block;margin-left:.4rem}
+    .ud-legend i.ok{background:var(--ok)}.ud-legend i.warn{background:var(--warn)}.ud-legend i.bad{background:var(--bad)}
+    .ud-legend small{color:var(--muted);margin-left:.25rem}
+    .ud-table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:.5rem;background:var(--card)}
+    .ud-table{width:100%;border-collapse:collapse;font-size:.76rem}
+    .ud-table th{background:var(--sec-strong);color:var(--muted);font-weight:600;text-align:right;padding:.45rem .6rem;white-space:nowrap;text-transform:uppercase;font-size:.62rem;letter-spacing:.04em}
+    .ud-table th:first-child{text-align:left}
+    .ud-table td{padding:.4rem .6rem;border-top:1px solid var(--border);text-align:right;white-space:nowrap;color:var(--fg)}
+    .ud-table td.mo{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace}
+    .ud-table tbody tr:hover{background:var(--sec)}
+    .ud-nm{display:flex;align-items:center;gap:.4rem;text-align:left!important;max-width:240px}
+    .ud-nm>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+    .ud-sw{transform:scale(.68);transform-origin:left center;flex-shrink:0}
+    .ud-pill{display:inline-block;min-width:42px;padding:1px 7px;border-radius:999px;font-weight:700;font-family:ui-monospace,Menlo,monospace}
+    .ud-pill.ok{background:var(--success-soft);color:var(--success)}
+    .ud-pill.warn{background:color-mix(in oklch,var(--warn) 15%,transparent);color:var(--warn)}
+    .ud-pill.bad{background:var(--danger-soft);color:var(--danger)}
+    .ud-bud{white-space:nowrap;display:flex;align-items:center;justify-content:flex-end;gap:.4rem}
+    .ud-bud-val{display:inline-block;min-width:70px;text-align:right;font-family:ui-monospace,Menlo,monospace;font-weight:600}
+    .ud-bud-edit{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;padding:.1rem .25rem;border-radius:.3rem;transition:all .15s;line-height:1}
+    .ud-bud-edit:hover{color:var(--accent);background:var(--sec)}
+    .ud-bud-ctrls{display:inline-flex;align-items:center;gap:.3rem}
+    .ud-bud-btn{background:var(--sec-strong);border:1px solid var(--border);color:var(--fg);cursor:pointer;font-size:.66rem;font-weight:700;padding:.2rem .4rem;border-radius:.35rem;transition:all .15s}
+    .ud-bud-btn.down:hover{border-color:var(--bad);color:var(--bad)}
+    .ud-bud-btn.up:hover{border-color:var(--ok);color:var(--ok)}
+    .ud-bud-btn:disabled{opacity:.35;cursor:not-allowed;border-style:dashed}
+    .ud-bud-btn:disabled:hover{border-color:var(--border);color:var(--fg)}
+    .ud-bud-cancel{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.78rem;padding:.1rem .2rem;border-radius:.3rem;line-height:1}
+    .ud-bud-cancel:hover{color:var(--bad)}
     /* utm selector */
     .drill-title-row{position:relative;display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem}
     .utm-selector{display:inline-flex;align-items:center;gap:.5rem;cursor:pointer;padding:.4rem .875rem;background:var(--sec);border:1px solid var(--border);border-radius:.625rem;transition:all .15s;user-select:none}
@@ -2506,7 +2546,10 @@ function sortTable(tableId,colIdx,headerEl){
 
   const pairs=Array.from(tbody.rows)
     .filter(r=>r.classList.contains('utm-row'))
-    .map(r=>[r,null]);
+    .map(r=>{
+      const nx=r.nextElementSibling;
+      return [r,(nx&&nx.classList.contains('utm-detail-row'))?nx:null];
+    });
 
   const cur=headerEl.dataset.sortDir||'';
   const dir=cur==='desc'?'asc':'desc';
@@ -4676,8 +4719,9 @@ function renderCampTable(rows){
 
     const inicio=r.data_inicio?r.data_inicio.split('-').reverse().join('/'):'—';
 
-    return`<tr class="anim utm-row" style="animation-delay:${i*20}ms">
+    return`<tr class="anim utm-row" data-utm="${esc(r.ad_utm||'')}" style="animation-delay:${i*20}ms">
       <td><div class="td-av">
+        <button class="utm-exp-btn" onclick="toggleUtmExpand('${esc(r.ad_utm||'')}',this)" title="Ver conjuntos ativos">▶</button>
         <div class="t-av">${esc((r.ad_utm||'?').charAt(0).toUpperCase())}</div>
         ${paisBadge}<span style="font-family:monospace;font-size:.8rem">${esc(r.ad_utm)}</span>
       </div></td>
@@ -5536,6 +5580,153 @@ async function saveBudget(adsetId,utm,adsetName,budgetAntes){
     if(!r.ok)throw new Error(d.error||r.statusText);
     showToast('ok','Orçamento atualizado!');
   }catch(e){showToast('err','Erro: '+e.message);}
+}
+
+/* ═══ OTIMIZAÇÃO RÁPIDA — expandir conjuntos ativos inline na aba Campanhas ═══ */
+window._adsetMapInline=window._adsetMapInline||{};
+const escA=s=>esc(s).replace(/"/g,'&quot;');
+
+// Semáforo: Sessão/Lead (SPL) vs Break Even (BE). ótimo≥BE×1.2 · bom≥BE · ruim<BE
+function corSPL(spl,be){
+  if(spl==null||be==null||be<=0)return'';
+  if(spl>=be*1.2)return'ok';
+  if(spl>=be)return'warn';
+  return'bad';
+}
+
+async function toggleUtmExpand(utm,btn){
+  const row=btn.closest('tr');
+  const nxt=row.nextElementSibling;
+  // Já aberta nesta UTM → fecha
+  if(nxt&&nxt.classList.contains('utm-detail-row')&&nxt.dataset.utm===utm){
+    nxt.remove();btn.classList.remove('open');return;
+  }
+  // Acordeão: fecha qualquer outra aberta
+  document.querySelectorAll('#camp-db-body .utm-detail-row').forEach(el=>el.remove());
+  document.querySelectorAll('#camp-db-body .utm-exp-btn.open').forEach(el=>el.classList.remove('open'));
+  btn.classList.add('open');
+
+  const rowData=(S.campRows||[]).find(r=>r.ad_utm===utm)||{};
+  const rps=+(rowData.rps||0);
+  const ncols=row.children.length;
+  const detail=document.createElement('tr');
+  detail.className='utm-detail-row';detail.dataset.utm=utm;
+  detail.innerHTML=`<td colspan="${ncols}"><div class="utm-detail"><div class="utm-detail-load">Carregando conjuntos ativos…</div></div></td>`;
+  row.after(detail);
+  const box=detail.querySelector('.utm-detail');
+
+  try{
+    const since=document.getElementById('f-since').value;
+    const until=document.getElementById('f-until').value;
+    const r=await fetch(`/api/drilldown/${encodeURIComponent(utm)}?since=${since}&until=${until}`);
+    if(!r.ok)throw new Error((await r.json()).error||r.statusText);
+    const d=await r.json();
+    renderUtmAdsets(box,utm,d,rps);
+  }catch(e){
+    box.innerHTML=`<div class="utm-detail-load" style="color:var(--bad)">${esc(e.message)}</div>`;
+  }
+}
+
+function renderUtmAdsets(box,utm,d,rps){
+  const adsets=(d.adsets||[]).filter(a=>a.status==='ACTIVE').sort((a,b)=>(b.spend||0)-(a.spend||0));
+  if(!adsets.length){
+    box.innerHTML=`<div class="utm-detail-load">Nenhum conjunto ativo com gasto no período.</div>`;
+    return;
+  }
+  const utmS=escA(utm);
+  const rowsHtml=adsets.map(a=>{
+    window._adsetMapInline[a.adset_id]=a;
+    const resultado=+(a.resultado_vc||0);
+    const conversas=+(a.conversas||0);
+    const spend=+(a.spend||0);
+    const custoRes=resultado>0?spend/resultado:0;
+    const spl=resultado>0?conversas/resultado:null;
+    const be=(custoRes>0&&rps>0)?custoRes/rps:null;
+    const cls=corSPL(spl,be);
+    const nmFull=escA(a.adset_name||'');
+    const short=esc((a.adset_name&&(a.adset_name.match(/\bV\d+$/)||[])[0])||a.adset_name||'—');
+    const bud=+(a.daily_budget||0);
+    const aid=escA(a.adset_id);
+    return `<tr>
+      <td class="ud-nm" title="${nmFull}">
+        <label class="ios-switch ud-sw" title="Ligar/desligar conjunto">
+          <input type="checkbox" checked onchange="toggleAdset('${aid}',this,'${utmS}','${nmFull}')">
+          <span class="ios-slider"></span>
+        </label>
+        <span>${short}</span>
+      </td>
+      <td class="mo">${BRL(spend)}</td>
+      <td class="mo">${NUM(resultado)}</td>
+      <td class="mo">${custoRes>0?BRL(custoRes):'—'}</td>
+      <td class="mo">${NUM(conversas)}</td>
+      <td class="mo"><span class="ud-pill ${cls}">${spl!=null?spl.toFixed(2):'—'}</span></td>
+      <td class="mo">${be!=null?be.toFixed(2):'—'}</td>
+      <td class="ud-bud" data-aid="${aid}" data-utm="${utmS}" data-nome="${nmFull}" data-bud="${bud}" data-min="${+(a.min_budget||1)}">
+        <span class="ud-bud-val">${bud>0?BRL(bud):'—'}</span>
+        <button class="ud-bud-edit" title="Editar orçamento" onclick="editarOrcamento(this)">✎</button>
+        <span class="ud-bud-ctrls" style="display:none">
+          <button class="ud-bud-btn down" title="Diminuir 20%" onclick="ajustarOrcamento20(this,0.8)">−20%</button>
+          <button class="ud-bud-btn up" title="Aumentar 20%" onclick="ajustarOrcamento20(this,1.2)">+20%</button>
+          <button class="ud-bud-cancel" title="Fechar" onclick="editarOrcamento(this)">✕</button>
+        </span>
+      </td>
+    </tr>`;
+  }).join('');
+  box.innerHTML=`
+    <div class="ud-head">
+      <span><b>${adsets.length}</b> conjunto(s) ativo(s)</span>
+      <span class="ud-rps">RPS da UTM: <b>${rps>0?BRL(rps):'—'}</b></span>
+      <span class="ud-legend"><i class="ok"></i>ótimo <i class="warn"></i>bom <i class="bad"></i>ruim <small>(Sessão/Lead vs Break Even)</small></span>
+    </div>
+    <div class="ud-table-wrap"><table class="ud-table"><thead><tr>
+      <th>Conjunto</th><th>Gasto</th><th>Resultado</th><th>Custo/Res.</th><th>Conversas</th>
+      <th title="Conversas iniciadas ÷ Resultado">Sessão/Lead</th><th title="Custo por resultado ÷ RPS">Break Even</th><th>Orçamento/dia</th>
+    </tr></thead><tbody>${rowsHtml}</tbody></table></div>`;
+}
+
+// Abre/fecha o modo edição (revela os botões ±20% ao lado do valor)
+function editarOrcamento(btn){
+  const cell=btn.closest('.ud-bud');
+  const bud=+cell.dataset.bud;
+  if(!(bud>0)){showToast('err','Conjunto sem orçamento próprio (CBO?) — ajuste pela campanha');return;}
+  const ctrls=cell.querySelector('.ud-bud-ctrls');
+  const edit=cell.querySelector('.ud-bud-edit');
+  const open=ctrls.style.display==='none';
+  if(open){
+    // bloqueia o -20% se a redução cairia abaixo do mínimo da Meta (1 USD na moeda da conta)
+    const min=+(cell.dataset.min||1);
+    const down=cell.querySelector('.ud-bud-btn.down');
+    const blocked=+(bud*0.8).toFixed(2)<min;
+    down.disabled=blocked;
+    down.title=blocked?`No mínimo da Meta (${BRL(min)}/dia)`:'Diminuir 20%';
+  }
+  ctrls.style.display=open?'inline-flex':'none';
+  edit.style.display=open?'none':'inline-flex';
+}
+
+async function ajustarOrcamento20(btn,fator){
+  const cell=btn.closest('.ud-bud');
+  const adsetId=cell.dataset.aid, utm=cell.dataset.utm, nome=cell.dataset.nome;
+  const atual=+cell.dataset.bud;
+  const min=+(cell.dataset.min||1);
+  if(!atual||atual<=0){showToast('err','Conjunto sem orçamento próprio (CBO?) — ajuste pela campanha');return;}
+  const novo=+(atual*fator).toFixed(2);
+  if(fator<1&&novo<min){showToast('err',`Mínimo da Meta: ${BRL(min)}/dia — não dá pra reduzir mais`);return;}
+  if(!confirm(`Confirmar: ${fator>1?'aumentar':'diminuir'} 20% o orçamento de "${nome}"?\n\nR$ ${atual.toFixed(2)} → R$ ${novo.toFixed(2)}/dia`))return;
+  cell.querySelectorAll('.ud-bud-btn').forEach(b=>b.disabled=true);
+  try{
+    const r=await fetch(`/api/meta/adset/${adsetId}/budget`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({daily_budget:novo,utm,adset_name:nome,budget_antes:atual})});
+    const dd=await r.json();
+    if(!r.ok)throw new Error(dd.error||r.statusText);
+    showToast('ok',`Orçamento → R$ ${novo.toFixed(2)}/dia`);
+    cell.dataset.bud=novo;
+    cell.querySelector('.ud-bud-val').textContent=BRL(novo);
+    if(window._adsetMapInline[adsetId])window._adsetMapInline[adsetId].daily_budget=novo;
+    // colapsa de volta para a visão "valor + lápis"
+    cell.querySelector('.ud-bud-ctrls').style.display='none';
+    cell.querySelector('.ud-bud-edit').style.display='inline-flex';
+  }catch(e){showToast('err','Erro: '+e.message);}
+  finally{cell.querySelectorAll('.ud-bud-btn').forEach(b=>b.disabled=false);}
 }
 
 /* ═══ HISTÓRICO ═══ */
