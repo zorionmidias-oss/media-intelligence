@@ -14,15 +14,16 @@ function verifyPassword(senha, hash) {
   return bcrypt.compare(senha, hash);
 }
 
-function generateToken(userId) {
-  return jwt.sign({ uid: userId }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
+function generateToken(userId, perfil) {
+  return jwt.sign({ uid: userId, perfil: perfil || 'admin' }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
 }
 
+// Returns { uid, perfil } or null. perfil defaults to 'admin' for legacy tokens.
 function verifyToken(token) {
   if (!token) return null;
   try {
     const payload = jwt.verify(token, JWT_SECRET);
-    return payload.uid;
+    return { uid: payload.uid, perfil: payload.perfil || 'admin' };
   } catch {
     return null;
   }
@@ -30,8 +31,8 @@ function verifyToken(token) {
 
 function requireAuth(req, res, next) {
   const token = req.cookies?.[COOKIE_NAME] || req.headers.authorization?.replace('Bearer ', '');
-  const userId = verifyToken(token);
-  if (!userId) {
+  const payload = verifyToken(token);
+  if (!payload) {
     if (req.path.startsWith('/api/')) {
       return res.status(401).json({ error: 'Não autenticado' });
     }
@@ -43,8 +44,17 @@ function requireAuth(req, res, next) {
     }
     return res.redirect('/login.html');
   }
-  req.userId = userId;
+  req.userId = payload.uid;
+  req.userPerfil = payload.perfil;
   next();
 }
 
-module.exports = { hashPassword, verifyPassword, generateToken, verifyToken, requireAuth, COOKIE_NAME };
+// Blocks routes for the 'restrito' profile (Overview + Campanhas only).
+function requireAdmin(req, res, next) {
+  if (req.userPerfil === 'restrito') {
+    return res.status(403).json({ error: 'Acesso negado' });
+  }
+  next();
+}
+
+module.exports = { hashPassword, verifyPassword, generateToken, verifyToken, requireAuth, requireAdmin, COOKIE_NAME };

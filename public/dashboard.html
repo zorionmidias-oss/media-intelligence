@@ -641,6 +641,9 @@
     .utm-exp-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.7rem;padding:0 .25rem;margin-right:.1rem;transition:transform .18s,color .18s;line-height:1}
     .utm-exp-btn:hover{color:var(--accent)}
     .utm-exp-btn.open{transform:rotate(90deg);color:var(--accent)}
+    /* Perfil restrito: esconde coluna de ações nas campanhas + badge de domínios pendentes */
+    body.perfil-restrito .col-acoes{display:none}
+    body.perfil-restrito #pend-badge{display:none!important}
     .utm-detail-row>td{padding:0!important;background:var(--bg)}
     .utm-detail{padding:.6rem .75rem .85rem;border-bottom:2px solid var(--accent);box-shadow:inset 0 8px 14px -10px rgba(0,0,0,.45)}
     .utm-detail-load{color:var(--muted);font-size:.78rem;padding:.6rem .25rem}
@@ -1534,7 +1537,7 @@
           <table id="camp-table">
             <thead><tr>
               <th>UTM</th><th>Domínio</th><th>Investido</th><th>Fat. Real</th><th>Lucro</th><th>ROAS</th>
-              <th class="col-h" data-col="cpc">CPC</th><th class="col-h" data-col="custo-res">Custo/Result.</th><th class="col-h" data-col="resultados">Resultados</th><th class="col-h" data-col="imp-gam">Imp. GAM</th><th class="col-h" data-col="ecpm">eCPM <span title="eCPM atribuído por UTM campaign via relatórios GAM. O eCPM nos KPIs globais (aba GAM) vem de blocos_anuncio e pode divergir, pois agrega todos os blocos independente da campanha." style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="rps">RPS</th><th class="col-h" data-col="sessoes-meta">Sessões (Meta)</th><th class="col-h" data-col="sessao-conv">Sessão/Conversa</th><th class="col-h" data-col="breakeven">Breakeven</th><th class="col-h" data-col="inicio">Início</th><th>Ações</th>
+              <th class="col-h" data-col="cpc">CPC</th><th class="col-h" data-col="custo-res">Custo/Result.</th><th class="col-h" data-col="resultados">Resultados</th><th class="col-h" data-col="imp-gam">Imp. GAM</th><th class="col-h" data-col="ecpm">eCPM <span title="eCPM atribuído por UTM campaign via relatórios GAM. O eCPM nos KPIs globais (aba GAM) vem de blocos_anuncio e pode divergir, pois agrega todos os blocos independente da campanha." style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="rps">RPS</th><th class="col-h" data-col="sessoes-meta">Sessões (Meta)</th><th class="col-h" data-col="sessao-conv">Sessão/Conversa</th><th class="col-h" data-col="breakeven">Breakeven</th><th class="col-h" data-col="inicio">Início</th><th class="col-acoes">Ações</th>
             </tr></thead>
             <tbody id="camp-db-body"><tr><td colspan="13" class="empty">Carregando…</td></tr></tbody>
           </table>
@@ -2503,6 +2506,30 @@
 /* ═══ STATE ═══ */
 const S={metrics:null,chat:[],busy:false,aiOk:null,sbCol:false,tab:'overview',campKPIs:null};
 
+/* ═══ PERFIL DE ACESSO ═══
+   'restrito' = apenas Overview + Campanhas; sem país/sigla, sem conjuntos. */
+let IS_RESTRITO=false;
+async function loadPerfil(){
+  try{
+    const r=await fetch('/api/auth/me');
+    if(r.ok){const u=await r.json();IS_RESTRITO=(u&&u.perfil==='restrito');}
+  }catch(e){}
+  if(IS_RESTRITO)applyPerfilGating();
+}
+function applyPerfilGating(){
+  document.body.classList.add('perfil-restrito');
+  // Sidebar: manter apenas Overview e Campanhas
+  document.querySelectorAll('.sb-nav .nav-btn').forEach(b=>{
+    const oc=b.getAttribute('onclick')||'';
+    if(!/nav\('overview'|nav\('campaigns'/.test(oc))b.style.display='none';
+  });
+  document.querySelectorAll('.sb-sep').forEach(s=>s.style.display='none');
+  const dom=document.getElementById('nav-domains');if(dom)dom.style.display='none';
+  const criar=document.querySelector('.btn-criar-campanha');if(criar)criar.style.display='none';
+  const pendBadge=document.getElementById('pend-badge');if(pendBadge)pendBadge.style.display='none';
+  const ps=document.getElementById('pais-section');if(ps)ps.style.display='none';
+}
+
 /* ═══ FORMAT ═══ */
 // loc, BRL, PCT, NUM definidas em /js/formatters.js (carregado no <head>)
 const ROAS=n=>n==null||isNaN(+n)?'—':loc(n,2)+'x';
@@ -3446,6 +3473,7 @@ function getPaisEmoji(sigla){return PAISES_EMOJI[sigla]||'🌍';}
 let _paisesData=null;
 
 async function loadPaises(){
+  if(IS_RESTRITO)return;
   const since=document.getElementById('f-since')?.value||'';
   const until=document.getElementById('f-until')?.value||'';
   const sec=document.getElementById('pais-section');
@@ -4769,9 +4797,11 @@ function renderCampTable(rows){
       ?`<span class="badge" style="background:var(--sec-strong);color:var(--muted)">${esc(r.dominio)}</span>`
       :'<span style="color:var(--muted)">—</span>';
 
-    const paisBadge=r.pais_sigla
+    const paisBadge=(!IS_RESTRITO&&r.pais_sigla)
       ?`<span title="${esc(r.pais_nome||r.pais_sigla)}" style="display:inline-flex;align-items:center;gap:2px;background:var(--sec-strong);border-radius:4px;padding:1px 5px;font-size:.65rem;color:var(--muted);margin-right:4px;flex-shrink:0">${getPaisEmoji(r.pais_sigla)} ${esc(r.pais_sigla)}</span>`
       :'';
+    // Perfil restrito: sem conjuntos (expand). A coluna Ações é escondida via CSS (.col-acoes).
+    const expBtn=IS_RESTRITO?'':`<button class="utm-exp-btn" onclick="toggleUtmExpand('${esc(r.ad_utm||'')}',this)" title="Ver conjuntos ativos">▶</button>`;
 
     // Sessão/Conversa com pílula colorida comparando vs breakeven
     const spc=r.sessao_por_conversa;
@@ -4790,7 +4820,7 @@ function renderCampTable(rows){
 
     return`<tr class="anim utm-row" data-utm="${esc(r.ad_utm||'')}" style="animation-delay:${i*20}ms">
       <td><div class="td-av">
-        <button class="utm-exp-btn" onclick="toggleUtmExpand('${esc(r.ad_utm||'')}',this)" title="Ver conjuntos ativos">▶</button>
+        ${expBtn}
         <div class="t-av">${esc((r.ad_utm||'?').charAt(0).toUpperCase())}</div>
         ${paisBadge}<span style="font-family:monospace;font-size:.8rem">${esc(r.ad_utm)}</span>
       </div></td>
@@ -4809,7 +4839,7 @@ function renderCampTable(rows){
       <td class="mo col-h" data-col="sessao-conv" data-sort="${spc!==null&&spc!==undefined?spc:-1}">${spcHtml}</td>
       <td class="mo col-h" data-col="breakeven" data-sort="${be!==null&&be!==undefined?be:-1}">${be!==null&&be!==undefined?be.toFixed(2):'<span style="color:var(--muted)">—</span>'}</td>
       <td class="mo col-h" data-col="inicio" data-sort="${r.data_inicio||''}">${inicio}</td>
-      <td style="white-space:nowrap">
+      <td class="col-acoes" style="white-space:nowrap">
         <button class="act-btn" onclick="abrirHistorico('${esc(r.ad_utm||'')}')" title="Histórico">📜</button>
       </td>
     </tr>`;
@@ -4853,7 +4883,7 @@ function renderCampTable(rows){
     <td class="mo col-h" data-col="sessao-conv"><strong>${totSpcHtml}</strong></td>
     <td class="mo col-h" data-col="breakeven"><strong>${totBe!==null?totBe.toFixed(2):'—'}</strong></td>
     <td class="mo col-h" data-col="inicio">—</td>
-    <td></td>
+    <td class="col-acoes"></td>
   </tr>`;
 
   tb.innerHTML=html+totalRow;
@@ -4899,6 +4929,7 @@ document.addEventListener('click',e=>{
 
 /* ═══ DOMÍNIOS ═══ */
 async function loadDominios(){
+  if(IS_RESTRITO)return;
   try{
     const [domRes,pendRes]=await Promise.all([
       fetch('/api/dominios').then(r=>r.json()),
@@ -4982,6 +5013,7 @@ async function checkSyncStatus(){
 }
 
 async function checkPendingStatus(){
+  if(IS_RESTRITO)return;
   try{
     const res=await fetch('/api/dominios/pendentes');
     if(!res.ok)return;
@@ -6372,6 +6404,7 @@ async function deleteTipoAcao(id){
 (async()=>{
   dpInit();
   initTheme();
+  await loadPerfil();
   await populateDomainSelect();
   await loadDominios();
   // Init sortable headers (thead is static even before data)

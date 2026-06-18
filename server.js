@@ -33,7 +33,7 @@ const supabase = require('./src/lib/supabase');
 const { syncAll, fetchAndSaveHourly, syncPaginas } = require('./src/lib/sync');
 const { resolveCountry, extractAdUTM } = require('./src/lib/parser');
 const { startScheduler } = require('./src/lib/scheduler');
-const { hashPassword, verifyPassword, generateToken, requireAuth, COOKIE_NAME } = require('./src/lib/auth');
+const { hashPassword, verifyPassword, generateToken, verifyToken, requireAuth, requireAdmin, COOKIE_NAME } = require('./src/lib/auth');
 const { registrarHistorico } = require('./src/lib/historico');
 
 const app = express();
@@ -43,6 +43,29 @@ const COOKIE_OPTS = { httpOnly: true, sameSite: 'strict', maxAge: 7 * 24 * 3600 
 
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
+
+// ── Gate global do perfil 'restrito' ──────────────────────────────────────────
+// Restrito = apenas Overview + Campanhas. Só pode acessar os endpoints que essas
+// duas telas usam; qualquer outra rota /api/* retorna 403 (rotas novas já nascem
+// bloqueadas — defesa contra vazamento de tokens/contas/país via F12).
+const RESTRITO_ALLOW = new Set([
+  'GET /api/overview',
+  'GET /api/dashboard',
+  'GET /api/dominios',
+  'GET /api/gam-status',
+  'GET /api/intraday',
+  'GET /api/orcamento-status',
+  'GET /api/reports-gam',
+  'GET /api/sync/log',
+]);
+app.use((req, res, next) => {
+  if (!req.path.startsWith('/api/') || req.path.startsWith('/api/auth/')) return next();
+  const token = req.cookies?.[COOKIE_NAME] || req.headers.authorization?.replace('Bearer ', '');
+  const payload = verifyToken(token);
+  if (!payload || payload.perfil !== 'restrito') return next(); // auth real fica nas rotas
+  if (RESTRITO_ALLOW.has(req.method + ' ' + req.path)) return next();
+  return res.status(403).json({ error: 'Acesso negado' });
+});
 
 // ── Public HTML routes ────────────────────────────────────────────────────────
 app.get('/privacidade', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'privacidade.html')));
@@ -65,7 +88,7 @@ app.post('/api/auth/login', async (req, res) => {
   if (!email || !password) return res.status(400).json({ error: 'Email e senha são obrigatórios' });
   const { data: users, error } = await supabase
     .from('usuarios')
-    .select('id,email,senha_hash,nome,ativo')
+    .select('id,email,senha_hash,nome,ativo,perfil')
     .eq('email', email.toLowerCase().trim())
     .limit(1);
   if (error || !users?.length) return res.status(401).json({ error: 'Credenciais inválidas' });
@@ -74,7 +97,7 @@ app.post('/api/auth/login', async (req, res) => {
   const ok = await verifyPassword(password, user.senha_hash);
   if (!ok) return res.status(401).json({ error: 'Credenciais inválidas' });
   await supabase.from('usuarios').update({ ultimo_acesso: new Date().toISOString() }).eq('id', user.id);
-  const token = generateToken(user.id);
+  const token = generateToken(user.id, user.perfil);
   res.cookie(COOKIE_NAME, token, COOKIE_OPTS);
   res.json({ ok: true, nome: user.nome || user.email });
 });
@@ -85,8 +108,8 @@ app.post('/api/auth/logout', (req, res) => {
 });
 
 app.get('/api/auth/me', requireAuth, async (req, res) => {
-  const { data } = await supabase.from('usuarios').select('id,email,nome').eq('id', req.userId).single();
-  res.json(data || { id: req.userId });
+  const { data } = await supabase.from('usuarios').select('id,email,nome,perfil').eq('id', req.userId).single();
+  res.json(data ? { ...data, perfil: req.userPerfil || data.perfil || 'admin' } : { id: req.userId, perfil: req.userPerfil || 'admin' });
 });
 
 // ── Legacy live-API routes ──────────────────────────────────────────────────
@@ -475,7 +498,7 @@ app.get('/api/utms', requireAuth, async (req, res) => {
 
 // ── Conjuntos ativos por UTM (ads ACTIVE na Meta → adset_ids distintos) ───────
 let _conjAtivosCache = { ts: 0, data: null };
-app.get('/api/utms/conjuntos-ativos', requireAuth, async (_req, res) => {
+app.get('/api/utms/conjuntos-ativos', requireAuth, requireAdmin, async (_req, res) => {
   try {
     if (_conjAtivosCache.data && Date.now() - _conjAtivosCache.ts < 60000) {
       return res.json(_conjAtivosCache.data);
@@ -526,7 +549,7 @@ app.get('/api/utms/conjuntos-ativos', requireAuth, async (_req, res) => {
 });
 
 // ── Drilldown ─────────────────────────────────────────────────────────────────
-app.get('/api/drilldown/:utm', requireAuth, drilldownHandler);
+app.get('/api/drilldown/:utm', requireAuth, requireAdmin, drilldownHandler);
 
 // ── Otimizações ───────────────────────────────────────────────────────────────
 // Static routes must come BEFORE :id param routes to avoid capture
@@ -769,7 +792,7 @@ app.post('/api/meta/ad/:id/toggle', requireAuth, async (req, res) => {
 });
 
 // ── Performance por País ──────────────────────────────────────────────────────
-app.get('/api/paises', requireAuth, async (req, res) => {
+app.get('/api/paises', requireAuth, requireAdmin, async (req, res) => {
   try {
     const now = new Date();
     const defaultSince = new Date(now.getTime() - 30 * 86400000).toISOString().slice(0, 10);
@@ -864,7 +887,7 @@ function _apDefaults(req) {
 }
 
 // MUST be before /:sigla to avoid 'nichos' matching as a sigla
-app.get('/api/analise-paises/nichos', requireAuth, async (req, res) => {
+app.get('/api/analise-paises/nichos', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { since, until } = _apDefaults(req);
     const { data, error } = await supabase
@@ -879,7 +902,7 @@ app.get('/api/analise-paises/nichos', requireAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/analise-paises/:sigla', requireAuth, async (req, res) => {
+app.get('/api/analise-paises/:sigla', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { since, until, nicho, tipo } = _apDefaults(req);
     const sigla = req.params.sigla;
@@ -927,7 +950,7 @@ app.get('/api/analise-paises/:sigla', requireAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/analise-paises', requireAuth, async (req, res) => {
+app.get('/api/analise-paises', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { since, until, nicho, tipo } = _apDefaults(req);
     let q = supabase

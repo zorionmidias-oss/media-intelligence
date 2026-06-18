@@ -188,7 +188,12 @@ async function handler(req, res) {
       ? +((tI / tC) / kpis.rps_sessao_total).toFixed(2)
       : null;
 
-    res.json({ kpis, rows: aggregated });
+    // Perfil 'restrito' não pode ver país: remove sigla/nome do país das linhas.
+    const out = req.userPerfil === 'restrito'
+      ? aggregated.map(({ pais_sigla, pais_nome, ...rest }) => rest)
+      : aggregated;
+
+    res.json({ kpis, rows: out });
   } catch (err) {
     console.error('[dashboard]', err.message);
     res.status(500).json({ error: err.message });

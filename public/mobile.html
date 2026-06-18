@@ -547,6 +547,17 @@ window.addEventListener('load',()=>setTimeout(window.hideLoading,400));
 
 // ── Navigation ────────────────────────────────────────────────────────────────
 const TABS=['overview','campanhas','paises','gam'];
+// Perfil 'restrito': apenas Overview + Campanhas (sem Países/GAM).
+async function applyPerfilMobile(){
+  try{
+    const r=await fetch('/api/auth/me');
+    if(!r.ok)return;
+    const u=await r.json();
+    if(u&&u.perfil==='restrito'){
+      document.querySelectorAll('.bnav-btn[data-tab="paises"],.bnav-btn[data-tab="gam"]').forEach(b=>b.style.display='none');
+    }
+  }catch(e){}
+}
 function navTo(tab){
   TABS.forEach(t=>{const s=document.getElementById('sec-'+t);if(s)s.classList.toggle('act',t===tab);});
   document.querySelectorAll('.bnav-btn[data-tab]').forEach(b=>b.classList.toggle('act',b.dataset.tab===tab));
@@ -1188,6 +1199,7 @@ if('serviceWorker'in navigator){navigator.serviceWorker.register('/sw.js').catch
 initDates();
 initTheme();
 initEye();
+applyPerfilMobile();
 loadDomainOptions();
 loadOverview();
 loadIntraday();
