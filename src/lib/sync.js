@@ -405,10 +405,27 @@ async function fetchAndSaveHourly(date) {
   const gamMap = {};
   for (const h of gamRows) gamMap[h.hora] = h;
 
+  // Se a busca horária da Meta voltou vazia (falha transitória de API/Supabase
+  // → fallback { _global_: {} }, ou meta_accounts vazio), NÃO zerar o investimento
+  // já gravado. Sem isto, toda hora com receita GAM > 0 era reescrita com
+  // investimento_brl = 0 (o guard de skip mantém a linha viva pela receita),
+  // destruindo o investimento global correto até o próximo sync bem-sucedido.
+  const metaHourlyEmpty = Object.keys(globalHoraMap).length === 0;
+  const existingInvGlobal = {};
+  if (metaHourlyEmpty) {
+    const { data: prev } = await supabase.from('dados_hora')
+      .select('hora,investimento_brl')
+      .eq('data', date).eq('dominio_id', 0);
+    for (const p of prev || []) existingInvGlobal[p.hora] = +(p.investimento_brl || 0);
+    console.warn(`[hourly] ${date}: Meta horária vazia — preservando investimento global existente (sem zerar)`);
+  }
+
   const rows = [];
   for (let hora = 0; hora < 24; hora++) {
     const gam = gamMap[hora];
-    const inv = +(globalHoraMap[hora] || 0).toFixed(4);
+    const inv = metaHourlyEmpty
+      ? +(existingInvGlobal[hora] || 0).toFixed(4)
+      : +(globalHoraMap[hora] || 0).toFixed(4);
     const rec = gam?.receita || 0;
     const imp = gam?.impressoes || 0;
     if (rec === 0 && inv === 0 && imp === 0) continue;
