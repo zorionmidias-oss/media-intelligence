@@ -644,6 +644,22 @@
     /* Perfil restrito: esconde coluna de ações nas campanhas + badge de domínios pendentes */
     body.el-no-acoes .col-acoes{display:none}
     body.no-domains #pend-badge{display:none!important}
+    /* Acessos (RBAC) */
+    .acessos-subtab.on{background:#3b82f6!important;color:#fff!important;border-color:transparent}
+    .ac-section-title{font-weight:600;font-size:.8rem;margin:14px 0 4px;color:var(--fg)}
+    .ac-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px}
+    .ac-tela-row{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--sec);border-radius:6px;padding:6px 8px}
+    .ac-tela-row select{font-size:.72rem;padding:2px 4px}
+    .ac-chk{display:flex;align-items:center;gap:6px;background:var(--sec);border-radius:6px;padding:6px 8px;font-size:.78rem;cursor:pointer}
+    .ac-tbl{width:100%;border-collapse:collapse;font-size:.82rem}
+    .ac-tbl th,.ac-tbl td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--bd,rgba(255,255,255,.07))}
+    .ac-tbl th{color:var(--muted);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.03em}
+    .ac-badge{display:inline-block;padding:1px 7px;border-radius:99px;font-size:.68rem;font-weight:600}
+    .ac-badge.admin{background:rgba(99,102,241,.18);color:#a5b4fc}
+    .ac-badge.colab{background:var(--sec-strong);color:var(--muted)}
+    .ac-act{background:transparent;border:none;cursor:pointer;font-size:.95rem;padding:3px 5px;border-radius:5px;color:var(--muted)}
+    .ac-act:hover{background:var(--sec-strong)}
+    .ac-act.danger:hover{color:var(--bad)}
     .utm-detail-row>td{padding:0!important;background:var(--bg)}
     .utm-detail{padding:.6rem .75rem .85rem;border-bottom:2px solid var(--accent);box-shadow:inset 0 8px 14px -10px rgba(0,0,0,.45)}
     .utm-detail-load{color:var(--muted);font-size:.78rem;padding:.6rem .25rem}
@@ -1244,6 +1260,11 @@
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
       <span class="nav-lbl">Diretório</span>
     </button>
+    <button class="nav-btn" id="nav-acessos" onclick="nav('acessos',this)" style="display:none">
+      <span class="nav-ind"></span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span class="nav-lbl">Acessos</span>
+    </button>
   </nav>
   <div class="sb-foot">
     <button class="nav-btn" id="nav-domains" onclick="nav('domains',this)" style="width:100%">
@@ -1745,6 +1766,29 @@
           <button class="btn btn-p" onclick="openModalAddLink()">+ Adicionar Link</button>
         </div>
         <div id="diretorio-body" style="margin-top:1rem">
+          <div class="empty" style="padding:2rem">Carregando…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACESSOS (gestão de usuários / RBAC) -->
+    <div id="tab-acessos" class="tab-panel">
+      <div class="sec">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+          <div>
+            <div class="chart-title">Acessos</div>
+            <div class="chart-sub">Usuários, níveis de acesso e auditoria</div>
+          </div>
+          <button class="btn btn-p" onclick="openModalNovoAcesso()">+ Novo acesso</button>
+        </div>
+        <div style="display:flex;gap:.5rem;margin-top:1rem">
+          <button class="btn btn-s acessos-subtab on" id="acessos-subtab-users" onclick="acessosShowTab('users',this)">Usuários</button>
+          <button class="btn btn-s acessos-subtab" id="acessos-subtab-log" onclick="acessosShowTab('log',this)">Histórico</button>
+        </div>
+        <div id="acessos-users" style="margin-top:1rem">
+          <div class="empty" style="padding:2rem">Carregando…</div>
+        </div>
+        <div id="acessos-log" style="margin-top:1rem;display:none">
           <div class="empty" style="padding:2rem">Carregando…</div>
         </div>
       </div>
@@ -2372,6 +2416,42 @@
   </div>
 </div>
 
+<div class="modal-bg" id="modal-acesso" onclick="if(event.target===this)closeModal('modal-acesso')">
+  <div class="modal" style="width:min(640px,96vw);max-height:90vh;overflow:auto">
+    <div class="modal-hd">
+      <span class="modal-title" id="modal-acesso-title">Novo acesso</span>
+      <button class="modal-close" onclick="closeModal('modal-acesso')">✕</button>
+    </div>
+    <input type="hidden" id="ac-edit-id" />
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+      <div class="field" style="flex:1;min-width:180px"><label>Nome</label><input type="text" id="ac-nome" placeholder="Nome do usuário" /></div>
+      <div class="field" style="flex:1;min-width:180px"><label>Email / usuário *</label><input type="text" id="ac-email" placeholder="email ou usuário de login" /></div>
+    </div>
+    <div class="field" id="ac-senha-wrap"><label id="ac-senha-label">Senha *</label><input type="password" id="ac-senha" placeholder="mínimo 4 caracteres" /></div>
+    <div class="field">
+      <label>Nível de acesso</label>
+      <select id="ac-perfil" onchange="acessoTogglePerfil()">
+        <option value="colaborador">Colaborador (acesso selecionado)</option>
+        <option value="admin">Administrador (acesso total)</option>
+      </select>
+    </div>
+    <div id="ac-colab-config">
+      <div class="ac-section-title">Telas</div>
+      <div class="chart-sub" style="margin:-2px 0 6px">O que não for marcado fica bloqueado no servidor.</div>
+      <div id="ac-telas" class="ac-grid"></div>
+      <div class="ac-section-title">Domínios</div>
+      <label style="display:flex;align-items:center;gap:6px;margin:4px 0;cursor:pointer"><input type="checkbox" id="ac-dom-todos" onchange="acessoToggleDomTodos()" /> Todos os domínios</label>
+      <div id="ac-dominios" class="ac-grid"></div>
+      <div class="ac-section-title">Elementos</div>
+      <div id="ac-elementos" class="ac-grid"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-s" onclick="closeModal('modal-acesso')">Cancelar</button>
+      <button class="btn btn-p" id="btn-salvar-acesso" onclick="salvarAcesso()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL IMPOSTO -->
 <div class="modal-bg" id="modal-imposto" onclick="if(event.target===this)closeModal('modal-imposto')">
   <div class="modal" style="width:min(400px,95vw)">
@@ -2723,7 +2803,7 @@ function toggleSb(){
 }
 
 /* ═══ NAV ═══ */
-const TITLES={overview:'Overview',campaigns:'Campanhas','analise-paises':'Análise de País',gam:'Reports GAM',funil:'Análise de Funil',otimizacoes:'Otimizações',ai:'Análise IA',relatorios:'Relatórios',domains:'Domínios',contas:'Contas Meta',diretorio:'Diretório','criar-campanha':'Criar Campanha'};
+const TITLES={overview:'Overview',campaigns:'Campanhas','analise-paises':'Análise de País',gam:'Reports GAM',funil:'Análise de Funil',otimizacoes:'Otimizações',ai:'Análise IA',relatorios:'Relatórios',domains:'Domínios',contas:'Contas Meta',diretorio:'Diretório',acessos:'Acessos','criar-campanha':'Criar Campanha'};
 function nav(id,btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('on'));
@@ -2738,6 +2818,7 @@ function nav(id,btn){
   if(id==='gam'){showOverlay('Carregando...');loadGAMReport().finally(hideOverlay);return;}
   if(id==='contas'){showOverlay('Carregando...');loadContas().finally(hideOverlay);}
   if(id==='diretorio'){showOverlay('Carregando…');loadDiretorio().finally(hideOverlay);}
+  if(id==='acessos'){showOverlay('Carregando…');loadAcessos().finally(hideOverlay);}
   if(id==='funil'){showOverlay('Carregando…');initFunilTab().finally(hideOverlay);}
   if(id==='criar-campanha'){showOverlay('Carregando templates…');initCriarCampanha().finally(hideOverlay);}
   if(id==='otimizacoes'){showOverlay('Carregando…');initOtimTab().finally(hideOverlay);}
@@ -5281,6 +5362,205 @@ async function deletarLink(id){
     if(!r.ok)throw new Error(d.error||r.statusText);
     showToast('ok','Link excluído');
     loadDiretorio();
+  }catch(e){showToast('err','Erro: '+e.message);}
+}
+
+/* ═══ ACESSOS (gestão de usuários / RBAC) ═══ */
+let _acCatalogo=null,_acUsers=[];
+function fmtUltimoAcesso(iso){
+  if(!iso)return '<span style="color:var(--muted)">nunca acessou</span>';
+  const d=new Date(iso),diff=(Date.now()-d.getTime())/1000;
+  if(diff<60)return 'agora há pouco';
+  if(diff<3600)return 'há '+Math.floor(diff/60)+' min';
+  if(diff<86400)return 'há '+Math.floor(diff/3600)+'h';
+  return d.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+async function loadAcessos(){
+  try{
+    if(!_acCatalogo){
+      const rc=await fetch('/api/acessos/catalogo');
+      if(rc.status===401){location.href='/login.html';return;}
+      if(!rc.ok)throw new Error('catálogo: '+rc.statusText);
+      _acCatalogo=await rc.json();
+    }
+    const r=await fetch('/api/acessos');
+    if(!r.ok)throw new Error((await r.json().catch(()=>({}))).error||r.statusText);
+    _acUsers=await r.json();
+    renderAcessosTable(_acUsers);
+  }catch(e){
+    document.getElementById('acessos-users').innerHTML=`<div class="empty" style="padding:2rem;color:var(--bad)">Erro: ${esc(e.message)}</div>`;
+  }
+}
+function renderAcessosTable(users){
+  const box=document.getElementById('acessos-users');
+  if(!users||!users.length){box.innerHTML='<div class="empty" style="padding:2rem">Nenhum usuário.</div>';return;}
+  const rows=users.map(u=>{
+    const badge=u.perfil==='admin'?'<span class="ac-badge admin">Administrador</span>':'<span class="ac-badge colab">Colaborador</span>';
+    const ativo=u.ativo
+      ?'<span style="color:var(--color-positive,#34d399)">● ativo</span>'
+      :'<span style="color:var(--muted)">○ inativo</span>';
+    return `<tr>
+      <td>${esc(u.nome||'—')}</td>
+      <td>${esc(u.email||'')}</td>
+      <td>${badge}</td>
+      <td>${fmtUltimoAcesso(u.ultimo_acesso)}</td>
+      <td>${ativo}</td>
+      <td style="white-space:nowrap;text-align:right">
+        <button class="ac-act" title="Editar" onclick="editarAcesso(${u.id})">✎</button>
+        <button class="ac-act" title="Resetar senha" onclick="resetSenhaAcesso(${u.id})">🔑</button>
+        <button class="ac-act" title="${u.ativo?'Desativar':'Ativar'}" onclick="toggleAtivoAcesso(${u.id},${u.ativo?'false':'true'})">${u.ativo?'⏸':'▶'}</button>
+        <button class="ac-act danger" title="Excluir" onclick="excluirAcesso(${u.id})">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+  box.innerHTML=`<table class="ac-tbl"><thead><tr>
+    <th>Nome</th><th>Email/usuário</th><th>Nível</th><th>Último acesso</th><th>Status</th><th></th>
+  </tr></thead><tbody>${rows}</tbody></table>`;
+}
+function acessosShowTab(which,btn){
+  document.querySelectorAll('.acessos-subtab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('acessos-users').style.display=which==='users'?'':'none';
+  document.getElementById('acessos-log').style.display=which==='log'?'':'none';
+  if(which==='log')loadAcessosLog();
+}
+async function loadAcessosLog(){
+  const box=document.getElementById('acessos-log');
+  try{
+    const r=await fetch('/api/acessos/log');
+    if(!r.ok)throw new Error(r.statusText);
+    const log=await r.json();
+    if(!log.length){box.innerHTML='<div class="empty" style="padding:2rem">Sem registros ainda.</div>';return;}
+    const acoes={criar:'criou',editar:'editou',resetar_senha:'resetou senha de',ativar:'ativou',desativar:'desativou',excluir:'excluiu'};
+    box.innerHTML=`<table class="ac-tbl"><thead><tr><th>Quando</th><th>Quem</th><th>Ação</th><th>Alvo</th></tr></thead><tbody>${
+      log.map(l=>`<tr>
+        <td>${new Date(l.criado_em).toLocaleString('pt-BR')}</td>
+        <td>${esc(l.ator_nome||'—')}</td>
+        <td>${esc(acoes[l.acao]||l.acao)}</td>
+        <td>${esc(l.alvo_nome||'—')}</td>
+      </tr>`).join('')
+    }</tbody></table>`;
+  }catch(e){box.innerHTML=`<div class="empty" style="padding:2rem;color:var(--bad)">Erro: ${esc(e.message)}</div>`;}
+}
+function buildPermControls(perms){
+  perms=perms||{telas:{},dominios:{todos:false,ids:[]},elementos:{}};
+  // Telas
+  document.getElementById('ac-telas').innerHTML=(_acCatalogo.screens||[]).map(s=>{
+    const v=(perms.telas||{})[s.key]||'';
+    return `<div class="ac-tela-row"><span>${esc(s.label)}</span>
+      <select data-tela="${s.key}">
+        <option value=""${v===''?' selected':''}>Sem acesso</option>
+        <option value="view"${v==='view'?' selected':''}>Ver</option>
+        <option value="edit"${v==='edit'?' selected':''}>Ver e editar</option>
+      </select></div>`;
+  }).join('');
+  // Domínios
+  const dom=perms.dominios||{todos:false,ids:[]};
+  document.getElementById('ac-dom-todos').checked=!!dom.todos;
+  document.getElementById('ac-dominios').innerHTML=(_acCatalogo.dominios||[]).map(d=>{
+    const ck=(dom.ids||[]).map(Number).includes(Number(d.id))?' checked':'';
+    return `<label class="ac-chk"><input type="checkbox" data-dom="${d.id}"${ck} /> ${esc(d.nome)}</label>`;
+  }).join('')||'<span class="chart-sub">Nenhum domínio cadastrado.</span>';
+  // Elementos
+  document.getElementById('ac-elementos').innerHTML=(_acCatalogo.elements||[]).map(e=>{
+    const ck=(perms.elementos||{})[e.key]===true?' checked':'';
+    return `<label class="ac-chk"><input type="checkbox" data-el="${e.key}"${ck} /> ${esc(e.label)}</label>`;
+  }).join('');
+  acessoToggleDomTodos();
+}
+function collectPerms(){
+  const telas={};
+  document.querySelectorAll('#ac-telas select[data-tela]').forEach(s=>{if(s.value)telas[s.getAttribute('data-tela')]=s.value;});
+  const todos=document.getElementById('ac-dom-todos').checked;
+  const ids=[...document.querySelectorAll('#ac-dominios input[data-dom]:checked')].map(i=>Number(i.getAttribute('data-dom')));
+  const elementos={};
+  document.querySelectorAll('#ac-elementos input[data-el]').forEach(i=>{elementos[i.getAttribute('data-el')]=i.checked;});
+  return {telas,dominios:{todos,ids},elementos};
+}
+function acessoTogglePerfil(){
+  const isColab=document.getElementById('ac-perfil').value==='colaborador';
+  document.getElementById('ac-colab-config').style.display=isColab?'':'none';
+}
+function acessoToggleDomTodos(){
+  const todos=document.getElementById('ac-dom-todos').checked;
+  document.querySelectorAll('#ac-dominios input[data-dom]').forEach(i=>{i.disabled=todos;i.parentElement.style.opacity=todos?.45:1;});
+}
+function openModalNovoAcesso(){
+  document.getElementById('modal-acesso-title').textContent='Novo acesso';
+  document.getElementById('ac-edit-id').value='';
+  document.getElementById('ac-nome').value='';
+  document.getElementById('ac-email').value='';
+  document.getElementById('ac-email').disabled=false;
+  document.getElementById('ac-senha').value='';
+  document.getElementById('ac-senha-wrap').style.display='';
+  document.getElementById('ac-senha-label').textContent='Senha *';
+  document.getElementById('ac-perfil').value='colaborador';
+  buildPermControls(null);
+  acessoTogglePerfil();
+  openModal('modal-acesso');
+}
+function editarAcesso(id){
+  const u=_acUsers.find(x=>x.id===id);if(!u){showToast('err','Usuário não encontrado');return;}
+  document.getElementById('modal-acesso-title').textContent='Editar acesso';
+  document.getElementById('ac-edit-id').value=u.id;
+  document.getElementById('ac-nome').value=u.nome||'';
+  document.getElementById('ac-email').value=u.email||'';
+  document.getElementById('ac-senha').value='';
+  document.getElementById('ac-senha-wrap').style.display='none';
+  document.getElementById('ac-perfil').value=u.perfil||'colaborador';
+  buildPermControls(u.permissoes||null);
+  acessoTogglePerfil();
+  openModal('modal-acesso');
+}
+async function salvarAcesso(){
+  const id=document.getElementById('ac-edit-id').value;
+  const nome=document.getElementById('ac-nome').value.trim();
+  const email=document.getElementById('ac-email').value.trim();
+  const senha=document.getElementById('ac-senha').value;
+  const perfil=document.getElementById('ac-perfil').value;
+  if(!email){showToast('err','Email/usuário é obrigatório');return;}
+  if(!id&&(!senha||senha.length<4)){showToast('err','Senha mínima de 4 caracteres');return;}
+  const body={nome,email,perfil};
+  if(perfil==='colaborador')body.permissoes=collectPerms();
+  if(!id)body.senha=senha;
+  const btn=document.getElementById('btn-salvar-acesso');btn.disabled=true;
+  try{
+    const r=await fetch(id?`/api/acessos/${id}`:'/api/acessos',{
+      method:id?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||r.statusText);
+    showToast('ok',id?'Acesso atualizado':'Acesso criado');
+    closeModal('modal-acesso');
+    loadAcessos();
+  }catch(e){showToast('err','Erro: '+e.message);}finally{btn.disabled=false;}
+}
+async function resetSenhaAcesso(id){
+  const u=_acUsers.find(x=>x.id===id);
+  const senha=prompt(`Nova senha para "${u?(u.nome||u.email):'usuário'}" (mín. 4 caracteres):`);
+  if(senha==null)return;
+  if(senha.length<4){showToast('err','Senha muito curta');return;}
+  try{
+    const r=await fetch(`/api/acessos/${id}/senha`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({senha})});
+    const d=await r.json();if(!r.ok)throw new Error(d.error||r.statusText);
+    showToast('ok','Senha redefinida');
+  }catch(e){showToast('err','Erro: '+e.message);}
+}
+async function toggleAtivoAcesso(id,ativo){
+  try{
+    const r=await fetch(`/api/acessos/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({ativo})});
+    const d=await r.json();if(!r.ok)throw new Error(d.error||r.statusText);
+    showToast('ok',ativo?'Usuário ativado':'Usuário desativado');
+    loadAcessos();
+  }catch(e){showToast('err','Erro: '+e.message);}
+}
+async function excluirAcesso(id){
+  const u=_acUsers.find(x=>x.id===id);
+  if(!confirm(`Excluir o acesso de "${u?(u.nome||u.email):'este usuário'}"? Esta ação não pode ser desfeita.`))return;
+  try{
+    const r=await fetch(`/api/acessos/${id}`,{method:'DELETE'});
+    const d=await r.json();if(!r.ok)throw new Error(d.error||r.statusText);
+    showToast('ok','Acesso excluído');
+    loadAcessos();
   }catch(e){showToast('err','Erro: '+e.message);}
 }
 

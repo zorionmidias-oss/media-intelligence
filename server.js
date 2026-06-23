@@ -155,7 +155,7 @@ function snapshot(u) { return u ? { perfil: u.perfil, permissoes: u.permissoes, 
 
 app.get('/api/acessos', requireAuth, requireAdmin, async (_req, res) => {
   const { data, error } = await supabase
-    .from('usuarios').select('id,nome,email,perfil,ativo,ultimo_acesso').order('id');
+    .from('usuarios').select('id,nome,email,perfil,ativo,ultimo_acesso,permissoes').order('id');
   if (error) return res.status(500).json({ error: error.message });
   res.json(data || []);
 });
