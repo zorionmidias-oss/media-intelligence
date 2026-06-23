@@ -391,10 +391,11 @@ app.get('/api/historico-campanhas/ultimo-numero', requireAuth, async (req, res) 
 
 // ── Domínios ────────────────────────────────────────────────────────────────
 app.get('/api/dominios', requireAuth, async (req, res) => {
-  const { data, error } = await supabase
-    .from('dominios')
-    .select('*')
-    .order('nome');
+  let q = supabase.from('dominios').select('*').order('nome');
+  if (Array.isArray(req.allowedDominios)) {
+    q = q.in('id', req.allowedDominios.length ? req.allowedDominios : [-1]);
+  }
+  const { data, error } = await q;
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });

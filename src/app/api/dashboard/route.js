@@ -39,6 +39,13 @@ async function handler(req, res) {
     if (tipo && tipo !== 'all') inicioQ = inicioQ.eq('tipo', tipo);
     if (domainId) inicioQ = inicioQ.eq('dominio_id', domainId);
 
+    // Colaborador restrito a domínios: limita aos IDs permitidos (vazio => nenhum dado).
+    if (Array.isArray(req.allowedDominios)) {
+      const ids = req.allowedDominios.length ? req.allowedDominios : [-1];
+      query = query.in('dominio_id', ids);
+      inicioQ = inicioQ.in('dominio_id', ids);
+    }
+
     const [{ data: rows, error }, { data: inicioRows }] = await Promise.all([query, inicioQ]);
     if (error) return res.status(500).json({ error: error.message });
 

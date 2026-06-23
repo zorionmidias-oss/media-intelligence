@@ -25,6 +25,19 @@ async function handler(req, res) {
     const domain = req.query.domain;
     const useDomain = domain && domain !== 'all';
 
+    // Colaborador restrito a domínios precisa de um domínio permitido; senão, sem dados
+    // (não servir o agregado global, que mistura todos os domínios).
+    if (Array.isArray(req.allowedDominios)) {
+      let _reqId = null;
+      if (useDomain) {
+        if (/^\d+$/.test(String(domain))) _reqId = Number(domain);
+        else { const { data: _d } = await supabase.from('dominios').select('id').eq('nome', domain).maybeSingle(); _reqId = _d?.id ?? null; }
+      }
+      if (_reqId == null || !req.allowedDominios.includes(_reqId)) {
+        return res.json({ hoje: [], ontem: [], hora_atual: horaAtual, data_hoje: dataHoje, data_ontem: dataOntem, sem_dados: true });
+      }
+    }
+
     if (useDomain) {
       let dq = supabase.from('dominios').select('id');
       if (/^\d+$/.test(String(domain))) dq = dq.eq('id', Number(domain));

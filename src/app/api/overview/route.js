@@ -58,6 +58,13 @@ async function handler(req, res) {
       .gte('data', df).lte('data', dt);
     if (domainId) gamQ = gamQ.eq('dominio_id', domainId);
 
+    // Colaborador restrito a domínios: limita aos IDs permitidos (vazio => nenhum dado).
+    if (Array.isArray(req.allowedDominios)) {
+      const ids = req.allowedDominios.length ? req.allowedDominios : [-1];
+      adsQ = adsQ.in('dominio_id', ids);
+      gamQ = gamQ.in('dominio_id', ids);
+    }
+
     let prevAdsQ = supabase
       .from('ads_consolidados')
       .select('ad_utm,valor_gasto,faturamento_real')
