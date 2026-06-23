@@ -642,8 +642,8 @@
     .utm-exp-btn:hover{color:var(--accent)}
     .utm-exp-btn.open{transform:rotate(90deg);color:var(--accent)}
     /* Perfil restrito: esconde coluna de ações nas campanhas + badge de domínios pendentes */
-    body.perfil-restrito .col-acoes{display:none}
-    body.perfil-restrito #pend-badge{display:none!important}
+    body.el-no-acoes .col-acoes{display:none}
+    body.no-domains #pend-badge{display:none!important}
     .utm-detail-row>td{padding:0!important;background:var(--bg)}
     .utm-detail{padding:.6rem .75rem .85rem;border-bottom:2px solid var(--accent);box-shadow:inset 0 8px 14px -10px rgba(0,0,0,.45)}
     .utm-detail-load{color:var(--muted);font-size:.78rem;padding:.6rem .25rem}
@@ -2506,28 +2506,43 @@
 /* ═══ STATE ═══ */
 const S={metrics:null,chat:[],busy:false,aiOk:null,sbCol:false,tab:'overview',campKPIs:null};
 
-/* ═══ PERFIL DE ACESSO ═══
-   'restrito' = apenas Overview + Campanhas; sem país/sigla, sem conjuntos. */
-let IS_RESTRITO=false;
+/* ═══ PERFIL DE ACESSO (RBAC granular) ═══
+   admin = acesso total; colaborador = só telas/elementos concedidos.
+   Segurança real é no servidor (porteiro deny-by-default); aqui é só usabilidade. */
+let PERMS={admin:true};
+function isAdminUI(){return PERMS&&PERMS.admin===true;}
+function hasScreen(key,action){
+  if(isAdminUI())return true;
+  const v=PERMS.telas&&PERMS.telas[key];
+  if(!v)return false;
+  return action==='edit'?v==='edit':true;
+}
+function canEdit(key){return hasScreen(key,'edit');}
+// default-deny (igual ao backend): elemento liberado só quando === true
+function elBlocked(key){if(isAdminUI())return false;return !(PERMS.elementos&&PERMS.elementos[key]===true);}
 async function loadPerfil(){
   try{
     const r=await fetch('/api/auth/me');
-    if(r.ok){const u=await r.json();IS_RESTRITO=(u&&u.perfil==='restrito');}
+    if(r.ok){const u=await r.json();PERMS=u.permissoes||{admin:true};}
   }catch(e){}
-  if(IS_RESTRITO)applyPerfilGating();
+  applyPerfilGating();
 }
 function applyPerfilGating(){
-  document.body.classList.add('perfil-restrito');
-  // Sidebar: manter apenas Overview e Campanhas
+  // Botão "Acessos" só aparece para admin
+  const acc=document.getElementById('nav-acessos');if(acc)acc.style.display=isAdminUI()?'':'none';
+  if(isAdminUI())return;
+  // Sidebar: esconder telas não concedidas
+  const navMap={overview:'overview',campaigns:'campaigns','analise-paises':'analise-paises',gam:'gam',funil:'funil',otimizacoes:'otimizacoes',ai:'ai',relatorios:'relatorios',contas:'contas',diretorio:'diretorio',domains:'domains'};
   document.querySelectorAll('.sb-nav .nav-btn').forEach(b=>{
-    const oc=b.getAttribute('onclick')||'';
-    if(!/nav\('overview'|nav\('campaigns'/.test(oc))b.style.display='none';
+    const oc=b.getAttribute('onclick')||'';const m=oc.match(/nav\('([^']+)'/);if(!m)return;
+    const key=m[1];if(key==='acessos')return;
+    if(navMap[key]&&!hasScreen(navMap[key]))b.style.display='none';
   });
-  document.querySelectorAll('.sb-sep').forEach(s=>s.style.display='none');
-  const dom=document.getElementById('nav-domains');if(dom)dom.style.display='none';
-  const criar=document.querySelector('.btn-criar-campanha');if(criar)criar.style.display='none';
-  const pendBadge=document.getElementById('pend-badge');if(pendBadge)pendBadge.style.display='none';
-  const ps=document.getElementById('pais-section');if(ps)ps.style.display='none';
+  const dom=document.getElementById('nav-domains');if(dom&&!hasScreen('domains'))dom.style.display='none';
+  if(elBlocked('criar_campanha')){const criar=document.querySelector('.btn-criar-campanha');if(criar)criar.style.display='none';}
+  if(elBlocked('coluna_acoes'))document.body.classList.add('el-no-acoes');
+  if(!hasScreen('domains'))document.body.classList.add('no-domains');
+  if(!hasScreen('analise-paises')){const ps=document.getElementById('pais-section');if(ps)ps.style.display='none';}
 }
 
 /* ═══ FORMAT ═══ */
@@ -3473,7 +3488,7 @@ function getPaisEmoji(sigla){return PAISES_EMOJI[sigla]||'🌍';}
 let _paisesData=null;
 
 async function loadPaises(){
-  if(IS_RESTRITO)return;
+  if(!hasScreen('analise-paises'))return;
   const since=document.getElementById('f-since')?.value||'';
   const until=document.getElementById('f-until')?.value||'';
   const sec=document.getElementById('pais-section');
@@ -4797,11 +4812,11 @@ function renderCampTable(rows){
       ?`<span class="badge" style="background:var(--sec-strong);color:var(--muted)">${esc(r.dominio)}</span>`
       :'<span style="color:var(--muted)">—</span>';
 
-    const paisBadge=(!IS_RESTRITO&&r.pais_sigla)
+    const paisBadge=(!elBlocked('ver_pais')&&r.pais_sigla)
       ?`<span title="${esc(r.pais_nome||r.pais_sigla)}" style="display:inline-flex;align-items:center;gap:2px;background:var(--sec-strong);border-radius:4px;padding:1px 5px;font-size:.65rem;color:var(--muted);margin-right:4px;flex-shrink:0">${getPaisEmoji(r.pais_sigla)} ${esc(r.pais_sigla)}</span>`
       :'';
     // Perfil restrito: sem conjuntos (expand). A coluna Ações é escondida via CSS (.col-acoes).
-    const expBtn=IS_RESTRITO?'':`<button class="utm-exp-btn" onclick="toggleUtmExpand('${esc(r.ad_utm||'')}',this)" title="Ver conjuntos ativos">▶</button>`;
+    const expBtn=elBlocked('expandir_conjuntos')?'':`<button class="utm-exp-btn" onclick="toggleUtmExpand('${esc(r.ad_utm||'')}',this)" title="Ver conjuntos ativos">▶</button>`;
 
     // Sessão/Conversa com pílula colorida comparando vs breakeven
     const spc=r.sessao_por_conversa;
@@ -4929,7 +4944,7 @@ document.addEventListener('click',e=>{
 
 /* ═══ DOMÍNIOS ═══ */
 async function loadDominios(){
-  if(IS_RESTRITO)return;
+  if(!hasScreen('domains'))return;
   try{
     const [domRes,pendRes]=await Promise.all([
       fetch('/api/dominios').then(r=>r.json()),
@@ -5013,7 +5028,7 @@ async function checkSyncStatus(){
 }
 
 async function checkPendingStatus(){
-  if(IS_RESTRITO)return;
+  if(!hasScreen('domains'))return;
   try{
     const res=await fetch('/api/dominios/pendentes');
     if(!res.ok)return;
