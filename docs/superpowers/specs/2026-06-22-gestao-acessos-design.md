@@ -33,7 +33,7 @@ Criar uma tela de administração onde o admin possa **criar usuários**, defini
 
 - `telas[chave]` = `"view"` (só leitura) | `"edit"` (leitura + escrita). Ausência da chave = sem acesso à tela.
 - `dominios.todos = true` → todos os domínios; senão, restrito a `dominios.ids` (IDs de `dominios`). Lista vazia + `todos:false` = nenhum dado.
-- `elementos[chave] = false` → elemento bloqueado. Ausência = liberado (default permissivo *dentro* de uma tela já concedida; o bloqueio forte é por tela/ação).
+- `elementos[chave] = true` → elemento liberado. **Default-deny**: ausência ou `false` = bloqueado (o colaborador só vê/usa o elemento quando concedido explicitamente). A UI grava todos os elementos como booleano explícito via `sanitizePermissions`.
 
 ### Tabela nova `acessos_log` (auditoria)
 Colunas: `id` (pk), `ator_id` (fk usuarios — quem fez), `ator_nome` (snapshot textual), `acao` (`criar` | `editar` | `resetar_senha` | `ativar` | `desativar` | `excluir`), `alvo_id` (fk usuarios — quem sofreu), `alvo_nome` (snapshot), `antes` (jsonb, snapshot de `{perfil,permissoes,ativo}` antes), `depois` (jsonb, snapshot depois), `criado_em` (timestamptz default now()). Senhas **nunca** entram no log.
