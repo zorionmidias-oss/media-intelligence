@@ -141,6 +141,127 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
   });
 });
 
+// ── Gestão de Acessos (admin only) ────────────────────────────────────────────
+async function logAcesso({ ator, acao, alvo, antes, depois }) {
+  try {
+    await supabase.from('acessos_log').insert({
+      ator_id: ator?.id || null, ator_nome: ator?.nome || ator?.email || null,
+      acao, alvo_id: alvo?.id || null, alvo_nome: alvo?.nome || alvo?.email || null,
+      antes: antes || null, depois: depois || null,
+    });
+  } catch (e) { console.warn('[acessos_log]', e.message); }
+}
+function snapshot(u) { return u ? { perfil: u.perfil, permissoes: u.permissoes, ativo: u.ativo } : null; }
+
+app.get('/api/acessos', requireAuth, requireAdmin, async (_req, res) => {
+  const { data, error } = await supabase
+    .from('usuarios').select('id,nome,email,perfil,ativo,ultimo_acesso').order('id');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
+});
+
+app.get('/api/acessos/catalogo', requireAuth, requireAdmin, async (_req, res) => {
+  const cat = PERMS.catalogForUI();
+  const { data: dominios } = await supabase.from('dominios').select('id,nome').order('nome');
+  res.json({ ...cat, dominios: dominios || [] });
+});
+
+app.get('/api/acessos/log', requireAuth, requireAdmin, async (req, res) => {
+  const limit = Math.min(Number(req.query.limit) || 100, 500);
+  const { data, error } = await supabase
+    .from('acessos_log').select('*').order('criado_em', { ascending: false }).limit(limit);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
+});
+
+app.post('/api/acessos', requireAuth, requireAdmin, async (req, res) => {
+  const { nome, email, senha, perfil } = req.body || {};
+  if (!email || !senha) return res.status(400).json({ error: 'email e senha são obrigatórios' });
+  if (!['admin', 'colaborador'].includes(perfil)) return res.status(400).json({ error: 'perfil inválido' });
+  const emailNorm = String(email).toLowerCase().trim();
+  const { data: exists } = await supabase.from('usuarios').select('id').eq('email', emailNorm).maybeSingle();
+  if (exists) return res.status(409).json({ error: 'email já cadastrado' });
+  const permissoes = perfil === 'colaborador' ? PERMS.sanitizePermissions(req.body.permissoes) : null;
+  const senha_hash = await hashPassword(senha);
+  const { data, error } = await supabase.from('usuarios')
+    .insert({ nome: nome || null, email: emailNorm, senha_hash, perfil, permissoes, ativo: true })
+    .select('id,nome,email,perfil,ativo').single();
+  if (error) return res.status(500).json({ error: error.message });
+  await logAcesso({ ator: req.fullUser, acao: 'criar', alvo: data, antes: null, depois: snapshot({ ...data, permissoes }) });
+  res.json(data);
+});
+
+app.put('/api/acessos/:id', requireAuth, requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  const { data: alvo } = await supabase.from('usuarios')
+    .select('id,nome,email,perfil,permissoes,ativo').eq('id', id).maybeSingle();
+  if (!alvo) return res.status(404).json({ error: 'usuário não encontrado' });
+  const antes = snapshot(alvo);
+  const update = {};
+  if (req.body.nome !== undefined) update.nome = req.body.nome || null;
+  if (req.body.email !== undefined) update.email = String(req.body.email).toLowerCase().trim();
+  if (req.body.perfil !== undefined) {
+    if (!['admin', 'colaborador'].includes(req.body.perfil)) return res.status(400).json({ error: 'perfil inválido' });
+    update.perfil = req.body.perfil;
+  }
+  const novoPerfil = update.perfil || alvo.perfil;
+  if (req.body.permissoes !== undefined || update.perfil) {
+    update.permissoes = novoPerfil === 'colaborador'
+      ? PERMS.sanitizePermissions(req.body.permissoes ?? alvo.permissoes) : null;
+  }
+  if (req.body.ativo !== undefined) update.ativo = !!req.body.ativo;
+
+  // Invariantes de proteção
+  const rebaixa = update.perfil === 'colaborador' && alvo.perfil === 'admin';
+  const desativa = update.ativo === false && alvo.ativo === true;
+  if ((rebaixa || desativa) && id === req.userId)
+    return res.status(400).json({ error: 'Você não pode rebaixar/desativar a si mesmo' });
+  if (rebaixa || desativa) {
+    const { count } = await supabase.from('usuarios')
+      .select('id', { count: 'exact', head: true }).eq('perfil', 'admin').eq('ativo', true);
+    if ((count || 0) <= 1) return res.status(400).json({ error: 'Deve restar ao menos 1 admin ativo' });
+  }
+
+  const { data, error } = await supabase.from('usuarios').update(update).eq('id', id)
+    .select('id,nome,email,perfil,permissoes,ativo').single();
+  if (error) return res.status(500).json({ error: error.message });
+  invalidatePermsCache(id);
+  await logAcesso({ ator: req.fullUser, acao: 'editar', alvo: data, antes, depois: snapshot(data) });
+  res.json(data);
+});
+
+app.post('/api/acessos/:id/senha', requireAuth, requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  const { senha } = req.body || {};
+  if (!senha || String(senha).length < 4) return res.status(400).json({ error: 'senha muito curta' });
+  const { data: alvo } = await supabase.from('usuarios').select('id,nome,email').eq('id', id).maybeSingle();
+  if (!alvo) return res.status(404).json({ error: 'usuário não encontrado' });
+  const senha_hash = await hashPassword(senha);
+  const { error } = await supabase.from('usuarios').update({ senha_hash }).eq('id', id);
+  if (error) return res.status(500).json({ error: error.message });
+  invalidatePermsCache(id);
+  await logAcesso({ ator: req.fullUser, acao: 'resetar_senha', alvo });
+  res.json({ ok: true });
+});
+
+app.delete('/api/acessos/:id', requireAuth, requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  if (id === req.userId) return res.status(400).json({ error: 'Você não pode excluir a si mesmo' });
+  const { data: alvo } = await supabase.from('usuarios')
+    .select('id,nome,email,perfil,permissoes,ativo').eq('id', id).maybeSingle();
+  if (!alvo) return res.status(404).json({ error: 'usuário não encontrado' });
+  if (alvo.perfil === 'admin') {
+    const { count } = await supabase.from('usuarios')
+      .select('id', { count: 'exact', head: true }).eq('perfil', 'admin').eq('ativo', true);
+    if ((count || 0) <= 1) return res.status(400).json({ error: 'Deve restar ao menos 1 admin ativo' });
+  }
+  const { error } = await supabase.from('usuarios').delete().eq('id', id);
+  if (error) return res.status(500).json({ error: error.message });
+  invalidatePermsCache(id);
+  await logAcesso({ ator: req.fullUser, acao: 'excluir', alvo, antes: snapshot(alvo), depois: null });
+  res.json({ ok: true });
+});
+
 // ── Legacy live-API routes ──────────────────────────────────────────────────
 app.get('/api/metrics', requireAuth, metricsHandler);
 app.post('/api/insights', requireAuth, insightsHandler);
@@ -532,7 +653,7 @@ app.get('/api/utms', requireAuth, async (req, res) => {
 
 // ── Conjuntos ativos por UTM (ads ACTIVE na Meta → adset_ids distintos) ───────
 let _conjAtivosCache = { ts: 0, data: null };
-app.get('/api/utms/conjuntos-ativos', requireAuth, requireAdmin, async (_req, res) => {
+app.get('/api/utms/conjuntos-ativos', requireAuth, async (_req, res) => {
   try {
     if (_conjAtivosCache.data && Date.now() - _conjAtivosCache.ts < 60000) {
       return res.json(_conjAtivosCache.data);
@@ -583,7 +704,7 @@ app.get('/api/utms/conjuntos-ativos', requireAuth, requireAdmin, async (_req, re
 });
 
 // ── Drilldown ─────────────────────────────────────────────────────────────────
-app.get('/api/drilldown/:utm', requireAuth, requireAdmin, drilldownHandler);
+app.get('/api/drilldown/:utm', requireAuth, drilldownHandler);
 
 // ── Otimizações ───────────────────────────────────────────────────────────────
 // Static routes must come BEFORE :id param routes to avoid capture
@@ -826,7 +947,7 @@ app.post('/api/meta/ad/:id/toggle', requireAuth, async (req, res) => {
 });
 
 // ── Performance por País ──────────────────────────────────────────────────────
-app.get('/api/paises', requireAuth, requireAdmin, async (req, res) => {
+app.get('/api/paises', requireAuth, async (req, res) => {
   try {
     const now = new Date();
     const defaultSince = new Date(now.getTime() - 30 * 86400000).toISOString().slice(0, 10);
@@ -921,7 +1042,7 @@ function _apDefaults(req) {
 }
 
 // MUST be before /:sigla to avoid 'nichos' matching as a sigla
-app.get('/api/analise-paises/nichos', requireAuth, requireAdmin, async (req, res) => {
+app.get('/api/analise-paises/nichos', requireAuth, async (req, res) => {
   try {
     const { since, until } = _apDefaults(req);
     const { data, error } = await supabase
@@ -936,7 +1057,7 @@ app.get('/api/analise-paises/nichos', requireAuth, requireAdmin, async (req, res
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/analise-paises/:sigla', requireAuth, requireAdmin, async (req, res) => {
+app.get('/api/analise-paises/:sigla', requireAuth, async (req, res) => {
   try {
     const { since, until, nicho, tipo } = _apDefaults(req);
     const sigla = req.params.sigla;
@@ -984,7 +1105,7 @@ app.get('/api/analise-paises/:sigla', requireAuth, requireAdmin, async (req, res
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/analise-paises', requireAuth, requireAdmin, async (req, res) => {
+app.get('/api/analise-paises', requireAuth, async (req, res) => {
   try {
     const { since, until, nicho, tipo } = _apDefaults(req);
     let q = supabase
