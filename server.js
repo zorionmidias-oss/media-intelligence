@@ -124,8 +124,21 @@ app.post('/api/auth/logout', (req, res) => {
 });
 
 app.get('/api/auth/me', requireAuth, async (req, res) => {
-  const { data } = await supabase.from('usuarios').select('id,email,nome,perfil').eq('id', req.userId).single();
-  res.json(data ? { ...data, perfil: req.userPerfil || data.perfil || 'admin' } : { id: req.userId, perfil: req.userPerfil || 'admin' });
+  const { data } = await supabase
+    .from('usuarios').select('id,email,nome,perfil,permissoes,ultimo_acesso').eq('id', req.userId).maybeSingle();
+  // throttle: só regrava ultimo_acesso se passou > 5 min
+  try {
+    const last = data?.ultimo_acesso ? new Date(data.ultimo_acesso).getTime() : 0;
+    if (Date.now() - last > 5 * 60 * 1000) {
+      await supabase.from('usuarios').update({ ultimo_acesso: new Date().toISOString() }).eq('id', req.userId);
+    }
+  } catch (_) {}
+  const user = data || { id: req.userId, perfil: req.userPerfil || 'admin' };
+  res.json({
+    id: user.id, email: user.email, nome: user.nome,
+    perfil: user.perfil || 'admin',
+    permissoes: PERMS.resolvePermissions(user),
+  });
 });
 
 // ── Legacy live-API routes ──────────────────────────────────────────────────
@@ -142,10 +155,14 @@ app.get('/api/intraday', requireAuth, intradayHandler);
 app.post('/api/relatorios/custom', requireAuth, relatorioCustomHandler);
 
 // ── Contas Meta ──────────────────────────────────────────────────────────────
-app.get('/api/contas', requireAuth, async (_req, res) => {
+app.get('/api/contas', requireAuth, async (req, res) => {
   const { data, error } = await supabase.from('meta_accounts').select('*').order('id');
   if (error) return res.status(500).json({ error: error.message });
-  res.json(data || []);
+  let rows = data || [];
+  if (PERMS.elementBlocked(req.fullUser, 'ver_tokens')) {
+    rows = rows.map(({ access_token, ...rest }) => ({ ...rest, access_token: null, tem_token: !!access_token }));
+  }
+  res.json(rows);
 });
 
 app.post('/api/contas', requireAuth, async (req, res) => {

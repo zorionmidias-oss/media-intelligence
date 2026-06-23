@@ -1,5 +1,6 @@
 'use strict';
 const supabase = require('../../../lib/supabase');
+const PERMS = require('../../../lib/permissions');
 
 async function handler(req, res) {
   try {
@@ -188,8 +189,8 @@ async function handler(req, res) {
       ? +((tI / tC) / kpis.rps_sessao_total).toFixed(2)
       : null;
 
-    // Perfil 'restrito' não pode ver país: remove sigla/nome do país das linhas.
-    const out = req.userPerfil === 'restrito'
+    // Esconde país (sigla/nome) quando o elemento ver_pais está bloqueado p/ o usuário.
+    const out = PERMS.elementBlocked(req.fullUser, 'ver_pais')
       ? aggregated.map(({ pais_sigla, pais_nome, ...rest }) => rest)
       : aggregated;
 
