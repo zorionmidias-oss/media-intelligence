@@ -177,6 +177,17 @@ async function handler(req, res) {
       adUnitPrefix = rawPrefix ? rawPrefix.toLowerCase() : null;
     }
 
+    // Colaborador restrito a domínios precisa selecionar um domínio permitido; senão,
+    // não servir o agregado global do cache GAM (evita vazamento entre domínios).
+    if (Array.isArray(req.allowedDominios) && (domainId == null || !req.allowedDominios.includes(Number(domainId)))) {
+      return res.json({
+        fromCache: true,
+        kpis: { ecpm: 0, rps: 0, taxaProgramatica: 0, viewability: 0, cpc: 0, ctr: 0, cliques_gam: 0, faturamento: 0, impressions: 0, anterior: null },
+        adUnits: [], advertisers: [], hourly: [], utmCampaigns: [], utmSources: [],
+        topUtmCampaign: [], topUtmSource: [], atraso_gam: null,
+      });
+    }
+
     // Previous period dates (same duration, immediately before df)
     const dias = Math.round((new Date(dt) - new Date(df)) / 86400000) + 1;
     const anteriorUntilDate = new Date(df); anteriorUntilDate.setDate(anteriorUntilDate.getDate() - 1);

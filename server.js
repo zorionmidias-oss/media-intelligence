@@ -35,6 +35,7 @@ const { resolveCountry, extractAdUTM } = require('./src/lib/parser');
 const { startScheduler } = require('./src/lib/scheduler');
 const { hashPassword, verifyPassword, generateToken, verifyToken, requireAuth, requireAdmin, COOKIE_NAME } = require('./src/lib/auth');
 const { registrarHistorico } = require('./src/lib/historico');
+const PERMS = require('./src/lib/permissions');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -44,27 +45,42 @@ const COOKIE_OPTS = { httpOnly: true, sameSite: 'strict', maxAge: 7 * 24 * 3600 
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 
-// ── Gate global do perfil 'restrito' ──────────────────────────────────────────
-// Restrito = apenas Overview + Campanhas. Só pode acessar os endpoints que essas
-// duas telas usam; qualquer outra rota /api/* retorna 403 (rotas novas já nascem
-// bloqueadas — defesa contra vazamento de tokens/contas/país via F12).
-const RESTRITO_ALLOW = new Set([
-  'GET /api/overview',
-  'GET /api/dashboard',
-  'GET /api/dominios',
-  'GET /api/gam-status',
-  'GET /api/intraday',
-  'GET /api/orcamento-status',
-  'GET /api/reports-gam',
-  'GET /api/sync/log',
-]);
-app.use((req, res, next) => {
+// ── Cache curto de permissões por usuário (evita 1 hit/req) ───────────────────
+const _permsCache = new Map(); // userId -> { ts, user }
+const PERMS_TTL = 15000;
+function invalidatePermsCache(userId) {
+  if (userId == null) _permsCache.clear();
+  else _permsCache.delete(Number(userId));
+}
+async function loadUser(userId) {
+  const hit = _permsCache.get(Number(userId));
+  if (hit && Date.now() - hit.ts < PERMS_TTL) return hit.user;
+  const { data } = await supabase
+    .from('usuarios').select('id,perfil,permissoes,ativo').eq('id', userId).maybeSingle();
+  const user = data || null;
+  _permsCache.set(Number(userId), { ts: Date.now(), user });
+  return user;
+}
+
+// ── Porteiro global (deny-by-default) ─────────────────────────────────────────
+// Substitui o gate antigo do perfil 'restrito'. Segurança real fica aqui: o que
+// não está explicitamente concedido no catálogo retorna 403. Rotas novas nascem
+// bloqueadas para colaboradores.
+app.use(async (req, res, next) => {
   if (!req.path.startsWith('/api/') || req.path.startsWith('/api/auth/')) return next();
   const token = req.cookies?.[COOKIE_NAME] || req.headers.authorization?.replace('Bearer ', '');
   const payload = verifyToken(token);
-  if (!payload || payload.perfil !== 'restrito') return next(); // auth real fica nas rotas
-  if (RESTRITO_ALLOW.has(req.method + ' ' + req.path)) return next();
-  return res.status(403).json({ error: 'Acesso negado' });
+  if (!payload) return next(); // sem token: auth real (401) fica nas rotas
+  let user = null;
+  try { user = await loadUser(payload.uid); } catch (_) { user = null; }
+  if (user && user.ativo === false) return res.status(403).json({ error: 'Conta desativada' });
+  if (!user) user = { id: payload.uid, perfil: payload.perfil || 'admin' };
+  req.fullUser = user;
+  req.userPerfil = user.perfil;
+  req.allowedDominios = PERMS.allowedDomainIds(user); // null=todos | number[]
+  const verdict = PERMS.checkAccess(user, req.method, req.path);
+  if (!verdict.allow) return res.status(403).json({ error: 'Acesso negado' });
+  next();
 });
 
 // ── Public HTML routes ────────────────────────────────────────────────────────
@@ -108,8 +124,142 @@ app.post('/api/auth/logout', (req, res) => {
 });
 
 app.get('/api/auth/me', requireAuth, async (req, res) => {
-  const { data } = await supabase.from('usuarios').select('id,email,nome,perfil').eq('id', req.userId).single();
-  res.json(data ? { ...data, perfil: req.userPerfil || data.perfil || 'admin' } : { id: req.userId, perfil: req.userPerfil || 'admin' });
+  const { data } = await supabase
+    .from('usuarios').select('id,email,nome,perfil,permissoes,ultimo_acesso').eq('id', req.userId).maybeSingle();
+  // throttle: só regrava ultimo_acesso se passou > 5 min
+  try {
+    const last = data?.ultimo_acesso ? new Date(data.ultimo_acesso).getTime() : 0;
+    if (Date.now() - last > 5 * 60 * 1000) {
+      await supabase.from('usuarios').update({ ultimo_acesso: new Date().toISOString() }).eq('id', req.userId);
+    }
+  } catch (_) {}
+  const user = data || { id: req.userId, perfil: req.userPerfil || 'admin' };
+  res.json({
+    id: user.id, email: user.email, nome: user.nome,
+    perfil: user.perfil || 'admin',
+    permissoes: PERMS.resolvePermissions(user),
+  });
+});
+
+// ── Gestão de Acessos (admin only) ────────────────────────────────────────────
+async function logAcesso({ ator, acao, alvo, antes, depois }) {
+  try {
+    await supabase.from('acessos_log').insert({
+      ator_id: ator?.id || null, ator_nome: ator?.nome || ator?.email || null,
+      acao, alvo_id: alvo?.id || null, alvo_nome: alvo?.nome || alvo?.email || null,
+      antes: antes || null, depois: depois || null,
+    });
+  } catch (e) { console.warn('[acessos_log]', e.message); }
+}
+function snapshot(u) { return u ? { perfil: u.perfil, permissoes: u.permissoes, ativo: u.ativo } : null; }
+
+app.get('/api/acessos', requireAuth, requireAdmin, async (_req, res) => {
+  const { data, error } = await supabase
+    .from('usuarios').select('id,nome,email,perfil,ativo,ultimo_acesso,permissoes').order('id');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
+});
+
+app.get('/api/acessos/catalogo', requireAuth, requireAdmin, async (_req, res) => {
+  const cat = PERMS.catalogForUI();
+  const { data: dominios } = await supabase.from('dominios').select('id,nome').order('nome');
+  res.json({ ...cat, dominios: dominios || [] });
+});
+
+app.get('/api/acessos/log', requireAuth, requireAdmin, async (req, res) => {
+  const limit = Math.min(Number(req.query.limit) || 100, 500);
+  const { data, error } = await supabase
+    .from('acessos_log').select('*').order('criado_em', { ascending: false }).limit(limit);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
+});
+
+app.post('/api/acessos', requireAuth, requireAdmin, async (req, res) => {
+  const { nome, email, senha, perfil } = req.body || {};
+  if (!email || !senha) return res.status(400).json({ error: 'email e senha são obrigatórios' });
+  if (!['admin', 'colaborador'].includes(perfil)) return res.status(400).json({ error: 'perfil inválido' });
+  const emailNorm = String(email).toLowerCase().trim();
+  const { data: exists } = await supabase.from('usuarios').select('id').eq('email', emailNorm).maybeSingle();
+  if (exists) return res.status(409).json({ error: 'email já cadastrado' });
+  const permissoes = perfil === 'colaborador' ? PERMS.sanitizePermissions(req.body.permissoes) : null;
+  const senha_hash = await hashPassword(senha);
+  const { data, error } = await supabase.from('usuarios')
+    .insert({ nome: nome || null, email: emailNorm, senha_hash, perfil, permissoes, ativo: true })
+    .select('id,nome,email,perfil,ativo').single();
+  if (error) return res.status(500).json({ error: error.message });
+  await logAcesso({ ator: req.fullUser, acao: 'criar', alvo: data, antes: null, depois: snapshot({ ...data, permissoes }) });
+  res.json(data);
+});
+
+app.put('/api/acessos/:id', requireAuth, requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  const { data: alvo } = await supabase.from('usuarios')
+    .select('id,nome,email,perfil,permissoes,ativo').eq('id', id).maybeSingle();
+  if (!alvo) return res.status(404).json({ error: 'usuário não encontrado' });
+  const antes = snapshot(alvo);
+  const update = {};
+  if (req.body.nome !== undefined) update.nome = req.body.nome || null;
+  if (req.body.email !== undefined) update.email = String(req.body.email).toLowerCase().trim();
+  if (req.body.perfil !== undefined) {
+    if (!['admin', 'colaborador'].includes(req.body.perfil)) return res.status(400).json({ error: 'perfil inválido' });
+    update.perfil = req.body.perfil;
+  }
+  const novoPerfil = update.perfil || alvo.perfil;
+  if (req.body.permissoes !== undefined || update.perfil) {
+    update.permissoes = novoPerfil === 'colaborador'
+      ? PERMS.sanitizePermissions(req.body.permissoes ?? alvo.permissoes) : null;
+  }
+  if (req.body.ativo !== undefined) update.ativo = !!req.body.ativo;
+
+  // Invariantes de proteção
+  const rebaixa = update.perfil === 'colaborador' && alvo.perfil === 'admin';
+  const desativa = update.ativo === false && alvo.ativo === true;
+  if ((rebaixa || desativa) && id === req.userId)
+    return res.status(400).json({ error: 'Você não pode rebaixar/desativar a si mesmo' });
+  if (rebaixa || desativa) {
+    const { count } = await supabase.from('usuarios')
+      .select('id', { count: 'exact', head: true }).eq('perfil', 'admin').eq('ativo', true);
+    if ((count || 0) <= 1) return res.status(400).json({ error: 'Deve restar ao menos 1 admin ativo' });
+  }
+
+  const { data, error } = await supabase.from('usuarios').update(update).eq('id', id)
+    .select('id,nome,email,perfil,permissoes,ativo').single();
+  if (error) return res.status(500).json({ error: error.message });
+  invalidatePermsCache(id);
+  await logAcesso({ ator: req.fullUser, acao: 'editar', alvo: data, antes, depois: snapshot(data) });
+  res.json(data);
+});
+
+app.post('/api/acessos/:id/senha', requireAuth, requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  const { senha } = req.body || {};
+  if (!senha || String(senha).length < 4) return res.status(400).json({ error: 'senha muito curta' });
+  const { data: alvo } = await supabase.from('usuarios').select('id,nome,email').eq('id', id).maybeSingle();
+  if (!alvo) return res.status(404).json({ error: 'usuário não encontrado' });
+  const senha_hash = await hashPassword(senha);
+  const { error } = await supabase.from('usuarios').update({ senha_hash }).eq('id', id);
+  if (error) return res.status(500).json({ error: error.message });
+  invalidatePermsCache(id);
+  await logAcesso({ ator: req.fullUser, acao: 'resetar_senha', alvo });
+  res.json({ ok: true });
+});
+
+app.delete('/api/acessos/:id', requireAuth, requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  if (id === req.userId) return res.status(400).json({ error: 'Você não pode excluir a si mesmo' });
+  const { data: alvo } = await supabase.from('usuarios')
+    .select('id,nome,email,perfil,permissoes,ativo').eq('id', id).maybeSingle();
+  if (!alvo) return res.status(404).json({ error: 'usuário não encontrado' });
+  if (alvo.perfil === 'admin') {
+    const { count } = await supabase.from('usuarios')
+      .select('id', { count: 'exact', head: true }).eq('perfil', 'admin').eq('ativo', true);
+    if ((count || 0) <= 1) return res.status(400).json({ error: 'Deve restar ao menos 1 admin ativo' });
+  }
+  const { error } = await supabase.from('usuarios').delete().eq('id', id);
+  if (error) return res.status(500).json({ error: error.message });
+  invalidatePermsCache(id);
+  await logAcesso({ ator: req.fullUser, acao: 'excluir', alvo, antes: snapshot(alvo), depois: null });
+  res.json({ ok: true });
 });
 
 // ── Legacy live-API routes ──────────────────────────────────────────────────
@@ -126,10 +276,14 @@ app.get('/api/intraday', requireAuth, intradayHandler);
 app.post('/api/relatorios/custom', requireAuth, relatorioCustomHandler);
 
 // ── Contas Meta ──────────────────────────────────────────────────────────────
-app.get('/api/contas', requireAuth, async (_req, res) => {
+app.get('/api/contas', requireAuth, async (req, res) => {
   const { data, error } = await supabase.from('meta_accounts').select('*').order('id');
   if (error) return res.status(500).json({ error: error.message });
-  res.json(data || []);
+  let rows = data || [];
+  if (PERMS.elementBlocked(req.fullUser, 'ver_tokens')) {
+    rows = rows.map(({ access_token, ...rest }) => ({ ...rest, access_token: null, tem_token: !!access_token }));
+  }
+  res.json(rows);
 });
 
 app.post('/api/contas', requireAuth, async (req, res) => {
@@ -358,10 +512,11 @@ app.get('/api/historico-campanhas/ultimo-numero', requireAuth, async (req, res) 
 
 // ── Domínios ────────────────────────────────────────────────────────────────
 app.get('/api/dominios', requireAuth, async (req, res) => {
-  const { data, error } = await supabase
-    .from('dominios')
-    .select('*')
-    .order('nome');
+  let q = supabase.from('dominios').select('*').order('nome');
+  if (Array.isArray(req.allowedDominios)) {
+    q = q.in('id', req.allowedDominios.length ? req.allowedDominios : [-1]);
+  }
+  const { data, error } = await q;
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
@@ -498,7 +653,7 @@ app.get('/api/utms', requireAuth, async (req, res) => {
 
 // ── Conjuntos ativos por UTM (ads ACTIVE na Meta → adset_ids distintos) ───────
 let _conjAtivosCache = { ts: 0, data: null };
-app.get('/api/utms/conjuntos-ativos', requireAuth, requireAdmin, async (_req, res) => {
+app.get('/api/utms/conjuntos-ativos', requireAuth, async (_req, res) => {
   try {
     if (_conjAtivosCache.data && Date.now() - _conjAtivosCache.ts < 60000) {
       return res.json(_conjAtivosCache.data);
@@ -549,7 +704,7 @@ app.get('/api/utms/conjuntos-ativos', requireAuth, requireAdmin, async (_req, re
 });
 
 // ── Drilldown ─────────────────────────────────────────────────────────────────
-app.get('/api/drilldown/:utm', requireAuth, requireAdmin, drilldownHandler);
+app.get('/api/drilldown/:utm', requireAuth, drilldownHandler);
 
 // ── Otimizações ───────────────────────────────────────────────────────────────
 // Static routes must come BEFORE :id param routes to avoid capture
@@ -792,7 +947,7 @@ app.post('/api/meta/ad/:id/toggle', requireAuth, async (req, res) => {
 });
 
 // ── Performance por País ──────────────────────────────────────────────────────
-app.get('/api/paises', requireAuth, requireAdmin, async (req, res) => {
+app.get('/api/paises', requireAuth, async (req, res) => {
   try {
     const now = new Date();
     const defaultSince = new Date(now.getTime() - 30 * 86400000).toISOString().slice(0, 10);
@@ -887,7 +1042,7 @@ function _apDefaults(req) {
 }
 
 // MUST be before /:sigla to avoid 'nichos' matching as a sigla
-app.get('/api/analise-paises/nichos', requireAuth, requireAdmin, async (req, res) => {
+app.get('/api/analise-paises/nichos', requireAuth, async (req, res) => {
   try {
     const { since, until } = _apDefaults(req);
     const { data, error } = await supabase
@@ -902,7 +1057,7 @@ app.get('/api/analise-paises/nichos', requireAuth, requireAdmin, async (req, res
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/analise-paises/:sigla', requireAuth, requireAdmin, async (req, res) => {
+app.get('/api/analise-paises/:sigla', requireAuth, async (req, res) => {
   try {
     const { since, until, nicho, tipo } = _apDefaults(req);
     const sigla = req.params.sigla;
@@ -950,7 +1105,7 @@ app.get('/api/analise-paises/:sigla', requireAuth, requireAdmin, async (req, res
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/analise-paises', requireAuth, requireAdmin, async (req, res) => {
+app.get('/api/analise-paises', requireAuth, async (req, res) => {
   try {
     const { since, until, nicho, tipo } = _apDefaults(req);
     let q = supabase

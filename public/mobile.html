@@ -547,15 +547,20 @@ window.addEventListener('load',()=>setTimeout(window.hideLoading,400));
 
 // ── Navigation ────────────────────────────────────────────────────────────────
 const TABS=['overview','campanhas','paises','gam'];
-// Perfil 'restrito': apenas Overview + Campanhas (sem Países/GAM).
+// Colaborador: esconde abas cujas telas não foram concedidas (admin vê tudo).
 async function applyPerfilMobile(){
   try{
     const r=await fetch('/api/auth/me');
     if(!r.ok)return;
     const u=await r.json();
-    if(u&&u.perfil==='restrito'){
-      document.querySelectorAll('.bnav-btn[data-tab="paises"],.bnav-btn[data-tab="gam"]').forEach(b=>b.style.display='none');
-    }
+    const perms=u&&u.permissoes;
+    if(!perms||perms.admin===true)return; // admin = acesso total
+    const map={overview:'overview',campanhas:'campaigns',paises:'analise-paises',gam:'gam'};
+    Object.entries(map).forEach(([tab,screen])=>{
+      if(!(perms.telas&&perms.telas[screen])){
+        const b=document.querySelector('.bnav-btn[data-tab="'+tab+'"]');if(b)b.style.display='none';
+      }
+    });
   }catch(e){}
 }
 function navTo(tab){

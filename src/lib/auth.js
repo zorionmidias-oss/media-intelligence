@@ -49,9 +49,10 @@ function requireAuth(req, res, next) {
   next();
 }
 
-// Blocks routes for the 'restrito' profile (Overview + Campanhas only).
+// Bloqueia qualquer usuário que não seja admin (usa perfil fresco do porteiro quando há).
 function requireAdmin(req, res, next) {
-  if (req.userPerfil === 'restrito') {
+  const perfil = req.fullUser?.perfil || req.userPerfil;
+  if (perfil !== 'admin') {
     return res.status(403).json({ error: 'Acesso negado' });
   }
   next();

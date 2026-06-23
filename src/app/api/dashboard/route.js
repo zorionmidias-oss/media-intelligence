@@ -1,5 +1,6 @@
 'use strict';
 const supabase = require('../../../lib/supabase');
+const PERMS = require('../../../lib/permissions');
 
 async function handler(req, res) {
   try {
@@ -37,6 +38,13 @@ async function handler(req, res) {
       .order('data', { ascending: true });
     if (tipo && tipo !== 'all') inicioQ = inicioQ.eq('tipo', tipo);
     if (domainId) inicioQ = inicioQ.eq('dominio_id', domainId);
+
+    // Colaborador restrito a domínios: limita aos IDs permitidos (vazio => nenhum dado).
+    if (Array.isArray(req.allowedDominios)) {
+      const ids = req.allowedDominios.length ? req.allowedDominios : [-1];
+      query = query.in('dominio_id', ids);
+      inicioQ = inicioQ.in('dominio_id', ids);
+    }
 
     const [{ data: rows, error }, { data: inicioRows }] = await Promise.all([query, inicioQ]);
     if (error) return res.status(500).json({ error: error.message });
@@ -188,8 +196,8 @@ async function handler(req, res) {
       ? +((tI / tC) / kpis.rps_sessao_total).toFixed(2)
       : null;
 
-    // Perfil 'restrito' não pode ver país: remove sigla/nome do país das linhas.
-    const out = req.userPerfil === 'restrito'
+    // Esconde país (sigla/nome) quando o elemento ver_pais está bloqueado p/ o usuário.
+    const out = PERMS.elementBlocked(req.fullUser, 'ver_pais')
       ? aggregated.map(({ pais_sigla, pais_nome, ...rest }) => rest)
       : aggregated;
 
