@@ -93,10 +93,11 @@ Todas exigem `requireAuth` + `requireAdmin` + estão no catálogo como tela `ace
 
 ### `/api/auth/me`
 Passa a incluir `permissoes` resolvidas (`resolvePermissions`) além de `perfil`.
+Também **atualiza `usuarios.ultimo_acesso`** (medindo último acesso ao dash a cada abertura), com **throttle**: só regrava se o último registro tem mais de 5 minutos, evitando uma escrita por refresh. O login continua gravando também.
 
 ### `dashboard.html`
 - `applyPerfilGating()` é generalizado: lê o JSON de permissões e esconde telas (botões da sidebar) e elementos não concedidos. Substitui o `IS_RESTRITO` fixo por um objeto `PERMS` + helpers (`hasScreen`, `canEdit`, `elBlocked`).
-- Nova aba **"Acessos"** na sidebar, visível só para admin: tabela de usuários + modal de criar/editar (checkboxes de telas com seletor ver/editar, seletor de domínios, checkboxes de elementos — tudo renderizado de `/api/acessos/catalogo`) + aba de histórico (auditoria).
+- Nova aba **"Acessos"** na sidebar, visível só para admin: tabela de usuários (com coluna **"Último acesso"** em formato amigável: "há 2h", "ontem 14:30", "22/06 14:30", "nunca acessou" se nulo) + modal de criar/editar (checkboxes de telas com seletor ver/editar, seletor de domínios, checkboxes de elementos — tudo renderizado de `/api/acessos/catalogo`) + aba de histórico (auditoria).
 - Reforço: o gating de front é só usabilidade; segurança é o porteiro.
 
 ### `mobile.html`
