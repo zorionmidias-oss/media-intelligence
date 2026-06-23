@@ -35,6 +35,7 @@ const { resolveCountry, extractAdUTM } = require('./src/lib/parser');
 const { startScheduler } = require('./src/lib/scheduler');
 const { hashPassword, verifyPassword, generateToken, verifyToken, requireAuth, requireAdmin, COOKIE_NAME } = require('./src/lib/auth');
 const { registrarHistorico } = require('./src/lib/historico');
+const PERMS = require('./src/lib/permissions');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -44,27 +45,42 @@ const COOKIE_OPTS = { httpOnly: true, sameSite: 'strict', maxAge: 7 * 24 * 3600 
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 
-// ── Gate global do perfil 'restrito' ──────────────────────────────────────────
-// Restrito = apenas Overview + Campanhas. Só pode acessar os endpoints que essas
-// duas telas usam; qualquer outra rota /api/* retorna 403 (rotas novas já nascem
-// bloqueadas — defesa contra vazamento de tokens/contas/país via F12).
-const RESTRITO_ALLOW = new Set([
-  'GET /api/overview',
-  'GET /api/dashboard',
-  'GET /api/dominios',
-  'GET /api/gam-status',
-  'GET /api/intraday',
-  'GET /api/orcamento-status',
-  'GET /api/reports-gam',
-  'GET /api/sync/log',
-]);
-app.use((req, res, next) => {
+// ── Cache curto de permissões por usuário (evita 1 hit/req) ───────────────────
+const _permsCache = new Map(); // userId -> { ts, user }
+const PERMS_TTL = 15000;
+function invalidatePermsCache(userId) {
+  if (userId == null) _permsCache.clear();
+  else _permsCache.delete(Number(userId));
+}
+async function loadUser(userId) {
+  const hit = _permsCache.get(Number(userId));
+  if (hit && Date.now() - hit.ts < PERMS_TTL) return hit.user;
+  const { data } = await supabase
+    .from('usuarios').select('id,perfil,permissoes,ativo').eq('id', userId).maybeSingle();
+  const user = data || null;
+  _permsCache.set(Number(userId), { ts: Date.now(), user });
+  return user;
+}
+
+// ── Porteiro global (deny-by-default) ─────────────────────────────────────────
+// Substitui o gate antigo do perfil 'restrito'. Segurança real fica aqui: o que
+// não está explicitamente concedido no catálogo retorna 403. Rotas novas nascem
+// bloqueadas para colaboradores.
+app.use(async (req, res, next) => {
   if (!req.path.startsWith('/api/') || req.path.startsWith('/api/auth/')) return next();
   const token = req.cookies?.[COOKIE_NAME] || req.headers.authorization?.replace('Bearer ', '');
   const payload = verifyToken(token);
-  if (!payload || payload.perfil !== 'restrito') return next(); // auth real fica nas rotas
-  if (RESTRITO_ALLOW.has(req.method + ' ' + req.path)) return next();
-  return res.status(403).json({ error: 'Acesso negado' });
+  if (!payload) return next(); // sem token: auth real (401) fica nas rotas
+  let user = null;
+  try { user = await loadUser(payload.uid); } catch (_) { user = null; }
+  if (user && user.ativo === false) return res.status(403).json({ error: 'Conta desativada' });
+  if (!user) user = { id: payload.uid, perfil: payload.perfil || 'admin' };
+  req.fullUser = user;
+  req.userPerfil = user.perfil;
+  req.allowedDominios = PERMS.allowedDomainIds(user); // null=todos | number[]
+  const verdict = PERMS.checkAccess(user, req.method, req.path);
+  if (!verdict.allow) return res.status(403).json({ error: 'Acesso negado' });
+  next();
 });
 
 // ── Public HTML routes ────────────────────────────────────────────────────────
