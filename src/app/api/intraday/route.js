@@ -74,20 +74,28 @@ async function handler(req, res) {
       ]);
 
       const mapDom = (gamRows, metaRows) => {
+        const gamByHora = Object.fromEntries((gamRows || []).map(r => [r.hora, r]));
         const metaByHora = Object.fromEntries(
           (metaRows || []).map(r => [r.hora, +(r.investimento_brl || 0)])
         );
-        return (gamRows || []).map(r => {
-          const rec = +(r.receita * 0.9).toFixed(4);
-          const inv = +(metaByHora[r.hora] || 0).toFixed(4);
+        // União das horas: GAM (receita) ∪ Meta (investimento). Sem isso, horas
+        // com gasto Meta mas sem receita GAM não apareceriam.
+        const horas = [...new Set([
+          ...Object.keys(gamByHora).map(Number),
+          ...Object.keys(metaByHora).map(Number),
+        ])].sort((a, b) => a - b);
+        return horas.map(hora => {
+          const g = gamByHora[hora];
+          const rec = +(((g?.receita || 0) * 0.9)).toFixed(4);
+          const inv = +(metaByHora[hora] || 0).toFixed(4);
           const roi = inv >= 1 ? +((rec - inv) / inv * 100).toFixed(4) : null;
           return {
-            hora:         r.hora,
+            hora,
             receita:      rec,
-            ecpm:         +(r.ecpm || 0),
+            ecpm:         +(g?.ecpm || 0),
             investimento: inv,
             roi,
-            impressoes:   r.impressoes || 0,
+            impressoes:   g?.impressoes || 0,
           };
         });
       };

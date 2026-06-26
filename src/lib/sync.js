@@ -3,7 +3,7 @@ const axios = require('axios');
 const { DateTime } = require('luxon');
 const supabase = require('./supabase');
 const { getBMConfigs, updateBMStatus } = require('./meta');
-const { fetchGAMReport, fetchGAMFunnelsByUTM, fetchGAMHourly, fetchGAMUtmCampaigns, fetchGAMUtmSources } = require('./gam');
+const { fetchGAMReport, fetchGAMFunnelsByUTM, fetchGAMHourlyByDomain, fetchGAMUtmCampaigns, fetchGAMUtmSources } = require('./gam');
 const { getUSDtoBRL, getUSDtoBRLByDate } = require('../services/exchange.service');
 const { findAction, getResults, OBJECTIVE_ACTION_MAP, getResultadoMeta } = require('../services/attribution.service');
 const { extractDomainPrefix, extractAdUTM, extractTipo, groupAdsByUTM, extractPaisSigla, extractNicho, resolveCountry } = require('./parser');
@@ -326,6 +326,7 @@ async function fetchMetaHourlySpend(date) {
 
   const globalHoraMap = {}; // hora → total spend BRL (todas as campanhas)
   const prefixHoraMap = {}; // prefixo → { hora → spend BRL }
+  let complete = true;      // false se a paginação de alguma conta falhar no meio
 
   for (const acc of accounts || []) {
     const { ad_account_id, access_token: token, imposto_percentual } = acc;
@@ -342,13 +343,13 @@ async function fetchMetaHourlySpend(date) {
     // Compute shift: account TZ hour → BRT hour
     const accountTz = apiInfo[accountId]?.timezone_name || 'America/Sao_Paulo';
     const needsRebucket = accountTz !== 'America/Sao_Paulo';
-    // Range alargado para cobrir o dia BR completo quando a conta está em outro fuso
+    // Range alargado para trás para cobrir BR h00-03 (= LA h20-23 de ontem).
+    // hrUntil = date (hoje): nenhuma hora BR de hoje vem de uma data LA futura,
+    // então não há motivo para pedir amanhã (só infla a paginação / pede data futura).
     const hrSince = needsRebucket
       ? DateTime.fromISO(date, { zone: 'America/Sao_Paulo' }).minus({ days: 1 }).toISODate()
       : date;
-    const hrUntil = needsRebucket
-      ? DateTime.fromISO(date, { zone: 'America/Sao_Paulo' }).plus({ days: 1 }).toISODate()
-      : date;
+    const hrUntil = date;
     if (needsRebucket) {
       console.log(`[hourly Meta ${accountId}] tz=${accountTz} — re-bucketing luxon para ${date}`);
     }
@@ -384,48 +385,68 @@ async function fetchMetaHourlySpend(date) {
         nextUrl = res.data?.paging?.next || null;
       }
     } catch (e) {
-      console.warn(`[hourly Meta ${accountId}]`, e.response?.data?.error?.message || e.message);
+      // Falha no meio da paginação → mapa parcial (faltam as horas mais recentes,
+      // pois o Meta devolve as datas antigas primeiro). Marca incompleto para que
+      // fetchAndSaveHourly NÃO zere as horas ausentes.
+      complete = false;
+      console.warn(`[hourly Meta ${accountId}] paginação incompleta:`, e.response?.data?.error?.message || e.message);
     }
   }
 
   const totalSpend = Object.values(globalHoraMap).reduce((s, v) => s + v, 0);
-  console.log(`[hourly Meta] ${date}: ${Object.keys(globalHoraMap).length} horas, total R$${totalSpend.toFixed(2)}, prefixos: [${Object.keys(prefixHoraMap).join(', ')}]`);
-  return { _global_: globalHoraMap, ...prefixHoraMap };
+  console.log(`[hourly Meta] ${date}: ${Object.keys(globalHoraMap).length} horas, total R$${totalSpend.toFixed(2)}, complete=${complete}, prefixos: [${Object.keys(prefixHoraMap).join(', ')}]`);
+  return { _global_: globalHoraMap, _complete: complete, ...prefixHoraMap };
 }
 
 // Fetch GAM + Meta hourly data for one date and upsert into dados_hora.
 async function fetchAndSaveHourly(date) {
-  const [gamRows, metaHoraMap] = await Promise.all([
-    fetchGAMHourly({ since: date, until: date }).catch(e => { console.warn('[hourly GAM]', e.message); return []; }),
-    fetchMetaHourlySpend(date).catch(e => { console.warn('[hourly Meta]', e.message); return { _global_: {} }; }),
+  const { data: dominios } = await supabase
+    .from('dominios')
+    .select('id,prefixo_campanha,prefixo_ad_unit,codigo_pedido_gam')
+    .eq('ativo', true);
+
+  const [gamByDom, metaHoraMap] = await Promise.all([
+    fetchGAMHourlyByDomain({ since: date, until: date, dominios }).catch(e => { console.warn('[hourly GAM]', e.message); return {}; }),
+    fetchMetaHourlySpend(date).catch(e => { console.warn('[hourly Meta]', e.message); return { _global_: {}, _complete: false }; }),
   ]);
 
+  const gamRows = gamByDom[0] || [];
   const globalHoraMap = metaHoraMap._global_ || {};
 
   const gamMap = {};
   for (const h of gamRows) gamMap[h.hora] = h;
 
-  // Se a busca horária da Meta voltou vazia (falha transitória de API/Supabase
-  // → fallback { _global_: {} }, ou meta_accounts vazio), NÃO zerar o investimento
-  // já gravado. Sem isto, toda hora com receita GAM > 0 era reescrita com
-  // investimento_brl = 0 (o guard de skip mantém a linha viva pela receita),
-  // destruindo o investimento global correto até o próximo sync bem-sucedido.
+  // Quando a busca horária da Meta veio incompleta, NÃO zerar o investimento já
+  // gravado nas horas ausentes. Dois casos cobertos:
+  //   • mapa VAZIO — falha total de API/Supabase (fallback { _global_: {} }) ou
+  //     meta_accounts vazio.
+  //   • mapa PARCIAL (_complete=false) — paginação de alguma conta falhou no meio
+  //     (throttle): o Meta devolve as datas antigas primeiro, então as horas mais
+  //     RECENTES de hoje somem do mapa. Sem este guard, elas eram reescritas com
+  //     investimento_brl = 0 (o skip de linha-viva pela receita GAM mantinha a
+  //     linha), zerando o investimento das últimas horas até um sync completo.
+  const metaComplete   = metaHoraMap._complete !== false;
   const metaHourlyEmpty = Object.keys(globalHoraMap).length === 0;
+  const preserveMissing = metaHourlyEmpty || !metaComplete;
   const existingInvGlobal = {};
-  if (metaHourlyEmpty) {
+  if (preserveMissing) {
     const { data: prev } = await supabase.from('dados_hora')
       .select('hora,investimento_brl')
       .eq('data', date).eq('dominio_id', 0);
     for (const p of prev || []) existingInvGlobal[p.hora] = +(p.investimento_brl || 0);
-    console.warn(`[hourly] ${date}: Meta horária vazia — preservando investimento global existente (sem zerar)`);
+    console.warn(`[hourly] ${date}: Meta horária ${metaHourlyEmpty ? 'vazia' : 'parcial'} — preservando investimento existente nas horas ausentes (sem zerar)`);
   }
 
   const rows = [];
   for (let hora = 0; hora < 24; hora++) {
     const gam = gamMap[hora];
-    const inv = metaHourlyEmpty
-      ? +(existingInvGlobal[hora] || 0).toFixed(4)
-      : +(globalHoraMap[hora] || 0).toFixed(4);
+    // Hora presente no mapa novo → usa o valor da Meta. Ausente → preserva o
+    // existente (se incompleto) ou 0 (se completo, é ausência legítima de gasto).
+    const inv = globalHoraMap[hora] != null
+      ? +globalHoraMap[hora].toFixed(4)
+      : preserveMissing
+        ? +(existingInvGlobal[hora] || 0).toFixed(4)
+        : 0;
     const rec = gam?.receita || 0;
     const imp = gam?.impressoes || 0;
     if (rec === 0 && inv === 0 && imp === 0) continue;
@@ -446,8 +467,6 @@ async function fetchAndSaveHourly(date) {
 
   // Linhas por domínio: só investimento Meta filtrado pelo prefixo da campanha
   // receita/ecpm/impressoes ficam em report_hora (consultadas pela intraday route)
-  const { data: dominios } = await supabase
-    .from('dominios').select('id,prefixo_campanha').eq('ativo', true);
   const domByPrefix = {};
   for (const d of dominios || []) {
     if (d.prefixo_campanha) domByPrefix[d.prefixo_campanha.toUpperCase()] = d.id;
@@ -468,6 +487,31 @@ async function fetchAndSaveHourly(date) {
         atualizado_em: new Date().toISOString(),
       });
     }
+  }
+
+  // report_hora: receita/ecpm/impressões horárias por domínio + global (dominio_id=0).
+  // Fonte do intraday filtrado por domínio. Escrito aqui (não só no cache do syncAll)
+  // para cobrir as duas datas (since+until) e alinhar com a data de São Paulo lida
+  // pela rota — o cache antigo gravava só a data UTC `until`, que diverge à noite BR.
+  const nowIso = new Date().toISOString();
+  const reportHoraRows = [];
+  for (const [domIdStr, horas] of Object.entries(gamByDom)) {
+    const domId = Number(domIdStr);
+    for (const h of horas || []) {
+      reportHoraRows.push({
+        data: date, hora: h.hora,
+        impressoes: h.impressoes || 0, nao_preenchidas: h.nao_preenchidas || 0,
+        receita: h.receita || 0, ecpm: h.ecpm || 0, ctr: h.ctr || 0,
+        cliques: h.cliques || 0, cpc: h.cpc || 0,
+        prefixo_ad_unit: '', dominio_id: domId, updated_at: nowIso,
+      });
+    }
+  }
+  if (reportHoraRows.length > 0) {
+    const { error: rhErr } = await supabase.from('report_hora')
+      .upsert(reportHoraRows, { onConflict: 'data,hora,dominio_id' });
+    if (rhErr) console.warn(`[hourly] upsert report_hora ${date}:`, rhErr.message);
+    else console.log(`[hourly] report_hora: ${reportHoraRows.length} linhas (${Object.keys(gamByDom).length} séries) → ${date}`);
   }
 
   if (rows.length === 0) {
@@ -890,37 +934,15 @@ async function syncAll(dateRange) {
 
     // ── Popular cache de Reports GAM em background ──
     try {
-      const [hourly, utmCampaigns, utmSources] = await Promise.all([
-        fetchGAMHourly({ since: until, until }).catch(e => { console.warn('[sync] GAM hourly cache:', e.message); return []; }),
+      // report_hora (horário por domínio + global) é populado em fetchAndSaveHourly,
+      // que roda para since+until e alinha com a data de São Paulo lida pela rota.
+      const [utmCampaigns, utmSources] = await Promise.all([
         fetchGAMUtmCampaigns({ since: until, until }).catch(e => { console.warn('[sync] GAM utm cache:', e.message); return []; }),
         fetchGAMUtmSources({ since: until, until }).catch(e => { console.warn('[sync] GAM src cache:', e.message); return []; }),
       ]);
 
       const now = new Date().toISOString();
       const pfx = dominios?.[0]?.prefixo_ad_unit || '';
-
-      if (hourly.length > 0) {
-        const { error: rHoraErr } = await supabase.from('report_hora')
-          .upsert(
-            hourly.map(h => ({
-              data: until,
-              hora: h.hora,
-              impressoes: h.impressoes || 0,
-              nao_preenchidas: h.nao_preenchidas || 0,
-              receita: h.receita || 0,
-              ecpm: h.ecpm || 0,
-              ctr: h.ctr || 0,
-              cliques: h.cliques || 0,
-              cpc: h.cpc || 0,
-              prefixo_ad_unit: '',  // dominio_id=0 = global; prefixo não discrimina mais
-              dominio_id: 0,
-              updated_at: now,
-            })),
-            { onConflict: 'data,hora,dominio_id' }
-          );
-        if (rHoraErr) console.error('[sync] upsert report_hora:', rHoraErr.message);
-        else console.log(`[sync] cache GAM: ${hourly.length} horas salvas`);
-      }
 
       if (utmCampaigns.length > 0) {
         const { error: utmErr } = await supabase.from('report_utm_campaign')

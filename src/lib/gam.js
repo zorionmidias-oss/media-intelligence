@@ -580,55 +580,121 @@ async function fetchGAMHourly({ since, until, domain, adUnitPrefix } = {}) {
 
     // BUG 3: usa prefixo do DB se disponível; fallback para heurística de 3 chars
     const prefix = adUnitPrefix != null ? adUnitPrefix : _domainPrefix(domain);
-
-    // hourMap: hora (0-23) → { impressoes, receita, cliques, ecpmWtSum, ecpmWt, ctrWtSum, ctrWt, cpcWtSum, cpcWt }
-    const hourMap = {};
-
-    for (const row of rows) {
-      const adUnit = row['Dimension.AD_UNIT_NAME'] || row['AD_UNIT_NAME'] || '';
-      if (prefix && !adUnit.toLowerCase().startsWith(prefix)) continue;
-
-      const horaRaw = row['Dimension.HOUR'] || row['HOUR'] || '0';
-      const hora = parseInt(horaRaw, 10);
-
-      const imp = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS'] || 0);
-      const revMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE'] || 0);
-      const receita = (revMicros / 1_000_000) * rate;
-      const ecpmMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM'] || 0);
-      const ctrRaw = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CTR'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_CTR'] || 0);
-      const cliques = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS'] || 0);
-      const cpcMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_CPC'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_CPC'] || 0);
-
-      const naoPreench = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_UNFILLED_IMPRESSIONS'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_UNFILLED_IMPRESSIONS'] || 0);
-
-      if (!hourMap[hora]) hourMap[hora] = { impressoes: 0, nao_preenchidas: 0, receita: 0, cliques: 0, ecpmWtSum: 0, ecpmWt: 0, ctrWtSum: 0, ctrWt: 0, cpcWtSum: 0, cpcWt: 0 };
-      const h = hourMap[hora];
-      h.impressoes += imp;
-      h.nao_preenchidas += naoPreench;
-      h.receita += receita;
-      h.cliques += cliques;
-      if (imp > 0 && ecpmMicros > 0) { h.ecpmWtSum += (ecpmMicros / 1_000_000) * rate * imp; h.ecpmWt += imp; }
-      if (imp > 0) { h.ctrWtSum += ctrRaw * imp; h.ctrWt += imp; }
-      if (cliques > 0 && cpcMicros > 0) { h.cpcWtSum += (cpcMicros / 1_000_000) * rate * cliques; h.cpcWt += cliques; }
-    }
-
-    return Array.from({ length: 24 }, (_, hora) => {
-      const h = hourMap[hora];
-      if (!h || (h.impressoes === 0 && h.nao_preenchidas === 0)) return null;
-      return {
-        hora,
-        impressoes: h.impressoes,
-        nao_preenchidas: h.nao_preenchidas,
-        receita: +h.receita.toFixed(2),
-        ecpm: h.ecpmWt > 0 ? +(h.ecpmWtSum / h.ecpmWt).toFixed(4) : 0,
-        ctr: h.ctrWt > 0 ? +(h.ctrWtSum / h.ctrWt * 100).toFixed(4) : 0,
-        cliques: h.cliques,
-        cpc: h.cpcWt > 0 ? +(h.cpcWtSum / h.cpcWt).toFixed(4) : 0,
-      };
-    }).filter(Boolean);
+    return _aggregateHourlyRows(rows, rate, prefix);
   } catch (e) {
     console.warn('[GAM fetchHourly]', e.message);
     return [];
+  }
+}
+
+// Agrega linhas brutas do relatório horário (AD_UNIT_NAME × HOUR) em até 24 buckets.
+// prefix: filtra ad units por prefixo (vazio/null = todas → agregado global).
+function _aggregateHourlyRows(rows, rate, prefix) {
+  const pfx = prefix ? String(prefix).toLowerCase() : '';
+  const hourMap = {};
+
+  for (const row of rows) {
+    const adUnit = row['Dimension.AD_UNIT_NAME'] || row['AD_UNIT_NAME'] || '';
+    if (pfx && !adUnit.toLowerCase().startsWith(pfx)) continue;
+
+    const horaRaw = row['Dimension.HOUR'] || row['HOUR'] || '0';
+    const hora = parseInt(horaRaw, 10);
+
+    const imp = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS'] || 0);
+    const revMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE'] || 0);
+    const receita = (revMicros / 1_000_000) * rate;
+    const ecpmMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM'] || 0);
+    const ctrRaw = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CTR'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_CTR'] || 0);
+    const cliques = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS'] || 0);
+    const cpcMicros = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_CPC'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_CPC'] || 0);
+
+    const naoPreench = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_UNFILLED_IMPRESSIONS'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_UNFILLED_IMPRESSIONS'] || 0);
+
+    if (!hourMap[hora]) hourMap[hora] = { impressoes: 0, nao_preenchidas: 0, receita: 0, cliques: 0, ecpmWtSum: 0, ecpmWt: 0, ctrWtSum: 0, ctrWt: 0, cpcWtSum: 0, cpcWt: 0 };
+    const h = hourMap[hora];
+    h.impressoes += imp;
+    h.nao_preenchidas += naoPreench;
+    h.receita += receita;
+    h.cliques += cliques;
+    if (imp > 0 && ecpmMicros > 0) { h.ecpmWtSum += (ecpmMicros / 1_000_000) * rate * imp; h.ecpmWt += imp; }
+    if (imp > 0) { h.ctrWtSum += ctrRaw * imp; h.ctrWt += imp; }
+    if (cliques > 0 && cpcMicros > 0) { h.cpcWtSum += (cpcMicros / 1_000_000) * rate * cliques; h.cpcWt += cliques; }
+  }
+
+  return Array.from({ length: 24 }, (_, hora) => {
+    const h = hourMap[hora];
+    if (!h || (h.impressoes === 0 && h.nao_preenchidas === 0)) return null;
+    return {
+      hora,
+      impressoes: h.impressoes,
+      nao_preenchidas: h.nao_preenchidas,
+      receita: +h.receita.toFixed(2),
+      ecpm: h.ecpmWt > 0 ? +(h.ecpmWtSum / h.ecpmWt).toFixed(4) : 0,
+      ctr: h.ctrWt > 0 ? +(h.ctrWtSum / h.ctrWt * 100).toFixed(4) : 0,
+      cliques: h.cliques,
+      cpc: h.cpcWt > 0 ? +(h.cpcWtSum / h.cpcWt).toFixed(4) : 0,
+    };
+  }).filter(Boolean);
+}
+
+// Prefixo de ad unit de um domínio: usa prefixo_ad_unit; senão deriva de
+// codigo_pedido_gam ("MKU-AdX" → "mku_"), igual ao matching de blocos_anuncio.
+function _domainAdUnitPrefix(d) {
+  if (d.prefixo_ad_unit) return String(d.prefixo_ad_unit).toLowerCase();
+  if (d.codigo_pedido_gam) return d.codigo_pedido_gam.split('-')[0].toLowerCase() + '_';
+  return null;
+}
+
+// Roda UM job horário e bucketiza por domínio + global numa única passada.
+// dominios: [{ id, prefixo_ad_unit, codigo_pedido_gam }]
+// Retorna { 0: [horasGlobais], <dominio_id>: [horas], ... }
+async function fetchGAMHourlyByDomain({ since, until, dominios } = {}) {
+  const networkCode = NETWORK_CODE;
+  if (!networkCode) return {};
+  const dates = { since: since || defaultDateRange().since, until: until || defaultDateRange().until };
+
+  try {
+    const [token, rate] = await Promise.all([getAccessToken(), getUSDtoBRL()]);
+
+    const xml = wrapEnvelope(soapHeader(networkCode), `
+      <runReportJob xmlns="https://www.google.com/apis/ads/publisher/${GAM_VERSION}">
+        <reportJob>
+          <reportQuery>
+            <dimensions>AD_UNIT_NAME</dimensions>
+            <dimensions>HOUR</dimensions>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_UNFILLED_IMPRESSIONS</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_CTR</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS</columns>
+            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_CPC</columns>
+            <startDate>${dateToXML(dates.since)}</startDate>
+            <endDate>${dateToXML(dates.until)}</endDate>
+            <dateRangeType>CUSTOM_DATE</dateRangeType>
+          </reportQuery>
+        </reportJob>
+      </runReportJob>`);
+
+    const runResp = await soapCall(token, xml);
+    const jobId = extractTag(runResp, 'id');
+    if (!jobId) {
+      console.warn('[GAM hourly/dom] no jobId — runResp:', runResp.slice(0, 800));
+      return {};
+    }
+
+    const rows = await pollAndDownload(token, networkCode, jobId);
+
+    const out = { 0: _aggregateHourlyRows(rows, rate, '') };
+    for (const d of dominios || []) {
+      const pfx = _domainAdUnitPrefix(d);
+      if (!pfx) continue;
+      out[d.id] = _aggregateHourlyRows(rows, rate, pfx);
+    }
+    return out;
+  } catch (e) {
+    console.warn('[GAM fetchHourlyByDomain]', e.message);
+    return {};
   }
 }
 
@@ -978,4 +1044,4 @@ async function fetchGAMBotoesIndependente({ since, until, filtroOrigem, filtroPa
   }
 }
 
-module.exports = { fetchGAMReport, fetchGAMAdvertisers, discoverGAMNetworks, fetchGAMFunnelsByUTM, fetchGAMHourly, fetchGAMUtmCampaigns, fetchGAMUtmSources, fetchGAMBlocosFunil, fetchGAMBotoesIndependente, getUSDtoBRL, getUSDtoBRLByDate };
+module.exports = { fetchGAMReport, fetchGAMAdvertisers, discoverGAMNetworks, fetchGAMFunnelsByUTM, fetchGAMHourly, fetchGAMHourlyByDomain, fetchGAMUtmCampaigns, fetchGAMUtmSources, fetchGAMBlocosFunil, fetchGAMBotoesIndependente, getUSDtoBRL, getUSDtoBRLByDate };
