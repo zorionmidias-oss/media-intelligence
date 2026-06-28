@@ -315,7 +315,9 @@ async function computeOrcamentoContas(opts = {}) {
   //   senão "Em uso" se há conjunto gastando/programado; senão "Disponível".
   const paginas = Object.values(porPagina).map(p => {
     const ativos = p.normal.n + p.programado.n + p.anomalia.n;
-    const orcamento = p.normal.orc + p.programado.orc + p.anomalia.orc;
+    // Orçamento DESCONTA os parados (anomalia) — só conta o que vai gastar (normal + programado).
+    // O valor parado fica detalhado na observação.
+    const orcamento = p.normal.orc + p.programado.orc;
     const status = p.anomalia.n > 0 ? 'com anomalia'
                  : (p.normal.n + p.programado.n) > 0 ? 'Em uso' : 'Disponível';
     const observacao = p.anomalia.n > 0
