@@ -1,7 +1,7 @@
 'use strict';
 const cron = require('node-cron');
 const { syncAll } = require('./sync');
-const { detectarAlertas } = require('./alertas');
+const { detectarAlertas, detectarConjuntosSemGasto } = require('./alertas');
 
 function startScheduler() {
   console.log('[scheduler] Iniciando sync inicial…');
@@ -12,6 +12,7 @@ function startScheduler() {
     console.log('[scheduler] Sync automático…');
     syncAll()
       .then(() => detectarAlertas())
+      .then(() => detectarConjuntosSemGasto())
       .catch(e => console.error('[scheduler] Sync cron falhou:', e.message));
   });
 

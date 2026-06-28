@@ -1,5 +1,50 @@
 'use strict';
 const supabase = require('./supabase');
+const { computeOrcamentoContas, STALL_HORAS } = require('./orcamento');
+
+// Conjuntos/campanhas ATIVOS há ≥ STALL_HORAS sem nenhum gasto (R$0) → notifica.
+// Roda no scheduler junto do sync. Dedup por unidade no mesmo dia (ad_utm = chave).
+async function detectarConjuntosSemGasto() {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const { stalled } = await computeOrcamentoContas();
+
+    for (const c of stalled || []) {
+      const chave = `${c.nivel}:${c.id}`;   // chave estável p/ dedup (ad_utm)
+      const { data: existing } = await supabase
+        .from('notificacoes')
+        .select('id')
+        .eq('tipo', 'conjunto_sem_gasto')
+        .eq('ad_utm', chave)
+        .gte('created_at', today + 'T00:00:00')
+        .limit(1);
+      if (existing?.length) continue;
+
+      const rotulo = c.nivel === 'campaign' ? 'Campanha' : 'Conjunto';
+      await supabase.from('notificacoes').insert({
+        tipo: 'conjunto_sem_gasto',
+        severidade: 'warning',
+        titulo: `${rotulo} "${c.nome}" ativo há ${Math.floor(c.horas_ativo)}h sem gastar`,
+        mensagem: `${c.account_nome} — orçamento R$ ${c.budget_brl.toFixed(2)} parado (R$ 0 gasto hoje). Verifique entrega/aprovação.`,
+        ad_utm: chave,
+        metadata: {
+          nivel: c.nivel,
+          id: c.id,
+          campaign_id: c.campaign_id,
+          account_id: c.account_id,
+          horas_ativo: c.horas_ativo,
+          budget_brl: c.budget_brl,
+        },
+      });
+      console.log(`[alertas] conjunto_sem_gasto: ${rotulo} "${c.nome}" (${c.account_nome}) há ${c.horas_ativo}h`);
+    }
+
+    return (stalled || []).length;
+  } catch (e) {
+    console.error('[alertas] detectarConjuntosSemGasto falhou:', e.message);
+    return 0;
+  }
+}
 
 async function detectarAlertas() {
   try {
@@ -118,4 +163,4 @@ async function detectarAlertas() {
   }
 }
 
-module.exports = { detectarAlertas };
+module.exports = { detectarAlertas, detectarConjuntosSemGasto };
