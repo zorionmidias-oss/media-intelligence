@@ -16,6 +16,7 @@ const axios = require('axios');
 const { DateTime } = require('luxon');
 const supabase = require('./supabase');
 const { getUSDtoBRL } = require('../services/exchange.service');
+const { extractDomainPrefix } = require('./parser');
 
 const BASE = 'https://graph.facebook.com/v19.0';
 
@@ -63,8 +64,15 @@ async function metaPaginado(url, params) {
 }
 
 // Calcula o orçamento de HOJE por conta + lista de conjuntos travados (sem gasto).
+// opts.prefixoFiltro (uppercase): se setado, conta só campanhas cujo prefixo do
+// nome (1º [...]) bate com o domínio selecionado. Sem filtro = todas as contas.
 // Retorna { orcamentoHoje, porConta, stalled }.
-async function computeOrcamentoContas() {
+async function computeOrcamentoContas(opts = {}) {
+  const prefixoFiltro = opts.prefixoFiltro ? String(opts.prefixoFiltro).toUpperCase() : null;
+  // Casa o nome da campanha com o domínio selecionado (mesma regra do sync)
+  const matchDominio = (campaignName) =>
+    !prefixoFiltro || (extractDomainPrefix(campaignName) || '').toUpperCase() === prefixoFiltro;
+
   const taxaUSD = await getUSDtoBRL();
 
   const { data: accounts } = await supabase
@@ -118,7 +126,7 @@ async function computeOrcamentoContas() {
         metaPaginado(`${BASE}/${accountId}/insights`, {
           level: 'adset',
           time_range: JSON.stringify({ since: hojeLocal, until: hojeLocal }),
-          fields: 'adset_id,campaign_id,spend',
+          fields: 'adset_id,campaign_id,campaign_name,spend',
           limit: 500,
           access_token: acc.access_token,
         }),
@@ -130,11 +138,13 @@ async function computeOrcamentoContas() {
       const spendByAdset = {};
       const spendByCamp = {};
       const campOfAdset = {};
+      const campNameOfAdset = {};   // p/ resolver domínio de unidades pausadas
       for (const r of insights) {
         const sp = Number(r.spend || 0);
         if (r.adset_id) {
           spendByAdset[r.adset_id] = (spendByAdset[r.adset_id] || 0) + sp;
           if (r.campaign_id) campOfAdset[r.adset_id] = r.campaign_id;
+          if (r.campaign_name) campNameOfAdset[r.adset_id] = r.campaign_name;
         }
         if (r.campaign_id) spendByCamp[r.campaign_id] = (spendByCamp[r.campaign_id] || 0) + sp;
       }
@@ -170,6 +180,7 @@ async function computeOrcamentoContas() {
       };
 
       for (const camp of campaigns) {
+        if (!matchDominio(camp.name)) continue;   // fora do domínio filtrado
         const campBudget = Number(camp.daily_budget || 0) / 100;
         const childAdsets = adsetsByCamp[camp.id] || [];
         if (campBudget > 0) {
@@ -216,6 +227,7 @@ async function computeOrcamentoContas() {
         const campId = campOfAdset[adsetId];
         if (cboAtivasIds.has(campId)) continue;   // coberto pelo budget da CBO ativa
         if (activeAdsetIds.has(adsetId)) continue; // conjunto ABO ativo, já contado
+        if (!matchDominio(campNameOfAdset[adsetId])) continue; // fora do domínio filtrado
         orcamentoContaOrig += spent;
         pausadosComGasto++;
       }

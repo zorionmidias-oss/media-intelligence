@@ -8,25 +8,35 @@ async function handler(req, res) {
     const hoje = now.toISOString().slice(0, 10);
     const since = req.query.since || hoje;
     const until  = req.query.until  || hoje;
+    const domain = req.query.domain;
 
     const dias = Math.round((new Date(until) - new Date(since)) / 86400000) + 1;
 
+    // Filtro por domínio (nome) → resolve id (filtra usado) e prefixo (filtra orçamento Meta)
+    let domainId = null;
+    let prefixoFiltro = null;
+    if (domain && domain !== 'all') {
+      const { data: d } = await supabase
+        .from('dominios')
+        .select('id,prefixo_campanha')
+        .eq('nome', domain)
+        .maybeSingle();
+      domainId = d?.id || null;
+      prefixoFiltro = d?.prefixo_campanha || null;
+    }
+
     // Orçamento de HOJE ao vivo (Meta) + conjuntos ativos sem gastar (travados)
-    const { orcamentoHoje, porConta, stalled } = await computeOrcamentoContas();
+    const { orcamentoHoje, porConta, stalled } = await computeOrcamentoContas({ prefixoFiltro });
 
     // USADO: soma de valor_gasto hoje e no período (já em BRL c/ imposto)
-    // v1: account-level — não aplica filtro de domínio intencionalmente
-    // TODO v2: adicionar filtro por domínio via prefixo de campanha
-    const { data: rowsHoje } = await supabase
-      .from('ads_consolidados')
-      .select('valor_gasto')
-      .eq('data', hoje);
-
-    const { data: rowsPeriodo } = await supabase
-      .from('ads_consolidados')
-      .select('valor_gasto')
-      .gte('data', since)
-      .lte('data', until);
+    let qHoje = supabase.from('ads_consolidados').select('valor_gasto').eq('data', hoje);
+    let qPeriodo = supabase.from('ads_consolidados').select('valor_gasto').gte('data', since).lte('data', until);
+    if (domainId) {
+      qHoje = qHoje.eq('dominio_id', domainId);
+      qPeriodo = qPeriodo.eq('dominio_id', domainId);
+    }
+    const { data: rowsHoje } = await qHoje;
+    const { data: rowsPeriodo } = await qPeriodo;
 
     const usadoHoje    = (rowsHoje   || []).reduce((s, r) => s + Number(r.valor_gasto || 0), 0);
     const usadoPeriodo = (rowsPeriodo || []).reduce((s, r) => s + Number(r.valor_gasto || 0), 0);

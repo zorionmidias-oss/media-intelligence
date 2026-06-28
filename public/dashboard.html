@@ -3485,8 +3485,10 @@ async function loadData(force=false){
 /* ═══ PACING DO DIA ═══ */
 async function loadOrcamentoStatus(since,until){
   try{
-    // v1: account-level — filtro de domínio não aplicado intencionalmente
-    const res=await fetch(`/api/orcamento-status?since=${since}&until=${until}`);
+    let q=`since=${since}&until=${until}`;
+    const domain=document.getElementById('f-domain')?.value;
+    if(domain&&domain!=='all')q+=`&domain=${encodeURIComponent(domain)}`;
+    const res=await fetch(`/api/orcamento-status?${q}`);
     if(!res.ok)return;
     const d=await res.json();
     renderOrcamentoStatus(d);
