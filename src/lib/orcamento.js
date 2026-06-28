@@ -310,18 +310,23 @@ async function computeOrcamentoContas(opts = {}) {
   }
 
   const orcamentoHoje = porConta.reduce((s, c) => s + c.orcamento_hoje_brl, 0);
-  // Deriva, por página: conjuntos ativos totais, orçamento configurado e STATUS.
-  //   "Em uso" se há conjunto gastando OU programado; "com anomalia" se só travados; senão fica fora.
+  // Deriva, por página: conjuntos ativos totais, orçamento configurado, STATUS e observação.
+  //   "com anomalia" se QUALQUER conjunto ativo está travado (mesmo com outros gastando);
+  //   senão "Em uso" se há conjunto gastando/programado; senão "Disponível".
   const paginas = Object.values(porPagina).map(p => {
     const ativos = p.normal.n + p.programado.n + p.anomalia.n;
     const orcamento = p.normal.orc + p.programado.orc + p.anomalia.orc;
-    const status = (p.normal.n + p.programado.n) > 0 ? 'Em uso'
-                 : p.anomalia.n > 0 ? 'com anomalia' : 'Disponível';
+    const status = p.anomalia.n > 0 ? 'com anomalia'
+                 : (p.normal.n + p.programado.n) > 0 ? 'Em uso' : 'Disponível';
+    const observacao = p.anomalia.n > 0
+      ? `${p.anomalia.n} de ${ativos} sem gastar (R$ ${p.anomalia.orc.toFixed(2).replace('.', ',')} parado)`
+      : '';
     return {
       token: p.token,
       conjuntos: ativos,
       orcamento_brl: +orcamento.toFixed(2),
       status,
+      observacao,
       normal: p.normal.n,
       programado: p.programado.n,
       anomalia: p.anomalia.n,

@@ -90,7 +90,15 @@ async function atualizarPlanilhaGestao({ dryRun = false } = {}) {
     throw new Error(`Colunas não encontradas (pagina=${colPagina} qtd=${colQtd} orc=${colOrc}). Headers: ${headers.join(' | ')}`);
   }
 
+  // Coluna de Observação: usa a existente, ou cria logo após a última coluna do cabeçalho.
+  let colObs = acharCol(headers, ['OBSERVA']);
+  const criarColObs = colObs < 0;
+  if (criarColObs) colObs = headers.length;   // próxima coluna (ex.: H)
+
   const updates = [];   // { range, values:[[v]] }
+  if (criarColObs) {
+    updates.push({ range: `'${ABA}'!${colLetter(colObs)}1`, values: [['Observação']] });
+  }
   const matched = [];
   const zeradas = [];   // linhas sem conjunto ativo (→ 0 / Disponível)
   const tokenUsado = {};
@@ -120,8 +128,9 @@ async function atualizarPlanilhaGestao({ dryRun = false } = {}) {
     const info = token ? porToken[token] : null;
     const conjuntos = info ? info.conjuntos : 0;
     const orcamento = info ? info.orcamento_brl : 0;
-    // Status vem da Meta: "Em uso" (gastando/programado) | "com anomalia" (travado) | "Disponível"
+    // Status da Meta: "Em uso" | "com anomalia" (qualquer conjunto travado) | "Disponível"
     const status = info ? info.status : 'Disponível';
+    const observacao = info ? (info.observacao || '') : '';
 
     if (token) { tokenUsado[token] = (tokenUsado[token] || 0) + 1; matched.push({ ...l, token, conjuntos, orcamento, status }); }
     else zeradas.push({ linha: l.linha, nome: l.nome });
@@ -129,6 +138,7 @@ async function atualizarPlanilhaGestao({ dryRun = false } = {}) {
     updates.push({ range: `'${ABA}'!${colLetter(colQtd)}${l.linha}`, values: [[`${conjuntos} CONJUNTO${conjuntos === 1 ? '' : 'S'}`]] });
     updates.push({ range: `'${ABA}'!${colLetter(colOrc)}${l.linha}`, values: [[conjuntos > 0 ? orcamento : '']] });
     if (colStatus >= 0) updates.push({ range: `'${ABA}'!${colLetter(colStatus)}${l.linha}`, values: [[status]] });
+    updates.push({ range: `'${ABA}'!${colLetter(colObs)}${l.linha}`, values: [[observacao]] });
   }
 
   // Diagnósticos
