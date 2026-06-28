@@ -49,6 +49,16 @@ function horasAtivasHoje(startIso, nowDt) {
   return nowDt.diff(efetivo, 'hours').hours;
 }
 
+// Token da PÁGINA no nome da unidade. Conjunto: 2º colchete ([PAIS_...] [PAGINA] V1).
+// Campanha: último colchete ([PREFIXO] [PAIS_...] [PAGINA]). Uppercase/trim.
+function extractPageToken(name, isAdset) {
+  if (!name) return null;
+  const br = [...String(name).matchAll(/\[([^\]]*)\]/g)].map(m => m[1].trim());
+  if (!br.length) return null;
+  const tok = isAdset ? (br[1] || br[0]) : br[br.length - 1];
+  return tok ? tok.toUpperCase() : null;
+}
+
 // Paginação automática para endpoints Meta (cursor-based).
 async function metaPaginado(url, params) {
   const items = [];
@@ -82,6 +92,23 @@ async function computeOrcamentoContas(opts = {}) {
 
   const porConta = [];
   const stalled = [];
+  // Agregado por PÁGINA (token) p/ planilha de gestão, em 3 buckets:
+  //   normal     = conjunto ativo gastando / que vai gastar hoje  → "Em uso"
+  //   programado = conjunto agendado p/ ligar (start futuro)      → "Em uso"
+  //   anomalia   = conjunto ativo há ≥3h sem gastar (travado)     → "com anomalia"
+  // orcamento_brl em cada bucket = daily_budget CONFIGURADO em BRL (não o "vai gastar").
+  const porPagina = {};   // token → { token, normal:{n,orc}, programado:{n,orc}, anomalia:{n,orc} }
+  const addPagina = (token, bucket, conjuntos, budgetBRL) => {
+    if (!token) return;
+    if (!porPagina[token]) porPagina[token] = {
+      token,
+      normal:     { n: 0, orc: 0 },
+      programado: { n: 0, orc: 0 },
+      anomalia:   { n: 0, orc: 0 },
+    };
+    porPagina[token][bucket].n += conjuntos;
+    porPagina[token][bucket].orc += budgetBRL;
+  };
 
   for (const acc of accounts || []) {
     if (!acc.access_token) continue;
@@ -195,11 +222,19 @@ async function computeOrcamentoContas(opts = {}) {
           const horas = childAdsets.length
             ? Math.max(...childAdsets.map(a => horasAtivasHoje(a.start_time, nowDt)))
             : horasAtivasHoje(camp.start_time, nowDt);
+          const pToken = extractPageToken(camp.name, false);
+          const nConj = childAdsets.length || 1;
+          const orcConfig = paraBRL(campBudget);   // budget configurado em BRL
           if (campSpent === 0 && horas >= STALL_HORAS) {
-            // Campanha travada: ativa há horas e R$0 gasto → não conta no orçamento
+            // Campanha travada: ativa há horas e R$0 gasto → não conta no orçamento (KPI)
             pushStalled('campaign', camp.id, camp.name || camp.id, camp.id, horas, campBudget);
-          } else {
+            addPagina(pToken, 'anomalia', nConj, orcConfig);
+          } else if (fator > 0) {
             orcamentoContaOrig += Math.max(campBudget * fator, campSpent);
+            addPagina(pToken, 'normal', nConj, orcConfig);
+          } else {
+            // fator 0 → agendada p/ dia futuro (não entra no orçamento do dia)
+            addPagina(pToken, 'programado', nConj, orcConfig);
           }
         } else {
           // ABO
@@ -210,11 +245,18 @@ async function computeOrcamentoContas(opts = {}) {
             contaFator(fator);
             const spent = spendByAdset[a.id] || 0;
             const horas = horasAtivasHoje(a.start_time, nowDt);
+            const pToken = extractPageToken(a.name, true);
+            const orcConfig = paraBRL(b);   // budget configurado em BRL
             if (spent === 0 && horas >= STALL_HORAS) {
-              // Conjunto travado: ativo há horas e R$0 gasto → não conta no orçamento
+              // Conjunto travado: ativo há horas e R$0 gasto → não conta no orçamento (KPI)
               pushStalled('adset', a.id, a.name || a.id, a.campaign_id, horas, b);
-            } else {
+              addPagina(pToken, 'anomalia', 1, orcConfig);
+            } else if (fator > 0) {
               orcamentoContaOrig += Math.max(b * fator, spent);
+              addPagina(pToken, 'normal', 1, orcConfig);
+            } else {
+              // fator 0 → agendado p/ dia futuro
+              addPagina(pToken, 'programado', 1, orcConfig);
             }
           }
         }
@@ -268,7 +310,24 @@ async function computeOrcamentoContas(opts = {}) {
   }
 
   const orcamentoHoje = porConta.reduce((s, c) => s + c.orcamento_hoje_brl, 0);
-  return { orcamentoHoje, porConta, stalled };
+  // Deriva, por página: conjuntos ativos totais, orçamento configurado e STATUS.
+  //   "Em uso" se há conjunto gastando OU programado; "com anomalia" se só travados; senão fica fora.
+  const paginas = Object.values(porPagina).map(p => {
+    const ativos = p.normal.n + p.programado.n + p.anomalia.n;
+    const orcamento = p.normal.orc + p.programado.orc + p.anomalia.orc;
+    const status = (p.normal.n + p.programado.n) > 0 ? 'Em uso'
+                 : p.anomalia.n > 0 ? 'com anomalia' : 'Disponível';
+    return {
+      token: p.token,
+      conjuntos: ativos,
+      orcamento_brl: +orcamento.toFixed(2),
+      status,
+      normal: p.normal.n,
+      programado: p.programado.n,
+      anomalia: p.anomalia.n,
+    };
+  });
+  return { orcamentoHoje, porConta, stalled, paginas };
 }
 
-module.exports = { computeOrcamentoContas, STALL_HORAS };
+module.exports = { computeOrcamentoContas, STALL_HORAS, extractPageToken };

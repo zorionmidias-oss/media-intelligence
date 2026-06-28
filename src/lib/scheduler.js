@@ -2,6 +2,15 @@
 const cron = require('node-cron');
 const { syncAll } = require('./sync');
 const { detectarAlertas, detectarConjuntosSemGasto } = require('./alertas');
+const { atualizarPlanilhaGestao } = require('./sheetsGestao');
+
+// Atualiza a planilha de gestão de páginas a cada sync (desliga com SHEET_GESTAO_SYNC=0).
+function syncPlanilhaGestao() {
+  if (process.env.SHEET_GESTAO_SYNC === '0') return Promise.resolve();
+  return atualizarPlanilhaGestao()
+    .then(r => console.log(`[sheets] planilha atualizada: ${r.paginas_casadas} casadas, ${r.paginas_zeradas} zeradas, ${r.tokens_sem_linha.length} tokens sem linha`))
+    .catch(e => console.error('[sheets] atualizarPlanilhaGestao falhou:', e.message));
+}
 
 function startScheduler() {
   console.log('[scheduler] Iniciando sync inicial…');
@@ -13,6 +22,7 @@ function startScheduler() {
     syncAll()
       .then(() => detectarAlertas())
       .then(() => detectarConjuntosSemGasto())
+      .then(() => syncPlanilhaGestao())
       .catch(e => console.error('[scheduler] Sync cron falhou:', e.message));
   });
 
