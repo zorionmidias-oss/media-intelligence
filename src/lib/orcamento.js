@@ -327,6 +327,7 @@ async function computeOrcamentoContas(opts = {}) {
       token: p.token,
       conjuntos: ativos,
       orcamento_brl: +orcamento.toFixed(2),
+      parado_brl: +p.anomalia.orc.toFixed(2),
       status,
       observacao,
       normal: p.normal.n,
