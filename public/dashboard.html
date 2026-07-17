@@ -6110,11 +6110,20 @@ const escA=s=>esc(s).replace(/"/g,'&quot;');
 // Formata valor na moeda da conta: USD → "USD x,xx", senão "R$ x,xx"
 function fmtMoeda(v,m){return String(m||'').toUpperCase()==='USD'?'USD '+loc(v,2):BRL(v);}
 
-// Semáforo: Sessão/Lead (SPL) vs Break Even (BE). ótimo≥BE×1.2 · bom≥BE · ruim<BE
+// Semáforo legado: Sessão/Lead (SPL) vs Break Even (BE). ótimo≥BE×1.2 · bom≥BE · ruim<BE
 function corSPL(spl,be){
   if(spl==null||be==null||be<=0)return'';
   if(spl>=be*1.2)return'ok';
   if(spl>=be)return'warn';
+  return'bad';
+}
+
+// Semáforo principal: ROI real do conjunto (receita GAM por ad id ÷ gasto).
+// ótimo≥1.2 · bom≥1.0 (breakeven) · ruim<1.0
+function corROI(roi){
+  if(roi==null)return'';
+  if(roi>=1.2)return'ok';
+  if(roi>=1)return'warn';
   return'bad';
 }
 
@@ -6166,7 +6175,12 @@ function renderUtmAdsets(box,utm,d,rps){
     const custoRes=resultado>0?spend/resultado:0;
     const spl=conversas>0?resultado/conversas:null;
     const be=(custoRes>0&&rps>0)?custoRes/rps:null;
-    const cls=corSPL(spl,be);
+    // Direcionador: ROI real (receita GAM por ad id ÷ gasto). Sem receita por id
+    // no período (tráfego antigo por nome) → cai no semáforo Sessão/Lead vs BE.
+    const fat=a.faturamento_real!=null?+a.faturamento_real:null;
+    const roi=a.roi!=null?+a.roi:null;
+    const clsRoi=corROI(roi);
+    const clsSpl=roi==null?corSPL(spl,be):'';
     const nmFull=escA(a.adset_name||'');
     const short=esc((a.adset_name&&(a.adset_name.match(/\bV\d+$/)||[])[0])||a.adset_name||'—');
     const bud=+(a.daily_budget||0);
@@ -6180,10 +6194,12 @@ function renderUtmAdsets(box,utm,d,rps){
         <span>${short}</span>
       </td>
       <td class="mo">${BRL(spend)}</td>
+      <td class="mo">${fat!=null?BRL(fat):'—'}</td>
+      <td class="mo">${roi!=null?`<span class="ud-pill ${clsRoi}">${roi.toFixed(2)}x</span>`:'—'}</td>
       <td class="mo">${NUM(resultado)}</td>
       <td class="mo">${custoRes>0?BRL(custoRes):'—'}</td>
       <td class="mo">${NUM(conversas)}</td>
-      <td class="mo"><span class="ud-pill ${cls}">${spl!=null?spl.toFixed(2):'—'}</span></td>
+      <td class="mo">${roi==null?`<span class="ud-pill ${clsSpl}">${spl!=null?spl.toFixed(2):'—'}</span>`:(spl!=null?spl.toFixed(2):'—')}</td>
       <td class="mo">${be!=null?be.toFixed(2):'—'}</td>
       <td class="ud-bud" data-aid="${aid}" data-utm="${utmS}" data-nome="${nmFull}" data-bud="${bud}" data-min="${+(a.min_budget||1)}" data-moeda="${a.moeda||'BRL'}">
         <span class="ud-bud-val">${bud>0?fmtMoeda(bud,a.moeda):'—'}</span>
@@ -6200,10 +6216,11 @@ function renderUtmAdsets(box,utm,d,rps){
     <div class="ud-head">
       <span><b>${adsets.length}</b> conjunto(s) ativo(s)</span>
       <span class="ud-rps">RPS da UTM: <b>${rps>0?BRL(rps):'—'}</b></span>
-      <span class="ud-legend"><i class="ok"></i>ótimo <i class="warn"></i>bom <i class="bad"></i>ruim <small>(Sessão/Lead vs Break Even)</small></span>
+      <span class="ud-legend"><i class="ok"></i>ótimo ≥1.2x <i class="warn"></i>bom ≥1.0x <i class="bad"></i>ruim <small>(ROI real · sem receita por id → Sessão/Lead vs BE)</small></span>
     </div>
     <div class="ud-table-wrap"><table class="ud-table"><thead><tr>
-      <th>Conjunto</th><th>Gasto</th><th>Resultado</th><th>Custo/Res.</th><th>Conversas</th>
+      <th>Conjunto</th><th>Gasto</th><th title="Receita GAM líquida (×0.9) dos anúncios deste conjunto, via ad id na utm_campaign">Receita</th>
+      <th title="Receita líquida ÷ gasto (com imposto)">ROI</th><th>Resultado</th><th>Custo/Res.</th><th>Conversas</th>
       <th title="Resultado ÷ Conversas iniciadas">Sessão/Lead</th><th title="Custo por resultado ÷ RPS">Break Even</th><th>Orçamento/dia</th>
     </tr></thead><tbody>${rowsHtml}</tbody></table></div>`;
 }

@@ -218,10 +218,15 @@ async function handler(req, res) {
     let _usdRate = null;
     for (const adset of adsetsMap.values()) {
       const cfg = accountCfgMap[adset.account_id] || { moeda: 'BRL', imposto: 0 };
-      if (cfg.moeda !== 'USD') continue;
-      if (!_usdRate) _usdRate = await getUSDtoBRLByDate(until);
-      const fator = _usdRate * (1 + cfg.imposto / 100);
-      console.log(`[drilldown ${utm}] adset "${adset.adset_name}" conta=${adset.account_id} USD taxa=${_usdRate} fator=${fator.toFixed(4)}`);
+      // Imposto vale para qualquer moeda (mesma fórmula do valor_gasto no sync);
+      // contas USD ainda convertem pela taxa do dia
+      let fator = 1 + cfg.imposto / 100;
+      if (cfg.moeda === 'USD') {
+        if (!_usdRate) _usdRate = await getUSDtoBRLByDate(until);
+        fator *= _usdRate;
+      }
+      if (fator === 1) continue;
+      console.log(`[drilldown ${utm}] adset "${adset.adset_name}" conta=${adset.account_id} moeda=${cfg.moeda} fator=${fator.toFixed(4)}`);
       adset.spend    = +(adset.spend * fator).toFixed(2);
       adset.cpc      = adset.clicks > 0 ? +(adset.spend / adset.clicks).toFixed(4) : 0;
       adset.cpm      = adset.impressions > 0 ? +(adset.spend / adset.impressions * 1000).toFixed(4) : 0;
@@ -245,6 +250,44 @@ async function handler(req, res) {
         if (!_usdRate) _usdRate = await getUSDtoBRLByDate(until);
         adset.min_budget = _usdRate ? +(+_usdRate).toFixed(2) : 1;
       }
+    }
+
+    // ── Receita real por conjunto/anúncio (GAM por ad id, gravada pelo sync em receita_ads) ──
+    // utm_campaign do site = ad id da Meta → receita atribuída com precisão ao conjunto.
+    // Taxa 10% aplicada AQUI (receita_bruta × 0.9), como a rota overview faz com blocos_anuncio.
+    // roi = faturamento_real ÷ gasto (já em BRL com imposto). null = sem receita por id no período
+    // (ex.: tráfego antigo por nome) — o frontend cai no semáforo Sessão/Lead.
+    try {
+      const adIdToAdset = {};
+      for (const a of adsetsMap.values()) for (const ad of a.ads) adIdToAdset[String(ad.ad_id)] = a;
+      const allAdIds = Object.keys(adIdToAdset);
+      if (allAdIds.length > 0) {
+        const { data: recRows, error: recErr } = await supabase
+          .from('receita_ads')
+          .select('ad_id,receita_bruta')
+          .in('ad_id', allAdIds)
+          .gte('data', since)
+          .lte('data', until);
+        if (recErr) throw recErr;
+        const brutaPorAd = {};
+        for (const r of recRows || []) {
+          brutaPorAd[r.ad_id] = (brutaPorAd[r.ad_id] || 0) + Number(r.receita_bruta || 0);
+        }
+        for (const a of adsetsMap.values()) {
+          let bruta = null;
+          for (const ad of a.ads) {
+            const b = brutaPorAd[String(ad.ad_id)];
+            if (b == null) { ad.faturamento_real = null; ad.roi = null; continue; }
+            ad.faturamento_real = +(b * 0.9).toFixed(2);
+            ad.roi = ad.spend > 0 ? +(ad.faturamento_real / ad.spend).toFixed(4) : null;
+            bruta = (bruta || 0) + b;
+          }
+          a.faturamento_real = bruta != null ? +(bruta * 0.9).toFixed(2) : null;
+          a.roi = (a.faturamento_real != null && a.spend > 0) ? +(a.faturamento_real / a.spend).toFixed(4) : null;
+        }
+      }
+    } catch (e) {
+      console.warn(`[drilldown ${utm}] receita_ads indisponível:`, e.message);
     }
 
     // Strip auth token before sending

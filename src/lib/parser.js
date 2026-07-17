@@ -109,11 +109,13 @@ function groupAdsByUTM(ads) {
         _cpcSum: 0, _cpcW: 0,
         _ctrSum: 0, _ctrW: 0,
         _adsetBudgets: new Map(),
+        _adIds: new Set(),
       };
     }
 
     const g = groups[key];
     if (!g.nicho && ad.nicho) g.nicho = ad.nicho;
+    if (ad.adId) g._adIds.add(String(ad.adId));
     g.spend += ad.spend || 0;
     g.clicks += ad.clicks || 0;
     g.impressions += ad.impressions || 0;
@@ -156,6 +158,7 @@ function groupAdsByUTM(ads) {
       cpc,
       ctr,
       orcamentoTotal: [...g._adsetBudgets.values()].reduce((a, b) => a + b, 0),
+      adIds: [...g._adIds],
     };
   });
 }

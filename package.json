@@ -17,7 +17,8 @@
   "type": "commonjs",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.91.1",
-    "@supabase/supabase-js": "^2.105.3",
+    "@supabase/ssr": "^0.12.0",
+    "@supabase/supabase-js": "^2.108.2",
     "axios": "^1.15.2",
     "bcrypt": "^6.0.0",
     "better-sqlite3": "^12.9.0",
@@ -43,6 +44,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.5.0",
+    "pg": "^8.22.0",
     "playwright": "^1.60.0",
     "postcss": "^8.5.12",
     "tailwindcss": "^4.2.4",

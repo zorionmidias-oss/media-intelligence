@@ -526,6 +526,34 @@ async function fetchAndSaveHourly(date) {
   return rows.length;
 }
 
+// Soma várias entradas do gamByDay (ex.: linhas por ad id + linha legada por nome)
+// em uma só: revenue/impressions/cliques somados, ctr/ecpm ponderados por impressão,
+// cpc ponderado por clique.
+function mergeGamEntries(entries) {
+  if (entries.length === 0) return {};
+  if (entries.length === 1) return entries[0];
+  const out = { revenue: 0, impressions: 0, cliques_gam: 0, ecpm: 0, ctr_gam: 0, cpc_gam: 0 };
+  let ecpmSum = 0, ctrSum = 0, cpcSum = 0, impW = 0, cliW = 0;
+  for (const e of entries) {
+    out.revenue += e.revenue || 0;
+    out.impressions += e.impressions || 0;
+    out.cliques_gam += e.cliques_gam || 0;
+    if ((e.impressions || 0) > 0) {
+      ecpmSum += (e.ecpm || 0) * e.impressions;
+      ctrSum += (e.ctr_gam || 0) * e.impressions;
+      impW += e.impressions;
+    }
+    if ((e.cliques_gam || 0) > 0) {
+      cpcSum += (e.cpc_gam || 0) * e.cliques_gam;
+      cliW += e.cliques_gam;
+    }
+  }
+  out.ecpm = impW > 0 ? ecpmSum / impW : 0;
+  out.ctr_gam = impW > 0 ? ctrSum / impW : 0;
+  out.cpc_gam = cliW > 0 ? cpcSum / cliW : 0;
+  return out;
+}
+
 // Main sync function
 // ─────────────────────────────────────────────
 function yesterday() {
@@ -589,6 +617,8 @@ async function syncAll(dateRange) {
     // ── Process Meta ads ──────────────────────────
     const pendingPrefixes = new Map(); // prefix → example campaign name
     const adsForGrouping = [];
+    const adIdToUtm = {}; // ad_id → adUTM (utm_campaign agora carrega o ad id da Meta)
+    const adIdInfo = {};  // ad_id → { adsetId, utm, domainId } (p/ receita_ads → ROI por conjunto)
 
     for (const ad of metaAds) {
       const prefix = extractDomainPrefix(ad.campaign_name);
@@ -642,8 +672,13 @@ async function syncAll(dateRange) {
 
       const paisSigla = extractPaisSigla(ad.adset_name) || extractPaisSigla(ad.campaign_name) || '';
       const nicho = extractNicho(ad.adset_name, ad.campaign_name);
+      if (ad.ad_id) {
+        adIdToUtm[String(ad.ad_id)] = adUTM;
+        adIdInfo[String(ad.ad_id)] = { adsetId: ad.adset_id ? String(ad.adset_id) : null, utm: adUTM, domainId: domain.id };
+      }
       adsForGrouping.push({
         adUTM,
+        adId: ad.ad_id ? String(ad.ad_id) : null,
         domainId: domain.id,
         tipo,
         date: adDate,
@@ -699,12 +734,19 @@ async function syncAll(dateRange) {
       // DIRETO campaigns: Meta ad name includes "-direto-" but GAM utm_campaign omits it
       // e.g. "relamad-australia-direto-fb" → try "relamad-australia-fb" as fallback
       const utmKeyNoDireto = utmKey.replace(/-direto-?/, '-').replace(/-$/, '');
-      const gam = dayGam[utmKey] || dayGam[utmKeyNoDireto] || {};
+      // utm_campaign no site agora carrega o ad id da Meta → match exato por id,
+      // somando todos os ads do grupo. O nome parseado continua como fallback
+      // ADITIVO (histórico + transição): tráfego antigo chega pelo nome e o novo
+      // pelo id no mesmo dia — as linhas GAM são distintas, somar não duplica.
+      const gamKeys = (g.adIds || []).filter(id => dayGam[id]);
+      if (dayGam[utmKey]) gamKeys.push(utmKey);
+      else if (dayGam[utmKeyNoDireto]) gamKeys.push(utmKeyNoDireto);
+      const gam = mergeGamEntries(gamKeys.map(k => dayGam[k]));
       const faturamentoBruto = gam.revenue || 0;
       // Taxa 10% aplicada AQUI. Não aplicar de novo no frontend nem nas rotas de API.
       if (g.tipo === 'direto') {
         const availKeys = Object.keys(dayGam);
-        const matched = dayGam[utmKey] ? utmKey : (dayGam[utmKeyNoDireto] ? utmKeyNoDireto : 'NONE');
+        const matched = gamKeys.length > 0 ? gamKeys.join('+') : 'NONE';
         console.log(`[DIRETO] date=${g.date} utm="${g.adUTM}" key="${utmKey}" noDireto="${utmKeyNoDireto}" GAMkeys=[${availKeys.join(',')}] matched="${matched}" fat=${faturamentoBruto.toFixed(4)} imp=${gam.impressions || 0}`);
       }
       const faturamentoReal = faturamentoBruto * 0.9;
@@ -893,6 +935,38 @@ async function syncAll(dateRange) {
       if (pErr) console.error('[sync] dominios_pendentes:', pErr.message);
     }
 
+    // ── Receita GAM por ad id → receita_ads (base do ROI por conjunto no drilldown) ──
+    // Receita fica BRUTA aqui; a taxa de 10% é aplicada na rota que consome (como blocos_anuncio).
+    try {
+      const nowIso = new Date().toISOString();
+      const receitaAdsRows = [];
+      for (const [dia, utmMap] of Object.entries(gamByDay)) {
+        for (const [key, v] of Object.entries(utmMap)) {
+          const info = adIdInfo[key];
+          if (!info) continue; // chave legada por nome, ou ad id fora da janela do sync
+          receitaAdsRows.push({
+            data: dia,
+            ad_id: key,
+            adset_id: info.adsetId,
+            ad_utm: info.utm,
+            dominio_id: info.domainId,
+            receita_bruta: +(v.revenue || 0).toFixed(4),
+            impressoes: v.impressions || 0,
+            cliques: v.cliques_gam || 0,
+            updated_at: nowIso,
+          });
+        }
+      }
+      if (receitaAdsRows.length > 0) {
+        const { error: raErr } = await supabase.from('receita_ads')
+          .upsert(receitaAdsRows, { onConflict: 'data,ad_id' });
+        if (raErr) console.warn('[sync] upsert receita_ads:', raErr.message);
+        else console.log(`[sync] receita_ads: ${receitaAdsRows.length} linhas (receita GAM por ad id)`);
+      }
+    } catch (e) {
+      console.warn('[sync] receita_ads:', e.message);
+    }
+
     // ── Upsert blocos_anuncio (per day, from adUnitsByDay) ────
     if (Object.keys(adUnitsByDay).length && dominios?.length) {
       for (const [dayDate, unitMap] of Object.entries(adUnitsByDay)) {
@@ -945,25 +1019,43 @@ async function syncAll(dateRange) {
       const pfx = dominios?.[0]?.prefixo_ad_unit || '';
 
       if (utmCampaigns.length > 0) {
+        // utm_campaign agora pode ser um ad id da Meta — traduz para o utm do
+        // anúncio e re-agrega (linhas por id + linha legada por nome colapsam
+        // na mesma chave do upsert, então precisam ser somadas antes)
+        const porUtm = {};
+        for (const u of utmCampaigns) {
+          const nome = adIdToUtm[u.utm_campaign] || u.utm_campaign;
+          if (!porUtm[nome]) {
+            porUtm[nome] = { utm_campaign: nome, impressoes: 0, receita: 0, cliques: 0, ecpmW: 0, ctrW: 0, cpcW: 0 };
+          }
+          const t = porUtm[nome];
+          t.impressoes += u.impressoes || 0;
+          t.receita += u.receita || 0;
+          t.cliques += u.cliques || 0;
+          t.ecpmW += (u.ecpm || 0) * (u.impressoes || 0);
+          t.ctrW += (u.ctr || 0) * (u.impressoes || 0);
+          t.cpcW += (u.cpc || 0) * (u.cliques || 0);
+        }
+        const utmRows = Object.values(porUtm);
         const { error: utmErr } = await supabase.from('report_utm_campaign')
           .upsert(
-            utmCampaigns.map(u => ({
+            utmRows.map(u => ({
               data: until,
               utm_campaign: u.utm_campaign,
               dominio_id: 0,
-              impressoes: u.impressoes || 0,
-              receita: u.receita || 0,
-              ecpm: u.ecpm || 0,
-              ctr: u.ctr || 0,
-              cliques: u.cliques || 0,
-              cpc: u.cpc || 0,
+              impressoes: u.impressoes,
+              receita: +u.receita.toFixed(2),
+              ecpm: u.impressoes > 0 ? +(u.ecpmW / u.impressoes).toFixed(4) : 0,
+              ctr: u.impressoes > 0 ? +(u.ctrW / u.impressoes).toFixed(4) : 0,
+              cliques: u.cliques,
+              cpc: u.cliques > 0 ? +(u.cpcW / u.cliques).toFixed(4) : 0,
               prefixo_ad_unit: pfx,
               updated_at: now,
             })),
             { onConflict: 'data,utm_campaign,dominio_id' }
           );
         if (utmErr) console.warn('[sync] upsert report_utm_campaign:', utmErr.message);
-        else console.log(`[sync] cache GAM: ${utmCampaigns.length} UTMs salvas`);
+        else console.log(`[sync] cache GAM: ${utmRows.length} UTMs salvas (${utmCampaigns.length} linhas brutas)`);
       }
 
       if (utmSources.length > 0) {
