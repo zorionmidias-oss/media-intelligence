@@ -50,6 +50,9 @@ Backfill de histórico: `scripts/backfill-meta-entidades.js`.
 - **Upsert key de ads_consolidados**: `data,dominio_id,ad_utm,account_id,pais_sigla`. Linhas com `manually_fixed=true` são puladas pelo sync.
 - **Meta API rejeita `actions` + breakdown horário** (400/1504038) em contas grandes — por isso o sync usa 2 queries para contas re-bucketed (métricas horárias sem actions + actions diárias). Ver `fetchInsightsWithDayFallback` (fallback dia a dia, tudo-ou-nada por conta).
 - `sync_log.status`: `success` | `partial` (alguma conta Meta falhou — badge amarelo no dashboard) | `error`.
+- **"Hoje" é SEMPRE fuso São Paulo** — `src/lib/datas.js` (backend) e `hojeBR()`/`dISO()` (front). NUNCA `new Date().toISOString().slice(0,10)`: é UTC e a partir das 21h BRT vira amanhã. Cron diário tem `timezone: 'America/Sao_Paulo'`.
+- **Query de período aberto SEMPRE via `src/lib/fetchAll.js`** — PostgREST corta em 1000 linhas em silêncio (junho/2026: investimento subcontado → ROI 117% falso no Overview).
+- **Métricas derivadas SEMPRE via `src/lib/metricas.js`** (breakeven = custo_sessao ÷ rps, <1 saudável; validar com `node scripts/test-metricas.js`). ROI do Overview = visão do negócio (receita TOTAL GAM − gasto); aba Campanhas = receita atribuída por campanha — divergem por design.
 
 ## Pegadinhas conhecidas
 
