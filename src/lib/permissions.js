@@ -7,8 +7,6 @@ const SCREENS = [
   { key: 'analise-paises', label: 'Análise de País' },
   { key: 'gam',            label: 'Reports GAM' },
   { key: 'funil',          label: 'Análise de Funil' },
-  { key: 'otimizacoes',    label: 'Otimizações' },
-  { key: 'ai',             label: 'Análise IA' },
   { key: 'relatorios',     label: 'Relatórios' },
   { key: 'contas',         label: 'Contas Meta' },
   { key: 'diretorio',      label: 'Diretório' },
@@ -62,7 +60,6 @@ const ROUTES = [
   R('GET', '/api/gerenciador', ['campaigns'], 'read'),
   R('GET', '/api/historico-campanhas/ultimo-numero', ['campaigns'], 'read'),
   R('GET', '/api/historico/:utm', ['campaigns'], 'read'),
-  R('POST', '/api/insights', ['campaigns'], 'read'),
   R('GET', '/api/meta/campaign/:id', ['campaigns'], 'read'),
   R('POST', '/api/meta/campaign/:id/toggle', ['campaigns'], 'write'),
   R('POST', '/api/meta/campaign/:id/budget', ['campaigns'], 'write'),
@@ -108,19 +105,6 @@ const ROUTES = [
   R('GET', '/api/funil-botoes', ['funil'], 'read'),
   R('GET', '/api/funil', ['funil'], 'read'),
 
-  // otimizacoes
-  R('GET', '/api/otimizacoes/tipos-acao', ['otimizacoes'], 'read'),
-  R('POST', '/api/otimizacoes/tipos-acao', ['otimizacoes'], 'write'),
-  R('PUT', '/api/otimizacoes/tipos-acao/:id', ['otimizacoes'], 'write'),
-  R('DELETE', '/api/otimizacoes/tipos-acao/:id', ['otimizacoes'], 'write'),
-  R('GET', '/api/otimizacoes/preview', ['otimizacoes'], 'read'),
-  R('GET', '/api/otimizacoes/snapshot-preview', ['otimizacoes'], 'read'),
-  R('GET', '/api/otimizacoes/revisar', ['otimizacoes'], 'read'),
-  R('GET', '/api/otimizacoes/pendentes-por-utm', ['otimizacoes'], 'read'),
-  R('GET', '/api/otimizacoes/:id/timeline', ['otimizacoes'], 'read'),
-  R('POST', '/api/otimizacoes/:id/fechar', ['otimizacoes'], 'write'),
-  R('GET', '/api/otimizacoes', ['otimizacoes'], 'read'),
-  R('POST', '/api/otimizacoes', ['otimizacoes'], 'write'),
 
   // relatorios
   R('POST', '/api/relatorios/custom', ['relatorios'], 'read'),

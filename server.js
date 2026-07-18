@@ -6,7 +6,6 @@ const cookieParser = require('cookie-parser');
 const axios = require('axios');
 
 const metricsHandler = require('./src/app/api/metrics/route');
-const insightsHandler = require('./src/app/api/insights/route');
 const dashboardHandler = require('./src/app/api/dashboard/route');
 const overviewHandler = require('./src/app/api/overview/route');
 const reportsGamHandler = require('./src/app/api/reports-gam/route');
@@ -27,7 +26,6 @@ const convTemplatesHandler  = require('./src/app/api/conversation-templates/rout
 const adCopiesHandler       = require('./src/app/api/ad-copies-templates/route');
 const intradayHandler       = require('./src/app/api/intraday/route');
 const orcamentoStatusHandler = require('./src/app/api/orcamento-status/route');
-const otimizacoesHandler = require('./src/app/api/otimizacoes/route');
 const { customHandler: relatorioCustomHandler } = require('./src/app/api/relatorios/route');
 const supabase = require('./src/lib/supabase');
 const { syncAll, fetchAndSaveHourly, syncPaginas } = require('./src/lib/sync');
@@ -264,7 +262,6 @@ app.delete('/api/acessos/:id', requireAuth, requireAdmin, async (req, res) => {
 
 // ── Legacy live-API routes ──────────────────────────────────────────────────
 app.get('/api/metrics', requireAuth, metricsHandler);
-app.post('/api/insights', requireAuth, insightsHandler);
 
 // ── Supabase-backed routes (fast — no external API calls) ──────────────────
 app.get('/api/overview', requireAuth, overviewHandler);
@@ -708,18 +705,6 @@ app.get('/api/drilldown/:utm', requireAuth, drilldownHandler);
 
 // ── Otimizações ───────────────────────────────────────────────────────────────
 // Static routes must come BEFORE :id param routes to avoid capture
-app.get('/api/otimizacoes/tipos-acao',          requireAuth, otimizacoesHandler.listTipos);
-app.post('/api/otimizacoes/tipos-acao',         requireAuth, otimizacoesHandler.createTipo);
-app.put('/api/otimizacoes/tipos-acao/:id',      requireAuth, otimizacoesHandler.updateTipo);
-app.delete('/api/otimizacoes/tipos-acao/:id',   requireAuth, otimizacoesHandler.deleteTipo);
-app.get('/api/otimizacoes/preview',              requireAuth, otimizacoesHandler.previewDecisao);
-app.get('/api/otimizacoes/snapshot-preview',     requireAuth, otimizacoesHandler.snapshotPreview);
-app.get('/api/otimizacoes/revisar',             requireAuth, otimizacoesHandler.revisarHoje);
-app.get('/api/otimizacoes/pendentes-por-utm',   requireAuth, otimizacoesHandler.pendentesPorUtm);
-app.get('/api/otimizacoes/:id/timeline',        requireAuth, otimizacoesHandler.timeline);
-app.post('/api/otimizacoes/:id/fechar',         requireAuth, otimizacoesHandler.fechar);
-app.get('/api/otimizacoes',                     requireAuth, otimizacoesHandler.listOtimizacoes);
-app.post('/api/otimizacoes',                    requireAuth, otimizacoesHandler.createOtimizacao);
 
 // ── Gerenciador ───────────────────────────────────────────────────────────────
 app.get('/api/gerenciador', requireAuth, gerenciadorHandler);
