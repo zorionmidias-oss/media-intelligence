@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#0e0f16"/>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,700;1,900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,700;1,900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
   <script src="/js/formatters.js"></script>
   <script src="/js/api.js"></script>
   <script src="/lib/chart.umd.min.js"></script>
@@ -18,39 +18,50 @@
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
   <style>
     :root {
+      /* ══ IDENTIDADE "TINTA & OURO" — terminal de operação noturno ══
+         Base azul-tinta profunda (não preto neutro), ouro-de-leilão como cor de
+         marca (controles/foco/ativo — NUNCA em valores), semânticas de dados
+         separadas: verde-menta lucro, coral prejuízo, laranja atenção. */
       /* Backgrounds */
-      --bg:#060609;--card:#0E0E13;--sec:#16161D;--sec-strong:#1F1F28;
-      --border:#20202A;--border-strong:#2C2C3A;
+      --bg:#0A0E17;--card:#101624;--sec:#151C2D;--sec-strong:#1D2740;
+      --border:#212B44;--border-strong:#2E3A5C;
       /* Text */
-      --fg:#F1F5F9;--fg-soft:#CBD5E1;--muted:#94A3B8;--muted-light:#475569;
-      /* Accent — UI only: botões, foco, itens ativos */
-      --accent:#00E5B4;--accent-hover:#00FFD1;--accent-soft:rgba(0,229,180,.10);--accent-fg:#060609;
+      --fg:#EAEFF9;--fg-soft:#C7D0E2;--muted:#8C98B4;--muted-light:#4A5570;
+      /* Accent (marca) — UI only: botões, foco, itens ativos */
+      --accent:#E8B44C;--accent-hover:#F5C866;--accent-soft:rgba(232,180,76,.12);--accent-fg:#131008;
       /* Cores semânticas de dados */
-      --color-positive:#4ADE80;--color-neutral:#94A3B8;--color-warning:#FB923C;--color-negative:#F87171;--color-info:#60A5FA;
+      --color-positive:#3DDC97;--color-neutral:#8C98B4;--color-warning:#FF9F45;--color-negative:#FF6B7A;--color-info:#5CA8FF;
       /* Aliases de compatibilidade */
-      --success:var(--color-positive);--success-soft:rgba(74,222,128,.10);
-      --warning:var(--color-warning);--warning-soft:rgba(251,146,60,.10);
-      --danger:var(--color-negative);--danger-soft:rgba(248,113,113,.10);
-      --info:var(--color-info);--info-soft:rgba(96,165,250,.10);
-      --c1:var(--color-info);--c2:var(--color-positive);--c3:var(--color-warning);--c4:var(--color-negative);--c5:#A78BFA;
+      --success:var(--color-positive);--success-soft:rgba(61,220,151,.11);
+      --warning:var(--color-warning);--warning-soft:rgba(255,159,69,.11);
+      --danger:var(--color-negative);--danger-soft:rgba(255,107,122,.11);
+      --info:var(--color-info);--info-soft:rgba(92,168,255,.11);
+      --c1:var(--color-info);--c2:var(--color-positive);--c3:var(--color-warning);--c4:var(--color-negative);--c5:#B18CFF;
       --ok:var(--color-positive);--warn:var(--color-warning);--bad:var(--color-negative);
-      --topbar-bg:rgba(6,6,9,.82);
-      --shadow-sm:0 1px 2px rgba(0,0,0,.3);--shadow-md:0 2px 4px rgba(0,0,0,.3),0 4px 12px rgba(0,0,0,.28);
-      --shadow-lg:0 4px 12px rgba(0,0,0,.35),0 16px 40px rgba(0,0,0,.45);--shadow-card:0 1px 3px rgba(0,0,0,.3);
-      --logo-color:#FFFFFF;
-      --acc-fg:var(--accent-fg);--sb:#0A0A0E;--sb-b:var(--border);
+      --topbar-bg:rgba(10,14,23,.84);
+      --shadow-sm:0 1px 2px rgba(3,6,14,.4);--shadow-md:0 2px 4px rgba(3,6,14,.38),0 4px 12px rgba(3,6,14,.32);
+      --shadow-lg:0 4px 12px rgba(3,6,14,.4),0 16px 40px rgba(3,6,14,.5);--shadow-card:0 1px 3px rgba(3,6,14,.35);
+      --logo-color:#F3E9D2;
+      --acc-fg:var(--accent-fg);--sb:#0B101D;--sb-b:var(--border);
+      /* Tipografia */
+      --font-ui:'Inter',-apple-system,BlinkMacSystemFont,"Helvetica Neue",system-ui,sans-serif;
+      --font-display:'Space Grotesk',var(--font-ui);
+      --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
       --sw:260px;--th:64px;--r-sm:.375rem;--r:.5rem;--rl:.75rem;--r-xl:1rem;--r-pill:999px;
       --ease:cubic-bezier(.4,0,.2,1);--ease-out:cubic-bezier(.16,1,.3,1);
     }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    *{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Inter","Helvetica Neue",system-ui,sans-serif!important}
+    *{font-family:var(--font-ui)!important}
+    /* Display: Space Grotesk carrega a personalidade — títulos, eyebrows, th */
+    h1,h2,h3,.hdr-title,.ck-lbl,.kpi-lbl,.sb-logo-text,th{font-family:var(--font-display)!important;letter-spacing:.01em}
     .logo,.brand-title{font-family:'Playfair Display',Georgia,serif!important}
-    code,pre,.ad-unit-name,.mono,.token-mask{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace!important}
+    /* Dados: mono tabular em TODO número — coluna alinha, dígito não dança */
+    code,pre,.ad-unit-name,.mono,.token-mask,.mo,.ck-val,.kpi-val,.ticker,.ticker *{font-family:var(--font-mono)!important;font-variant-numeric:tabular-nums}
     html,body{height:100%;overflow:hidden}
     /* Foco de teclado acessível — só aparece em navegação por teclado, não no clique */
     :focus-visible{outline:2px solid color-mix(in oklch,var(--accent) 70%,transparent);outline-offset:2px}
     :focus:not(:focus-visible){outline:none}
-    body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Inter","Helvetica Neue",system-ui,sans-serif;background:var(--bg);color:var(--fg);display:flex;line-height:1.5;letter-spacing:-.01em;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+    body{font-family:var(--font-ui);background:var(--bg);color:var(--fg);display:flex;line-height:1.5;letter-spacing:-.01em;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
 
     @keyframes fsu{from{opacity:0;transform:translateY(1rem)}to{opacity:1;transform:translateY(0)}}
     @keyframes pls{0%,100%{opacity:1}50%{opacity:.35}}
@@ -326,7 +337,7 @@
     thead th{background:var(--sec);padding:.75rem 1rem;text-align:left;font-size:.6875rem;font-weight:700;color:var(--fg-soft);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border-strong);white-space:nowrap}
     tbody td{padding:.875rem 1rem;border-bottom:1px solid var(--border);font-size:.875rem;color:var(--fg)}
     tbody td:first-child{font-weight:600}
-    tbody td.mo{font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;font-size:.8125rem;color:var(--fg-soft);font-feature-settings:'tnum' 1}
+    tbody td.mo{font-family:var(--font-mono);font-size:.8125rem;color:var(--fg-soft);font-feature-settings:'tnum' 1;white-space:nowrap}
     tbody td.mo.pos{color:var(--ok);font-weight:600}
     tbody td.mo.neg{color:var(--bad);font-weight:600}
     tbody tr:last-child td{border-bottom:none}
@@ -556,7 +567,22 @@
     .meta-edit-btn{background:transparent;border:none;cursor:pointer;opacity:.35;font-size:.7rem;padding:0;line-height:1;transition:opacity .15s;color:var(--fg)}
     .meta-edit-btn:hover{opacity:1}
 
+    /* ── TICKER DE OPERAÇÃO (assinatura do header) ──
+       Fita única mono: câmbio · atraso de dados · status GAM. Some inteira
+       enquanto nenhum item está visível (JS controla display inline). */
+    .ticker{display:flex;align-items:center;height:2.25rem;border:1px solid var(--border);border-radius:var(--r);background:var(--sec);font-size:.72rem;color:var(--muted);white-space:nowrap;overflow:hidden}
+    .ticker:not(:has([style*="flex"])){display:none}
+    .ticker .topbar-status,.ticker .gam-delay{background:transparent!important;border:none!important;border-radius:0;height:100%;padding:0 .75rem;margin:0;align-items:center;gap:.375rem;font-size:.72rem}
+    .ticker .gam-delay{border-left:1px solid var(--border-strong)!important}
+    .ticker .topbar-status.late{color:var(--color-warning)}
+    .ticker .gam-delay.atrasado{color:var(--warn)}
+    .ticker .gam-delay.muito-atrasado{color:var(--bad)}
+
     /* ── NOTIFICATIONS ── */
+    .notif-wrap{position:relative}
+    .notif-panel{position:absolute;right:0;top:calc(100% + 8px);width:380px;max-height:460px;display:none;flex-direction:column;background:var(--card);border:1px solid var(--border);border-radius:var(--rl);box-shadow:var(--shadow-lg);z-index:120;overflow:hidden}
+    .notif-panel.open{display:flex}
+    .notif-empty{padding:1.75rem 1rem;text-align:center;color:var(--muted);font-size:.8125rem}
     .notif-badge{position:absolute;top:1px;right:1px;min-width:16px;height:16px;padding:0 3px;background:var(--danger);color:#fff;font-size:.55rem;font-weight:700;border-radius:8px;display:none;align-items:center;justify-content:center;line-height:1}
     .notif-ph{display:flex;align-items:center;justify-content:space-between;padding:.875rem 1rem;border-bottom:1px solid var(--border)}
     .notif-ph h3{font-size:.875rem;margin:0;font-weight:600}
@@ -883,21 +909,23 @@
 
     /* ── LIGHT THEME ── */
     :root[data-theme="light"]{
-      --bg:#F8FAFC;--card:#FFFFFF;--sec:#F3F6FA;--sec-strong:#EAEEF3;
-      --border:#E2E5EA;--border-strong:#D2D6DD;
-      --fg:#1C1C1E;--fg-soft:#6B6B6B;--muted:#6B6B6B;--muted-light:#AEAEB2;
-      --accent:#007AFF;--accent-hover:#0066DD;--accent-soft:rgba(0,122,255,0.10);--accent-fg:#FFFFFF;
-      --color-positive:#00A862;--color-neutral:#6B6B6B;--color-warning:#FF9500;--color-negative:#E5384B;--color-info:#007AFF;
-      --success:var(--color-positive);--success-soft:rgba(0,168,98,0.12);
-      --warning:var(--color-warning);--warning-soft:rgba(255,149,0,0.12);
-      --danger:var(--color-negative);--danger-soft:rgba(229,56,75,0.12);
-      --info:var(--color-info);--info-soft:rgba(0,122,255,0.10);
-      --c1:var(--color-info);--c2:var(--color-positive);--c3:var(--color-warning);--c4:var(--color-negative);--c5:#5856D6;
+      /* "Papel financeiro": base quente de papel, tinta escura, mesmo ouro
+         de marca (escurecido p/ contraste AA sobre branco) */
+      --bg:#F7F6F2;--card:#FFFFFF;--sec:#F1EFE9;--sec-strong:#E8E5DC;
+      --border:#E2DFD5;--border-strong:#CFCABB;
+      --fg:#1B1E28;--fg-soft:#454B5C;--muted:#6D7385;--muted-light:#A8ADBB;
+      --accent:#9A6E14;--accent-hover:#7E590F;--accent-soft:rgba(154,110,20,0.10);--accent-fg:#FFFFFF;
+      --color-positive:#0E9F6E;--color-neutral:#6D7385;--color-warning:#D97706;--color-negative:#E5484D;--color-info:#2563EB;
+      --success:var(--color-positive);--success-soft:rgba(14,159,110,0.12);
+      --warning:var(--color-warning);--warning-soft:rgba(217,119,6,0.12);
+      --danger:var(--color-negative);--danger-soft:rgba(229,72,77,0.12);
+      --info:var(--color-info);--info-soft:rgba(37,99,235,0.10);
+      --c1:var(--color-info);--c2:var(--color-positive);--c3:var(--color-warning);--c4:var(--color-negative);--c5:#7C5CD6;
       --ok:var(--color-positive);--warn:var(--color-warning);--bad:var(--color-negative);
-      --topbar-bg:rgba(252,252,254,0.8);
-      --shadow-sm:0 1px 2px rgba(16,24,40,.05);--shadow-md:0 2px 6px rgba(16,24,40,.06),0 1px 2px rgba(16,24,40,.04);
-      --shadow-lg:0 12px 32px rgba(16,24,40,.12),0 4px 10px rgba(16,24,40,.06);--shadow-card:0 1px 2px rgba(16,24,40,.04),0 4px 12px rgba(16,24,40,.05);--shadow-elevated:0 4px 12px rgba(16,24,40,.10),0 2px 4px rgba(16,24,40,.06);
-      --logo-color:#1C1C1E;
+      --topbar-bg:rgba(250,249,245,0.85);
+      --shadow-sm:0 1px 2px rgba(30,26,12,.05);--shadow-md:0 2px 6px rgba(30,26,12,.06),0 1px 2px rgba(30,26,12,.04);
+      --shadow-lg:0 12px 32px rgba(30,26,12,.12),0 4px 10px rgba(30,26,12,.06);--shadow-card:0 1px 2px rgba(30,26,12,.04),0 4px 12px rgba(30,26,12,.05);--shadow-elevated:0 4px 12px rgba(30,26,12,.10),0 2px 4px rgba(30,26,12,.06);
+      --logo-color:#1B1E28;
       --acc-fg:var(--accent-fg);--sb:var(--card);--sb-b:var(--border);
     }
     body{transition:background .25s ease,color .25s ease}
@@ -1312,16 +1340,31 @@
       <button class="pend-badge" id="pend-badge" onclick="nav('domains',document.getElementById('nav-domains'))">
         ⚠ <span id="pend-count">0</span> domínio(s) novo(s)
       </button>
-      <!-- combined fx + delay badge -->
-      <span class="topbar-status" id="topbar-status">
-        US$1 = R$<span id="fx-rate">—</span><span id="delay-inline" style="display:none"> · 🕐 <span id="delay-txt">—</span>h</span>
-      </span>
+      <!-- TICKER DE OPERAÇÃO: câmbio · atraso · status GAM, numa fita só -->
+      <div class="ticker" id="op-ticker">
+        <span class="topbar-status tk" id="topbar-status">
+          US$1 = R$<span id="fx-rate">—</span><span id="delay-inline" style="display:none"> · 🕐 <span id="delay-txt">—</span>h</span>
+        </span>
+        <span class="gam-delay tk" id="gam-delay-global"></span>
+      </div>
       <!-- legacy hidden elements kept for JS compat -->
       <div class="fx-badge" id="fx-badge" style="display:none"></div>
-      <span class="gam-delay" id="gam-delay-global"></span>
       <div class="delay-badge" id="delay-badge" style="display:none">
         <span class="d-dot" id="delay-dot"></span>
         <svg id="delay-spin-ico" class="spin-ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+      </div>
+      <div class="notif-wrap">
+        <button class="ico-btn" id="notif-btn" onclick="toggleNotifs(event)" title="Notificações">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          <span class="notif-badge" id="notif-count">0</span>
+        </button>
+        <div class="notif-panel" id="notif-panel">
+          <div class="notif-ph">
+            <h3>Notificações</h3>
+            <button onclick="marcarTodasNotifs()">Marcar todas lidas</button>
+          </div>
+          <div class="notif-body" id="notif-body"><div class="notif-empty">Carregando…</div></div>
+        </div>
       </div>
       <button class="btn-toggle-eye" id="toggle-eye" title="Ocultar/revelar valores">
         <svg class="icon-eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -6175,10 +6218,62 @@ async function abrirHistorico(utm){
   }
 }
 
+/* ═══ NOTIFICAÇÕES (sino) ═══ */
+let _notifs=[];
+function _notifBadgeUpd(){
+  const unread=_notifs.filter(n=>!n.lida).length;
+  const b=document.getElementById('notif-count');
+  if(b){b.style.display=unread>0?'flex':'none';b.textContent=unread>9?'9+':unread;}
+}
+const NOTIF_ICO={danger:'🔴',warning:'⚠️',success:'🟢',info:'🔵'};
+async function loadNotifs(){
+  try{
+    const r=await fetch('/api/notificacoes?limit=30');
+    if(!r.ok)return;
+    _notifs=await r.json();
+    if(!Array.isArray(_notifs))_notifs=[];
+    _notifBadgeUpd();
+    renderNotifs();
+  }catch(_){}
+}
+function renderNotifs(){
+  const box=document.getElementById('notif-body');
+  if(!box)return;
+  if(!_notifs.length){box.innerHTML='<div class="notif-empty">Sem notificações — operação tranquila.</div>';return;}
+  box.innerHTML=_notifs.map(n=>{
+    const dt=n.created_at?new Date(n.created_at):null;
+    const quando=dt?dt.toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+    return `<div class="notif-item ${n.lida?'':'unread'}" onclick="marcarNotifLida(${n.id},this)">
+      <span class="notif-ico">${NOTIF_ICO[n.severidade]||'🔵'}</span>
+      <div class="notif-txt"><strong>${esc(n.titulo||'')}</strong><p>${esc(n.mensagem||'')}</p><small>${quando}</small></div>
+    </div>`;
+  }).join('');
+}
+function toggleNotifs(e){
+  e.stopPropagation();
+  document.getElementById('notif-panel').classList.toggle('open');
+}
+function marcarNotifLida(id,el){
+  el.classList.remove('unread');
+  const n=_notifs.find(x=>x.id===id);
+  if(n&&!n.lida){n.lida=true;_notifBadgeUpd();fetch(`/api/notificacoes/${id}/marcar-lida`,{method:'POST'}).catch(()=>{});}
+}
+async function marcarTodasNotifs(){
+  _notifs.forEach(n=>n.lida=true);
+  _notifBadgeUpd();renderNotifs();
+  fetch('/api/notificacoes/marcar-todas-lidas',{method:'POST'}).catch(()=>{});
+}
+document.addEventListener('click',e=>{
+  const p=document.getElementById('notif-panel');
+  if(p&&p.classList.contains('open')&&!e.target.closest('.notif-wrap'))p.classList.remove('open');
+});
+
 /* ═══ INIT ═══ */
 (async()=>{
   dpInit();
   initTheme();
+  loadNotifs();
+  setInterval(loadNotifs,120000);
   await loadPerfil();
   await populateDomainSelect();
   await loadDominios();
