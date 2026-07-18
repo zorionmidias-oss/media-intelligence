@@ -36,7 +36,8 @@ const DERIVADAS = {
   roas:            { label: 'ROAS',            fmt: 'num',   calc: a => a.valor_gasto > 0 ? a.faturamento_real / a.valor_gasto : null,                            dep: ['valor_gasto', 'faturamento_real'] },
   cpc:             { label: 'CPC (R$)',        fmt: 'moeda', calc: a => a.cliques > 0 ? a.valor_gasto / a.cliques : null,                                         dep: ['valor_gasto', 'cliques'] },
   ecpm:            { label: 'eCPM (R$)',       fmt: 'moeda', calc: a => a.impressoes_gam > 0 ? (a.faturamento_bruto / a.impressoes_gam) * 1000 : null,            dep: ['faturamento_bruto', 'impressoes_gam'] },
-  rps:             { label: 'RPS (R$)',        fmt: 'moeda', calc: a => a.impressoes_gam > 0 ? a.faturamento_real / a.impressoes_gam : null,                      dep: ['faturamento_real', 'impressoes_gam'] },
+  rps:             { label: 'RPS (R$)',        fmt: 'moeda', calc: a => a.sessoes_meta > 0 ? a.faturamento_real / a.sessoes_meta : null,                          dep: ['faturamento_real', 'sessoes_meta'] },
+  breakeven:       { label: 'Breakeven',       fmt: 'num',   calc: a => a.faturamento_real > 0 && a.valor_gasto > 0 ? a.valor_gasto / a.faturamento_real : null,  dep: ['valor_gasto', 'faturamento_real'] },
   custo_resultado: { label: 'Custo/Result.',   fmt: 'moeda', calc: a => a.resultado > 0 ? a.valor_gasto / a.resultado : null,                                     dep: ['valor_gasto', 'resultado'] },
   dias_ativos:     { label: 'Dias Ativos',     fmt: 'int',   calc: a => a._dias.size,                                                                             dep: [] },
 };

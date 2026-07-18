@@ -1,5 +1,6 @@
 'use strict';
 const { hojeBR, diasAtrasBR } = require('../../../lib/datas');
+const { fetchAll } = require('../../../lib/fetchAll');
 const supabase = require('../../../lib/supabase');
 const { fetchGAMHourly, fetchGAMUtmCampaigns, fetchGAMUtmSources } = require('../../../lib/gam');
 
@@ -196,33 +197,40 @@ async function handler(req, res) {
     const anteriorDf = anteriorSinceDate.toISOString().slice(0, 10);
     const anteriorDt = anteriorUntilDate.toISOString().slice(0, 10);
 
-    let gamQ = supabase
-      .from('blocos_anuncio')
-      .select('nome_bloco,impressoes,total_clicks,receita_total,ecpm_medio,taxa_correspondencia_programatica')
-      .gte('data', df)
-      .lte('data', dt);
-    if (domainId) gamQ = gamQ.eq('dominio_id', domainId);
-
-    let adsQ = supabase
-      .from('ads_consolidados')
-      .select('viewability,impressoes_gam,cpc_gam,ctr_gam,cliques_gam')
-      .gte('data', df)
-      .lte('data', dt);
-    if (domainId) adsQ = adsQ.eq('dominio_id', domainId);
-
-    let prevGamQ = supabase
-      .from('blocos_anuncio')
-      .select('impressoes,receita_total,ecpm_medio')
-      .gte('data', anteriorDf)
-      .lte('data', anteriorDt);
-    if (domainId) prevGamQ = prevGamQ.eq('dominio_id', domainId);
-
-    let prevAdsQ = supabase
-      .from('ads_consolidados')
-      .select('impressoes_gam,cpc_gam,cliques_gam')
-      .gte('data', anteriorDf)
-      .lte('data', anteriorDt);
-    if (domainId) prevAdsQ = prevAdsQ.eq('dominio_id', domainId);
+    // Fábricas p/ fetchAll — período longo passa do corte de 1000 do PostgREST
+    // (blocos_anuncio tem ~800 linhas/mês; 2+ meses subcontava receita)
+    const gamQ = () => {
+      let q = supabase
+        .from('blocos_anuncio')
+        .select('nome_bloco,impressoes,total_clicks,receita_total,ecpm_medio,taxa_correspondencia_programatica')
+        .gte('data', df).lte('data', dt).order('data', { ascending: true });
+      if (domainId) q = q.eq('dominio_id', domainId);
+      return q;
+    };
+    const adsQ = () => {
+      let q = supabase
+        .from('ads_consolidados')
+        .select('viewability,impressoes_gam,cpc_gam,ctr_gam,cliques_gam')
+        .gte('data', df).lte('data', dt).order('data', { ascending: true }).order('id', { ascending: true });
+      if (domainId) q = q.eq('dominio_id', domainId);
+      return q;
+    };
+    const prevGamQ = () => {
+      let q = supabase
+        .from('blocos_anuncio')
+        .select('impressoes,receita_total,ecpm_medio')
+        .gte('data', anteriorDf).lte('data', anteriorDt).order('data', { ascending: true });
+      if (domainId) q = q.eq('dominio_id', domainId);
+      return q;
+    };
+    const prevAdsQ = () => {
+      let q = supabase
+        .from('ads_consolidados')
+        .select('impressoes_gam,cpc_gam,cliques_gam')
+        .gte('data', anteriorDf).lte('data', anteriorDt).order('data', { ascending: true }).order('id', { ascending: true });
+      if (domainId) q = q.eq('dominio_id', domainId);
+      return q;
+    };
 
     const opts = { since: df, until: dt, adUnitPrefix: adUnitPrefix || undefined };
     const pfx = adUnitPrefix || '';
@@ -252,7 +260,8 @@ async function handler(req, res) {
       );
     }
 
-    const [{ data: rows }, { data: adsRows }, { data: prevRows }, { data: prevAdsRows }] = await Promise.all([gamQ, adsQ, prevGamQ, prevAdsQ]);
+    const [{ data: rows }, { data: adsRows }, { data: prevRows }, { data: prevAdsRows }] =
+      await Promise.all([fetchAll(gamQ), fetchAll(adsQ), fetchAll(prevGamQ), fetchAll(prevAdsQ)]);
     console.log(`[GAM filter] dominio_id=${domainId ?? 0}, blocos=${rows?.length ?? 0}, horas=${(hourly || []).length}, utms=${(utmCampaigns || []).length}`);
 
     let totImps = 0, totRev = 0, totClicks = 0;

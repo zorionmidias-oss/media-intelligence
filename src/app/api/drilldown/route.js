@@ -66,7 +66,7 @@ async function handler(req, res) {
     // Sem: agrega por UTM (legado — pode misturar campanhas homônimas).
     let dbQ = supabase
       .from('ads_consolidados')
-      .select('data,valor_gasto,faturamento_real,lucro,cliques,resultado,impressoes_gam,ecpm,rps,cpc,roas')
+      .select('data,valor_gasto,faturamento_real,lucro,cliques,resultado,impressoes_gam,ecpm,sessoes_meta,cpc,roas')
       .gte('data', since)
       .lte('data', until);
     dbQ = campaignId ? dbQ.eq('campaign_id', campaignId) : dbQ.eq('ad_utm', utm);
@@ -79,14 +79,14 @@ async function handler(req, res) {
       acc.clicks      += Number(r.cliques           || 0);
       acc.results     += Number(r.resultado         || 0);
       acc.impressions += Number(r.impressoes_gam    || 0);
+      acc.sessoes     += Number(r.sessoes_meta      || 0);
       return acc;
-    }, { spend: 0, fat: 0, lucro: 0, clicks: 0, results: 0, impressions: 0 });
+    }, { spend: 0, fat: 0, lucro: 0, clicks: 0, results: 0, impressions: 0, sessoes: 0 });
 
     total.roas = total.spend > 0 ? +(total.fat / total.spend).toFixed(4) : 0;
     total.cpc  = total.clicks > 0 ? +(total.spend / total.clicks).toFixed(4) : 0;
-
-    const rpsArr = (rows || []).map(r => Number(r.rps || 0)).filter(v => v > 0);
-    total.rps = rpsArr.length ? rpsArr.reduce((s, v) => s + v, 0) / rpsArr.length : 0;
+    // RPS canônico (fat ÷ sessões, das SOMAS) — antes era média das médias diárias
+    total.rps = total.sessoes > 0 ? +(total.fat / total.sessoes).toFixed(4) : 0;
 
     // ── Accounts ─────────────────────────────────────────────────────────────
     const { data: accounts } = await supabase.from('meta_accounts').select('*').eq('ativo', true);

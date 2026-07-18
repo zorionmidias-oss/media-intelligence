@@ -92,7 +92,11 @@ async function handler(req, res) {
 
     // ─── Aggregate ads_consolidados (Meta spend + UTM attribution) ───
     const invByDay = {};
-    const fatByDay = {}; // from ads_consolidados.faturamento_real (0.9 applied by sync.js)
+    // AUDITORIA jul/2026: o trend usava faturamento de ads_consolidados (só receita
+    // ATRIBUÍDA a campanha) enquanto o KPI usa blocos_anuncio (receita TOTAL) — a
+    // mesma tela mostrava duas verdades. Trend agora soma blocos por dia (×0.9),
+    // consistente com o KPI.
+    const fatBlocosByDay = {}; // blocos_anuncio ×0.9 — mesma fonte do KPI faturamento
     const utmMap = {};
     let totSpend = 0, totResults = 0, totClicks = 0;
     let _viewWtSum = 0, _viewWt = 0;
@@ -101,8 +105,6 @@ async function handler(req, res) {
       const day = r.data;
       if (!invByDay[day]) invByDay[day] = 0;
       invByDay[day] += Number(r.valor_gasto || 0);
-      if (!fatByDay[day]) fatByDay[day] = 0;
-      fatByDay[day] += Number(r.faturamento_real || 0);
 
       const key = `${r.dominio_id}|${r.ad_utm}`;
       if (!utmMap[key]) {
@@ -144,6 +146,7 @@ async function handler(req, res) {
     for (const r of gam || []) {
       const day = r.data;
       const revBruto = Number(r.receita_total || 0);
+      fatBlocosByDay[day] = (fatBlocosByDay[day] || 0) + revBruto * 0.9;
 
       const imp = Number(r.impressoes || 0);
       const clk = Number(r.total_clicks || 0);
@@ -178,10 +181,10 @@ async function handler(req, res) {
     const rps = gamImps > 0 ? totFat / gamImps : 0;
     const viewability = _viewWt > 0 ? _viewWtSum / _viewWt : 0;
 
-    // ─── Trend: merge daily faturamento (GAM) + investimento (Meta) ───
-    const allDays = new Set([...Object.keys(invByDay), ...Object.keys(fatByDay)]);
+    // ─── Trend: merge daily faturamento (blocos GAM ×0.9 — mesma fonte do KPI) + investimento (Meta) ───
+    const allDays = new Set([...Object.keys(invByDay), ...Object.keys(fatBlocosByDay)]);
     const trend = [...allDays].sort().map(d => {
-      const fat = fatByDay[d] || 0;
+      const fat = fatBlocosByDay[d] || 0;
       const inv = invByDay[d] || 0;
       const ed  = ecpmByDay[d];
       return {

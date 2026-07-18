@@ -5,7 +5,6 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const axios = require('axios');
 
-const metricsHandler = require('./src/app/api/metrics/route');
 const dashboardHandler = require('./src/app/api/dashboard/route');
 const overviewHandler = require('./src/app/api/overview/route');
 const reportsGamHandler = require('./src/app/api/reports-gam/route');
@@ -13,7 +12,6 @@ const gamStatusHandler  = require('./src/app/api/gam-status/route');
 const metasHandler = require('./src/app/api/metas/route');
 const { handler: notifHandler, marcarLida, marcarTodasLidas } = require('./src/app/api/notificacoes/route');
 const drilldownHandler   = require('./src/app/api/drilldown/route');
-const gerenciadorHandler = require('./src/app/api/gerenciador/route');
 const funilHandler       = require('./src/app/api/funil/route');
 const funilBotoesHandler = require('./src/app/api/funil-botoes/route');
 const historicoHandler = require('./src/app/api/historico/route');
@@ -261,7 +259,6 @@ app.delete('/api/acessos/:id', requireAuth, requireAdmin, async (req, res) => {
 });
 
 // ── Legacy live-API routes ──────────────────────────────────────────────────
-app.get('/api/metrics', requireAuth, metricsHandler);
 
 // ── Supabase-backed routes (fast — no external API calls) ──────────────────
 app.get('/api/overview', requireAuth, overviewHandler);
@@ -707,7 +704,6 @@ app.get('/api/drilldown/:utm', requireAuth, drilldownHandler);
 // Static routes must come BEFORE :id param routes to avoid capture
 
 // ── Gerenciador ───────────────────────────────────────────────────────────────
-app.get('/api/gerenciador', requireAuth, gerenciadorHandler);
 
 // Campaign-level Meta actions
 app.post('/api/meta/campaign/:id/toggle', requireAuth, async (req, res) => {
