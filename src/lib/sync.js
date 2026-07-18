@@ -14,8 +14,11 @@ const AD_FIELDS = 'ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name,s
 // (400 subcode 1504038 "Sua solicitação expirou") — versão sem actions para essas queries
 const AD_FIELDS_NO_ACTIONS = AD_FIELDS.replace(',actions', '');
 
+// "Hoje" do negócio é SEMPRE fuso BR — new Date().toISOString() é UTC e a
+// partir das 21h BRT viraria amanhã (sync passava a rotular/pedir o dia errado)
+const { hojeBR, diasAtrasBR } = require('./datas');
 function today() {
-  return new Date().toISOString().slice(0, 10);
+  return hojeBR();
 }
 
 // Busca paginada de insights da Meta; lança em caso de erro HTTP.
@@ -642,7 +645,7 @@ async function upsertMetaEntidades(adIdInfo) {
 // Main sync function
 // ─────────────────────────────────────────────
 function yesterday() {
-  return new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  return diasAtrasBR(1);
 }
 
 async function syncAll(dateRange) {
@@ -1248,7 +1251,7 @@ async function syncPaginas() {
 
   if (!accounts?.length) { console.warn('[syncPaginas] nenhuma conta ativa'); return; }
 
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = hojeBR();
 
   // page_id → { id, name, picture_url, sourceAccountId }
   const allPagesMap = new Map();

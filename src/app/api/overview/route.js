@@ -1,6 +1,8 @@
 'use strict';
 const supabase = require('../../../lib/supabase');
 const { getUSDtoBRL } = require('../../../lib/gam');
+const { fetchAll } = require('../../../lib/fetchAll');
+const { hojeBR, diasAtrasBR, addDiasISO } = require('../../../lib/datas');
 
 async function getMetasProgresso(totFat, totSpend, totLucro, roi) {
   try {
@@ -28,9 +30,9 @@ async function getMetasProgresso(totFat, totSpend, totLucro, roi) {
 async function handler(req, res) {
   try {
     const { since, until, domain } = req.query;
-    const now = new Date();
-    const df = since || new Date(now.getTime() - 30 * 86400000).toISOString().slice(0, 10);
-    const dt = until || now.toISOString().slice(0, 10);
+    // Datas do negócio no fuso BR — "hoje" UTC vira amanhã a partir das 21h BRT
+    const df = since || diasAtrasBR(30);
+    const dt = until || hojeBR();
 
     let domainId = null;
     if (domain && domain !== 'all') {
@@ -40,44 +42,52 @@ async function handler(req, res) {
 
     // Previous period for comparison
     const dias = Math.round((new Date(dt) - new Date(df)) / 86400000) + 1;
-    const prevUntilDate = new Date(df); prevUntilDate.setDate(prevUntilDate.getDate() - 1);
-    const prevSinceDate = new Date(df); prevSinceDate.setDate(prevSinceDate.getDate() - dias);
-    const prevDf = prevSinceDate.toISOString().slice(0, 10);
-    const prevDt = prevUntilDate.toISOString().slice(0, 10);
+    const prevDf = addDiasISO(df, -dias);
+    const prevDt = addDiasISO(df, -1);
 
-    let adsQ = supabase
-      .from('ads_consolidados')
-      .select('data,ad_utm,campanha_meta,tipo,dominio_id,valor_gasto,faturamento_real,lucro,cliques,impressoes_gam,resultado,cpc,ctr,ecpm,rps,viewability,orcamento_total,previsao_faturamento_real,previsao_lucro,dominios(nome)')
-      .gte('data', df).lte('data', dt);
-    if (domainId) adsQ = adsQ.eq('dominio_id', domainId);
+    // Fábricas de query: fetchAll pagina além do corte de 1000 linhas do PostgREST
+    // (junho tinha 1.215 linhas de ads → investimento subcontado → ROI 117% falso)
+    const restrito = Array.isArray(req.allowedDominios)
+      ? (req.allowedDominios.length ? req.allowedDominios : [-1]) : null;
 
+    const adsQ = () => {
+      let q = supabase
+        .from('ads_consolidados')
+        .select('data,ad_utm,campanha_meta,tipo,dominio_id,valor_gasto,faturamento_real,lucro,cliques,impressoes_gam,resultado,cpc,ctr,ecpm,rps,viewability,orcamento_total,previsao_faturamento_real,previsao_lucro,dominios(nome)')
+        .gte('data', df).lte('data', dt).order('data', { ascending: true });
+      if (domainId) q = q.eq('dominio_id', domainId);
+      if (restrito) q = q.in('dominio_id', restrito);
+      return q;
+    };
     // blocos_anuncio = source of truth for GAM revenue (has more historical data)
-    let gamQ = supabase
-      .from('blocos_anuncio')
-      .select('data,nome_bloco,impressoes,total_clicks,receita_total,ecpm_medio,taxa_correspondencia_programatica')
-      .gte('data', df).lte('data', dt);
-    if (domainId) gamQ = gamQ.eq('dominio_id', domainId);
+    const gamQ = () => {
+      let q = supabase
+        .from('blocos_anuncio')
+        .select('data,nome_bloco,impressoes,total_clicks,receita_total,ecpm_medio,taxa_correspondencia_programatica')
+        .gte('data', df).lte('data', dt).order('data', { ascending: true });
+      if (domainId) q = q.eq('dominio_id', domainId);
+      if (restrito) q = q.in('dominio_id', restrito);
+      return q;
+    };
+    const prevAdsQ = () => {
+      let q = supabase
+        .from('ads_consolidados')
+        .select('ad_utm,valor_gasto,faturamento_real')
+        .gte('data', prevDf).lte('data', prevDt).order('data', { ascending: true });
+      if (domainId) q = q.eq('dominio_id', domainId);
+      return q;
+    };
+    const prevGamQ = () => {
+      let q = supabase
+        .from('blocos_anuncio')
+        .select('impressoes,total_clicks,ecpm_medio')
+        .gte('data', prevDf).lte('data', prevDt).order('data', { ascending: true });
+      if (domainId) q = q.eq('dominio_id', domainId);
+      return q;
+    };
 
-    // Colaborador restrito a domínios: limita aos IDs permitidos (vazio => nenhum dado).
-    if (Array.isArray(req.allowedDominios)) {
-      const ids = req.allowedDominios.length ? req.allowedDominios : [-1];
-      adsQ = adsQ.in('dominio_id', ids);
-      gamQ = gamQ.in('dominio_id', ids);
-    }
-
-    let prevAdsQ = supabase
-      .from('ads_consolidados')
-      .select('ad_utm,valor_gasto,faturamento_real')
-      .gte('data', prevDf).lte('data', prevDt);
-    if (domainId) prevAdsQ = prevAdsQ.eq('dominio_id', domainId);
-
-    let prevGamQ = supabase
-      .from('blocos_anuncio')
-      .select('impressoes,total_clicks,ecpm_medio')
-      .gte('data', prevDf).lte('data', prevDt);
-    if (domainId) prevGamQ = prevGamQ.eq('dominio_id', domainId);
-
-    const [{ data: ads, error: adsErr }, { data: gam }, { data: prevAds }, { data: prevGam }] = await Promise.all([adsQ, gamQ, prevAdsQ, prevGamQ]);
+    const [{ data: ads, error: adsErr }, { data: gam }, { data: prevAds }, { data: prevGam }] =
+      await Promise.all([fetchAll(adsQ), fetchAll(gamQ), fetchAll(prevAdsQ), fetchAll(prevGamQ)]);
     if (adsErr) return res.status(500).json({ error: adsErr.message });
 
     // ─── Aggregate ads_consolidados (Meta spend + UTM attribution) ───
@@ -289,7 +299,7 @@ async function handler(req, res) {
     };
 
     // Previsão: query direta para hoje (respeita filtro de domínio; null se hoje não está no range)
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = hojeBR();
     let previsao = null;
     let delayHours = 0;
     if (todayStr >= df && todayStr <= dt) {

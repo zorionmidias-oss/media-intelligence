@@ -5,6 +5,7 @@ const { getUSDtoBRLByDate } = require('../../../lib/gam');
 const { extractAdUTM, extractTipo } = require('../../../lib/parser');
 const { getResultadoMeta, findAction } = require('../../../services/attribution.service');
 const METRICAS = require('../../../lib/metricas');
+const { hojeBR, diasAtrasBR } = require('../../../lib/datas');
 
 const META_BASE = 'https://graph.facebook.com/v19.0';
 
@@ -42,8 +43,8 @@ async function handler(req, res) {
     const utm = req.params.utm;
     if (!utm) return res.status(400).json({ error: 'UTM é obrigatório' });
 
-    const since = req.query.since || new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
-    const until = req.query.until || new Date().toISOString().slice(0, 10);
+    const since = req.query.since || diasAtrasBR(30);
+    const until = req.query.until || hojeBR();
     const noCache = req.query.nocache === '1';
     // adsets_only: pula insights por anúncio (expand inline não mostra criativos) → bem mais rápido
     const adsetsOnly = req.query.adsets_only === '1';

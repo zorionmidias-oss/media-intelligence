@@ -2,16 +2,15 @@
 const supabase = require('../../../lib/supabase');
 const PERMS = require('../../../lib/permissions');
 const METRICAS = require('../../../lib/metricas');
+const { fetchAll } = require('../../../lib/fetchAll');
+const { hojeBR, diasAtrasBR } = require('../../../lib/datas');
 
 async function handler(req, res) {
   try {
     const { since, until, domain, tipo } = req.query;
-    const now = new Date();
-    const defaultSince = new Date(now.getTime() - 30 * 86400000).toISOString().slice(0, 10);
-    const defaultUntil = now.toISOString().slice(0, 10);
-
-    const dateFrom = since || defaultSince;
-    const dateTo = until || defaultUntil;
+    // Datas do negócio no fuso BR — "hoje" UTC vira amanhã a partir das 21h BRT
+    const dateFrom = since || diasAtrasBR(30);
+    const dateTo = until || hojeBR();
 
     // Filter by domain (join dominios)
     let domainId = null;
@@ -20,16 +19,23 @@ async function handler(req, res) {
       domainId = d?.id || null;
     }
 
-    // Main query — ads_consolidados within date range
-    let query = supabase
-      .from('ads_consolidados')
-      .select('*,dominios(nome,prefixo_campanha)')
-      .gte('data', dateFrom)
-      .lte('data', dateTo)
-      .order('valor_gasto', { ascending: false });
-
-    if (tipo && tipo !== 'all') query = query.eq('tipo', tipo);
-    if (domainId) query = query.eq('dominio_id', domainId);
+    // Main query (fábrica p/ fetchAll — período longo passa de 1000 linhas e o
+    // PostgREST cortava, subcontando investimento nos acumulados de mês)
+    const query = () => {
+      let q = supabase
+        .from('ads_consolidados')
+        .select('*,dominios(nome,prefixo_campanha)')
+        .gte('data', dateFrom)
+        .lte('data', dateTo)
+        .order('data', { ascending: true })
+        .order('id', { ascending: true });
+      if (tipo && tipo !== 'all') q = q.eq('tipo', tipo);
+      if (domainId) q = q.eq('dominio_id', domainId);
+      if (Array.isArray(req.allowedDominios)) {
+        q = q.in('dominio_id', req.allowedDominios.length ? req.allowedDominios : [-1]);
+      }
+      return q;
+    };
 
     // data_inicio = primeiro dia com GASTO real (dia que começou a rodar), via
     // views agregadas no banco (v_inicio_*). A query antiga puxava todas as
@@ -42,12 +48,11 @@ async function handler(req, res) {
     // Colaborador restrito a domínios: limita aos IDs permitidos (vazio => nenhum dado).
     if (Array.isArray(req.allowedDominios)) {
       const ids = req.allowedDominios.length ? req.allowedDominios : [-1];
-      query = query.in('dominio_id', ids);
       inicioUtmQ = inicioUtmQ.in('dominio_id', ids);
     }
 
     const [{ data: rows, error }, { data: inicioCampRows }, { data: inicioUtmRows }] =
-      await Promise.all([query, inicioCampQ, inicioUtmQ]);
+      await Promise.all([fetchAll(query), inicioCampQ, inicioUtmQ]);
     if (error) return res.status(500).json({ error: error.message });
 
     // Chave de agrupamento anti-erro: campaign_id quando a linha tem (id nunca é

@@ -5,7 +5,7 @@ async function handler(req, res) {
   try {
     const now = new Date();
     const sp = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
-    const today = sp.toISOString().slice(0, 10);
+    const today = require('../../../lib/datas').hojeBR();
     const horaAtual = sp.getHours();
 
     const { data: horaRow } = await supabase

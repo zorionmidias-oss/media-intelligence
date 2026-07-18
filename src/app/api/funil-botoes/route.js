@@ -1,10 +1,11 @@
 'use strict';
+const { hojeBR, diasAtrasBR } = require('../../../lib/datas');
 const { fetchGAMBotoesIndependente } = require('../../../lib/gam');
 
 async function handler(req, res) {
   try {
     const { since, until, origem, pagina } = req.query;
-    const now = new Date().toISOString().slice(0, 10);
+    const now = hojeBR();
     const df = since || now;
     const dt = until || now;
 

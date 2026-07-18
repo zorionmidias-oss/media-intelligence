@@ -1,11 +1,11 @@
 'use strict';
+const { hojeBR, diasAtrasBR } = require('../../../lib/datas');
 const supabase = require('../../../lib/supabase');
 const { computeOrcamentoContas } = require('../../../lib/orcamento');
 
 async function handler(req, res) {
   try {
-    const now = new Date();
-    const hoje = now.toISOString().slice(0, 10);
+    const hoje = hojeBR();
     const since = req.query.since || hoje;
     const until  = req.query.until  || hoje;
     const domain = req.query.domain;

@@ -1,4 +1,5 @@
 'use strict';
+const { hojeBR, diasAtrasBR } = require('../../../lib/datas');
 const { fetchAllBMs } = require('../../../lib/meta');
 const { fetchGAMReport, fetchGAMAdvertisers, discoverGAMNetworks, fetchGAMFunnelsByUTM } = require('../../../lib/gam');
 
@@ -10,13 +11,7 @@ function cacheKey(q) {
 }
 
 function defaultRange() {
-  const to = new Date();
-  const from = new Date();
-  from.setDate(from.getDate() - 30);
-  return {
-    since: from.toISOString().slice(0, 10),
-    until: to.toISOString().slice(0, 10),
-  };
+  return { since: diasAtrasBR(30), until: hojeBR() };
 }
 
 function buildTrend(dailySpendMap, dailyRevenueMap, since, until) {

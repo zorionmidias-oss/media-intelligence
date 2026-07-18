@@ -505,6 +505,9 @@ function ROAS(v){return Number(v||0).toFixed(2)+'x';}
 function USD(brl){if(!USD_RATE||brl==null)return'';return'$'+((+brl)/USD_RATE).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
 function fmtDate(d){return d.toISOString().slice(0,10);}
+// Dia do negócio = fuso SP (toISOString é UTC — às 21h BRT 'hoje' virava amanhã)
+function hojeBR(){return new Date().toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'});}
+function dISO(iso,delta){const d=new Date(iso+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+delta);return d.toISOString().slice(0,10);}
 function chgHtml(v,absolute){
   if(v==null)return'<span class="kpi-chg neu">—</span>';
   const cls=v>=0?'pos':'neg', arrow=v>=0?'↑ +':'↓ ';
@@ -577,10 +580,9 @@ function getDates(){
 }
 
 function initDates(){
-  const u=new Date(),s=new Date();
-  s.setDate(s.getDate()-6);
-  document.getElementById('f-until').value=fmtDate(u);
-  document.getElementById('f-since').value=fmtDate(s);
+  const hoje=hojeBR();
+  document.getElementById('f-until').value=hoje;
+  document.getElementById('f-since').value=dISO(hoje,-6);
   _activePreset='7d';
   updateDateBtn();
 }
@@ -645,22 +647,18 @@ function selectPreset(id){
     document.getElementById('date-cs-until').value=until;
     return;
   }
-  const now=new Date();
+  const hoje=hojeBR();
   const si=document.getElementById('f-since'), ui=document.getElementById('f-until');
-  ui.value=fmtDate(now);
-  if(id==='hoje'){si.value=fmtDate(now);}
-  else if(id==='ontem'){const d=new Date(now);d.setDate(d.getDate()-1);si.value=fmtDate(d);ui.value=fmtDate(d);}
-  else if(id==='7d'){const d=new Date(now);d.setDate(d.getDate()-6);si.value=fmtDate(d);}
-  else if(id==='14d'){const d=new Date(now);d.setDate(d.getDate()-13);si.value=fmtDate(d);}
-  else if(id==='30d'){const d=new Date(now);d.setDate(d.getDate()-29);si.value=fmtDate(d);}
-  else if(id==='mes'){
-    const f=new Date(now.getFullYear(),now.getMonth(),1);
-    const l=new Date(now.getFullYear(),now.getMonth()+1,0);
-    si.value=fmtDate(f);ui.value=fmtDate(l);
-  }else if(id==='mes-ant'){
-    const f=new Date(now.getFullYear(),now.getMonth()-1,1);
-    const l=new Date(now.getFullYear(),now.getMonth(),0);
-    si.value=fmtDate(f);ui.value=fmtDate(l);
+  ui.value=hoje;
+  if(id==='hoje'){si.value=hoje;}
+  else if(id==='ontem'){const d=dISO(hoje,-1);si.value=d;ui.value=d;}
+  else if(id==='7d'){si.value=dISO(hoje,-6);}
+  else if(id==='14d'){si.value=dISO(hoje,-13);}
+  else if(id==='30d'){si.value=dISO(hoje,-29);}
+  else if(id==='mes'){si.value=hoje.slice(0,8)+'01';}
+  else if(id==='mes-ant'){
+    const ult=dISO(hoje.slice(0,8)+'01',-1);
+    si.value=ult.slice(0,8)+'01';ui.value=ult;
   }
   updateDateBtn();
   closeDateSheet();

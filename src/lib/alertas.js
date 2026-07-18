@@ -1,12 +1,13 @@
 'use strict';
 const supabase = require('./supabase');
 const { computeOrcamentoContas, STALL_HORAS } = require('./orcamento');
+const { hojeBR, diasAtrasBR } = require('./datas');
 
 // Conjuntos/campanhas ATIVOS há ≥ STALL_HORAS sem nenhum gasto (R$0) → notifica.
 // Roda no scheduler junto do sync. Dedup por unidade no mesmo dia (ad_utm = chave).
 async function detectarConjuntosSemGasto() {
   try {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = hojeBR();
     const { stalled } = await computeOrcamentoContas();
 
     for (const c of stalled || []) {
@@ -53,7 +54,7 @@ async function detectarConjuntosSemGasto() {
 const ORFAO_GASTO_MIN = 5; // R$ — abaixo disso pode ser resto de campanha pausada
 async function detectarUtmOrfao() {
   try {
-    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    const yesterday = diasAtrasBR(1);
     const { data: rows } = await supabase
       .from('ads_consolidados')
       .select('ad_utm,campanha_meta,campaign_id,valor_gasto,faturamento_real,gam_match,account_id')
@@ -92,8 +93,8 @@ async function detectarUtmOrfao() {
 
 async function detectarAlertas() {
   try {
-    const today = new Date().toISOString().slice(0, 10);
-    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    const today = hojeBR();
+    const yesterday = diasAtrasBR(1);
 
     const [{ data: todayAds }, { data: yesterdayAds }, { data: metas }] = await Promise.all([
       supabase.from('ads_consolidados').select('ad_utm,dominio_id,valor_gasto,faturamento_real,lucro,roas,cpc,ecpm,resultado,impressoes_gam').eq('data', today),

@@ -1,4 +1,5 @@
 'use strict';
+const { hojeBR, diasAtrasBR } = require('../../../lib/datas');
 const { fetchGAMBlocosFunil } = require('../../../lib/gam');
 
 async function handler(req, res) {
@@ -6,7 +7,7 @@ async function handler(req, res) {
     const { utm, since, until } = req.query;
     if (!utm) return res.status(400).json({ erro: 'utm é obrigatório' });
 
-    const now = new Date().toISOString().slice(0, 10);
+    const now = hojeBR();
     const df = since || now;
     const dt = until || now;
 

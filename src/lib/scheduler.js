@@ -13,7 +13,7 @@ function syncPlanilhaGestao() {
       // Página ativa na Meta sem linha EXATA na planilha (match é por igualdade —
       // colchete abreviado tipo [ELIANA] não casa com "ELIANA MARTINS"): notifica
       // em vez de deixar a página invisível na gestão. Dedup por token/dia.
-      const hoje = new Date().toISOString().slice(0, 10);
+      const hoje = require('./datas').hojeBR();
       const supabase = require('./supabase');
       const avisos = [
         ...(r.tokens_sem_linha || []).map(t => ({
@@ -57,13 +57,15 @@ function startScheduler() {
       .catch(e => console.error('[scheduler] Sync cron falhou:', e.message));
   });
 
-  // Every day at 06:00 — full backfill of yesterday's finalized data
+  // Every day at 06:00 BR — full backfill of yesterday's finalized data.
+  // Sem timezone o node-cron usa o relógio do servidor (Render = UTC → rodava 03h BR).
   cron.schedule('0 6 * * *', () => {
     console.log('[scheduler] Sync diário 06h (backfill ontem)…');
-    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    const { diasAtrasBR } = require('./datas');
+    const yesterday = diasAtrasBR(1);
     syncAll({ since: yesterday, until: yesterday })
       .catch(e => console.error('[scheduler] Sync diário falhou:', e.message));
-  });
+  }, { timezone: 'America/Sao_Paulo' });
 
   cron.schedule('*/10 * * * *', async () => {
     if (process.env.RENDER_EXTERNAL_URL) {

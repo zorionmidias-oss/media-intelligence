@@ -157,13 +157,8 @@ function parseCSV(csv) {
 }
 
 function defaultDateRange() {
-  const until = new Date();
-  const since = new Date();
-  since.setDate(since.getDate() - 30);
-  return {
-    since: since.toISOString().slice(0, 10),
-    until: until.toISOString().slice(0, 10),
-  };
+  const { hojeBR, diasAtrasBR } = require('./datas');
+  return { since: diasAtrasBR(30), until: hojeBR() };
 }
 
 async function pollAndDownload(token, networkCode, jobId) {

@@ -2767,10 +2767,9 @@ let _relInit=false,_relResult=null,_relSortState={key:null,dir:-1};
 
 async function initRelTab(){
   if(_relInit)return;_relInit=true;
-  const fmt=d=>d.toISOString().slice(0,10);
-  const hoje=new Date(),ini=new Date();ini.setDate(ini.getDate()-6);
-  document.getElementById('rel-since').value=fmt(ini);
-  document.getElementById('rel-until').value=fmt(hoje);
+  const hoje=hojeBR();
+  document.getElementById('rel-since').value=dISO(hoje,-6);
+  document.getElementById('rel-until').value=hoje;
   relSyncOrdenar();
   document.getElementById('rel-mets').addEventListener('change',relSyncOrdenar);
   try{
@@ -3283,6 +3282,12 @@ function _fmtBR(iso){
   return`${d}/${m}/${y}`;
 }
 
+// "Hoje" do negócio é SEMPRE fuso de São Paulo. toISOString() é UTC — a partir
+// das 21h BRT o dia UTC já é amanhã, o que deslocava todos os presets de data.
+function hojeBR(){return new Date().toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'});}
+// Aritmética de dias sobre uma data ISO (independente de fuso: âncora ao meio-dia UTC)
+function dISO(iso,delta){const d=new Date(iso+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+delta);return d.toISOString().slice(0,10);}
+
 function dpToggle(){
   const pop=document.getElementById('date-picker-popup');
   if(pop.classList.contains('open'))dpClose();else dpOpen();
@@ -3293,19 +3298,19 @@ function dpClose(){document.getElementById('date-picker-popup').classList.remove
 function dpSelectPreset(btn,forcePreset){
   const preset=forcePreset||(btn&&btn.dataset.preset);
   if(!preset)return;
-  const now=new Date();
-  const fmt=d=>d.toISOString().slice(0,10);
-  let since,until=fmt(now);
-  if(preset==='hoje'){since=fmt(now);}
-  else if(preset==='ontem'){const y=new Date(now);y.setDate(y.getDate()-1);since=fmt(y);until=fmt(y);}
-  else if(preset==='7d'){const s=new Date(now);s.setDate(s.getDate()-6);since=fmt(s);}
-  else if(preset==='14d'){const s=new Date(now);s.setDate(s.getDate()-13);since=fmt(s);}
-  else if(preset==='30d'){const s=new Date(now);s.setDate(s.getDate()-29);since=fmt(s);}
-  else if(preset==='mes'){since=fmt(new Date(now.getFullYear(),now.getMonth(),1));}
+  // Tudo ancorado no dia BR (não UTC): às 21h BRT "hoje" UTC já é amanhã
+  const hoje=hojeBR();
+  let since,until=hoje;
+  if(preset==='hoje'){since=hoje;}
+  else if(preset==='ontem'){since=until=dISO(hoje,-1);}
+  else if(preset==='7d'){since=dISO(hoje,-6);}
+  else if(preset==='14d'){since=dISO(hoje,-13);}
+  else if(preset==='30d'){since=dISO(hoje,-29);}
+  else if(preset==='mes'){since=hoje.slice(0,8)+'01';}
   else if(preset==='mes-passado'){
-    const f=new Date(now.getFullYear(),now.getMonth()-1,1);
-    const l=new Date(now.getFullYear(),now.getMonth(),0);
-    since=fmt(f);until=fmt(l);
+    const primeiroDesteMes=hoje.slice(0,8)+'01';
+    until=dISO(primeiroDesteMes,-1);       // último dia do mês passado
+    since=until.slice(0,8)+'01';           // primeiro dia do mês passado
   }
   else return;
   _dpState={since,until,preset};
@@ -3486,10 +3491,8 @@ function renderAll(d){
 let _trendFixed30=[];
 async function loadTrendFixed(){
   try{
-    const hoje=new Date();
-    const s=new Date(hoje);s.setDate(s.getDate()-29);
-    const since=s.toISOString().slice(0,10);
-    const until=hoje.toISOString().slice(0,10);
+    const until=hojeBR();
+    const since=dISO(until,-29);
     const res=await fetch(`/api/overview?since=${since}&until=${until}`);
     if(!res.ok)return;
     const d=await res.json();
@@ -4682,8 +4685,9 @@ function presetInicio(dias){
   const ate=document.getElementById('f-inicio-ate');
   if(dias===null){de.value='';ate.value='';}
   else{
-    de.value=new Date(Date.now()-dias*86400000).toISOString().slice(0,10);
-    ate.value=new Date().toISOString().slice(0,10);
+    const hoje=hojeBR();
+    de.value=dISO(hoje,-dias);
+    ate.value=hoje;
   }
   filterCampDB();
 }
@@ -6393,7 +6397,7 @@ async function loadFunil(){
 }
 
 /* ═══ HELPERS ═══ */
-function todayISO(){return new Date().toISOString().slice(0,10);}
+function todayISO(){return hojeBR();}
 
 /* ═══ OLHO — OCULTAR VALORES ═══ */
 function aplicarClasseHideable(){
@@ -10277,7 +10281,7 @@ function drzBuildPayload(status){
     pixel_id:d.pixel_id,
     custom_conversion_id:convId,
     daily_budget:budgetCents,
-    start_time:d.start_time||new Date().toISOString().slice(0,10),
+    start_time:d.start_time||hojeBR(),
     end_time:d.end_time||null,
     geo_locations,
     age_min:ageMin,

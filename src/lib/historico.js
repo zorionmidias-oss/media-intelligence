@@ -5,7 +5,7 @@ async function registrarHistorico({ utm, adset_id, adset_name, acao, antes, depo
   if (!utm || !acao) return;
   try {
     // Grab current UTM metrics as snapshot
-    const today = new Date().toISOString().slice(0, 10);
+    const today = require('./datas').hojeBR();
     const { data: rows } = await supabase
       .from('ads_consolidados')
       .select('valor_gasto,faturamento_real,lucro,roas,cpc,ecpm')

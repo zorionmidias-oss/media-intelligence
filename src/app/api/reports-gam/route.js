@@ -1,4 +1,5 @@
 'use strict';
+const { hojeBR, diasAtrasBR } = require('../../../lib/datas');
 const supabase = require('../../../lib/supabase');
 const { fetchGAMHourly, fetchGAMUtmCampaigns, fetchGAMUtmSources } = require('../../../lib/gam');
 
@@ -6,7 +7,7 @@ function calcularAtrasoGAM(hourly, until) {
   const agora = new Date();
   const horaBR = new Date(agora.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
   const horaAtualBR = horaBR.getHours();
-  const dataAtualBR = horaBR.toISOString().slice(0, 10);
+  const dataAtualBR = hojeBR();
 
   if (until !== dataAtualBR) {
     return { tem_atraso: false, motivo: 'periodo_passado', mensagem: 'Período passado' };
@@ -157,8 +158,8 @@ async function handler(req, res) {
     const useCached = req.query.cached !== 'false';
 
     const now = new Date();
-    const df = since || new Date(now.getTime() - 30 * 86400000).toISOString().slice(0, 10);
-    const dt = until || now.toISOString().slice(0, 10);
+    const df = since || diasAtrasBR(30);
+    const dt = until || hojeBR();
 
     let domainId = null;
     let adUnitPrefix = null;
