@@ -554,6 +554,91 @@ function mergeGamEntries(entries) {
   return out;
 }
 
+// ── Dimensão meta_entidades: hierarquia por id (ad → conjunto → campanha → página) ──
+// Chave de cruzamento é SEMPRE id; nome é só rótulo de exibição. page_id é resolvido
+// incrementalmente (apenas ads ainda sem page_id na dimensão) via batch `?ids=` na
+// Graph API: adset.promoted_object.page_id (bot) || creative.object_story_spec.page_id
+// (direto). Devolve o mapa ad_id → page_id para o receita_ads reaproveitar.
+async function upsertMetaEntidades(adIdInfo) {
+  const adIds = Object.keys(adIdInfo);
+  if (!adIds.length) return {};
+
+  // page_ids já conhecidos — nunca sobrescrever um page_id preenchido com null
+  const pageByAd = {};
+  for (let i = 0; i < adIds.length; i += 200) {
+    const { data } = await supabase.from('meta_entidades')
+      .select('ad_id,page_id').in('ad_id', adIds.slice(i, i + 200));
+    for (const r of data || []) if (r.page_id) pageByAd[r.ad_id] = r.page_id;
+  }
+
+  const { data: accs } = await supabase.from('meta_accounts')
+    .select('ad_account_id,access_token').eq('ativo', true);
+  const tokenByAccount = {};
+  for (const a of accs || []) {
+    const k = String(a.ad_account_id).startsWith('act_') ? String(a.ad_account_id) : `act_${a.ad_account_id}`;
+    if (a.access_token) tokenByAccount[k] = a.access_token;
+  }
+
+  const missingByAccount = {};
+  for (const id of adIds) {
+    if (pageByAd[id]) continue;
+    const acc = adIdInfo[id].accountId;
+    if (!acc || !tokenByAccount[acc]) continue;
+    (missingByAccount[acc] ||= []).push(id);
+  }
+  for (const [acc, ids] of Object.entries(missingByAccount)) {
+    for (let i = 0; i < ids.length; i += 50) {
+      const batch = ids.slice(i, i + 50);
+      try {
+        const r = await axios.get(`${BASE}/`, {
+          params: {
+            ids: batch.join(','),
+            fields: 'adset{promoted_object{page_id}},creative{object_story_spec{page_id}}',
+            access_token: tokenByAccount[acc],
+          },
+          timeout: 30000,
+        });
+        for (const [id, ad] of Object.entries(r.data || {})) {
+          const pid = ad?.adset?.promoted_object?.page_id || ad?.creative?.object_story_spec?.page_id;
+          if (pid) pageByAd[id] = String(pid);
+        }
+      } catch (e) {
+        // Falha de um batch não bloqueia: page_id fica null e é retentado no próximo sync
+        console.warn(`[entidades] page_id batch ${acc}:`, e.response?.data?.error?.message || e.message);
+      }
+    }
+  }
+
+  const nowIso = new Date().toISOString();
+  const rows = adIds.map(id => {
+    const i = adIdInfo[id];
+    return {
+      ad_id: id,
+      adset_id: i.adsetId,
+      campaign_id: i.campaignId,
+      page_id: pageByAd[id] || null,
+      ad_name: i.adName,
+      adset_name: i.adsetName,
+      campaign_name: i.campaignName,
+      ad_utm: i.utm,
+      dominio_id: i.domainId,
+      account_id: i.accountId,
+      tipo: i.tipo,
+      pais_sigla: i.paisSigla,
+      nicho: i.nicho,
+      updated_at: nowIso,
+    };
+  });
+  for (let i = 0; i < rows.length; i += 500) {
+    const { error } = await supabase.from('meta_entidades')
+      .upsert(rows.slice(i, i + 500), { onConflict: 'ad_id' });
+    if (error) { console.warn('[entidades] upsert:', error.message); break; }
+  }
+  const comPagina = rows.filter(r => r.page_id).length;
+  console.log(`[entidades] ${rows.length} ads na dimensão (${comPagina} com page_id)`);
+  return pageByAd;
+}
+
 // Main sync function
 // ─────────────────────────────────────────────
 function yesterday() {
@@ -674,11 +759,24 @@ async function syncAll(dateRange) {
       const nicho = extractNicho(ad.adset_name, ad.campaign_name);
       if (ad.ad_id) {
         adIdToUtm[String(ad.ad_id)] = adUTM;
-        adIdInfo[String(ad.ad_id)] = { adsetId: ad.adset_id ? String(ad.adset_id) : null, utm: adUTM, domainId: domain.id };
+        adIdInfo[String(ad.ad_id)] = {
+          adsetId: ad.adset_id ? String(ad.adset_id) : null,
+          campaignId: ad.campaign_id ? String(ad.campaign_id) : null,
+          adName: ad.ad_name || null,
+          adsetName: ad.adset_name || null,
+          campaignName: ad.campaign_name || null,
+          accountId: ad._accountId || null,
+          tipo,
+          paisSigla: paisSigla || null,
+          nicho: nicho || null,
+          utm: adUTM,
+          domainId: domain.id,
+        };
       }
       adsForGrouping.push({
         adUTM,
         adId: ad.ad_id ? String(ad.ad_id) : null,
+        campaignId: ad.campaign_id ? String(ad.campaign_id) : null,
         domainId: domain.id,
         tipo,
         date: adDate,
@@ -739,8 +837,12 @@ async function syncAll(dateRange) {
       // ADITIVO (histórico + transição): tráfego antigo chega pelo nome e o novo
       // pelo id no mesmo dia — as linhas GAM são distintas, somar não duplica.
       const gamKeys = (g.adIds || []).filter(id => dayGam[id]);
-      if (dayGam[utmKey]) gamKeys.push(utmKey);
-      else if (dayGam[utmKeyNoDireto]) gamKeys.push(utmKeyNoDireto);
+      const matchPorId = gamKeys.length > 0;
+      let matchPorNome = false;
+      if (dayGam[utmKey]) { gamKeys.push(utmKey); matchPorNome = true; }
+      else if (dayGam[utmKeyNoDireto]) { gamKeys.push(utmKeyNoDireto); matchPorNome = true; }
+      // Auditável: como a receita desta linha foi casada com o GAM
+      const gamMatch = matchPorId && matchPorNome ? 'id+nome' : matchPorId ? 'id' : matchPorNome ? 'nome' : null;
       const gam = mergeGamEntries(gamKeys.map(k => dayGam[k]));
       const faturamentoBruto = gam.revenue || 0;
       // Taxa 10% aplicada AQUI. Não aplicar de novo no frontend nem nas rotas de API.
@@ -805,6 +907,8 @@ async function syncAll(dateRange) {
         data: g.date,
         dominio_id: g.domainId,
         ad_utm: g.adUTM,
+        campaign_id: g.campaignId || null,
+        gam_match: gamMatch,
         campanha_meta: g.campaignName,
         tipo: g.tipo,
         account_id: g.accountId || null,
@@ -891,7 +995,7 @@ async function syncAll(dateRange) {
         .upsert(adsRows, { onConflict: 'data,dominio_id,ad_utm,account_id,pais_sigla' });
       if (uErr && uErr.message.toLowerCase().includes('could not find')) {
         // New columns not yet migrated — retry without them
-        const fallback = adsRows.map(({ cpc_gam, ctr_gam, cliques_gam, sessoes_meta, conversas_meta, account_id, valor_gasto_original, imposto_aplicado, moeda_original, taxa_usd_aplicada, pais_sigla, pais_nome, pais_emoji, nicho, ...rest }) => rest);
+        const fallback = adsRows.map(({ cpc_gam, ctr_gam, cliques_gam, sessoes_meta, conversas_meta, account_id, valor_gasto_original, imposto_aplicado, moeda_original, taxa_usd_aplicada, pais_sigla, pais_nome, pais_emoji, nicho, campaign_id, gam_match, ...rest }) => rest);
         ({ error: uErr } = await supabase
           .from('ads_consolidados')
           .upsert(fallback, { onConflict: 'data,dominio_id,ad_utm,account_id,pais_sigla' }));
@@ -935,6 +1039,14 @@ async function syncAll(dateRange) {
       if (pErr) console.error('[sync] dominios_pendentes:', pErr.message);
     }
 
+    // ── Dimensão meta_entidades (hierarquia por id, com page_id) ─────────────
+    let pageByAd = {};
+    try {
+      pageByAd = await upsertMetaEntidades(adIdInfo);
+    } catch (e) {
+      console.warn('[sync] meta_entidades:', e.message);
+    }
+
     // ── Receita GAM por ad id → receita_ads (base do ROI por conjunto no drilldown) ──
     // Receita fica BRUTA aqui; a taxa de 10% é aplicada na rota que consome (como blocos_anuncio).
     try {
@@ -948,6 +1060,8 @@ async function syncAll(dateRange) {
             data: dia,
             ad_id: key,
             adset_id: info.adsetId,
+            campaign_id: info.campaignId,
+            page_id: pageByAd[key] || null,
             ad_utm: info.utm,
             dominio_id: info.domainId,
             receita_bruta: +(v.revenue || 0).toFixed(4),

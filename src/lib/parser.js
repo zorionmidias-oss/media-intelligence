@@ -102,6 +102,7 @@ function groupAdsByUTM(ads) {
         tipo: ad.tipo,
         date: ad.date,
         campaignName: ad.campaignName,
+        campaignId: ad.campaignId || null,
         accountId: ad.accountId || null,
         paisSigla: pais,
         nicho: ad.nicho || null,
@@ -115,6 +116,7 @@ function groupAdsByUTM(ads) {
 
     const g = groups[key];
     if (!g.nicho && ad.nicho) g.nicho = ad.nicho;
+    if (!g.campaignId && ad.campaignId) g.campaignId = ad.campaignId;
     if (ad.adId) g._adIds.add(String(ad.adId));
     g.spend += ad.spend || 0;
     g.clicks += ad.clicks || 0;
@@ -146,6 +148,7 @@ function groupAdsByUTM(ads) {
       tipo: g.tipo,
       date: g.date,
       campaignName: g.campaignName,
+      campaignId: g.campaignId || null,
       accountId: g.accountId,
       paisSigla: g.paisSigla,
       nicho: g.nicho,

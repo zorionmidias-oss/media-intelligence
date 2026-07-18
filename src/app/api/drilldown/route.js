@@ -46,8 +46,11 @@ async function handler(req, res) {
     const noCache = req.query.nocache === '1';
     // adsets_only: pula insights por anúncio (expand inline não mostra criativos) → bem mais rápido
     const adsetsOnly = req.query.adsets_only === '1';
+    // campaign_id: cruzamento por id (anti-erro) — busca os ads direto na campanha,
+    // sem filtro por nome. Duas páginas com anúncios homônimos nunca se misturam.
+    const campaignId = req.query.campaign_id || null;
 
-    const cacheKey = `${utm}:${since}:${until}:${adsetsOnly ? 'a' : 'f'}`;
+    const cacheKey = `${campaignId || utm}:${since}:${until}:${adsetsOnly ? 'a' : 'f'}`;
     if (!noCache) {
       const hit = getCached(cacheKey);
       if (hit) {
@@ -57,12 +60,15 @@ async function handler(req, res) {
     }
 
     // ── DB aggregate ────────────────────────────────────────────────────────
-    const { data: rows } = await supabase
+    // Com campaign_id: agrega só as linhas da campanha (histórico carimbado no backfill).
+    // Sem: agrega por UTM (legado — pode misturar campanhas homônimas).
+    let dbQ = supabase
       .from('ads_consolidados')
       .select('data,valor_gasto,faturamento_real,lucro,cliques,resultado,impressoes_gam,ecpm,rps,cpc,roas')
-      .eq('ad_utm', utm)
       .gte('data', since)
       .lte('data', until);
+    dbQ = campaignId ? dbQ.eq('campaign_id', campaignId) : dbQ.eq('ad_utm', utm);
+    const { data: rows } = await dbQ;
 
     const total = (rows || []).reduce((acc, r) => {
       acc.spend       += Number(r.valor_gasto      || 0);
@@ -84,26 +90,44 @@ async function handler(req, res) {
     const { data: accounts } = await supabase.from('meta_accounts').select('*').eq('ativo', true);
     console.log(`[drilldown ${utm}] contas: ${(accounts || []).length}`);
 
-    // ── Parallel: fetch ads from all accounts ────────────────────────────────
+    // ── Fetch ads: por campaign_id (exato) ou por nome em todas as contas (legado) ──
     const adsetsMap = new Map(); // adset_id → adset object
+    const AD_FETCH_FIELDS = 'id,name,status,effective_status,adset_id,adset{id,name,status,daily_budget,campaign{id,name,objective}},creative{id,thumbnail_url,name}';
 
-    await Promise.allSettled((accounts || []).map(acc =>
-      axios.get(`${META_BASE}/${acc.ad_account_id}/ads`, {
+    // Conta dona da campanha via meta_entidades (dimensão por id gravada pelo sync)
+    let campAccount = null;
+    if (campaignId) {
+      const { data: ent } = await supabase.from('meta_entidades')
+        .select('account_id').eq('campaign_id', campaignId).not('account_id', 'is', null).limit(1).maybeSingle();
+      campAccount = (accounts || []).find(a => {
+        const k = String(a.ad_account_id).startsWith('act_') ? String(a.ad_account_id) : `act_${a.ad_account_id}`;
+        return k === ent?.account_id;
+      }) || null;
+      if (!campAccount) console.warn(`[drilldown] campaign_id=${campaignId} sem conta na dimensão — fallback por nome`);
+    }
+
+    const fetchTargets = campAccount
+      ? [{ acc: campAccount, url: `${META_BASE}/${campaignId}/ads` }]
+      : (accounts || []).map(acc => ({ acc, url: `${META_BASE}/${acc.ad_account_id}/ads` }));
+
+    await Promise.allSettled(fetchTargets.map(({ acc, url }) =>
+      axios.get(url, {
         params: {
           access_token: acc.access_token,
-          fields: 'id,name,status,effective_status,adset_id,adset{id,name,status,daily_budget,campaign{id,name,objective}},creative{id,thumbnail_url,name}',
-          filtering: JSON.stringify([{ field: 'name', operator: 'CONTAIN', value: utm }]),
+          fields: AD_FETCH_FIELDS,
+          // Sem campaign_id, o filtro CONTAIN por nome continua (legado)
+          ...(campAccount ? {} : { filtering: JSON.stringify([{ field: 'name', operator: 'CONTAIN', value: utm }]) }),
           limit: 200,
         },
         timeout: 20000,
       }).then(r => {
         const ads = r.data?.data || [];
-        console.log(`[drilldown ${utm}] conta ${acc.ad_account_id}: ${ads.length} ads`);
+        console.log(`[drilldown ${campaignId || utm}] conta ${acc.ad_account_id}: ${ads.length} ads`);
         for (const ad of ads) {
           if (!ad.adset) continue;
-          // Bug C: CONTAIN filter from Meta API can match substrings (e.g. "ama" in "ADAMA")
+          // Bug C (só no caminho por nome): CONTAIN pode casar substring ("ama" em "ADAMA")
           // Re-validate with the same extractAdUTM normalization used by sync
-          if (extractAdUTM(ad.name) !== utm.toLowerCase()) continue;
+          if (!campAccount && extractAdUTM(ad.name) !== utm.toLowerCase()) continue;
           const aid = ad.adset.id;
           if (!adsetsMap.has(aid)) {
             adsetsMap.set(aid, {
@@ -295,6 +319,7 @@ async function handler(req, res) {
 
     const payload = {
       utm,
+      campaign_id: campaignId,
       total,
       adsets: Array.from(adsetsMap.values()).filter(a => a.spend > 0).sort((a, b) => b.spend - a.spend),
       debug: {

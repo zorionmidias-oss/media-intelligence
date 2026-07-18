@@ -12,3 +12,10 @@ audit-output.txt
 gam-debug.csv
 gam-diag-utm.csv
 C:*
+
+# Artefatos locais de tooling/agentes
+_shots/
+reports/
+.agents/
+.mcp.json
+skills-lock.json

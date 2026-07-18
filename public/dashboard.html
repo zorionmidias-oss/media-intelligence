@@ -4819,7 +4819,8 @@ function filterCampDB(q){
   const term=q.toLowerCase().trim();
   // Filter S.campRows then re-render
   const filtered=!term?S.campRows:S.campRows.filter(r=>
-    (r.ad_utm||'').toLowerCase().includes(term)||(r.dominio||'').toLowerCase().includes(term)
+    (r.ad_utm||'').toLowerCase().includes(term)||(r.dominio||'').toLowerCase().includes(term)||
+    (r.pagina||'').toLowerCase().includes(term)||(r.campanha_meta||'').toLowerCase().includes(term)
   );
   renderCampTable(filtered);
 }
@@ -4899,7 +4900,13 @@ function renderCampTable(rows){
       ?`<span title="${esc(r.pais_nome||r.pais_sigla)}" style="display:inline-flex;align-items:center;gap:2px;background:var(--sec-strong);border-radius:4px;padding:1px 5px;font-size:.65rem;color:var(--muted);margin-right:4px;flex-shrink:0">${getPaisEmoji(r.pais_sigla)} ${esc(r.pais_sigla)}</span>`
       :'';
     // Perfil restrito: sem conjuntos (expand). A coluna Ações é escondida via CSS (.col-acoes).
-    const expBtn=elBlocked('expandir_conjuntos')?'':`<button class="utm-exp-btn" onclick="toggleUtmExpand('${esc(r.ad_utm||'')}',this)" title="Ver conjuntos ativos">▶</button>`;
+    const expBtn=elBlocked('expandir_conjuntos')?'':`<button class="utm-exp-btn" onclick="toggleUtmExpand('${esc(r.ad_utm||'')}','${esc(r.campaign_id||'')}',this)" title="Ver conjuntos ativos">▶</button>`;
+    // Badge da página (último colchete da campanha) só em linha carimbada por id —
+    // linha legada agrega histórico por nome (pode misturar páginas homônimas) e
+    // ganha o marcador ·legado no lugar
+    const pagBadge=r.campaign_id&&r.pagina
+      ?`<span title="${esc(r.campanha_meta||'')}" style="background:var(--sec-strong);border-radius:4px;padding:1px 5px;font-size:.65rem;color:var(--muted);flex-shrink:0">${esc(r.pagina)}</span>`
+      :`<span title="Histórico agregado por nome (sem id de campanha)" style="font-size:.65rem;color:var(--muted);flex-shrink:0">·legado</span>`;
 
     // Sessão/Conversa com pílula colorida comparando vs breakeven
     const spc=r.sessao_por_conversa;
@@ -4916,11 +4923,11 @@ function renderCampTable(rows){
 
     const inicio=r.data_inicio?r.data_inicio.split('-').reverse().join('/'):'—';
 
-    return`<tr class="anim utm-row" data-utm="${esc(r.ad_utm||'')}" style="animation-delay:${i*20}ms">
+    return`<tr class="anim utm-row" data-utm="${esc(r.ad_utm||'')}" data-key="${esc(r.campaign_id||r.ad_utm||'')}" style="animation-delay:${i*20}ms">
       <td><div class="td-av">
         ${expBtn}
         <div class="t-av">${esc((r.ad_utm||'?').charAt(0).toUpperCase())}</div>
-        ${paisBadge}<span style="font-family:monospace;font-size:.8rem">${esc(r.ad_utm)}</span>
+        ${paisBadge}<span style="font-family:monospace;font-size:.8rem">${esc(r.ad_utm)}</span>${pagBadge}
       </div></td>
       <td>${domBadge}</td>
       <td class="mo" data-sort="${r.valor_gasto||0}">${BRL(r.valor_gasto)}<span class="uvar-inv" data-utm="${esc(r.ad_utm||'')}"></span></td>
@@ -6127,11 +6134,14 @@ function corROI(roi){
   return'bad';
 }
 
-async function toggleUtmExpand(utm,btn){
+async function toggleUtmExpand(utm,campId,btn){
+  // campId = campaign_id da Meta (cruzamento por id — duas páginas com anúncios
+  // homônimos nunca se misturam). Vazio em linhas legadas sem carimbo.
+  const key=campId||utm;
   const row=btn.closest('tr');
   const nxt=row.nextElementSibling;
-  // Já aberta nesta UTM → fecha
-  if(nxt&&nxt.classList.contains('utm-detail-row')&&nxt.dataset.utm===utm){
+  // Já aberta nesta linha → fecha
+  if(nxt&&nxt.classList.contains('utm-detail-row')&&nxt.dataset.key===key){
     nxt.remove();btn.classList.remove('open');return;
   }
   // Acordeão: fecha qualquer outra aberta
@@ -6139,11 +6149,12 @@ async function toggleUtmExpand(utm,btn){
   document.querySelectorAll('#camp-db-body .utm-exp-btn.open').forEach(el=>el.classList.remove('open'));
   btn.classList.add('open');
 
-  const rowData=(S.campRows||[]).find(r=>r.ad_utm===utm)||{};
+  const rowData=(S.campRows||[]).find(r=>campId?(r.campaign_id===campId):(r.ad_utm===utm&&!r.campaign_id))
+    ||(S.campRows||[]).find(r=>r.ad_utm===utm)||{};
   const rps=+(rowData.rps||0);
   const ncols=row.children.length;
   const detail=document.createElement('tr');
-  detail.className='utm-detail-row';detail.dataset.utm=utm;
+  detail.className='utm-detail-row';detail.dataset.utm=utm;detail.dataset.key=key;
   detail.innerHTML=`<td colspan="${ncols}"><div class="utm-detail"><div class="utm-detail-load">Carregando conjuntos ativos…</div></div></td>`;
   row.after(detail);
   const box=detail.querySelector('.utm-detail');
@@ -6151,7 +6162,7 @@ async function toggleUtmExpand(utm,btn){
   try{
     const since=document.getElementById('f-since').value;
     const until=document.getElementById('f-until').value;
-    const r=await fetch(`/api/drilldown/${encodeURIComponent(utm)}?since=${since}&until=${until}&adsets_only=1`);
+    const r=await fetch(`/api/drilldown/${encodeURIComponent(utm)}?since=${since}&until=${until}&adsets_only=1${campId?`&campaign_id=${encodeURIComponent(campId)}`:''}`);
     if(!r.ok)throw new Error((await r.json()).error||r.statusText);
     const d=await r.json();
     renderUtmAdsets(box,utm,d,rps);

@@ -46,6 +46,50 @@ async function detectarConjuntosSemGasto() {
   }
 }
 
+// UTM órfão: dia FECHADO (ontem) com gasto relevante e ZERO receita casada no GAM.
+// Quase sempre é typo de UTM entre Meta e site (ex.: yetudefb vs yetundefb) ou
+// utm_campaign sem o ad id — antes isso aparecia como "faturamento R$ 0" sem
+// explicação; agora grita. Dedup por utm/dia.
+const ORFAO_GASTO_MIN = 5; // R$ — abaixo disso pode ser resto de campanha pausada
+async function detectarUtmOrfao() {
+  try {
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    const { data: rows } = await supabase
+      .from('ads_consolidados')
+      .select('ad_utm,campanha_meta,campaign_id,valor_gasto,faturamento_real,gam_match,account_id')
+      .eq('data', yesterday)
+      .gte('valor_gasto', ORFAO_GASTO_MIN);
+
+    let count = 0;
+    for (const r of rows || []) {
+      if (Number(r.faturamento_real || 0) > 0 || r.gam_match) continue;
+      const { data: existing } = await supabase
+        .from('notificacoes')
+        .select('id')
+        .eq('tipo', 'utm_sem_receita')
+        .eq('ad_utm', r.ad_utm)
+        .gte('created_at', yesterday + 'T00:00:00')
+        .limit(1);
+      if (existing?.length) continue;
+
+      await supabase.from('notificacoes').insert({
+        tipo: 'utm_sem_receita',
+        severidade: 'danger',
+        titulo: `${r.ad_utm} gastou R$ ${Number(r.valor_gasto).toFixed(2)} ontem sem NENHUMA receita casada`,
+        mensagem: `Nenhum match GAM por id nem por nome em ${yesterday}. Provável typo de UTM no site ou utm_campaign sem o ad id. Campanha: ${r.campanha_meta || '—'}`,
+        ad_utm: r.ad_utm,
+        metadata: { data: yesterday, campaign_id: r.campaign_id, account_id: r.account_id, valor_gasto: r.valor_gasto },
+      });
+      count++;
+      console.log(`[alertas] utm_sem_receita: ${r.ad_utm} (R$ ${Number(r.valor_gasto).toFixed(2)} em ${yesterday})`);
+    }
+    return count;
+  } catch (e) {
+    console.error('[alertas] detectarUtmOrfao falhou:', e.message);
+    return 0;
+  }
+}
+
 async function detectarAlertas() {
   try {
     const today = new Date().toISOString().slice(0, 10);
@@ -163,4 +207,4 @@ async function detectarAlertas() {
   }
 }
 
-module.exports = { detectarAlertas, detectarConjuntosSemGasto };
+module.exports = { detectarAlertas, detectarConjuntosSemGasto, detectarUtmOrfao };

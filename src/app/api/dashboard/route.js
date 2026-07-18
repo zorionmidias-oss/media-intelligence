@@ -33,7 +33,7 @@ async function handler(req, res) {
     // data_inicio query — MIN(data) per UTM with any activity, NO date range filter
     let inicioQ = supabase
       .from('ads_consolidados')
-      .select('dominio_id,ad_utm,pais_sigla,data')
+      .select('dominio_id,ad_utm,pais_sigla,campaign_id,data')
       .or('valor_gasto.gt.0,faturamento_real.gt.0')
       .order('data', { ascending: true });
     if (tipo && tipo !== 'all') inicioQ = inicioQ.eq('tipo', tipo);
@@ -49,20 +49,26 @@ async function handler(req, res) {
     const [{ data: rows, error }, { data: inicioRows }] = await Promise.all([query, inicioQ]);
     if (error) return res.status(500).json({ error: error.message });
 
+    // Chave de agrupamento anti-erro: campaign_id quando a linha tem (id nunca é
+    // ambíguo — duas páginas homônimas ficam separadas); fallback legado por nome
+    // para histórico sem carimbo.
+    const rowKey = r => r.campaign_id ? `c:${r.campaign_id}` : `${r.dominio_id}|${r.ad_utm}|${r.pais_sigla || ''}`;
+
     // Build data_inicio map: key → first date with activity
     const inicioMap = {};
     for (const r of inicioRows || []) {
-      const key = `${r.dominio_id}|${r.ad_utm}|${r.pais_sigla || ''}`;
+      const key = rowKey(r);
       if (!inicioMap[key]) inicioMap[key] = r.data;
     }
 
-    // Aggregate by (dominio_id, ad_utm, pais_sigla) — merges multiple accounts
+    // Aggregate by campaign_id (novo) ou (dominio_id, ad_utm, pais_sigla) (legado)
     const utmMap = {};
     for (const r of rows || []) {
-      const key = `${r.dominio_id}|${r.ad_utm}|${r.pais_sigla || ''}`;
+      const key = rowKey(r);
       if (!utmMap[key]) {
         utmMap[key] = {
           _key: key,
+          campaign_id: r.campaign_id || null,
           ad_utm: r.ad_utm,
           tipo: r.tipo,
           dominio: r.dominios?.nome || null,
@@ -140,8 +146,14 @@ async function handler(req, res) {
           ? +((inv / conversas) / rps_sessao).toFixed(2)
           : null;
 
+        // Rótulo da página = último colchete do nome da campanha ("[X] [Y] [ELIANA MARTINS]")
+        const brackets = [...String(g.campanha_meta || '').matchAll(/\[([^\]]+)\]/g)];
+        const pagina = brackets.length >= 2 ? brackets[brackets.length - 1][1].trim() : null;
+
         return {
           ad_utm: g.ad_utm,
+          campaign_id: g.campaign_id,
+          pagina,
           tipo: g.tipo,
           dominio: g.dominio,
           campanha_meta: g.campanha_meta,

@@ -49,6 +49,9 @@ function acharCol(headers, termos) {
 }
 
 // Constrói matcher: dado um nome (col Página), devolve o melhor token.
+// Prefixo de palavras ("AMARA" casa "Amara Okafor") — a AMBIGUIDADE (mesmo token
+// casando 2+ linhas, ex. "ELIANA" × "Eliana Martins"/"Eliana Morais") é tratada
+// no passo 2: ninguém ganha no chute, as linhas recebem aviso explícito.
 function montarMatcher(tokens) {
   // tokens ordenados por nº de palavras desc (depois comprimento) p/ priorizar match longo
   const lista = tokens
@@ -228,13 +231,21 @@ async function atualizarPlanilhaGestao({ dryRun = false } = {}) {
     linhas.push({ linha: r + 1, nome, nicho, pais, token: matcher(nome), specificidade: normWords(nome).length * 100 + nome.length });
   }
 
-  // Passo 2: desambiguação — quando um token casa em >1 linha, o NOME MAIS ESPECÍFICO
-  // (mais palavras, depois mais longo) fica com os conjuntos; as outras vão p/ 0/Disponível.
+  // Passo 2: ambiguidade NUNCA se resolve em silêncio. Token casando >1 linha:
+  //   • se exatamente UMA linha é IGUAL ao token (normalizada), ela vence — as
+  //     outras são homônimas mais longas e ganham aviso;
+  //   • senão ("ELIANA" × "Eliana Martins"/"Eliana Morais"), NINGUÉM vence: todas
+  //     ficam zeradas com aviso p/ corrigir o colchete do conjunto (nome completo).
   const porTokenLinhas = {};
   for (const l of linhas) if (l.token) (porTokenLinhas[l.token] ||= []).push(l);
-  const vencedora = {};   // token → linha vencedora
+  const vencedora = {};      // token → linha vencedora
+  const semVencedor = {};    // token → true (ambíguo de verdade — zera todas com aviso)
   for (const [tok, ls] of Object.entries(porTokenLinhas)) {
-    vencedora[tok] = ls.slice().sort((a, b) => b.specificidade - a.specificidade)[0].linha;
+    if (ls.length === 1) { vencedora[tok] = ls[0].linha; continue; }
+    const tokNorm = normWords(tok).join(' ');
+    const exatas = ls.filter(l => normWords(l.nome).join(' ') === tokNorm);
+    if (exatas.length === 1) vencedora[tok] = exatas[0].linha;
+    else semVencedor[tok] = true;
   }
 
   // Agregadores p/ a Overview
@@ -244,14 +255,23 @@ async function atualizarPlanilhaGestao({ dryRun = false } = {}) {
   // Passo 3: monta updates
   for (const l of linhas) {
     let token = l.token;
-    if (token && vencedora[token] !== l.linha) { desambiguadas.push(l.nome); token = null; }
+    let obsExtra = '';
+    if (token && semVencedor[token]) {
+      desambiguadas.push(l.nome);
+      obsExtra = `⚠ token ambíguo: [${token}] casa com ${porTokenLinhas[token].length} páginas — use o nome completo no 2º colchete do conjunto`;
+      token = null;
+    } else if (token && vencedora[token] !== l.linha) {
+      desambiguadas.push(l.nome);
+      obsExtra = `⚠ homônima: conjuntos de [${token}] atribuídos à linha ${vencedora[token]} (nome exato)`;
+      token = null;
+    }
     const info = token ? porToken[token] : null;
     const conjuntos = info ? info.conjuntos : 0;
     const orcamento = info ? info.orcamento_brl : 0;
     const parado = info ? (info.parado_brl || 0) : 0;
     // Status da Meta: "Em uso" | "com anomalia" (qualquer conjunto travado) | "Disponível"
     const status = info ? info.status : 'Disponível';
-    const observacao = info ? (info.observacao || '') : '';
+    const observacao = info ? (info.observacao || '') : obsExtra;
 
     if (token) { tokenUsado[token] = (tokenUsado[token] || 0) + 1; matched.push({ ...l, token, conjuntos, orcamento, status }); }
     else zeradas.push({ linha: l.linha, nome: l.nome });
@@ -274,7 +294,7 @@ async function atualizarPlanilhaGestao({ dryRun = false } = {}) {
 
   // Diagnósticos
   const tokensSemLinha = paginas.filter(p => !tokenUsado[p.token]).map(p => p.token);
-  const ambiguos = Object.entries(porTokenLinhas).filter(([, ls]) => ls.length > 1).map(([t]) => t);
+  const ambiguos = Object.keys(semVencedor);   // só ambiguidade real (sem vencedor)
   const comAnomalia = matched.filter(m => m.status === 'com anomalia').map(m => m.nome);
 
   const relatorio = {
