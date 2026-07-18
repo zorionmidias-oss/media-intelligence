@@ -4,6 +4,7 @@ const supabase = require('../../../lib/supabase');
 const { getUSDtoBRLByDate } = require('../../../lib/gam');
 const { extractAdUTM, extractTipo } = require('../../../lib/parser');
 const { getResultadoMeta, findAction } = require('../../../services/attribution.service');
+const METRICAS = require('../../../lib/metricas');
 
 const META_BASE = 'https://graph.facebook.com/v19.0';
 
@@ -274,6 +275,17 @@ async function handler(req, res) {
         if (!_usdRate) _usdRate = await getUSDtoBRLByDate(until);
         adset.min_budget = _usdRate ? +(+_usdRate).toFixed(2) : 1;
       }
+    }
+
+    // ── Breakeven por conjunto (canônico): custo/sessão do conjunto ÷ RPS da página ──
+    // rps vem do chamador (linha da aba Campanhas = faturamento ÷ sessões da página).
+    // sessões do conjunto = view_content da Meta (resultado_vc). <1 = saudável.
+    const rpsPagina = Number(req.query.rps) || 0;
+    for (const a of adsetsMap.values()) {
+      a.custo_sessao = a.resultado_vc > 0 ? +(a.spend / a.resultado_vc).toFixed(4) : null;
+      a.breakeven = rpsPagina > 0
+        ? METRICAS.breakevenContraRPS({ investimento: a.spend, sessoes: a.resultado_vc, rps: rpsPagina })
+        : null;
     }
 
     // ── Receita real por conjunto/anúncio (GAM por ad id, gravada pelo sync em receita_ads) ──

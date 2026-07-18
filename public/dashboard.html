@@ -1527,7 +1527,16 @@
         <!-- Table -->
         <div class="tbl-wrap scroll">
           <div class="search-bar" style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-            <input type="text" class="search-in" id="search-camp-db" placeholder="🔍 Pesquisar UTM / domínio…" oninput="filterCampDB(this.value)" style="flex:1;min-width:180px"/>
+            <input type="text" class="search-in" id="search-camp-db" placeholder="🔍 Pesquisar UTM / página / domínio…" oninput="filterCampDB()" style="flex:1;min-width:180px"/>
+            <div style="display:flex;align-items:center;gap:.375rem;flex-wrap:wrap">
+              <span style="font-size:.75rem;color:var(--muted);white-space:nowrap">Início:</span>
+              <input type="date" class="search-in" id="f-inicio-de" onchange="filterCampDB()" style="width:9.5rem;padding:.375rem .5rem;font-size:.8rem" title="Campanhas que começaram a rodar a partir desta data"/>
+              <span style="color:var(--muted);font-size:.75rem">–</span>
+              <input type="date" class="search-in" id="f-inicio-ate" onchange="filterCampDB()" style="width:9.5rem;padding:.375rem .5rem;font-size:.8rem" title="Campanhas que começaram a rodar até esta data"/>
+              <button class="col-toggle-btn" onclick="presetInicio(7)" title="Começaram nos últimos 7 dias">7d</button>
+              <button class="col-toggle-btn" onclick="presetInicio(30)" title="Começaram nos últimos 30 dias">30d</button>
+              <button class="col-toggle-btn" onclick="presetInicio(null)" title="Limpar filtro de início">✕</button>
+            </div>
             <div class="col-toggle-wrap">
               <button class="col-toggle-btn" onclick="toggleColDD(this)">⚙ Colunas</button>
               <div class="col-toggle-dd" id="col-toggle-dd">
@@ -1547,7 +1556,7 @@
           <table id="camp-table">
             <thead><tr>
               <th>UTM</th><th>Domínio</th><th>Investido</th><th>Fat. Real</th><th>Lucro</th><th>ROAS</th>
-              <th class="col-h" data-col="cpc">CPC</th><th class="col-h" data-col="custo-res">Custo/Result.</th><th class="col-h" data-col="resultados">Resultados</th><th class="col-h" data-col="imp-gam">Imp. GAM</th><th class="col-h" data-col="ecpm">eCPM <span title="eCPM atribuído por UTM campaign via relatórios GAM. O eCPM nos KPIs globais (aba GAM) vem de blocos_anuncio e pode divergir, pois agrega todos os blocos independente da campanha." style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="rps">RPS</th><th class="col-h" data-col="sessoes-meta">Sessões (Meta)</th><th class="col-h" data-col="sessao-conv">Sessão/Conversa</th><th class="col-h" data-col="breakeven">Breakeven</th><th class="col-h" data-col="inicio">Início</th><th class="col-acoes">Ações</th>
+              <th class="col-h" data-col="cpc">CPC</th><th class="col-h" data-col="custo-res">Custo/Result.</th><th class="col-h" data-col="resultados">Resultados</th><th class="col-h" data-col="imp-gam">Imp. GAM</th><th class="col-h" data-col="ecpm">eCPM <span title="eCPM atribuído por UTM campaign via relatórios GAM. O eCPM nos KPIs globais (aba GAM) vem de blocos_anuncio e pode divergir, pois agrega todos os blocos independente da campanha." style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="rps">RPS <span title="Retorno por sessão: faturamento real ÷ sessões (view_content Meta)" style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="sessoes-meta">Sessões (Meta)</th><th class="col-h" data-col="sessao-conv">Sessão/Conversa</th><th class="col-h" data-col="breakeven">Breakeven <span title="Custo por sessão ÷ RPS — abaixo de 1 = gastando menos do que ganha" style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="inicio">Início <span title="Primeiro dia em que a campanha teve gasto real" style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-acoes">Ações</th>
             </tr></thead>
             <tbody id="camp-db-body"><tr><td colspan="13" class="empty">Carregando…</td></tr></tbody>
           </table>
@@ -4649,14 +4658,34 @@ function switchCampTab(tipo,btn){
   loadCampaignsDB(tipo).finally(hideOverlay);
 }
 
-function filterCampDB(q){
-  const term=q.toLowerCase().trim();
-  // Filter S.campRows then re-render
-  const filtered=!term?S.campRows:S.campRows.filter(r=>
-    (r.ad_utm||'').toLowerCase().includes(term)||(r.dominio||'').toLowerCase().includes(term)||
-    (r.pagina||'').toLowerCase().includes(term)||(r.campanha_meta||'').toLowerCase().includes(term)
-  );
+function filterCampDB(){
+  const term=(document.getElementById('search-camp-db')?.value||'').toLowerCase().trim();
+  const de=document.getElementById('f-inicio-de')?.value||'';
+  const ate=document.getElementById('f-inicio-ate')?.value||'';
+  const filtered=S.campRows.filter(r=>{
+    if(term&&!((r.ad_utm||'').toLowerCase().includes(term)||(r.dominio||'').toLowerCase().includes(term)||
+      (r.pagina||'').toLowerCase().includes(term)||(r.campanha_meta||'').toLowerCase().includes(term)))return false;
+    // Filtro de data de início (dia que a campanha começou a gastar)
+    if(de||ate){
+      const ini=(r.data_inicio||'').slice(0,10);
+      if(!ini)return false;              // sem início conhecido → fora do filtro por data
+      if(de&&ini<de)return false;
+      if(ate&&ini>ate)return false;
+    }
+    return true;
+  });
   renderCampTable(filtered);
+}
+
+function presetInicio(dias){
+  const de=document.getElementById('f-inicio-de');
+  const ate=document.getElementById('f-inicio-ate');
+  if(dias===null){de.value='';ate.value='';}
+  else{
+    de.value=new Date(Date.now()-dias*86400000).toISOString().slice(0,10);
+    ate.value=new Date().toISOString().slice(0,10);
+  }
+  filterCampDB();
 }
 
 async function loadCampaignsDB(tipo){
@@ -4742,18 +4771,11 @@ function renderCampTable(rows){
       ?`<span title="${esc(r.campanha_meta||'')}" style="background:var(--sec-strong);border-radius:4px;padding:1px 5px;font-size:.65rem;color:var(--muted);flex-shrink:0">${esc(r.pagina)}</span>`
       :`<span title="Histórico agregado por nome (sem id de campanha)" style="font-size:.65rem;color:var(--muted);flex-shrink:0">·legado</span>`;
 
-    // Sessão/Conversa com pílula colorida comparando vs breakeven
+    // Sessão/Conversa é informativo; o semáforo vive no BREAKEVEN (canônico: <1 saudável)
     const spc=r.sessao_por_conversa;
     const be=r.breakeven;
-    let spcHtml;
-    if(spc===null||spc===undefined){spcHtml='<span style="color:var(--muted)">—</span>';}
-    else if(be===null||be===undefined){spcHtml=spc.toFixed(2);}
-    else{
-      const ok=spc>=be;
-      const sc=ok?'var(--success)':'var(--danger)';
-      const sb=ok?'var(--success-soft)':'var(--danger-soft)';
-      spcHtml=`<span class="variacao" style="background:${sb};color:${sc}">${spc.toFixed(2)}</span>`;
-    }
+    const spcHtml=(spc===null||spc===undefined)?'<span style="color:var(--muted)">—</span>':spc.toFixed(2);
+    const beHtml=bePill(be);
 
     const inicio=r.data_inicio?r.data_inicio.split('-').reverse().join('/'):'—';
 
@@ -4776,7 +4798,7 @@ function renderCampTable(rows){
       <td class="mo col-h" data-col="rps" data-sort="${r.rps||0}">${r.rps>0?BRL(r.rps):'—'}</td>
       <td class="mo col-h" data-col="sessoes-meta" data-sort="${r.sessoes||0}">${r.sessoes>0?NUM(r.sessoes):'—'}</td>
       <td class="mo col-h" data-col="sessao-conv" data-sort="${spc!==null&&spc!==undefined?spc:-1}">${spcHtml}</td>
-      <td class="mo col-h" data-col="breakeven" data-sort="${be!==null&&be!==undefined?be:-1}">${be!==null&&be!==undefined?be.toFixed(2):'<span style="color:var(--muted)">—</span>'}</td>
+      <td class="mo col-h" data-col="breakeven" data-sort="${be!==null&&be!==undefined?be:-1}">${beHtml}</td>
       <td class="mo col-h" data-col="inicio" data-sort="${r.data_inicio||''}">${inicio}</td>
       <td class="col-acoes" style="white-space:nowrap">
         <button class="act-btn" onclick="abrirHistorico('${esc(r.ad_utm||'')}')" title="Histórico">📜</button>
@@ -4784,25 +4806,18 @@ function renderCampTable(rows){
     </tr>`;
   }).join('');
 
-  // TOTAL row — derivadas recalculadas dos totais das linhas visíveis
+  // TOTAL row — derivadas recalculadas das SOMAS das linhas visíveis (fórmulas
+  // canônicas de src/lib/metricas.js; nunca média de linhas)
   const totInv=rows.reduce((s,r)=>s+r.valor_gasto,0);
   const totFat=rows.reduce((s,r)=>s+r.faturamento_real,0);
-  const totLuc=rows.reduce((s,r)=>s+r.lucro,0);
+  const totLuc=totFat-totInv;
   const totSes=rows.reduce((s,r)=>s+(r.sessoes||0),0);
   const totCon=rows.reduce((s,r)=>s+(r.conversas||0),0);
   const totSpc=totSes>0&&totCon>0?totSes/totCon:null;
   const totRps=totSes>0&&totFat>0?totFat/totSes:null;
-  const totBe=totCon>0&&totInv>0&&totRps!==null?(totInv/totCon)/totRps:null;
-  const totSpcOk=totSpc!==null&&totBe!==null;
-  let totSpcHtml;
-  if(totSpc===null){totSpcHtml='—';}
-  else if(totBe===null){totSpcHtml=totSpc.toFixed(2);}
-  else{
-    const ok=totSpc>=totBe;
-    const sc=ok?'var(--success)':'var(--danger)';
-    const sb=ok?'var(--success-soft)':'var(--danger-soft)';
-    totSpcHtml=`<span class="variacao" style="background:${sb};color:${sc}">${totSpc.toFixed(2)}</span>`;
-  }
+  // breakeven = custo/sessão ÷ rps (mesmo escopo → totInv/totFat)
+  const totBe=(totInv>0&&totFat>0)?totInv/totFat:null;
+  const totSpcHtml=totSpc===null?'—':totSpc.toFixed(2);
   const totLc=totLuc>=0?'var(--color-positive)':'var(--color-negative)';
   const totRoas=totInv>0?totFat/totInv:0;
   const totRc=totRoas>=1?'var(--color-positive)':'var(--color-warning)';
@@ -4817,10 +4832,10 @@ function renderCampTable(rows){
     <td class="mo col-h" data-col="resultados"></td>
     <td class="mo col-h" data-col="imp-gam"></td>
     <td class="mo col-h" data-col="ecpm"></td>
-    <td class="mo col-h" data-col="rps"></td>
+    <td class="mo col-h" data-col="rps"><strong>${totRps!==null?BRL(totRps):'—'}</strong></td>
     <td class="mo col-h" data-col="sessoes-meta"><strong>${totSes>0?NUM(totSes):'—'}</strong></td>
     <td class="mo col-h" data-col="sessao-conv"><strong>${totSpcHtml}</strong></td>
-    <td class="mo col-h" data-col="breakeven"><strong>${totBe!==null?totBe.toFixed(2):'—'}</strong></td>
+    <td class="mo col-h" data-col="breakeven"><strong>${bePill(totBe)}</strong></td>
     <td class="mo col-h" data-col="inicio">—</td>
     <td class="col-acoes"></td>
   </tr>`;
@@ -5951,12 +5966,21 @@ const escA=s=>esc(s).replace(/"/g,'&quot;');
 // Formata valor na moeda da conta: USD → "USD x,xx", senão "R$ x,xx"
 function fmtMoeda(v,m){return String(m||'').toUpperCase()==='USD'?'USD '+loc(v,2):BRL(v);}
 
-// Semáforo legado: Sessão/Lead (SPL) vs Break Even (BE). ótimo≥BE×1.2 · bom≥BE · ruim<BE
-function corSPL(spl,be){
-  if(spl==null||be==null||be<=0)return'';
-  if(spl>=be*1.2)return'ok';
-  if(spl>=be)return'warn';
+// Régua canônica do breakeven (espelha src/lib/metricas.js — só apresentação):
+// ótimo be≤1/1.2 · bom be≤1 · ruim be>1. <1 = gastando menos do que ganha.
+function corBE(be){
+  if(be==null)return'';
+  if(be<=1/1.2+1e-9)return'ok';
+  if(be<=1)return'warn';
   return'bad';
+}
+// Pílula colorida do breakeven p/ a tabela de campanhas
+function bePill(be){
+  if(be==null)return'<span style="color:var(--muted)">—</span>';
+  const cls=corBE(be);
+  const sc=cls==='ok'?'var(--success)':cls==='warn'?'var(--color-warning)':'var(--danger)';
+  const sb=cls==='ok'?'var(--success-soft)':cls==='warn'?'color-mix(in oklch,var(--color-warning) 15%,transparent)':'var(--danger-soft)';
+  return `<span class="variacao" style="background:${sb};color:${sc}">${be.toFixed(2)}</span>`;
 }
 
 // Semáforo principal: ROI real do conjunto (receita GAM por ad id ÷ gasto).
@@ -5996,7 +6020,7 @@ async function toggleUtmExpand(utm,campId,btn){
   try{
     const since=document.getElementById('f-since').value;
     const until=document.getElementById('f-until').value;
-    const r=await fetch(`/api/drilldown/${encodeURIComponent(utm)}?since=${since}&until=${until}&adsets_only=1${campId?`&campaign_id=${encodeURIComponent(campId)}`:''}`);
+    const r=await fetch(`/api/drilldown/${encodeURIComponent(utm)}?since=${since}&until=${until}&adsets_only=1&rps=${rps||0}${campId?`&campaign_id=${encodeURIComponent(campId)}`:''}`);
     if(!r.ok)throw new Error((await r.json()).error||r.statusText);
     const d=await r.json();
     renderUtmAdsets(box,utm,d,rps);
@@ -6019,13 +6043,14 @@ function renderUtmAdsets(box,utm,d,rps){
     const spend=+(a.spend||0);
     const custoRes=resultado>0?spend/resultado:0;
     const spl=conversas>0?resultado/conversas:null;
-    const be=(custoRes>0&&rps>0)?custoRes/rps:null;
+    // Breakeven canônico do conjunto vem do servidor: custo/sessão ÷ RPS da página
+    const be=a.breakeven!=null?+a.breakeven:null;
     // Direcionador: ROI real (receita GAM por ad id ÷ gasto). Sem receita por id
-    // no período (tráfego antigo por nome) → cai no semáforo Sessão/Lead vs BE.
+    // no período → o semáforo cai no Breakeven canônico (<1 saudável).
     const fat=a.faturamento_real!=null?+a.faturamento_real:null;
     const roi=a.roi!=null?+a.roi:null;
     const clsRoi=corROI(roi);
-    const clsSpl=roi==null?corSPL(spl,be):'';
+    const clsBe=corBE(be);
     const nmFull=escA(a.adset_name||'');
     const short=esc((a.adset_name&&(a.adset_name.match(/\bV\d+$/)||[])[0])||a.adset_name||'—');
     const bud=+(a.daily_budget||0);
@@ -6044,8 +6069,8 @@ function renderUtmAdsets(box,utm,d,rps){
       <td class="mo">${NUM(resultado)}</td>
       <td class="mo">${custoRes>0?BRL(custoRes):'—'}</td>
       <td class="mo">${NUM(conversas)}</td>
-      <td class="mo">${roi==null?`<span class="ud-pill ${clsSpl}">${spl!=null?spl.toFixed(2):'—'}</span>`:(spl!=null?spl.toFixed(2):'—')}</td>
-      <td class="mo">${be!=null?be.toFixed(2):'—'}</td>
+      <td class="mo">${spl!=null?spl.toFixed(2):'—'}</td>
+      <td class="mo">${be!=null?`<span class="ud-pill ${clsBe}">${be.toFixed(2)}</span>`:'—'}</td>
       <td class="ud-bud" data-aid="${aid}" data-utm="${utmS}" data-nome="${nmFull}" data-bud="${bud}" data-min="${+(a.min_budget||1)}" data-moeda="${a.moeda||'BRL'}">
         <span class="ud-bud-val">${bud>0?fmtMoeda(bud,a.moeda):'—'}</span>
         <button class="ud-bud-edit" title="Editar orçamento" onclick="editarOrcamento(this)">✎</button>
@@ -6060,13 +6085,13 @@ function renderUtmAdsets(box,utm,d,rps){
   box.innerHTML=`
     <div class="ud-head">
       <span><b>${adsets.length}</b> conjunto(s) ativo(s)</span>
-      <span class="ud-rps">RPS da UTM: <b>${rps>0?BRL(rps):'—'}</b></span>
-      <span class="ud-legend"><i class="ok"></i>ótimo ≥1.2x <i class="warn"></i>bom ≥1.0x <i class="bad"></i>ruim <small>(ROI real · sem receita por id → Sessão/Lead vs BE)</small></span>
+      <span class="ud-rps">RPS da página (fat ÷ sessões): <b>${rps>0?BRL(rps):'—'}</b></span>
+      <span class="ud-legend"><i class="ok"></i>ROI ≥1.2x · BE ≤0.83 <i class="warn"></i>ROI ≥1x · BE ≤1 <i class="bad"></i>abaixo <small>(ROI real por id · Break Even = custo/sessão ÷ RPS)</small></span>
     </div>
     <div class="ud-table-wrap"><table class="ud-table"><thead><tr>
       <th>Conjunto</th><th>Gasto</th><th title="Receita GAM líquida (×0.9) dos anúncios deste conjunto, via ad id na utm_campaign">Receita</th>
       <th title="Receita líquida ÷ gasto (com imposto)">ROI</th><th>Resultado</th><th>Custo/Res.</th><th>Conversas</th>
-      <th title="Resultado ÷ Conversas iniciadas">Sessão/Lead</th><th title="Custo por resultado ÷ RPS">Break Even</th><th>Orçamento/dia</th>
+      <th title="Sessões (view_content) ÷ Conversas iniciadas">Sessão/Lead</th><th title="Custo por sessão do conjunto ÷ RPS da página — abaixo de 1 = gastando menos do que ganha">Break Even</th><th>Orçamento/dia</th>
     </tr></thead><tbody>${rowsHtml}</tbody></table></div>`;
 }
 

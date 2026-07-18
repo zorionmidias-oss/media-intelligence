@@ -1,6 +1,7 @@
 'use strict';
 const supabase = require('../../../lib/supabase');
 const PERMS = require('../../../lib/permissions');
+const METRICAS = require('../../../lib/metricas');
 
 async function handler(req, res) {
   try {
@@ -30,23 +31,23 @@ async function handler(req, res) {
     if (tipo && tipo !== 'all') query = query.eq('tipo', tipo);
     if (domainId) query = query.eq('dominio_id', domainId);
 
-    // data_inicio query — MIN(data) per UTM with any activity, NO date range filter
-    let inicioQ = supabase
-      .from('ads_consolidados')
-      .select('dominio_id,ad_utm,pais_sigla,campaign_id,data')
-      .or('valor_gasto.gt.0,faturamento_real.gt.0')
-      .order('data', { ascending: true });
-    if (tipo && tipo !== 'all') inicioQ = inicioQ.eq('tipo', tipo);
-    if (domainId) inicioQ = inicioQ.eq('dominio_id', domainId);
+    // data_inicio = primeiro dia com GASTO real (dia que começou a rodar), via
+    // views agregadas no banco (v_inicio_*). A query antiga puxava todas as
+    // linhas com atividade e o PostgREST cortava em 1000 — campanha nova nunca
+    // aparecia no mapa.
+    let inicioCampQ = supabase.from('v_inicio_por_campanha').select('campaign_id,data_inicio');
+    let inicioUtmQ = supabase.from('v_inicio_por_utm').select('dominio_id,ad_utm,pais_sigla,data_inicio');
+    if (domainId) inicioUtmQ = inicioUtmQ.eq('dominio_id', domainId);
 
     // Colaborador restrito a domínios: limita aos IDs permitidos (vazio => nenhum dado).
     if (Array.isArray(req.allowedDominios)) {
       const ids = req.allowedDominios.length ? req.allowedDominios : [-1];
       query = query.in('dominio_id', ids);
-      inicioQ = inicioQ.in('dominio_id', ids);
+      inicioUtmQ = inicioUtmQ.in('dominio_id', ids);
     }
 
-    const [{ data: rows, error }, { data: inicioRows }] = await Promise.all([query, inicioQ]);
+    const [{ data: rows, error }, { data: inicioCampRows }, { data: inicioUtmRows }] =
+      await Promise.all([query, inicioCampQ, inicioUtmQ]);
     if (error) return res.status(500).json({ error: error.message });
 
     // Chave de agrupamento anti-erro: campaign_id quando a linha tem (id nunca é
@@ -54,11 +55,13 @@ async function handler(req, res) {
     // para histórico sem carimbo.
     const rowKey = r => r.campaign_id ? `c:${r.campaign_id}` : `${r.dominio_id}|${r.ad_utm}|${r.pais_sigla || ''}`;
 
-    // Build data_inicio map: key → first date with activity
+    // data_inicio map: chave de campanha e chave legada
     const inicioMap = {};
-    for (const r of inicioRows || []) {
-      const key = rowKey(r);
-      if (!inicioMap[key]) inicioMap[key] = r.data;
+    for (const r of inicioCampRows || []) {
+      if (r.data_inicio) inicioMap[`c:${r.campaign_id}`] = r.data_inicio;
+    }
+    for (const r of inicioUtmRows || []) {
+      if (r.data_inicio) inicioMap[`${r.dominio_id}|${r.ad_utm}|${r.pais_sigla || ''}`] = r.data_inicio;
     }
 
     // Aggregate by campaign_id (novo) ou (dominio_id, ad_utm, pais_sigla) (legado)
@@ -131,20 +134,14 @@ async function handler(req, res) {
       .map(g => {
         const sessoes   = g.sessoes_meta;
         const conversas = g.conversas_meta;
-        const fat       = g.faturamento_real;
-        const inv       = g.valor_gasto;
 
-        const sessao_por_conversa = (sessoes > 0 && conversas > 0)
-          ? +(sessoes / conversas).toFixed(2)
-          : null;
-
-        const rps_sessao = (sessoes > 0 && fat > 0)
-          ? +(fat / sessoes).toFixed(4)
-          : null;
-
-        const breakeven = (conversas > 0 && rps_sessao !== null && inv > 0)
-          ? +((inv / conversas) / rps_sessao).toFixed(2)
-          : null;
+        // Métricas derivadas: SEMPRE via módulo canônico, a partir das somas brutas
+        const m = METRICAS.derivar({
+          investimento: g.valor_gasto,
+          faturamento: g.faturamento_real,
+          sessoes,
+          conversas,
+        });
 
         // Rótulo da página = último colchete do nome da campanha ("[X] [Y] [ELIANA MARTINS]")
         const brackets = [...String(g.campanha_meta || '').matchAll(/\[([^\]]+)\]/g)];
@@ -161,15 +158,17 @@ async function handler(req, res) {
           pais_nome: g.pais_nome,
           valor_gasto: +g.valor_gasto.toFixed(2),
           faturamento_real: +g.faturamento_real.toFixed(2),
-          lucro: +g.lucro.toFixed(2),
-          roas: g.valor_gasto > 0 ? +(g.faturamento_real / g.valor_gasto).toFixed(4) : 0,
+          lucro: m.lucro,
+          roas: m.roas || 0,
           cpc: g._cpcW > 0 ? +(g._cpcSum / g._cpcW).toFixed(4) : 0,
           ctr: g._ctrW > 0 ? +(g._ctrSum / g._ctrW).toFixed(2) : 0,
           custo_resultado: g.resultado > 0 ? +(g.valor_gasto / g.resultado).toFixed(2) : 0,
           resultado: g.resultado,
           impressoes_gam: g.impressoes_gam,
           ecpm: g._ecpmW > 0 ? +(g._ecpmSum / g._ecpmW).toFixed(2) : 0,
-          rps: g._rpsW > 0 ? +(g._rpsSum / g._rpsW).toFixed(4) : 0,
+          // RPS canônico = faturamento ÷ sessões (retorno por sessão)
+          rps: m.rps,
+          custo_sessao: m.custo_sessao,
           orcamento_total: +g.orcamento_total.toFixed(2),
           previsao_impressoes: g.previsao_impressoes,
           previsao_faturamento_real: +g.previsao_faturamento_real.toFixed(2),
@@ -178,9 +177,9 @@ async function handler(req, res) {
           // New fields
           sessoes: sessoes,
           conversas: conversas,
-          sessao_por_conversa,
-          rps_sessao,
-          breakeven,
+          sessao_por_conversa: m.sessao_por_lead,
+          rps_sessao: m.rps,
+          breakeven: m.breakeven,
           data_inicio: inicioMap[g._key] || null,
         };
       })
@@ -197,16 +196,18 @@ async function handler(req, res) {
       acc.conversas    += r.conversas || 0;
       return acc;
     }, { faturamento: 0, investimento: 0, lucro: 0, impressoes: 0, cliques: 0, sessoes: 0, conversas: 0 });
+    // Totais derivados: mesmas fórmulas canônicas, das SOMAS (nunca média de linhas)
+    const mt = METRICAS.derivar({
+      investimento: kpis.investimento,
+      faturamento: kpis.faturamento,
+      sessoes: kpis.sessoes,
+      conversas: kpis.conversas,
+    });
     kpis.roi  = kpis.investimento > 0 ? kpis.lucro / kpis.investimento * 100 : 0;
-    kpis.roas = kpis.investimento > 0 ? kpis.faturamento / kpis.investimento : 0;
-
-    // Totals for derived metrics — recalculated from sums, never avg of lines
-    const tS = kpis.sessoes, tC = kpis.conversas, tF = kpis.faturamento, tI = kpis.investimento;
-    kpis.sessao_por_conversa_total = (tS > 0 && tC > 0) ? +(tS / tC).toFixed(2) : null;
-    kpis.rps_sessao_total          = (tS > 0 && tF > 0) ? +(tF / tS).toFixed(4) : null;
-    kpis.breakeven_total           = (tC > 0 && tI > 0 && kpis.rps_sessao_total !== null)
-      ? +((tI / tC) / kpis.rps_sessao_total).toFixed(2)
-      : null;
+    kpis.roas = mt.roas || 0;
+    kpis.sessao_por_conversa_total = mt.sessao_por_lead;
+    kpis.rps_sessao_total          = mt.rps;
+    kpis.breakeven_total           = mt.breakeven;
 
     // Esconde país (sigla/nome) quando o elemento ver_pais está bloqueado p/ o usuário.
     const out = PERMS.elementBlocked(req.fullUser, 'ver_pais')
