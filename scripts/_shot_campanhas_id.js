@@ -9,6 +9,8 @@ const { chromium } = require('playwright');
 
 const dashboardHandler = require('../src/app/api/dashboard/route');
 const drilldownHandler = require('../src/app/api/drilldown/route');
+const intradayHandler = require('../src/app/api/intraday/route');
+const overviewHandler = require('../src/app/api/overview/route');
 
 const ROOT = path.join(__dirname, '..', 'public');
 const MIME = { '.html':'text/html', '.js':'text/javascript', '.css':'text/css', '.json':'application/json', '.svg':'image/svg+xml', '.png':'image/png' };
@@ -25,6 +27,14 @@ const server = http.createServer(async (req, res) => {
   const query = Object.fromEntries(new URLSearchParams(qs || ''));
   if (p === '/api/dashboard') {
     return dashboardHandler({ query, fullUser: { role: 'admin' } }, mockRes(res));
+  }
+  if (p === '/api/intraday') return intradayHandler({ query, fullUser: { role: 'admin' } }, mockRes(res));
+  if (p === '/api/overview') return overviewHandler({ query, fullUser: { role: 'admin' } }, mockRes(res));
+  if (p === '/lib/chart.umd.min.js') {
+    return fs.readFile(path.join(__dirname, '..', 'node_modules/chart.js/dist/chart.umd.min.js'), (err, data) => {
+      if (err) { res.statusCode = 404; res.end('404'); return; }
+      res.setHeader('Content-Type', 'text/javascript'); res.end(data);
+    });
   }
   const mDrill = p.match(/^\/api\/drilldown\/(.+)$/);
   if (mDrill) {
@@ -47,6 +57,8 @@ fs.mkdirSync(OUT, { recursive: true });
   const browser = await chromium.launch({ channel: 'chrome' });
   const d = await browser.newPage({ viewport: { width: 1600, height: 950 } });
   d.on('pageerror', e => console.log('PAGE_ERROR:', e.message));
+  d.on('console', m => { if(m.type()==='error') console.log('CONSOLE_ERR:', m.text().slice(0,180)); });
+  d.on('response', r => { if(r.url().includes('/api/') && r.status()>=400) console.log('HTTP', r.status(), new URL(r.url()).pathname); });
   await d.addInitScript(() => localStorage.setItem('camp_col_prefs', JSON.stringify({rps:1,'sessao-conv':1,breakeven:1,inicio:1})));
   await d.goto('http://localhost:8124/dashboard.html', { waitUntil: 'domcontentloaded' }).catch(() => {});
   await d.waitForTimeout(2500);
@@ -55,6 +67,13 @@ fs.mkdirSync(OUT, { recursive: true });
   await d.waitForTimeout(2500);
   await d.screenshot({ path: path.join(OUT, 'redesign-overview-dark.png') });
   console.log('saved redesign-overview-dark.png');
+  // ROI intraday com degradê por sinal
+  await d.evaluate(()=>{const c=document.getElementById('intraday-canvas');if(c)c.scrollIntoView({block:'center'});});
+  await d.waitForTimeout(800);
+  await d.evaluate(()=>{const b=document.querySelector('#intraday-toggles .ctog[data-metric="roi"]');if(b)b.click();});
+  await d.waitForTimeout(1500);
+  await d.screenshot({ path: path.join(OUT, 'redesign-roi-intraday.png') });
+  console.log('saved redesign-roi-intraday.png');
   await d.evaluate(()=>document.documentElement.setAttribute('data-theme','light'));
   await d.waitForTimeout(700);
   await d.screenshot({ path: path.join(OUT, 'redesign-overview-light.png') });

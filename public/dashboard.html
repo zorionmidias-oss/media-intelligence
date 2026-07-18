@@ -3924,15 +3924,26 @@ function renderIntradayChart(data,metric){
           label:'Hoje',
           data:hojeVals,
           borderColor:'#00E5B4',
-          // Mesmo degradê de área para TODAS as métricas (inclusive ROI —
-          // antes ficava transparente e destoava dos outros cards)
+          // Mesmo degradê de área para TODAS as métricas. No ROI o degradê é
+          // ancorado na linha do ZERO: menta esvaindo até o zero em cima,
+          // VERMELHO aprofundando abaixo do zero (prejuízo pinta vermelho).
           backgroundColor:(c)=>{
-            const{ctx,chartArea}=c.chart;
+            const{ctx,chartArea,scales}=c.chart;
             if(!chartArea)return 'rgba(0,229,180,0.08)';
-            const g=ctx.createLinearGradient(0,chartArea.top,0,chartArea.bottom);
-            g.addColorStop(0,'rgba(0,229,180,0.32)');
-            g.addColorStop(.55,'rgba(0,229,180,0.07)');
-            g.addColorStop(1,'rgba(0,229,180,0)');
+            const top=chartArea.top,bot=chartArea.bottom;
+            const g=ctx.createLinearGradient(0,top,0,bot);
+            if(metric==='roi'&&scales&&scales.y){
+              const y0=Math.min(Math.max(scales.y.getPixelForValue(0),top),bot);
+              const t=Math.min(Math.max((y0-top)/((bot-top)||1),0),1);
+              g.addColorStop(0,'rgba(0,229,180,0.32)');
+              g.addColorStop(Math.max(t-0.001,0),'rgba(0,229,180,0)');
+              g.addColorStop(Math.min(t+0.001,1),'rgba(255,107,122,0)');
+              g.addColorStop(1,'rgba(255,107,122,0.34)');
+            }else{
+              g.addColorStop(0,'rgba(0,229,180,0.32)');
+              g.addColorStop(.55,'rgba(0,229,180,0.07)');
+              g.addColorStop(1,'rgba(0,229,180,0)');
+            }
             return g;
           },
           borderWidth:2,
