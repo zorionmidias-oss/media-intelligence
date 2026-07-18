@@ -18,31 +18,31 @@
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
   <style>
     :root {
-      /* ══ IDENTIDADE "TINTA & OURO" — terminal de operação noturno ══
-         Base azul-tinta profunda (não preto neutro), ouro-de-leilão como cor de
-         marca (controles/foco/ativo — NUNCA em valores), semânticas de dados
-         separadas: verde-menta lucro, coral prejuízo, laranja atenção. */
+      /* ══ IDENTIDADE "BLACK & MENTA" — terminal de operação noturno ══
+         Preto absoluto (OLED), verde-menta como cor de marca (controles/foco/
+         ativo — NUNCA em valores), semânticas de dados separadas:
+         verde lucro, coral prejuízo, laranja atenção. */
       /* Backgrounds */
-      --bg:#0A0E17;--card:#101624;--sec:#151C2D;--sec-strong:#1D2740;
-      --border:#212B44;--border-strong:#2E3A5C;
+      --bg:#000000;--card:#0A0A0D;--sec:#121216;--sec-strong:#1A1A21;
+      --border:#1E1E26;--border-strong:#2B2B36;
       /* Text */
-      --fg:#EAEFF9;--fg-soft:#C7D0E2;--muted:#8C98B4;--muted-light:#4A5570;
+      --fg:#F1F5F9;--fg-soft:#CBD5E1;--muted:#94A3B8;--muted-light:#475569;
       /* Accent (marca) — UI only: botões, foco, itens ativos */
-      --accent:#E8B44C;--accent-hover:#F5C866;--accent-soft:rgba(232,180,76,.12);--accent-fg:#131008;
+      --accent:#00E5B4;--accent-hover:#00FFD1;--accent-soft:rgba(0,229,180,.10);--accent-fg:#001410;
       /* Cores semânticas de dados */
-      --color-positive:#3DDC97;--color-neutral:#8C98B4;--color-warning:#FF9F45;--color-negative:#FF6B7A;--color-info:#5CA8FF;
+      --color-positive:#4ADE80;--color-neutral:#94A3B8;--color-warning:#FF9F45;--color-negative:#FF6B7A;--color-info:#5CA8FF;
       /* Aliases de compatibilidade */
-      --success:var(--color-positive);--success-soft:rgba(61,220,151,.11);
+      --success:var(--color-positive);--success-soft:rgba(74,222,128,.11);
       --warning:var(--color-warning);--warning-soft:rgba(255,159,69,.11);
       --danger:var(--color-negative);--danger-soft:rgba(255,107,122,.11);
       --info:var(--color-info);--info-soft:rgba(92,168,255,.11);
       --c1:var(--color-info);--c2:var(--color-positive);--c3:var(--color-warning);--c4:var(--color-negative);--c5:#B18CFF;
       --ok:var(--color-positive);--warn:var(--color-warning);--bad:var(--color-negative);
-      --topbar-bg:rgba(10,14,23,.84);
-      --shadow-sm:0 1px 2px rgba(3,6,14,.4);--shadow-md:0 2px 4px rgba(3,6,14,.38),0 4px 12px rgba(3,6,14,.32);
-      --shadow-lg:0 4px 12px rgba(3,6,14,.4),0 16px 40px rgba(3,6,14,.5);--shadow-card:0 1px 3px rgba(3,6,14,.35);
-      --logo-color:#F3E9D2;
-      --acc-fg:var(--accent-fg);--sb:#0B101D;--sb-b:var(--border);
+      --topbar-bg:rgba(0,0,0,.84);
+      --shadow-sm:0 1px 2px rgba(0,0,0,.5);--shadow-md:0 2px 4px rgba(0,0,0,.45),0 4px 12px rgba(0,0,0,.4);
+      --shadow-lg:0 4px 12px rgba(0,0,0,.5),0 16px 40px rgba(0,0,0,.6);--shadow-card:0 1px 3px rgba(0,0,0,.45);
+      --logo-color:#FFFFFF;
+      --acc-fg:var(--accent-fg);--sb:#050507;--sb-b:var(--border);
       /* Tipografia */
       --font-ui:'Inter',-apple-system,BlinkMacSystemFont,"Helvetica Neue",system-ui,sans-serif;
       --font-display:'Space Grotesk',var(--font-ui);
@@ -53,7 +53,7 @@
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     *{font-family:var(--font-ui)!important}
     /* Display: Space Grotesk carrega a personalidade — títulos, eyebrows, th */
-    h1,h2,h3,.hdr-title,.ck-lbl,.kpi-lbl,.sb-logo-text,th{font-family:var(--font-display)!important;letter-spacing:.01em}
+    h1,h2,h3,.hdr-title,.ck-lbl,.kpi-lbl,.sb-logo-text,th,.chart-title,.pais-section-title{font-family:var(--font-display)!important;letter-spacing:.01em}
     .logo,.brand-title{font-family:'Playfair Display',Georgia,serif!important}
     /* Dados: mono tabular em TODO número — coluna alinha, dígito não dança */
     code,pre,.ad-unit-name,.mono,.token-mask,.mo,.ck-val,.kpi-val,.ticker,.ticker *{font-family:var(--font-mono)!important;font-variant-numeric:tabular-nums}
@@ -269,7 +269,9 @@
 
     /* ── KPI ── */
     .kpi-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.75rem}
-    .kpi-lbl{font-size:.875rem;color:var(--muted);font-weight:500}
+    /* Eyebrow uniforme em TODOS os KPIs (mesma régua da aba Campanhas):
+       label pequeno caps em cima, número grande mono embaixo */
+    .kpi-lbl{font-size:.6875rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.09em}
     .kpi-icon{width:2.25rem;height:2.25rem;border-radius:var(--r);background:linear-gradient(160deg,var(--sec-strong),color-mix(in oklch,var(--sec) 55%,var(--card)));border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0;transition:background .3s var(--ease),color .3s var(--ease),border-color .3s var(--ease)}
     .card-hv:hover .kpi-icon{background:color-mix(in oklch,var(--accent) 12%,transparent);border-color:color-mix(in oklch,var(--accent) 35%,transparent);color:var(--accent)}
     /* chart toggles */
@@ -909,12 +911,11 @@
 
     /* ── LIGHT THEME ── */
     :root[data-theme="light"]{
-      /* "Papel financeiro": base quente de papel, tinta escura, mesmo ouro
-         de marca (escurecido p/ contraste AA sobre branco) */
-      --bg:#F7F6F2;--card:#FFFFFF;--sec:#F1EFE9;--sec-strong:#E8E5DC;
-      --border:#E2DFD5;--border-strong:#CFCABB;
+      /* Light: base fria limpa, menta escurecida p/ contraste AA sobre branco */
+      --bg:#F8FAFC;--card:#FFFFFF;--sec:#F3F6FA;--sec-strong:#EAEEF3;
+      --border:#E2E5EA;--border-strong:#D2D6DD;
       --fg:#1B1E28;--fg-soft:#454B5C;--muted:#6D7385;--muted-light:#A8ADBB;
-      --accent:#9A6E14;--accent-hover:#7E590F;--accent-soft:rgba(154,110,20,0.10);--accent-fg:#FFFFFF;
+      --accent:#00805F;--accent-hover:#006B4F;--accent-soft:rgba(0,128,95,0.10);--accent-fg:#FFFFFF;
       --color-positive:#0E9F6E;--color-neutral:#6D7385;--color-warning:#D97706;--color-negative:#E5484D;--color-info:#2563EB;
       --success:var(--color-positive);--success-soft:rgba(14,159,110,0.12);
       --warning:var(--color-warning);--warning-soft:rgba(217,119,6,0.12);
@@ -922,9 +923,9 @@
       --info:var(--color-info);--info-soft:rgba(37,99,235,0.10);
       --c1:var(--color-info);--c2:var(--color-positive);--c3:var(--color-warning);--c4:var(--color-negative);--c5:#7C5CD6;
       --ok:var(--color-positive);--warn:var(--color-warning);--bad:var(--color-negative);
-      --topbar-bg:rgba(250,249,245,0.85);
-      --shadow-sm:0 1px 2px rgba(30,26,12,.05);--shadow-md:0 2px 6px rgba(30,26,12,.06),0 1px 2px rgba(30,26,12,.04);
-      --shadow-lg:0 12px 32px rgba(30,26,12,.12),0 4px 10px rgba(30,26,12,.06);--shadow-card:0 1px 2px rgba(30,26,12,.04),0 4px 12px rgba(30,26,12,.05);--shadow-elevated:0 4px 12px rgba(30,26,12,.10),0 2px 4px rgba(30,26,12,.06);
+      --topbar-bg:rgba(252,252,254,0.85);
+      --shadow-sm:0 1px 2px rgba(16,24,40,.05);--shadow-md:0 2px 6px rgba(16,24,40,.06),0 1px 2px rgba(16,24,40,.04);
+      --shadow-lg:0 12px 32px rgba(16,24,40,.12),0 4px 10px rgba(16,24,40,.06);--shadow-card:0 1px 2px rgba(16,24,40,.04),0 4px 12px rgba(16,24,40,.05);--shadow-elevated:0 4px 12px rgba(16,24,40,.10),0 2px 4px rgba(16,24,40,.06);
       --logo-color:#1B1E28;
       --acc-fg:var(--accent-fg);--sb:var(--card);--sb-b:var(--border);
     }
@@ -1114,7 +1115,7 @@
     /* ── Performance por País ── */
     .pais-section{margin-top:1.5rem}
     .pais-section-hd{display:flex;align-items:baseline;gap:.75rem;margin-bottom:1rem}
-    .pais-section-title{font-size:.9375rem;font-weight:600;color:var(--fg)}
+    .pais-section-title{font-size:1rem;font-weight:600;color:var(--fg)}
     .pais-section-sub{font-size:.75rem;color:var(--muted)}
     .pais-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.875rem}
     @media(max-width:900px){.pais-grid{grid-template-columns:repeat(2,1fr)}}
@@ -1706,7 +1707,7 @@
         <div class="gam-tab-content" id="gam-tab-hora" style="display:none">
           <div class="hora-header">
             <div>
-              <div style="font-size:.9375rem;font-weight:600;color:var(--fg)">Performance por Hora do Dia</div>
+              <div class="chart-title">Performance por Hora do Dia</div>
               <div style="font-size:.75rem;color:var(--muted);margin-top:2px">Horário de Brasília · apenas horas com dados</div>
             </div>
             <div class="atraso-info" id="atraso-info"></div>
@@ -3923,13 +3924,23 @@ function renderIntradayChart(data,metric){
           label:'Hoje',
           data:hojeVals,
           borderColor:'#00E5B4',
-          backgroundColor:metric==='roi'?'transparent':'rgba(0,229,180,0.08)',
+          // Mesmo degradê de área para TODAS as métricas (inclusive ROI —
+          // antes ficava transparente e destoava dos outros cards)
+          backgroundColor:(c)=>{
+            const{ctx,chartArea}=c.chart;
+            if(!chartArea)return 'rgba(0,229,180,0.08)';
+            const g=ctx.createLinearGradient(0,chartArea.top,0,chartArea.bottom);
+            g.addColorStop(0,'rgba(0,229,180,0.32)');
+            g.addColorStop(.55,'rgba(0,229,180,0.07)');
+            g.addColorStop(1,'rgba(0,229,180,0)');
+            return g;
+          },
           borderWidth:2,
           borderDash:[],
           pointRadius:3,
           pointHoverRadius:5,
           tension:.35,
-          fill:true,
+          fill:{target:'origin'},
           spanGaps:true,
           segment:{
             borderColor:ctx=>metric!=='roi'?undefined:(ctx.p1.parsed.y<0?'#E5384B':'#00E5B4'),
