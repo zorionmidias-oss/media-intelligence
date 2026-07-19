@@ -828,10 +828,22 @@ async function syncAll(dateRange) {
     }
 
     // ── Build ads_consolidados upsert rows ────────
+    // Fallback GAM por NOME não distingue campanhas homônimas (mesmo utm em
+    // E1/E2/…): atribui a receita por nome só ao grupo de MAIOR gasto do dia
+    // naquele utm — os demais ficam com o match exato por id. Sem isso, a mesma
+    // receita seria somada em cada campanha irmã (dupla contagem).
+    const donoDoNome = {}; // `${date}|${domainId}|${utm}` → chave do grupo vencedor
+    for (const g of grouped) {
+      const k = `${g.date}|${g.domainId}|${g.adUTM.toLowerCase()}`;
+      const atual = donoDoNome[k];
+      if (!atual || (g.spend || 0) > atual.spend) donoDoNome[k] = { id: `${g.accountId}|${g.campaignId}`, spend: g.spend || 0 };
+    }
+
     let adsRows = [];
     for (const g of grouped) {
       const dayGam = gamByDay[g.date] || {};
       const utmKey = g.adUTM.toLowerCase();
+      const souDonoDoNome = donoDoNome[`${g.date}|${g.domainId}|${utmKey}`]?.id === `${g.accountId}|${g.campaignId}`;
       // DIRETO campaigns: Meta ad name includes "-direto-" but GAM utm_campaign omits it
       // e.g. "relamad-australia-direto-fb" → try "relamad-australia-fb" as fallback
       const utmKeyNoDireto = utmKey.replace(/-direto-?/, '-').replace(/-$/, '');
@@ -842,8 +854,8 @@ async function syncAll(dateRange) {
       const gamKeys = (g.adIds || []).filter(id => dayGam[id]);
       const matchPorId = gamKeys.length > 0;
       let matchPorNome = false;
-      if (dayGam[utmKey]) { gamKeys.push(utmKey); matchPorNome = true; }
-      else if (dayGam[utmKeyNoDireto]) { gamKeys.push(utmKeyNoDireto); matchPorNome = true; }
+      if (souDonoDoNome && dayGam[utmKey]) { gamKeys.push(utmKey); matchPorNome = true; }
+      else if (souDonoDoNome && dayGam[utmKeyNoDireto]) { gamKeys.push(utmKeyNoDireto); matchPorNome = true; }
       // Auditável: como a receita desta linha foi casada com o GAM
       const gamMatch = matchPorId && matchPorNome ? 'id+nome' : matchPorId ? 'id' : matchPorNome ? 'nome' : null;
       const gam = mergeGamEntries(gamKeys.map(k => dayGam[k]));
@@ -956,13 +968,15 @@ async function syncAll(dateRange) {
     if (adsRows.length > 0) {
       // Deduplicate: remove zero-spend shadow rows for UTMs where another account
       // has actual spend on the same date+domain. Prevents double-counting GAM revenue.
+      // Exceção: linha sem gasto mas com receita casada por ID é legítima (campanha
+      // pausada que ainda fatura) — nunca descartar.
       const utmsWithSpend = new Set(
         adsRows.filter(r => (r.valor_gasto || 0) > 0)
           .map(r => `${r.data}|${r.dominio_id}|${r.ad_utm}`)
       );
       const beforeDedup = adsRows.length;
       adsRows = adsRows.filter(r =>
-        (r.valor_gasto || 0) > 0 || !utmsWithSpend.has(`${r.data}|${r.dominio_id}|${r.ad_utm}`)
+        (r.valor_gasto || 0) > 0 || (r.gam_match || '').includes('id') || !utmsWithSpend.has(`${r.data}|${r.dominio_id}|${r.ad_utm}`)
       );
       if (adsRows.length < beforeDedup) {
         console.log(`[sync] removidas ${beforeDedup - adsRows.length} linhas UTM sem investimento (shadow de outra conta)`);
@@ -995,13 +1009,13 @@ async function syncAll(dateRange) {
     if (adsRows.length > 0) {
       let { error: uErr } = await supabase
         .from('ads_consolidados')
-        .upsert(adsRows, { onConflict: 'data,dominio_id,ad_utm,account_id,pais_sigla' });
+        .upsert(adsRows, { onConflict: 'data,dominio_id,ad_utm,account_id,pais_sigla,campaign_id' });
       if (uErr && uErr.message.toLowerCase().includes('could not find')) {
         // New columns not yet migrated — retry without them
         const fallback = adsRows.map(({ cpc_gam, ctr_gam, cliques_gam, sessoes_meta, conversas_meta, account_id, valor_gasto_original, imposto_aplicado, moeda_original, taxa_usd_aplicada, pais_sigla, pais_nome, pais_emoji, nicho, campaign_id, gam_match, ...rest }) => rest);
         ({ error: uErr } = await supabase
           .from('ads_consolidados')
-          .upsert(fallback, { onConflict: 'data,dominio_id,ad_utm,account_id,pais_sigla' }));
+          .upsert(fallback, { onConflict: 'data,dominio_id,ad_utm,account_id,pais_sigla,campaign_id' }));
         if (!uErr) console.warn('[sync] upserted without new columns — run ALTER TABLE migration');
       }
       if (uErr) console.error('[sync] upsert ads_consolidados:', uErr.message);

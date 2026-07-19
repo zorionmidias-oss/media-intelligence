@@ -101,7 +101,10 @@ function extractTipo(campaignName) {
   return /direto/i.test(String(campaignName || '')) ? 'direto' : 'bot';
 }
 
-// Groups ads by (date, domainId, adUTM, accountId, paisSigla).
+// Groups ads by (date, domainId, adUTM, accountId, paisSigla, campaignId).
+// campaignId na chave: campanhas replicadas (estruturas E1/E2…) reusam os
+// mesmos nomes de anúncio — sem o id, 4 campanhas com "khanyisafb" colapsavam
+// numa linha só somando o gasto de todas.
 // Sums spend/clicks/impressions/results.
 // CPC/CTR = clicks/impressions-weighted averages.
 // orcamentoTotal = sum of UNIQUE adset daily budgets in the group.
@@ -111,7 +114,7 @@ function groupAdsByUTM(ads) {
   for (const ad of ads) {
     if (!ad.adUTM) continue;
     const pais = ad.paisSigla || '';
-    const key = `${ad.date}|${ad.domainId}|${ad.adUTM}|${ad.accountId || ''}|${pais}`;
+    const key = `${ad.date}|${ad.domainId}|${ad.adUTM}|${ad.accountId || ''}|${pais}|${ad.campaignId || ''}`;
 
     if (!groups[key]) {
       groups[key] = {
@@ -134,7 +137,6 @@ function groupAdsByUTM(ads) {
 
     const g = groups[key];
     if (!g.nicho && ad.nicho) g.nicho = ad.nicho;
-    if (!g.campaignId && ad.campaignId) g.campaignId = ad.campaignId;
     if (ad.adId) g._adIds.add(String(ad.adId));
     g.spend += ad.spend || 0;
     g.clicks += ad.clicks || 0;
