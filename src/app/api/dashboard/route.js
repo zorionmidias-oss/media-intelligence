@@ -4,6 +4,7 @@ const PERMS = require('../../../lib/permissions');
 const METRICAS = require('../../../lib/metricas');
 const { fetchAll } = require('../../../lib/fetchAll');
 const { hojeBR, diasAtrasBR } = require('../../../lib/datas');
+const { extractEstrutura } = require('../../../lib/parser');
 
 async function handler(req, res) {
   try {
@@ -156,6 +157,8 @@ async function handler(req, res) {
           ad_utm: g.ad_utm,
           campaign_id: g.campaign_id,
           pagina,
+          // "E1"/"E2"… do início do nome da campanha (convenção de estrutura)
+          estrutura: extractEstrutura(g.campanha_meta),
           tipo: g.tipo,
           dominio: g.dominio,
           campanha_meta: g.campanha_meta,

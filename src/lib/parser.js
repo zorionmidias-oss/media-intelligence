@@ -3,6 +3,22 @@
 // "[MKUKER] [NG_RELA_EN_BOT_0001] [JANE]" → "MKUKER"
 const FIRST_BRACKET_RE = /^\[([^\]]+)\]/;
 
+// Estrutura no INÍCIO do nome da campanha: "E1 [MKUKER] …" ou "[E2] [MKUKER] …"
+// (convenção jul/2026: E<n> = número da estrutura). Precisa de espaço/colchete
+// depois pra não casar nomes tipo "E10X…" colados em texto.
+const ESTRUTURA_RE = /^\s*\[?\s*(E\d+)\s*\]?(?=[\s\[]|$)\s*/i;
+
+// "E1 [MKUKER] …" → "E1" | sem estrutura → null
+function extractEstrutura(campaignName) {
+  const m = String(campaignName || '').match(ESTRUTURA_RE);
+  return m ? m[1].toUpperCase() : null;
+}
+
+// Remove o token de estrutura para os parsers posicionais (prefixo = 1º colchete)
+function stripEstrutura(name) {
+  return String(name || '').replace(ESTRUTURA_RE, '');
+}
+
 // "01-janefb" → "janefb" | "02_janefb" → "janefb"
 const NUM_PREFIX_RE = /^\d+[-_\s]*/;
 
@@ -70,7 +86,9 @@ function extractNicho(adsetName, campaignName) {
 
 function extractDomainPrefix(campaignName) {
   if (!campaignName) return null;
-  const m = String(campaignName).match(FIRST_BRACKET_RE);
+  // Estrutura vem ANTES do prefixo ("E1 [MKUKER]…" / "[E1] [MKUKER]…") —
+  // sem o strip, "[E1]" viraria prefixo de domínio e quebraria o matching
+  const m = stripEstrutura(campaignName).match(FIRST_BRACKET_RE);
   return m ? m[1].trim() : null;
 }
 
@@ -166,4 +184,4 @@ function groupAdsByUTM(ads) {
   });
 }
 
-module.exports = { extractDomainPrefix, extractAdUTM, extractTipo, groupAdsByUTM, extractPaisSigla, extractNicho, resolveCountry, siglaParaEmoji, PAISES };
+module.exports = { extractDomainPrefix, extractAdUTM, extractTipo, groupAdsByUTM, extractPaisSigla, extractNicho, extractEstrutura, stripEstrutura, resolveCountry, siglaParaEmoji, PAISES };

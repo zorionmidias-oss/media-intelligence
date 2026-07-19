@@ -1589,6 +1589,10 @@
           <div class="search-bar" style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
             <input type="text" class="search-in" id="search-camp-db" placeholder="🔍 Pesquisar UTM / página / domínio…" oninput="filterCampDB()" style="flex:1;min-width:180px"/>
             <div style="display:flex;align-items:center;gap:.375rem;flex-wrap:wrap">
+              <span style="font-size:.75rem;color:var(--muted);white-space:nowrap">Estrutura:</span>
+              <select id="f-estrutura" onchange="filterCampDB()" style="min-width:6.5rem" title="Filtrar campanhas pela estrutura (E1, E2… no início do nome)">
+                <option value="">Todas</option>
+              </select>
               <span style="font-size:.75rem;color:var(--muted);white-space:nowrap">Início:</span>
               <input type="date" class="search-in" id="f-inicio-de" onchange="filterCampDB()" style="width:9.5rem;padding:.375rem .5rem;font-size:.8rem" title="Campanhas que começaram a rodar a partir desta data"/>
               <span style="color:var(--muted);font-size:.75rem">–</span>
@@ -4776,9 +4780,13 @@ function filterCampDB(){
   const term=(document.getElementById('search-camp-db')?.value||'').toLowerCase().trim();
   const de=document.getElementById('f-inicio-de')?.value||'';
   const ate=document.getElementById('f-inicio-ate')?.value||'';
+  const estr=document.getElementById('f-estrutura')?.value||'';
   const filtered=S.campRows.filter(r=>{
     if(term&&!((r.ad_utm||'').toLowerCase().includes(term)||(r.dominio||'').toLowerCase().includes(term)||
       (r.pagina||'').toLowerCase().includes(term)||(r.campanha_meta||'').toLowerCase().includes(term)))return false;
+    // Filtro por estrutura (E1, E2… no início do nome da campanha)
+    if(estr==='__sem__'){if(r.estrutura)return false;}
+    else if(estr&&r.estrutura!==estr)return false;
     // Filtro de data de início (dia que a campanha começou a gastar)
     if(de||ate){
       const ini=(r.data_inicio||'').slice(0,10);
@@ -4789,6 +4797,21 @@ function filterCampDB(){
     return true;
   });
   renderCampTable(filtered);
+}
+
+// Repopula o select de estrutura com as estruturas presentes nos dados carregados
+function populateEstruturaFilter(){
+  const sel=document.getElementById('f-estrutura');
+  if(!sel)return;
+  const atual=sel.value;
+  const estruturas=[...new Set((S.campRows||[]).map(r=>r.estrutura).filter(Boolean))]
+    .sort((a,b)=>Number(a.slice(1))-Number(b.slice(1)));
+  const temSem=(S.campRows||[]).some(r=>!r.estrutura);
+  sel.innerHTML='<option value="">Todas</option>'
+    +estruturas.map(e=>`<option value="${esc(e)}">${esc(e)}</option>`).join('')
+    +(temSem&&estruturas.length?'<option value="__sem__">Sem estrutura</option>':'');
+  // preserva a seleção se ainda existir
+  if([...sel.options].some(o=>o.value===atual))sel.value=atual;
 }
 
 function presetInicio(dias){
@@ -4819,6 +4842,7 @@ async function loadCampaignsDB(tipo){
     if(!res.ok)throw new Error((await res.json().catch(()=>({}))).error||res.statusText);
     const d=await res.json();
     S.campRows=d.rows||[];
+    populateEstruturaFilter();
     S.campKPIs=d.kpis||{};
     renderCampKPIs(d.kpis||{},tipo);
     renderCampTable(S.campRows);
@@ -4885,6 +4909,10 @@ function renderCampTable(rows){
     const pagBadge=r.campaign_id&&r.pagina
       ?`<span title="${esc(r.campanha_meta||'')}" style="background:var(--sec-strong);border-radius:4px;padding:1px 5px;font-size:.65rem;color:var(--muted);flex-shrink:0">${esc(r.pagina)}</span>`
       :`<span title="Histórico agregado por nome (sem id de campanha)" style="font-size:.65rem;color:var(--muted);flex-shrink:0">·legado</span>`;
+    // Badge de estrutura (E1, E2… do nome da campanha)
+    const estrBadge=r.estrutura
+      ?`<span title="Estrutura ${esc(r.estrutura)}" class="mono" style="background:var(--accent-soft);color:var(--accent);border-radius:4px;padding:1px 5px;font-size:.65rem;font-weight:600;flex-shrink:0">${esc(r.estrutura)}</span>`
+      :'';
 
     // Sessão/Conversa é informativo; o semáforo vive no BREAKEVEN (canônico: <1 saudável)
     const spc=r.sessao_por_conversa;
@@ -4898,7 +4926,7 @@ function renderCampTable(rows){
       <td><div class="td-av">
         ${expBtn}
         <div class="t-av">${esc((r.ad_utm||'?').charAt(0).toUpperCase())}</div>
-        ${paisBadge}<span style="font-family:monospace;font-size:.8rem">${esc(r.ad_utm)}</span>${pagBadge}
+        ${estrBadge}${paisBadge}<span style="font-family:monospace;font-size:.8rem">${esc(r.ad_utm)}</span>${pagBadge}
       </div></td>
       <td>${domBadge}</td>
       <td class="mo" data-sort="${r.valor_gasto||0}">${BRL(r.valor_gasto)}<span class="uvar-inv" data-utm="${esc(r.ad_utm||'')}"></span></td>
