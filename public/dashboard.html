@@ -68,6 +68,10 @@
     @keyframes spin{to{transform:rotate(360deg)}}
     @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
     .anim{animation:fsu .5s ease-out both}
+    /* a11y: quem pediu menos movimento no SO recebe UI estática */
+    @media (prefers-reduced-motion:reduce){
+      *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+    }
     .spin-ico{animation:spin 1s linear infinite}
     .skeleton{
       background:linear-gradient(90deg,var(--sec) 25%,var(--sec-strong) 50%,var(--sec) 75%);
@@ -176,7 +180,7 @@
     .rel-actions{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;padding:1.15rem 0;border-top:1px solid var(--border)}
     .rel-btn{display:inline-flex;align-items:center;gap:.45rem;height:2.25rem;padding:0 1rem;border-radius:var(--r);border:1px solid var(--border);background:var(--sec);color:var(--fg);font-family:inherit;font-size:.8125rem;font-weight:600;cursor:pointer;transition:all .15s}
     .rel-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
-    .rel-btn:disabled{opacity:.4;cursor:not-allowed}
+    .rel-btn:disabled{opacity:.3;cursor:not-allowed;pointer-events:none}
     .rel-btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
     .rel-btn.primary:hover{filter:brightness(1.1);color:var(--accent-fg)}
     .rel-exports{display:flex;gap:.4rem;align-items:center}
@@ -363,7 +367,11 @@
     /* ── GAM CARDS ── */
     .gam-c{text-align:center;padding:.875rem .75rem}
     .gam-l{font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.375rem}
-    .gam-v{font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;font-size:1.125rem;color:var(--c1)}
+    /* Valor na mesma régua dos demais KPIs (branco mono, peso 700) — azul lia
+       como link; eCPM e RPS são os primários e ganham tamanho maior */
+    .gam-v{font-family:var(--font-mono);font-size:1.125rem;font-weight:700;color:var(--fg);font-variant-numeric:tabular-nums}
+    .gam-c:nth-child(-n+2) .gam-v{font-size:1.35rem}
+    .gam-l{font-family:var(--font-display)}
     .sec-h{font-size:.9375rem;font-weight:600;color:var(--fg);margin-bottom:.75rem}
 
     /* ── UTM CARDS ── */
@@ -954,6 +962,10 @@
     .adset-filter input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px;cursor:pointer}
     .adset-filter label{cursor:pointer}
 
+    /* ── STICKY HEADER na tabela de blocos GAM (lista longa) ── */
+    #tab-gam .tbl-wrap.scroll{max-height:68vh;overflow:auto}
+    #tab-gam .tbl-wrap.scroll thead th{position:sticky;top:0;z-index:2}
+
     /* ── COMPACT TABLE ROWS ── */
     #camp-db-body td,#adunit-body td,#hora-tbody td,#utm-tbody td,#funil-tbody td,#botoes-tbody td,#dom-table-body td{padding:6px 10px!important;font-size:.75rem!important}
 
@@ -1047,6 +1059,8 @@
 
     /* ── SIDEBAR SEPARATOR ── */
     .sb-sep{height:1px;background:var(--border);margin:.5rem .75rem}
+    .sb-group{font-family:var(--font-display);font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-light);padding:.875rem .75rem .25rem;white-space:nowrap}
+    .sb.col .sb-group{display:none}
 
     /* ── COLUMN TOGGLE DROPDOWN ── */
     .col-toggle-wrap{position:relative}
@@ -1237,6 +1251,7 @@
   </div>
   <button class="btn-criar-campanha" onclick="openCampTypeModal()">+ Criar Campanha</button>
   <nav class="sb-nav">
+    <div class="sb-group">Operação</div>
     <button class="nav-btn on" onclick="nav('overview',this)">
       <span class="nav-ind"></span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
@@ -1247,6 +1262,7 @@
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>
       <span class="nav-lbl">Campanhas</span>
     </button>
+    <div class="sb-group">Análise</div>
     <button class="nav-btn" onclick="nav('analise-paises',this)">
       <span class="nav-ind"></span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
@@ -1267,7 +1283,7 @@
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
       <span class="nav-lbl">Relatórios</span>
     </button>
-    <div class="sb-sep"></div>
+    <div class="sb-group">Gestão</div>
     <button class="nav-btn" id="nav-contas" onclick="nav('contas',this)">
       <span class="nav-ind"></span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
@@ -1355,7 +1371,7 @@
         <svg id="delay-spin-ico" class="spin-ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
       </div>
       <div class="notif-wrap">
-        <button class="ico-btn" id="notif-btn" onclick="toggleNotifs(event)" title="Notificações">
+        <button class="ico-btn" id="notif-btn" onclick="toggleNotifs(event)" title="Notificações" aria-label="Notificações">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
           <span class="notif-badge" id="notif-count">0</span>
         </button>
@@ -1367,11 +1383,11 @@
           <div class="notif-body" id="notif-body"><div class="notif-empty">Carregando…</div></div>
         </div>
       </div>
-      <button class="btn-toggle-eye" id="toggle-eye" title="Ocultar/revelar valores">
+      <button class="btn-toggle-eye" id="toggle-eye" title="Ocultar/revelar valores" aria-label="Ocultar ou revelar valores">
         <svg class="icon-eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         <svg class="icon-eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
       </button>
-      <button class="theme-toggle ico-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="Alternar tema">
+      <button class="theme-toggle ico-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="Alternar tema" aria-label="Alternar tema claro/escuro">
         <svg id="theme-icon-dark" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         <svg id="theme-icon-light" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
       </button>
@@ -1772,7 +1788,7 @@
       <div class="sec">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
           <div>
-            <div class="chart-title">Contas Meta</div>
+            
             <div class="chart-sub">Gerenciar Business Managers e Ad Accounts</div>
           </div>
           <button class="btn btn-p" onclick="openModalAddConta()">+ Adicionar Conta</button>
@@ -1794,7 +1810,7 @@
       <div class="sec">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
           <div>
-            <div class="chart-title">Diretório</div>
+            
             <div class="chart-sub">Links importantes — planilhas, documentos, pastas e mais</div>
           </div>
           <button class="btn btn-p" onclick="openModalAddLink()">+ Adicionar Link</button>
@@ -1810,7 +1826,7 @@
       <div class="sec">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
           <div>
-            <div class="chart-title">Acessos</div>
+            
             <div class="chart-sub">Usuários, níveis de acesso e auditoria</div>
           </div>
           <button class="btn btn-p" onclick="openModalNovoAcesso()">+ Novo acesso</button>
@@ -1833,7 +1849,7 @@
       <div class="sec">
         <div class="funil-header">
           <div>
-            <h2>Análise de Funil</h2>
+            
             <p class="muted">Performance por bloco de mensagem do funil</p>
           </div>
           <div class="funil-controls">
@@ -2707,6 +2723,7 @@ function makeTableSortable(tableId){
       a.className='sort-arrow';a.textContent=' ↕';
       th.appendChild(a);
     }
+    th.setAttribute('aria-sort','none');
     th.onclick=()=>sortTable(tableId,idx,th);
   });
 }
@@ -2734,6 +2751,9 @@ function sortTable(tableId,colIdx,headerEl){
   headerEl.dataset.sortDir=dir;
   const a=headerEl.querySelector('.sort-arrow');
   if(a){a.textContent=dir==='desc'?' ↓':' ↑';a.style.opacity='1';}
+  // a11y: expõe a ordenação atual para leitores de tela
+  table.querySelectorAll('thead th').forEach(t=>t.setAttribute('aria-sort','none'));
+  headerEl.setAttribute('aria-sort',dir==='desc'?'descending':'ascending');
 
   pairs.sort(([ra],[rb])=>{
     const av=ra.cells[colIdx]?.dataset.sort??ra.cells[colIdx]?.textContent??'';
@@ -2787,6 +2807,8 @@ function toggleSb(){
 
 /* ═══ NAV ═══ */
 const TITLES={overview:'Overview',campaigns:'Campanhas','analise-paises':'Análise de País',gam:'Reports GAM',funil:'Análise de Funil',relatorios:'Relatórios',domains:'Domínios',contas:'Contas Meta',diretorio:'Diretório',acessos:'Acessos','criar-campanha':'Criar Campanha'};
+// Telas de gestão não usam período/domínio — esconder controles que não fazem nada
+const TABS_SEM_FILTROS=['contas','diretorio','acessos','domains','criar-campanha'];
 function nav(id,btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('on'));
@@ -2794,6 +2816,10 @@ function nav(id,btn){
   document.getElementById('tab-'+id).classList.add('on');
   document.getElementById('hdr-title').textContent=TITLES[id]||id;
   S.tab=id;
+  const hf=document.querySelector('.hdr-filters');
+  if(hf)hf.style.display=TABS_SEM_FILTROS.includes(id)?'none':'flex';
+  // Deep-link: URL reflete a aba ativa (F5/compartilhar volta pra mesma tela)
+  try{history.replaceState(null,'','#'+id);}catch(_){}
   if(id==='analise-paises'){showOverlay('Carregando…');loadAnalisePaises().finally(hideOverlay);return;}
   if(id==='campaigns'){showOverlay('Carregando...');loadCampaignsDB(S.campTipo||'bot').finally(hideOverlay);return;}
   if(id==='domains'){showOverlay('Carregando...');loadDominios().finally(hideOverlay);return;}
@@ -2811,9 +2837,12 @@ let _relInit=false,_relResult=null,_relSortState={key:null,dir:-1};
 
 async function initRelTab(){
   if(_relInit)return;_relInit=true;
+  // Período do relatório segue o filtro global (override livre depois)
   const hoje=hojeBR();
-  document.getElementById('rel-since').value=dISO(hoje,-6);
-  document.getElementById('rel-until').value=hoje;
+  const gSince=document.getElementById('f-since')?.value;
+  const gUntil=document.getElementById('f-until')?.value;
+  document.getElementById('rel-since').value=gSince||dISO(hoje,-6);
+  document.getElementById('rel-until').value=gUntil||hoje;
   relSyncOrdenar();
   document.getElementById('rel-mets').addEventListener('change',relSyncOrdenar);
   try{
@@ -3696,6 +3725,23 @@ function renderApList(){
       <td colspan="9" style="padding:0"><div class="ap-acord-body open" id="ap-body-${sig}">${bodyContent}</div></td>
     </tr>`;
   }).join('');
+  // TOTAL — derivadas recalculadas das SOMAS (mesma régua da aba Campanhas)
+  const tInv=sorted.reduce((s,p)=>s+(p.investimento||0),0);
+  const tFat=sorted.reduce((s,p)=>s+(p.faturamento||0),0);
+  const tLuc=tFat-tInv;
+  const tImp=sorted.reduce((s,p)=>s+(p.impressoes_gam||0),0);
+  const tUtms=sorted.reduce((s,p)=>s+(p.num_utms||0),0);
+  const tRoas=tInv>0?tFat/tInv:0;
+  tbody.innerHTML+=`<tr class="row-total">
+    <td></td><td><strong>TOTAL</strong></td>
+    <td class="mo"><strong>${BRL(tInv)}</strong></td>
+    <td class="mo" style="color:var(--color-info)"><strong>${BRL(tFat)}</strong></td>
+    <td class="mo" style="color:${tLuc>=0?'var(--color-positive)':'var(--color-negative)'}"><strong>${BRL(tLuc)}</strong></td>
+    <td class="mo" style="color:${tRoas>=1?'var(--color-positive)':'var(--color-warning)'}"><strong>${tRoas.toFixed(2)}x</strong></td>
+    <td></td>
+    <td class="mo"><strong>${NUM(tImp)}</strong></td>
+    <td class="mo"><strong>${tUtms}</strong></td>
+  </tr>`;
   // Kick off lazy loads for expanded-but-uncached countries
   sorted.filter(p=>_apExpanded[p.pais_sigla]&&!_apUtmCache[p.pais_sigla]).forEach(p=>apLoadUtms(p.pais_sigla));
 }
@@ -3728,12 +3774,12 @@ async function loadAnalisePaises(){
     if(_apNicho!=='all')p.set('nicho',_apNicho);
     if(_apTipo!=='all')p.set('tipo',_apTipo);
     const res=await fetch('/api/analise-paises?'+p);
-    if(!res.ok){tbody.innerHTML='<tr><td colspan="9" class="empty">Erro ao carregar dados.</td></tr>';return;}
+    if(!res.ok){tbody.innerHTML=erroTabela(9,'Não foi possível carregar os dados de país.','loadAnalisePaises()');return;}
     _apData=await res.json();
     renderApList();
   }catch(e){
     console.warn('[analise-paises]',e);
-    tbody.innerHTML='<tr><td colspan="9" class="empty">Erro ao carregar dados.</td></tr>';
+    tbody.innerHTML=erroTabela(9,'Não foi possível carregar os dados de país.','loadAnalisePaises()');
   }
 }
 
@@ -4600,7 +4646,7 @@ function renderTopUtmSourceCard(sources){
   }
   el.innerHTML=sources.map((u,i)=>`<div class="utm-item">
     <span class="utm-rank">${i+1}.</span>
-    <span class="utm-name" title="${esc(u.utm_campaign)}">${esc(u.utm_campaign)}</span>
+    <span class="utm-name" title="${esc(u.utm_source||u.utm_campaign||'')}">${esc(u.utm_source||u.utm_campaign||'—')}</span>
     <span class="utm-rev" style="color:var(--c2)">${BRL(u.receita)}</span>
   </div>`).join('');
 }
@@ -4832,7 +4878,7 @@ function renderCampTable(rows){
       ?`<span title="${esc(r.pais_nome||r.pais_sigla)}" style="display:inline-flex;align-items:center;gap:2px;background:var(--sec-strong);border-radius:4px;padding:1px 5px;font-size:.65rem;color:var(--muted);margin-right:4px;flex-shrink:0">${getPaisEmoji(r.pais_sigla)} ${esc(r.pais_sigla)}</span>`
       :'';
     // Perfil restrito: sem conjuntos (expand). A coluna Ações é escondida via CSS (.col-acoes).
-    const expBtn=elBlocked('expandir_conjuntos')?'':`<button class="utm-exp-btn" onclick="toggleUtmExpand('${esc(r.ad_utm||'')}','${esc(r.campaign_id||'')}',this)" title="Ver conjuntos ativos">▶</button>`;
+    const expBtn=elBlocked('expandir_conjuntos')?'':`<button class="utm-exp-btn" aria-label="Expandir conjuntos da campanha" onclick="toggleUtmExpand('${esc(r.ad_utm||'')}','${esc(r.campaign_id||'')}',this)" title="Ver conjuntos ativos">▶</button>`;
     // Badge da página (último colchete da campanha) só em linha carimbada por id —
     // linha legada agrega histórico por nome (pode misturar páginas homônimas) e
     // ganha o marcador ·legado no lugar
@@ -4870,7 +4916,7 @@ function renderCampTable(rows){
       <td class="mo col-h" data-col="breakeven" data-sort="${be!==null&&be!==undefined?be:-1}">${beHtml}</td>
       <td class="mo col-h" data-col="inicio" data-sort="${r.data_inicio||''}">${inicio}</td>
       <td class="col-acoes" style="white-space:nowrap">
-        <button class="act-btn" onclick="abrirHistorico('${esc(r.ad_utm||'')}')" title="Histórico">📜</button>
+        <button class="act-btn" onclick="abrirHistorico('${esc(r.ad_utm||'')}')" title="Histórico" aria-label="Histórico da UTM"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg></button>
       </td>
     </tr>`;
   }).join('');
@@ -5132,10 +5178,13 @@ async function loadContas(){
   try{
     const res=await fetch('/api/contas');
     if(res.status===401){window.location.href='/login.html';return;}
-    const contas=await res.json();
+    const raw=await res.json();
+    // Guard: resposta de erro ({error}) não é array — evitava "undefined conta(s)"
+    const contas=Array.isArray(raw)?raw:[];
     const count=document.getElementById('contas-count');
     if(count)count.textContent=`${contas.length} conta(s)`;
-    if(!contas.length){tbody.innerHTML='<tr><td colspan="7" class="empty">Nenhuma conta cadastrada</td></tr>';return;}
+    if(!res.ok||!Array.isArray(raw)){tbody.innerHTML=erroTabela(7,'Não foi possível carregar as contas.','loadContas()');return;}
+    if(!contas.length){tbody.innerHTML=`<tr><td colspan="7" class="empty">Nenhuma conta cadastrada ainda.<br><button class="btn btn-p" style="margin-top:.75rem" onclick="openModalAddConta()">+ Adicionar Conta</button></td></tr>`;return;}
     tbody.innerHTML=contas.map(c=>{
       const statusHtml = c.ativo
         ? `<span class="acct-status acct-ok">🟢 Ativo${c.ultimo_status?' · '+c.ultimo_status:''}</span>`
@@ -5165,7 +5214,7 @@ async function loadContas(){
     }).join('');
     makeTableSortable('contas-table');
   }catch(e){
-    if(tbody)tbody.innerHTML=`<tr><td colspan="6" class="empty">Erro: ${esc(e.message)}</td></tr>`;
+    if(tbody)tbody.innerHTML=erroTabela(6,'Não foi possível carregar: '+e.message,'loadDominios()');
   }
 }
 
@@ -5187,7 +5236,7 @@ async function loadDiretorio(){
     const links=await res.json();
     renderDiretorio(links);
   }catch(e){
-    box.innerHTML=`<div class="empty" style="padding:2rem;color:var(--bad)">Erro: ${esc(e.message)}</div>`;
+    box.innerHTML=erroBox('Não foi possível carregar o diretório: '+e.message,'loadDiretorio()');
   }
 }
 
@@ -5732,7 +5781,12 @@ function showToast(type,msg,duration=3500){
 
 /* ═══ GOTO CAMPAIGNS ═══ */
 function goToCampaigns(utm){
-  nav('campaigns',document.querySelector('.nav-btn[onclick*="campaigns"]'));
+  // Deep-link: abre a aba do hash da URL (#gam, #relatorios…); fallback campanhas
+  const hashTab=(location.hash||'').replace('#','');
+  const hashBtn=hashTab&&document.getElementById('tab-'+hashTab)
+    ?document.querySelector(`.nav-btn[onclick*="'${hashTab}'"]`):null;
+  if(hashBtn&&hashBtn.offsetParent!==null)nav(hashTab,hashBtn);
+  else nav('campaigns',document.querySelector('.nav-btn[onclick*="campaigns"]'));
   setTimeout(()=>{
     const inp=document.getElementById('search-camp-db');
     if(inp){inp.value=utm;filterCampDB(utm);}
@@ -6240,6 +6294,14 @@ async function abrirHistorico(utm){
   }
 }
 
+/* ═══ ERRO PADRÃO COM RETRY (regra error-recovery) ═══ */
+function erroTabela(colspan,msg,retryFn){
+  return `<tr><td colspan="${colspan}" class="empty">${esc(msg)}<br><button class="btn btn-s" style="margin-top:.75rem" onclick="${retryFn}">↻ Tentar de novo</button></td></tr>`;
+}
+function erroBox(msg,retryFn){
+  return `<div class="empty" style="padding:2.5rem 1rem;text-align:center">${esc(msg)}<br><button class="btn btn-s" style="margin-top:.75rem" onclick="${retryFn}">↻ Tentar de novo</button></div>`;
+}
+
 /* ═══ NOTIFICAÇÕES (sino) ═══ */
 let _notifs=[];
 function _notifBadgeUpd(){
@@ -6247,7 +6309,7 @@ function _notifBadgeUpd(){
   const b=document.getElementById('notif-count');
   if(b){b.style.display=unread>0?'flex':'none';b.textContent=unread>9?'9+':unread;}
 }
-const NOTIF_ICO={danger:'🔴',warning:'⚠️',success:'🟢',info:'🔵'};
+const NOTIF_DOT={danger:'var(--danger)',warning:'var(--warn)',success:'var(--ok)',info:'var(--info)'};
 async function loadNotifs(){
   try{
     const r=await fetch('/api/notificacoes?limit=30');
@@ -6266,7 +6328,7 @@ function renderNotifs(){
     const dt=n.created_at?new Date(n.created_at):null;
     const quando=dt?dt.toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
     return `<div class="notif-item ${n.lida?'':'unread'}" onclick="marcarNotifLida(${n.id},this)">
-      <span class="notif-ico">${NOTIF_ICO[n.severidade]||'🔵'}</span>
+      <span class="notif-ico" aria-hidden="true" style="width:.6rem;height:.6rem;border-radius:50%;background:${NOTIF_DOT[n.severidade]||'var(--info)'};margin-top:.35rem;flex-shrink:0"></span>
       <div class="notif-txt"><strong>${esc(n.titulo||'')}</strong><p>${esc(n.mensagem||'')}</p><small>${quando}</small></div>
     </div>`;
   }).join('');
