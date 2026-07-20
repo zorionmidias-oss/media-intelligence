@@ -68,10 +68,25 @@ const PAISES = new Proxy({}, {
 });
 
 // "[MKUKER] [NG_RELA_EN_BOT_0001] [JANE]" → "NG"
+// "[AFS_RELA_EN_BOT_0001]" → "AFS"  (legado)
+// "[E1] [MKUKER] [AFS] [F3] …"  → "AFS"  (novo: colchete solto de 2-3 letras)
+// pais_sigla faz parte da chave de upsert de ads_consolidados — se voltar vazio,
+// o mesmo anúncio vira linha nova a cada sync. Por isso o fallback.
 function extractPaisSigla(name) {
   if (!name) return '';
-  const m = String(name).match(/\[([A-Z]{2,3})_/);
-  return m ? m[1] : '';
+  // 1) formato legado tem prioridade: [PAIS_NICHO_...] é inequívoco
+  const legado = String(name).match(/\[([A-Z]{2,3})_/);
+  if (legado) return legado[1];
+  // 2) novo: colchete solto de 2-3 letras. Estrutura ([E1]) e funil ([F3]) têm
+  //    dígito e não casam; site longo (MKUKER) também não. Sobra o país —
+  //    EXCETO quando o site também tem 2-3 letras (domínio "EU"):
+  //      conjunto  [AFS] [F3] [PAG] V1          → 1 candidato  → é o país
+  //      campanha  [E1] [EU] [CZ] [F3] [PAG]…   → 2 candidatos → o 2º é o país
+  const soltos = [...stripEstrutura(String(name)).matchAll(/\[([^\]]*)\]/g)]
+    .map(m => m[1].trim())
+    .filter(b => /^[A-Z]{2,3}$/.test(b));
+  if (!soltos.length) return '';
+  return soltos.length > 1 ? soltos[1] : soltos[0];
 }
 
 // "[GH_RELA_EN_BOT_0001]" → "RELA"  |  "[NG_NEWS_EN_BOT_0002]" → "NEWS"

@@ -49,13 +49,33 @@ function horasAtivasHoje(startIso, nowDt) {
   return nowDt.diff(efetivo, 'hours').hours;
 }
 
-// Token da PÁGINA no nome da unidade. Conjunto: 2º colchete ([PAIS_...] [PAGINA] V1).
-// Campanha: último colchete ([PREFIXO] [PAIS_...] [PAGINA]). Uppercase/trim.
+// Token da PÁGINA no nome da unidade. ANCORA PELO FIM, nunca pelo começo:
+//
+//   NOVO (jul/2026)  campanha [E1] [SITE] [PAIS] [F3] [PAGINA] [PERFIL]  → penúltimo
+//                    conjunto      [PAIS] [F3] [PAGINA] V1              → último
+//   LEGADO           campanha [SITE] [PAIS_NICHO_..._NNNN] [PAGINA]     → último
+//                    conjunto        [PAIS_NICHO_..._NNNN] [PAGINA] V1  → último
+//
+// A regra antiga ("2º colchete do conjunto") quebrou quando inseriram [F3] no
+// meio: TODO conjunto virou token "F3" e a planilha de gestão casou 1 de 46
+// páginas. Contando do fim, inserir token novo no meio não quebra de novo.
+// Discriminador de formato: bloco de código legado [XX_YYY_..._NNNN].
+const CODIGO_LEGADO_RE = /^[A-Z]{2,3}_[A-Z]+_/;
+// Tokens que NUNCA são nome de página — se o penúltimo for um destes, o nome
+// não tem perfil no fim e a página é o último mesmo.
+const NAO_E_PAGINA_RE = /^(?:[A-Z]{2,3}|[EF]\d+)$/;
 function extractPageToken(name, isAdset) {
   if (!name) return null;
-  const br = [...String(name).matchAll(/\[([^\]]*)\]/g)].map(m => m[1].trim());
+  const br = [...String(name).matchAll(/\[([^\]]*)\]/g)].map(m => m[1].trim()).filter(Boolean);
   if (!br.length) return null;
-  const tok = isAdset ? (br[1] || br[0]) : br[br.length - 1];
+  const ultimo = br[br.length - 1];
+  let tok;
+  if (br.some(b => CODIGO_LEGADO_RE.test(b)) || isAdset) {
+    tok = ultimo;
+  } else {
+    const penultimo = br[br.length - 2];
+    tok = (penultimo && !NAO_E_PAGINA_RE.test(penultimo.toUpperCase())) ? penultimo : ultimo;
+  }
   return tok ? tok.toUpperCase() : null;
 }
 
