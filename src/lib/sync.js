@@ -85,6 +85,7 @@ async function fetchMetaAdsForSync(dateRange) {
 
   const allAds = [];
   const failedBMs = []; // contas cujo fetch falhou — dados delas ficam defasados no banco
+  const failedAccounts = []; // ids das contas acima — a poda NUNCA roda em conta que falhou
   const budgetByAccount = {}; // accountId → Map(campaignId → budget)
 
   for (const config of configs) {
@@ -244,11 +245,12 @@ async function fetchMetaAdsForSync(dateRange) {
       const detail = e.response?.data ? JSON.stringify(e.response.data) : e.message;
       console.error(`[sync Meta BM${config.id}] status=${e.response?.status ?? 'N/A'} ${detail}`);
       failedBMs.push(`${config.nome || `BM${config.id}`} (${config.account}): ${e.response?.data?.error?.message || e.message}`);
+      failedAccounts.push(config.account);
       await updateBMStatus(config.id, `ERR_${e.response?.status ?? 'N/A'}`, detail);
     }
   }
 
-  return { ads: allAds, failedBMs };
+  return { ads: allAds, failedBMs, failedAccounts };
 }
 
 // Returns the UTC offset (in whole hours) for an IANA timezone on a given date.
@@ -691,13 +693,15 @@ async function syncAll(dateRange) {
 
     // Fetch Meta ads, GAM report, GAM UTM funnels — all in parallel
     const [metaRes, gamReport, gamFunnels] = await Promise.all([
-      fetchMetaAdsForSync(dr).catch(e => { console.error('[sync] Meta:', e.message); return { ads: [], failedBMs: [`fetch geral: ${e.message}`] }; }),
+      // failedAccounts: null = não sabemos o que falhou → a poda não roda (fail-safe)
+      fetchMetaAdsForSync(dr).catch(e => { console.error('[sync] Meta:', e.message); return { ads: [], failedBMs: [`fetch geral: ${e.message}`], failedAccounts: null }; }),
       fetchGAMReport(dr).catch(e => { console.error('[sync] GAM report:', e.message); return null; }),
       fetchGAMFunnelsByUTM(null, dr).catch(e => { console.error('[sync] GAM UTM:', e.message); return { campaigns: [] }; }),
     ]);
 
     const metaAds = metaRes.ads;
     const metaFailedBMs = metaRes.failedBMs;
+    const metaFailedAccounts = metaRes.failedAccounts === undefined ? null : metaRes.failedAccounts;
 
     // GAM UTM lookup by day: byDay['yyyy-mm-dd']['utm'] → { revenue, impressions, ecpm }
     const gamByDay = gamFunnels?.byDay || {};
@@ -1020,6 +1024,49 @@ async function syncAll(dateRange) {
       }
       if (uErr) console.error('[sync] upsert ads_consolidados:', uErr.message);
       rowsProcessed += adsRows.length;
+
+      // ── Poda de linhas órfãs ───────────────────────────────────────────────
+      // ad_utm e campanha_meta vêm do NOME na Meta e fazem parte da chave de
+      // upsert. Renomear um anúncio no meio do dia cria uma linha NOVA e deixa a
+      // do nome antigo intacta, com o gasto dela — o dia passa a somar duas vezes
+      // (jul/2026: C 01 em 19/07 marcava 101,61 vs 63,52 reais na Meta).
+      // Depois de gravar, apaga o que existe para (data, account_id) e NÃO veio
+      // neste sync. Só roda em (data, conta) que acabamos de escrever, então dia
+      // sem gasto nunca é tocado.
+      if (!uErr) {
+        const falhou = metaFailedAccounts === null ? null : new Set(metaFailedAccounts);
+        const chaveDe = r => `${r.dominio_id}|${r.ad_utm}|${r.pais_sigla || ''}|${r.campaign_id || ''}`;
+        const escritas = {};   // `${data}|${account_id}` → Set(chaves)
+        for (const r of adsRows) {
+          if (!r.account_id) continue;
+          (escritas[`${r.data}|${r.account_id}`] ||= new Set()).add(chaveDe(r));
+        }
+        if (falhou === null) {
+          console.warn('[poda] pulada — não foi possível saber quais contas falharam');
+        } else {
+          let podadas = 0;
+          for (const [k, chaves] of Object.entries(escritas)) {
+            const sep = k.indexOf('|');
+            const data = k.slice(0, sep), accountId = k.slice(sep + 1);
+            // Conta que falhou tem dado incompleto neste ciclo — podar apagaria o que é bom.
+            if (falhou.has(accountId)) { console.warn(`[poda] ${data} ${accountId}: pulada (conta falhou na Meta)`); continue; }
+            const { data: existentes, error: selErr } = await supabase
+              .from('ads_consolidados')
+              .select('id,dominio_id,ad_utm,pais_sigla,campaign_id,manually_fixed,valor_gasto')
+              .eq('data', data).eq('account_id', accountId);
+            if (selErr) { console.warn(`[poda] ${data} ${accountId}: select falhou — ${selErr.message}`); continue; }
+            const orfas = (existentes || []).filter(r => !r.manually_fixed && !chaves.has(chaveDe(r)));
+            if (!orfas.length) continue;
+            const perdido = orfas.reduce((s, r) => s + Number(r.valor_gasto || 0), 0);
+            const { error: delErr } = await supabase
+              .from('ads_consolidados').delete().in('id', orfas.map(r => r.id));
+            if (delErr) { console.warn(`[poda] ${data} ${accountId}: delete falhou — ${delErr.message}`); continue; }
+            podadas += orfas.length;
+            console.log(`[poda] ${data} ${accountId}: ${orfas.length} órfã(s), R$ ${perdido.toFixed(2)} de gasto fantasma removido — ${orfas.slice(0, 6).map(r => r.ad_utm).join(', ')}`);
+          }
+          if (podadas) console.log(`[poda] total: ${podadas} linha(s) removida(s)`);
+        }
+      }
 
       // Clean up ghost rows: pais_sigla='' entries that now have a real country counterpart
       if (!uErr) {
