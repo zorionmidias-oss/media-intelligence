@@ -11,6 +11,9 @@ const { computeOrcamentoContas } = require('./orcamento');
 
 const SS_ID = process.env.SHEET_GESTAO_ID || '1HIx10S1kGmjsposvvpdM1OMdclbm3t0Z92ERz_QzF0A';
 const ABA = process.env.SHEET_GESTAO_ABA || 'Paginas';
+// Teto por ESTRUTURA: 15 páginas cadastradas (não cabe mais nova) e 15 em uso
+// (estrutura saturada — nada ocioso p/ girar). Ver seção POR ESTRUTURA no Overview.
+const LIMITE_ESTRUTURA = Number(process.env.LIMITE_ESTRUTURA || 15);
 const SA_JSON_CONTENT = process.env.GOOGLE_ADM_SERVICE_ACCOUNT_JSON_CONTENT;
 const KEY_FILE = process.env.GOOGLE_ADM_SERVICE_ACCOUNT_JSON || './credentials/google-service-account.json';
 
@@ -155,6 +158,23 @@ async function montarOverview(sheets, sheetId, d) {
   const secTitle=(t,a=OV.menta)=>{reqs(R,1,[ovCell(t,{color:a,size:11,bold:true,borders:{bottom:ovBorder()}}),...Array.from({length:7},()=>ovCell('',{borders:{bottom:ovBorder()}}))]);merge(R,1,R+1,9);R++;};
   const tHead=(cols,orcFrom)=>{const cs=[];for(let i=0;i<8;i++)cs.push(ovCell(cols[i]||'',{color:OV.muted,size:9,bold:true,align:i===0?'LEFT':'RIGHT'}));reqs(R,1,cs);if(orcFrom)merge(R,orcFrom,R+1,9);R++;};
 
+  // POR ESTRUTURA — só aparece se a coluna ESTRUTURA existir na aba (senão vira só "—").
+  const estruturas = d.estruturaArr || [];
+  if (estruturas.some(e => e.estrutura !== '—')) {
+    secTitle('POR ESTRUTURA');
+    tHead(['ESTRUTURA','PÁGINAS','EM USO','DISPONÍVEL','CONJUNTOS','ORÇAMENTO','SITUAÇÃO',''],7);
+    estruturas.forEach((e,idx)=>{const bg=idx%2===0?OV.panel2:OV.bg;
+      // Limites: "em uso" é o mais grave (estrutura saturada) e ganha a linha.
+      const cheiaUso = e.emUso >= LIMITE_ESTRUTURA, cheiaPag = e.paginas >= LIMITE_ESTRUTURA;
+      const sit = cheiaUso ? `⛔ LIMITE GERAL · ${e.emUso}/${LIMITE_ESTRUTURA} ativas`
+                : cheiaPag ? `⚠ LIMITE DE PÁGINAS · ${e.paginas}/${LIMITE_ESTRUTURA} — não cabe nova`
+                : `${LIMITE_ESTRUTURA - e.paginas} vaga${LIMITE_ESTRUTURA - e.paginas === 1 ? '' : 's'}`;
+      const sitCor = cheiaUso ? OV.ambar : cheiaPag ? OV.ambar : OV.faint;
+      const marca = (cheiaUso || cheiaPag) ? {left:ovBorder(OV.ambar)} : undefined;
+      reqs(R,1,[ovCell(e.estrutura,{bg,color:OV.text,bold:true,size:11,borders:marca}),ovCell(e.paginas,{bg,color:cheiaPag?OV.ambar:OV.text,font:MONO,align:'RIGHT'}),ovCell(e.emUso,{bg,color:cheiaUso?OV.ambar:(e.emUso>0?OV.menta:OV.faint),font:MONO,align:'RIGHT'}),ovCell(e.disponivel,{bg,color:e.disponivel>0?OV.azul:OV.faint,font:MONO,align:'RIGHT'}),ovCell(e.conjuntos,{bg,color:OV.text,font:MONO,align:'RIGHT'}),ovCell(e.orcamento,{bg,color:OV.text,font:MONO,align:'RIGHT',currency:true}),ovCell(sit,{bg,color:sitCor,size:10,bold:cheiaUso||cheiaPag}),ovCell('',{bg})]);
+      merge(R,7,R+1,9);R++;}); R++;
+  }
+
   // POR PAÍS
   secTitle('POR PAÍS');
   tHead(['PAÍS','PÁGINAS','EM USO','ANOMALIA','CONJUNTOS','ORÇAMENTO','',''],6);
@@ -180,6 +200,29 @@ async function montarOverview(sheets, sheetId, d) {
   await sheets.spreadsheets.batchUpdate({spreadsheetId:SS_ID,requestBody:{requests}});
 }
 
+// Insere a coluna "SUBIU POR" imediatamente após ESTRUTURA. Devolve true se criou.
+async function criarColunaSubiu(sheets, headers) {
+  const colEstrut = acharCol(headers, ['ESTRUTURA']);
+  if (colEstrut < 0) return false;   // sem ESTRUTURA não existe "do lado de"
+  const meta = await sheets.spreadsheets.get({ spreadsheetId: SS_ID, fields: 'sheets.properties(sheetId,title)' });
+  const aba = (meta.data.sheets || []).find(s => s.properties.title.toUpperCase() === ABA.toUpperCase());
+  if (!aba) return false;
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: SS_ID,
+    requestBody: { requests: [{ insertDimension: {
+      range: { sheetId: aba.properties.sheetId, dimension: 'COLUMNS', startIndex: colEstrut + 1, endIndex: colEstrut + 2 },
+      inheritFromBefore: true,
+    } }] },
+  });
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: SS_ID,
+    range: `'${ABA}'!${colLetter(colEstrut + 1)}1`,
+    valueInputOption: 'RAW',
+    requestBody: { values: [['SUBIU POR']] },
+  });
+  return true;
+}
+
 // dryRun=true: calcula e devolve o relatório SEM escrever na planilha.
 async function atualizarPlanilhaGestao({ dryRun = false } = {}) {
   const sheets = getSheetsClient();
@@ -192,9 +235,19 @@ async function atualizarPlanilhaGestao({ dryRun = false } = {}) {
 
   // Lê a aba inteira
   const range = `'${ABA}'!A1:Z2000`;
-  const resp = await sheets.spreadsheets.values.get({ spreadsheetId: SS_ID, range });
-  const rows = resp.data.values || [];
+  let resp = await sheets.spreadsheets.values.get({ spreadsheetId: SS_ID, range });
+  let rows = resp.data.values || [];
   if (!rows.length) throw new Error(`Aba "${ABA}" vazia ou inexistente`);
+
+  // "SUBIU POR" nasce ao lado de ESTRUTURA. Inserir coluna desloca tudo à direita,
+  // então isso acontece ANTES de calcular qualquer índice — e relê a aba depois.
+  if (!dryRun && acharCol(rows[0], ['SUBIU']) < 0) {
+    const criada = await criarColunaSubiu(sheets, rows[0]);
+    if (criada) {
+      resp = await sheets.spreadsheets.values.get({ spreadsheetId: SS_ID, range });
+      rows = resp.data.values || [];
+    }
+  }
 
   const headers = rows[0];
   const colPagina = acharCol(headers, ['PAGINA']);
@@ -203,6 +256,7 @@ async function atualizarPlanilhaGestao({ dryRun = false } = {}) {
   const colStatus = acharCol(headers, ['STATUS']);
   const colNicho  = acharCol(headers, ['NICHO']);
   const colPais   = acharCol(headers, ['PAIS']);
+  const colEstrut = acharCol(headers, ['ESTRUTURA']);
   if (colPagina < 0 || colQtd < 0 || colOrc < 0) {
     throw new Error(`Colunas não encontradas (pagina=${colPagina} qtd=${colQtd} orc=${colOrc}). Headers: ${headers.join(' | ')}`);
   }
@@ -228,7 +282,8 @@ async function atualizarPlanilhaGestao({ dryRun = false } = {}) {
     if (!nome) continue;
     const nicho = colNicho >= 0 ? ((rows[r][colNicho] || '—').trim() || '—') : '—';
     const pais  = colPais  >= 0 ? ((rows[r][colPais]  || '—').trim() || '—') : '—';
-    linhas.push({ linha: r + 1, nome, nicho, pais, token: matcher(nome), specificidade: normWords(nome).length * 100 + nome.length });
+    const estrutura = colEstrut >= 0 ? ((rows[r][colEstrut] || '—').trim() || '—') : '—';
+    linhas.push({ linha: r + 1, nome, nicho, pais, estrutura, token: matcher(nome), specificidade: normWords(nome).length * 100 + nome.length });
   }
 
   // Passo 2: ambiguidade NUNCA se resolve em silêncio. Token casando >1 linha:
@@ -248,9 +303,16 @@ async function atualizarPlanilhaGestao({ dryRun = false } = {}) {
     else semVencedor[tok] = true;
   }
 
+  // ⚠ "SUBIU POR" é MANUAL — o sync cria a coluna e nunca escreve nela.
+  // Tentamos derivar de /{act_id}/activities (actor_name em create_ad_set/
+  // create_campaign_group), mas o log só retém ~7 dias em janela rolante: como os
+  // conjuntos são recriados diariamente, o evento mais antigo visível é a última
+  // mexida, não o lançamento da página. Resultado atribuía autor até a página
+  // parada. Não há campo de criador de Page na Graph API — não insistir por aqui.
+
   // Agregadores p/ a Overview
   const ag = { total:0, emUso:0, anomalia:0, disponivel:0, conjuntos:0, orcamento:0, parado:0 };
-  const porPais = {}; const porNicho = {}; const anomalias = [];
+  const porPais = {}; const porNicho = {}; const porEstrut = {}; const anomalias = [];
 
   // Passo 3: monta updates
   for (const l of linhas) {
@@ -284,6 +346,9 @@ async function atualizarPlanilhaGestao({ dryRun = false } = {}) {
     if (status === 'Em uso') P.emUso++; else if (status === 'com anomalia') P.anomalia++;
     const N = porNicho[l.nicho] || (porNicho[l.nicho] = { nicho:l.nicho, paginas:0, orcamento:0 });
     N.paginas++; N.orcamento += orcamento;
+    const E = porEstrut[l.estrutura] || (porEstrut[l.estrutura] = { estrutura:l.estrutura, paginas:0, emUso:0, anomalia:0, disponivel:0, conjuntos:0, orcamento:0 });
+    E.paginas++; E.conjuntos += conjuntos; E.orcamento += orcamento;
+    if (status === 'Em uso') E.emUso++; else if (status === 'com anomalia') E.anomalia++; else E.disponivel++;
     if (status === 'com anomalia') anomalias.push({ nome:l.nome, pais:l.pais, obs:observacao });
 
     updates.push({ range: `'${ABA}'!${colLetter(colQtd)}${l.linha}`, values: [[`${conjuntos} CONJUNTO${conjuntos === 1 ? '' : 'S'}`]] });
@@ -307,6 +372,16 @@ async function atualizarPlanilhaGestao({ dryRun = false } = {}) {
     tokens_sem_linha: tokensSemLinha,        // página ativa na Meta sem linha na planilha
     tokens_ambiguos: ambiguos,               // mesmo token casou em >1 linha
     desambiguadas,                           // linhas que perderam p/ nome mais específico
+    // Estruturas que bateram o teto (15): no limite de páginas e/ou saturadas de ativas.
+    estruturas_no_limite: Object.values(porEstrut)
+      .filter(e => e.estrutura !== '—' && (e.paginas >= LIMITE_ESTRUTURA || e.emUso >= LIMITE_ESTRUTURA))
+      .map(e => ({
+        estrutura: e.estrutura,
+        paginas: e.paginas,
+        emUso: e.emUso,
+        limite_paginas: e.paginas >= LIMITE_ESTRUTURA,
+        limite_geral: e.emUso >= LIMITE_ESTRUTURA,
+      })),
     zeradas: zeradas.map(z => z.nome),       // linhas → Disponível
     dryRun,
   };
@@ -324,6 +399,10 @@ async function atualizarPlanilhaGestao({ dryRun = false } = {}) {
         pctUso: ag.total ? Math.round((ag.emUso / ag.total) * 100) : 0,
         paisArr: Object.values(porPais).sort((a, b) => b.orcamento - a.orcamento),
         nichoArr: Object.values(porNicho).sort((a, b) => b.orcamento - a.orcamento),
+        // Estrutura ordena pelo nome (EST 01, EST 02…) — é sequência, não ranking; "—" por último.
+        estruturaArr: Object.values(porEstrut).sort((a, b) =>
+          (a.estrutura === '—') - (b.estrutura === '—') ||
+          a.estrutura.localeCompare(b.estrutura, 'pt-BR', { numeric: true })),
         anomalias: anomalias.sort((a, b) => (b.obs > a.obs ? 1 : -1)),
         atualizado: DateTime.now().setZone('America/Sao_Paulo').toFormat("dd/MM/yyyy 'às' HH:mm"),
       };
