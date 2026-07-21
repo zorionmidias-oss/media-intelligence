@@ -706,6 +706,15 @@ async function syncAll(dateRange) {
     // GAM UTM lookup by day: byDay['yyyy-mm-dd']['utm'] → { revenue, impressions, ecpm }
     const gamByDay = gamFunnels?.byDay || {};
 
+    // GAM fora do ar ≠ dia sem receita. fetchGAMFunnelsByUTM engole o próprio
+    // erro e devolve {campaigns: []} SEM byDay; fetchGAMReport vira null no
+    // catch acima. A janela (ontem+hoje) sempre tem receita, então byDay vazio
+    // só acontece em falha — nesses ciclos NÃO se pode gravar faturamento 0 por
+    // cima do que já foi casado (jul/2026: um ciclo assim zerou a receita de
+    // ontem+hoje no dash, com status "success"). Ver merge antes do upsert.
+    const gamFunnelsOk = Object.keys(gamByDay).length > 0;
+    const gamReportOk = Object.keys(gamReport?.adUnitsByDay || {}).length > 0;
+
     // ── Process Meta ads ──────────────────────────
     const pendingPrefixes = new Map(); // prefix → example campaign name
     const adsForGrouping = [];
@@ -967,6 +976,45 @@ async function syncAll(dateRange) {
         conversas_meta: g.conversas_meta || 0,
         updated_at: new Date().toISOString(),
       });
+    }
+
+    // ── GAM caiu neste ciclo? Preserva a receita já gravada ──────────────────
+    // O gasto Meta continua fresco; só os campos derivados do GAM voltam do
+    // banco. lucro/roas são recalculados com o gasto NOVO. Some no próximo
+    // ciclo bom, tudo é reescrito com dado real.
+    if ((!gamFunnelsOk || !gamReportOk) && adsRows.length > 0) {
+      const datas = [...new Set(adsRows.map(r => r.data))];
+      const { data: prevRows, error: prevErr } = await supabase
+        .from('ads_consolidados')
+        .select('data,dominio_id,ad_utm,account_id,pais_sigla,campaign_id,faturamento_bruto,faturamento_real,impressoes_gam,ecpm,rps,gam_match,cpc_gam,ctr_gam,cliques_gam,viewability')
+        .in('data', datas);
+      if (prevErr) {
+        console.warn('[sync] GAM indisponível e falhou a leitura do estado anterior:', prevErr.message);
+      } else {
+        const kOf = r => `${r.data}|${r.dominio_id}|${r.ad_utm}|${r.account_id || ''}|${r.pais_sigla || ''}|${r.campaign_id || ''}`;
+        const prevMap = new Map((prevRows || []).map(r => [kOf(r), r]));
+        let preservadas = 0;
+        for (const r of adsRows) {
+          const p = prevMap.get(kOf(r));
+          if (!p) continue;
+          if (!gamFunnelsOk) {
+            r.faturamento_bruto = Number(p.faturamento_bruto || 0);
+            r.faturamento_real = Number(p.faturamento_real || 0);
+            r.impressoes_gam = Number(p.impressoes_gam || 0);
+            r.ecpm = Number(p.ecpm || 0);
+            r.rps = Number(p.rps || 0);
+            r.gam_match = p.gam_match || null;
+            r.cpc_gam = Number(p.cpc_gam || 0);
+            r.ctr_gam = Number(p.ctr_gam || 0);
+            r.cliques_gam = Number(p.cliques_gam || 0);
+            r.lucro = +(r.faturamento_real - r.valor_gasto).toFixed(2);
+            r.roas = r.valor_gasto > 0 ? +(r.faturamento_real / r.valor_gasto).toFixed(4) : 0;
+            if (r.faturamento_real > 0) preservadas++;
+          }
+          if (!gamReportOk) r.viewability = Number(p.viewability || 0);
+        }
+        console.warn(`[sync] GAM indisponível (funnels=${gamFunnelsOk ? 'ok' : 'FALHOU'}, report=${gamReportOk ? 'ok' : 'FALHOU'}) — receita preservada do ciclo anterior em ${preservadas}/${adsRows.length} linhas`);
+      }
     }
 
     if (adsRows.length > 0) {
@@ -1272,8 +1320,12 @@ async function syncAll(dateRange) {
 
     // ── Log success ───────────────────────────────
     const duration = Date.now() - startMs;
-    const syncStatus = metaFailedBMs.length > 0 ? 'partial' : 'success';
-    const failNote = metaFailedBMs.length > 0 ? ` | FALHA Meta: ${metaFailedBMs.join('; ')}` : '';
+    const gamNotes = [];
+    if (!gamFunnelsOk) gamNotes.push('FALHA GAM UTM: receita preservada do ciclo anterior');
+    if (!gamReportOk) gamNotes.push('FALHA GAM report: blocos/viewability não atualizados');
+    const syncStatus = (metaFailedBMs.length > 0 || gamNotes.length > 0) ? 'partial' : 'success';
+    const failNote = (metaFailedBMs.length > 0 ? ` | FALHA Meta: ${metaFailedBMs.join('; ')}` : '')
+      + (gamNotes.length > 0 ? ` | ${gamNotes.join('; ')}` : '');
     await supabase.from('sync_log').insert({
       source: 'syncAll',
       status: syncStatus,
