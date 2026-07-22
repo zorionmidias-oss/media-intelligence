@@ -6,7 +6,7 @@ const { promisify } = require('util');
 const gunzip = promisify(zlib.gunzip);
 const supabase = require('./supabase');
 
-const GAM_VERSION = 'v202505';
+const GAM_VERSION = process.env.GAM_API_VERSION || 'v202605';
 const SOAP_ENDPOINT = `https://ads.google.com/apis/ads/publisher/${GAM_VERSION}/ReportService`;
 const SCOPE = [
   'https://www.googleapis.com/auth/admanager',

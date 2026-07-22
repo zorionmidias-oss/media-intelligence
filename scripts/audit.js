@@ -9,7 +9,7 @@ const gunzip = promisify(zlib.gunzip);
 const supabase = require('../src/lib/supabase');
 const { extractAdUTM } = require('../src/lib/parser');
 
-const GAM_VERSION = 'v202505';
+const GAM_VERSION = 'v202605';
 const SOAP_ENDPOINT = `https://ads.google.com/apis/ads/publisher/${GAM_VERSION}/ReportService`;
 const NETWORK_CODE = process.env.GOOGLE_ADM_NETWORK_CODE;
 const KEY_FILE = process.env.GOOGLE_ADM_SERVICE_ACCOUNT_JSON || './credentials/google-service-account.json';

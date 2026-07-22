@@ -22,13 +22,13 @@ const axios = require('axios');
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
 <soapenv:Header>
-  <ns1:RequestHeader xmlns:ns1="https://www.google.com/apis/ads/publisher/v202505" soapenv:mustUnderstand="0">
+  <ns1:RequestHeader xmlns:ns1="https://www.google.com/apis/ads/publisher/v202605" soapenv:mustUnderstand="0">
     <ns1:networkCode>${nc}</ns1:networkCode>
     <ns1:applicationName>diagnose</ns1:applicationName>
   </ns1:RequestHeader>
 </soapenv:Header>
 <soapenv:Body>
-  <runReportJob xmlns="https://www.google.com/apis/ads/publisher/v202505">
+  <runReportJob xmlns="https://www.google.com/apis/ads/publisher/v202605">
     <reportJob>
       <reportQuery>
         <dimensions>AD_UNIT_NAME</dimensions>
@@ -47,7 +47,7 @@ const axios = require('axios');
 
   try {
     const r = await axios.post(
-      'https://ads.google.com/apis/ads/publisher/v202505/ReportService',
+      'https://ads.google.com/apis/ads/publisher/v202605/ReportService',
       xml,
       { headers: { 'Content-Type': 'text/xml; charset=utf-8', SOAPAction: '', Authorization: `Bearer ${token}` } }
     );
