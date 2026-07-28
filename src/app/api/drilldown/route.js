@@ -327,6 +327,14 @@ async function handler(req, res) {
       console.warn(`[drilldown ${utm}] receita_ads indisponível:`, e.message);
     }
 
+    // ── RPS por conjunto (canônico): faturamento real do conjunto ÷ sessões (view_content) ──
+    // Retorno por sessão do próprio conjunto (não da página). null = sem receita por id no período.
+    for (const a of adsetsMap.values()) {
+      a.rps = (a.faturamento_real != null && a.resultado_vc > 0)
+        ? +(a.faturamento_real / a.resultado_vc).toFixed(4)
+        : null;
+    }
+
     // Strip auth token before sending
     for (const a of adsetsMap.values()) delete a._token;
 

@@ -6221,6 +6221,7 @@ function renderUtmAdsets(box,utm,d,rps){
       <td class="mo">${custoRes>0?BRL(custoRes):'—'}</td>
       <td class="mo">${NUM(conversas)}</td>
       <td class="mo">${spl!=null?spl.toFixed(2):'—'}</td>
+      <td class="mo">${a.rps!=null?BRL(a.rps):'—'}</td>
       <td class="mo">${be!=null?`<span class="ud-pill ${clsBe}">${be.toFixed(2)}</span>`:'—'}</td>
       <td class="ud-bud" data-aid="${aid}" data-utm="${utmS}" data-nome="${nmFull}" data-bud="${bud}" data-min="${+(a.min_budget||1)}" data-moeda="${a.moeda||'BRL'}">
         <span class="ud-bud-val">${bud>0?fmtMoeda(bud,a.moeda):'—'}</span>
@@ -6242,7 +6243,7 @@ function renderUtmAdsets(box,utm,d,rps){
     <div class="ud-table-wrap"><table class="ud-table"><thead><tr>
       <th>Conjunto</th><th>Gasto</th><th title="Receita GAM líquida (×0.9) dos anúncios deste conjunto, via ad id na utm_campaign">Receita</th>
       <th title="Receita líquida ÷ gasto (com imposto)">ROI</th><th>Resultado</th><th>Custo/Res.</th><th>Conversas</th>
-      <th title="Sessões (view_content) ÷ Conversas iniciadas">Sessão/Lead</th><th title="Custo por sessão do conjunto ÷ RPS da página — abaixo de 1 = gastando menos do que ganha">Break Even</th><th>Orçamento/dia</th>
+      <th title="Sessões (view_content) ÷ Conversas iniciadas">Sessão/Lead</th><th title="Receita GAM líquida ÷ sessões (view_content) do próprio conjunto — retorno por sessão">RPS</th><th title="Custo por sessão do conjunto ÷ RPS da página — abaixo de 1 = gastando menos do que ganha">Break Even</th><th>Orçamento/dia</th>
     </tr></thead><tbody>${rowsHtml}</tbody></table></div>`;
 }
 
