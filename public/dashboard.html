@@ -6194,7 +6194,8 @@ function renderUtmAdsets(box,utm,d,rps){
     const spend=+(a.spend||0);
     const custoRes=resultado>0?spend/resultado:0;
     const spl=conversas>0?resultado/conversas:null;
-    // Breakeven canônico do conjunto vem do servidor: custo/sessão ÷ RPS da página
+    // Breakeven do conjunto vem do servidor: custo/sessão ÷ RPS do PRÓPRIO conjunto
+    // (= 1/roi quando há receita por id); fallback ao RPS da página sem receita casada.
     const be=a.breakeven!=null?+a.breakeven:null;
     // Direcionador: ROI real (receita GAM por ad id ÷ gasto). Sem receita por id
     // no período → o semáforo cai no Breakeven canônico (<1 saudável).

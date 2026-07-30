@@ -278,15 +278,11 @@ async function handler(req, res) {
       }
     }
 
-    // ── Breakeven por conjunto (canônico): custo/sessão do conjunto ÷ RPS da página ──
-    // rps vem do chamador (linha da aba Campanhas = faturamento ÷ sessões da página).
-    // sessões do conjunto = view_content da Meta (resultado_vc). <1 = saudável.
+    // ── Custo/sessão por conjunto: gasto do conjunto ÷ view_content do conjunto ──
+    // rpsPagina = fallback do breakeven p/ conjunto sem receita casada por id (ver adiante).
     const rpsPagina = Number(req.query.rps) || 0;
     for (const a of adsetsMap.values()) {
       a.custo_sessao = a.resultado_vc > 0 ? +(a.spend / a.resultado_vc).toFixed(4) : null;
-      a.breakeven = rpsPagina > 0
-        ? METRICAS.breakevenContraRPS({ investimento: a.spend, sessoes: a.resultado_vc, rps: rpsPagina })
-        : null;
     }
 
     // ── Receita real por conjunto/anúncio (GAM por ad id, gravada pelo sync em receita_ads) ──
@@ -327,11 +323,18 @@ async function handler(req, res) {
       console.warn(`[drilldown ${utm}] receita_ads indisponível:`, e.message);
     }
 
-    // ── RPS por conjunto (canônico): faturamento real do conjunto ÷ sessões (view_content) ──
-    // Retorno por sessão do próprio conjunto (não da página). null = sem receita por id no período.
+    // ── RPS + Breakeven POR CONJUNTO (canônico, agora que a receita casa por ad id) ──
+    // Cada conjunto tem faturamento próprio (receita_ads por ad id) → rps e breakeven do
+    // PRÓPRIO conjunto, não da página. Com receita por id, breakeven reduz a
+    // gasto ÷ faturamento (= 1/roi, imune a contagem de sessão). Sem receita por id
+    // (tráfego antigo por nome) → cai no RPS da página como estimativa. <1 = saudável.
     for (const a of adsetsMap.values()) {
       a.rps = (a.faturamento_real != null && a.resultado_vc > 0)
         ? +(a.faturamento_real / a.resultado_vc).toFixed(4)
+        : null;
+      const rpsRef = a.rps != null ? a.rps : rpsPagina;
+      a.breakeven = rpsRef > 0
+        ? METRICAS.breakevenContraRPS({ investimento: a.spend, sessoes: a.resultado_vc, rps: rpsRef })
         : null;
     }
 
