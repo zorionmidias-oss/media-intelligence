@@ -3,6 +3,7 @@ const supabase = require('../../../lib/supabase');
 const { getUSDtoBRL } = require('../../../lib/gam');
 const { fetchAll } = require('../../../lib/fetchAll');
 const { hojeBR, diasAtrasBR, addDiasISO } = require('../../../lib/datas');
+const METRICAS = require('../../../lib/metricas');
 
 async function getMetasProgresso(totFat, totSpend, totLucro, roi) {
   try {
@@ -53,7 +54,7 @@ async function handler(req, res) {
     const adsQ = () => {
       let q = supabase
         .from('ads_consolidados')
-        .select('data,ad_utm,campanha_meta,tipo,dominio_id,valor_gasto,faturamento_real,lucro,cliques,impressoes_gam,resultado,cpc,ctr,ecpm,rps,viewability,orcamento_total,previsao_faturamento_real,previsao_lucro,dominios(nome)')
+        .select('data,ad_utm,campanha_meta,tipo,dominio_id,valor_gasto,faturamento_real,lucro,cliques,impressoes_gam,resultado,sessoes_meta,cpc,ctr,ecpm,rps,viewability,orcamento_total,previsao_faturamento_real,previsao_lucro,dominios(nome)')
         .gte('data', df).lte('data', dt).order('data', { ascending: true });
       if (domainId) q = q.eq('dominio_id', domainId);
       if (restrito) q = q.in('dominio_id', restrito);
@@ -98,7 +99,7 @@ async function handler(req, res) {
     // consistente com o KPI.
     const fatBlocosByDay = {}; // blocos_anuncio ×0.9 — mesma fonte do KPI faturamento
     const utmMap = {};
-    let totSpend = 0, totResults = 0, totClicks = 0;
+    let totSpend = 0, totResults = 0, totClicks = 0, totSessoes = 0;
     let _viewWtSum = 0, _viewWt = 0;
 
     for (const r of ads || []) {
@@ -135,6 +136,7 @@ async function handler(req, res) {
       totSpend += Number(r.valor_gasto || 0);
       totResults += Number(r.resultado || 0);
       totClicks += Number(r.cliques || 0);
+      totSessoes += Number(r.sessoes_meta || 0);
     }
 
     // ─── Aggregate blocos_anuncio (GAM: ecpm, impressions, viewability only) ───
@@ -180,6 +182,9 @@ async function handler(req, res) {
     const gamCtr = gamImps > 0 ? (gamClicks / gamImps) * 100 : 0;
     const rps = gamImps > 0 ? totFat / gamImps : 0;
     const viewability = _viewWt > 0 ? _viewWtSum / _viewWt : 0;
+    // PAR = impressões GAM ÷ sessões (view_content Meta) — anúncios exibidos por
+    // sessão. Usa gamImps (mesma base da KPI "Impressões") ÷ sessões atribuídas.
+    const par = METRICAS.par({ impressoes: gamImps, sessoes: totSessoes });
 
     // ─── Trend: merge daily faturamento (blocos GAM ×0.9 — mesma fonte do KPI) + investimento (Meta) ───
     const allDays = new Set([...Object.keys(invByDay), ...Object.keys(fatBlocosByDay)]);
@@ -381,6 +386,8 @@ async function handler(req, res) {
         roi,
         results: totResults,
         impressions: gamImps,
+        sessoes: totSessoes,
+        par,
         ctr: +gamCtr.toFixed(2),
         ecpm: +ecpm.toFixed(2),
         rps: +rps.toFixed(4),

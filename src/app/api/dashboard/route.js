@@ -147,6 +147,7 @@ async function handler(req, res) {
           faturamento: g.faturamento_real,
           sessoes,
           conversas,
+          impressoes: g.impressoes_gam,
         });
 
         // Rótulo da página = último colchete do nome da campanha ("[X] [Y] [ELIANA MARTINS]")
@@ -173,6 +174,8 @@ async function handler(req, res) {
           custo_resultado: g.resultado > 0 ? +(g.valor_gasto / g.resultado).toFixed(2) : 0,
           resultado: g.resultado,
           impressoes_gam: g.impressoes_gam,
+          // PAR = impressões GAM ÷ sessões (view_content) — anúncios por sessão
+          par: m.par,
           ecpm: g._ecpmW > 0 ? +(g._ecpmSum / g._ecpmW).toFixed(2) : 0,
           // RPS canônico = faturamento ÷ sessões (retorno por sessão)
           rps: m.rps,
@@ -210,12 +213,14 @@ async function handler(req, res) {
       faturamento: kpis.faturamento,
       sessoes: kpis.sessoes,
       conversas: kpis.conversas,
+      impressoes: kpis.impressoes,
     });
     kpis.roi  = kpis.investimento > 0 ? kpis.lucro / kpis.investimento * 100 : 0;
     kpis.roas = mt.roas || 0;
     kpis.sessao_por_conversa_total = mt.sessao_por_lead;
     kpis.rps_sessao_total          = mt.rps;
     kpis.breakeven_total           = mt.breakeven;
+    kpis.par                       = mt.par;
 
     // Esconde país (sigla/nome) quando o elemento ver_pais está bloqueado p/ o usuário.
     const out = PERMS.elementBlocked(req.fullUser, 'ver_pais')

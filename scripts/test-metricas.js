@@ -2,7 +2,7 @@
 // Teste de sanidade do módulo canônico de métricas (src/lib/metricas.js).
 // Casos = exemplos dados pelo cliente em 18/07/2026. Qualquer mudança de fórmula
 // que quebre um caso, este script acusa. Rodar: node scripts/test-metricas.js
-const { derivar, breakevenContraRPS, corBreakeven } = require('../src/lib/metricas');
+const { derivar, breakevenContraRPS, corBreakeven, par } = require('../src/lib/metricas');
 
 let fail = 0;
 function eq(label, got, want) {
@@ -38,6 +38,13 @@ const m3 = derivar({ investimento: 900, faturamento: 1000, sessoes: 500, convers
 eq('breakeven mesmo escopo = inv/fat', m3.breakeven, 0.9);
 eq('rps 1000/500', m3.rps, 2);
 eq('custo_sessao 900/500', m3.custo_sessao, 1.8);
+
+// PAR = impressões GAM ÷ sessões: 25000/5000 = 5.00
+eq('par 25000/5000', par({ impressoes: 25000, sessoes: 5000 }), 5);
+eq('par 3000/1200 → 2.5', par({ impressoes: 3000, sessoes: 1200 }), 2.5);
+eq('par sem sessões → null', par({ impressoes: 100, sessoes: 0 }), null);
+// PAR também sai de derivar (mesma fórmula)
+eq('par via derivar', derivar({ sessoes: 5000, impressoes: 25000 }).par, 5);
 
 // Zeros nunca viram 0/Infinity
 const m4 = derivar({ investimento: 0, faturamento: 0, sessoes: 0, conversas: 0 });

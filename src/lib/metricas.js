@@ -13,6 +13,7 @@
 //   custo_sessao      = investimento ÷ sessões          (custo por visualização)
 //   breakeven         = custo_sessao ÷ rps              (<1 = saudável)
 //   sessao_por_lead   = sessões ÷ conversas iniciadas   (view_content ÷ mensagens Meta)
+//   par               = impressões GAM ÷ sessões        (anúncios exibidos por sessão · def. cliente 19/08/2026)
 // Obs.: no nível onde investimento e faturamento são do MESMO escopo, breakeven
 // reduz a investimento ÷ faturamento (sessões se cancelam) — imune a erro de
 // contagem de sessão. A forma completa importa quando o custo_sessao é de um
@@ -24,7 +25,13 @@ const round = (v, d) => (v === null ? null : +v.toFixed(d));
 // Entradas: SOMAS brutas do período/escopo.
 //   investimento (BRL c/ imposto), faturamento (real, pós-taxa), sessoes
 //   (view_content Meta), conversas (mensagens iniciadas Meta).
-function derivar({ investimento, faturamento, sessoes, conversas }) {
+// PAR = impressões GAM ÷ sessões (view_content) — anúncios exibidos por sessão
+// do site. Único ponto da fórmula; overview e aba Campanhas consomem daqui.
+function par({ impressoes, sessoes }) {
+  return round(div(Number(impressoes) || 0, Number(sessoes) || 0), 2);
+}
+
+function derivar({ investimento, faturamento, sessoes, conversas, impressoes }) {
   const inv = Number(investimento) || 0;
   const fat = Number(faturamento) || 0;
   const ses = Number(sessoes) || 0;
@@ -39,6 +46,7 @@ function derivar({ investimento, faturamento, sessoes, conversas }) {
     custo_sessao: round(custoSessao, 4),
     breakeven: round(div(custoSessao, rps), 4),
     sessao_por_lead: round(div(ses, conv), 2),
+    par: par({ impressoes, sessoes: ses }),
   };
 }
 
@@ -59,4 +67,4 @@ function corBreakeven(be) {
   return 'bad';
 }
 
-module.exports = { derivar, breakevenContraRPS, corBreakeven };
+module.exports = { derivar, breakevenContraRPS, corBreakeven, par };

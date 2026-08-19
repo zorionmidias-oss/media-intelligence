@@ -1465,7 +1465,7 @@
         </div>
 
         <!-- GAM KPI cards -->
-        <div class="g5 anim" style="animation-delay:80ms" id="gam-kpi-row">
+        <div class="g6 anim" style="animation-delay:80ms" id="gam-kpi-row">
           <div class="gam-card" title="Fonte: Google Ad Manager">
             <div class="gam-card-lbl">eCPM <span class="gam-card-badge">GAM</span></div>
             <div class="gam-card-val hideable-value" id="gam-kpi-ecpm">…</div>
@@ -1490,6 +1490,11 @@
             <div class="gam-card-lbl">Impressões <span class="gam-card-badge">GAM</span></div>
             <div class="gam-card-val hideable-value" id="gam-kpi-imp">…</div>
             <div class="gam-card-var" id="gam-kpi-imp-var"></div>
+          </div>
+          <div class="gam-card" title="PAR = Impressões GAM ÷ Sessões (view_content Meta) — anúncios exibidos por sessão do site">
+            <div class="gam-card-lbl">PAR</div>
+            <div class="gam-card-val hideable-value" id="gam-kpi-par">…</div>
+            <div class="gam-card-var" id="gam-kpi-par-var"></div>
           </div>
         </div>
 
@@ -1611,6 +1616,7 @@
                 <label class="col-toggle-item"><input type="checkbox" data-col="ecpm" onchange="toggleCol(this)"> eCPM</label>
                 <label class="col-toggle-item"><input type="checkbox" data-col="rps" onchange="toggleCol(this)"> RPS</label>
                 <label class="col-toggle-item"><input type="checkbox" data-col="sessoes-meta" onchange="toggleCol(this)"> Sessões (Meta)</label>
+                <label class="col-toggle-item"><input type="checkbox" data-col="par" onchange="toggleCol(this)"> PAR</label>
                 <label class="col-toggle-item"><input type="checkbox" data-col="sessao-conv" onchange="toggleCol(this)"> Sessão/Conversa</label>
                 <label class="col-toggle-item"><input type="checkbox" data-col="breakeven" onchange="toggleCol(this)"> Breakeven</label>
                 <label class="col-toggle-item"><input type="checkbox" data-col="inicio" onchange="toggleCol(this)"> Início</label>
@@ -1620,9 +1626,9 @@
           <table id="camp-table">
             <thead><tr>
               <th>UTM</th><th>Domínio</th><th>Investido</th><th>Fat. Real</th><th>Lucro</th><th>ROAS</th>
-              <th class="col-h" data-col="cpc">CPC</th><th class="col-h" data-col="custo-res">Custo/Result.</th><th class="col-h" data-col="resultados">Resultados</th><th class="col-h" data-col="imp-gam">Imp. GAM</th><th class="col-h" data-col="ecpm">eCPM <span title="eCPM atribuído por UTM campaign via relatórios GAM. O eCPM nos KPIs globais (aba GAM) vem de blocos_anuncio e pode divergir, pois agrega todos os blocos independente da campanha." style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="rps">RPS <span title="Retorno por sessão: faturamento real ÷ sessões (view_content Meta)" style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="sessoes-meta">Sessões (Meta)</th><th class="col-h" data-col="sessao-conv">Sessão/Conversa</th><th class="col-h" data-col="breakeven">Breakeven <span title="Custo por sessão ÷ RPS — abaixo de 1 = gastando menos do que ganha" style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="inicio">Início <span title="Primeiro dia em que a campanha teve gasto real" style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-acoes">Ações</th>
+              <th class="col-h" data-col="cpc">CPC</th><th class="col-h" data-col="custo-res">Custo/Result.</th><th class="col-h" data-col="resultados">Resultados</th><th class="col-h" data-col="imp-gam">Imp. GAM</th><th class="col-h" data-col="ecpm">eCPM <span title="eCPM atribuído por UTM campaign via relatórios GAM. O eCPM nos KPIs globais (aba GAM) vem de blocos_anuncio e pode divergir, pois agrega todos os blocos independente da campanha." style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="rps">RPS <span title="Retorno por sessão: faturamento real ÷ sessões (view_content Meta)" style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="sessoes-meta">Sessões (Meta)</th><th class="col-h" data-col="par">PAR <span title="Impressões GAM ÷ sessões (view_content Meta) — anúncios exibidos por sessão do site" style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="sessao-conv">Sessão/Conversa</th><th class="col-h" data-col="breakeven">Breakeven <span title="Custo por sessão ÷ RPS — abaixo de 1 = gastando menos do que ganha" style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="inicio">Início <span title="Primeiro dia em que a campanha teve gasto real" style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-acoes">Ações</th>
             </tr></thead>
-            <tbody id="camp-db-body"><tr><td colspan="13" class="empty">Carregando…</td></tr></tbody>
+            <tbody id="camp-db-body"><tr><td colspan="18" class="empty">Carregando…</td></tr></tbody>
           </table>
           <div class="tbl-foot">
             <span style="font-size:.875rem;color:var(--muted)" id="camp-db-count">—</span>
@@ -4103,6 +4109,8 @@ function renderGamKpis(k){
   setVar('gam-kpi-ctr-var', k.ctr, ant?.ctr);
   set('gam-kpi-imp',  k.impressions!=null?NUM(k.impressions):'—');
   setVar('gam-kpi-imp-var', k.impressions, ant?.impressions);
+  set('gam-kpi-par',  k.par!=null?loc(k.par,2):'—');
+  setVar('gam-kpi-par-var', k.par, ant?.par);
 }
 
 /* ── NETWORKS ── */
@@ -4830,7 +4838,7 @@ async function loadCampaignsDB(tipo){
   const tb=document.getElementById('camp-db-body');
   const ct=document.getElementById('camp-db-count');
   const kpiStrip=document.getElementById('camp-kpis');
-  if(tb)tb.innerHTML='<tr><td colspan="17" class="empty">Carregando…</td></tr>';
+  if(tb)tb.innerHTML='<tr><td colspan="18" class="empty">Carregando…</td></tr>';
   if(kpiStrip)kpiStrip.style.display='none';
   const since=document.getElementById('f-since').value;
   const until=document.getElementById('f-until').value;
@@ -4847,7 +4855,7 @@ async function loadCampaignsDB(tipo){
     renderCampKPIs(d.kpis||{},tipo);
     renderCampTable(S.campRows);
   }catch(e){
-    if(tb)tb.innerHTML=`<tr><td colspan="17" class="empty" style="color:var(--bad)">${esc(e.message)}</td></tr>`;
+    if(tb)tb.innerHTML=`<tr><td colspan="18" class="empty" style="color:var(--bad)">${esc(e.message)}</td></tr>`;
     if(ct)ct.textContent='Erro';
   }
 }
@@ -4940,6 +4948,7 @@ function renderCampTable(rows){
       <td class="mo col-h" data-col="ecpm" data-sort="${r.ecpm||0}">${r.ecpm>0?BRL(r.ecpm):'—'}</td>
       <td class="mo col-h" data-col="rps" data-sort="${r.rps||0}">${r.rps>0?BRL(r.rps):'—'}</td>
       <td class="mo col-h" data-col="sessoes-meta" data-sort="${r.sessoes||0}">${r.sessoes>0?NUM(r.sessoes):'—'}</td>
+      <td class="mo col-h" data-col="par" data-sort="${r.par||0}">${r.par>0?loc(r.par,2):'—'}</td>
       <td class="mo col-h" data-col="sessao-conv" data-sort="${spc!==null&&spc!==undefined?spc:-1}">${spcHtml}</td>
       <td class="mo col-h" data-col="breakeven" data-sort="${be!==null&&be!==undefined?be:-1}">${beHtml}</td>
       <td class="mo col-h" data-col="inicio" data-sort="${r.data_inicio||''}">${inicio}</td>
@@ -4956,6 +4965,9 @@ function renderCampTable(rows){
   const totLuc=totFat-totInv;
   const totSes=rows.reduce((s,r)=>s+(r.sessoes||0),0);
   const totCon=rows.reduce((s,r)=>s+(r.conversas||0),0);
+  const totImp=rows.reduce((s,r)=>s+(r.impressoes_gam||0),0);
+  // PAR total = impressões GAM ÷ sessões das linhas visíveis (nunca média de linhas)
+  const totPar=(totImp>0&&totSes>0)?totImp/totSes:null;
   const totSpc=totSes>0&&totCon>0?totSes/totCon:null;
   const totRps=totSes>0&&totFat>0?totFat/totSes:null;
   // breakeven = custo/sessão ÷ rps (mesmo escopo → totInv/totFat)
@@ -4977,6 +4989,7 @@ function renderCampTable(rows){
     <td class="mo col-h" data-col="ecpm"></td>
     <td class="mo col-h" data-col="rps"><strong>${totRps!==null?BRL(totRps):'—'}</strong></td>
     <td class="mo col-h" data-col="sessoes-meta"><strong>${totSes>0?NUM(totSes):'—'}</strong></td>
+    <td class="mo col-h" data-col="par"><strong>${totPar!==null?loc(totPar,2):'—'}</strong></td>
     <td class="mo col-h" data-col="sessao-conv"><strong>${totSpcHtml}</strong></td>
     <td class="mo col-h" data-col="breakeven"><strong>${bePill(totBe)}</strong></td>
     <td class="mo col-h" data-col="inicio">—</td>
@@ -4991,7 +5004,7 @@ function renderCampTable(rows){
 }
 
 /* ── Column visibility ── */
-const CAMP_COLS=['cpc','custo-res','resultados','imp-gam','ecpm','rps','sessoes-meta','sessao-conv','breakeven','inicio'];
+const CAMP_COLS=['cpc','custo-res','resultados','imp-gam','ecpm','rps','sessoes-meta','par','sessao-conv','breakeven','inicio'];
 const COL_PREFS_KEY='camp_col_prefs';
 function loadColPrefs(){
   try{return JSON.parse(localStorage.getItem(COL_PREFS_KEY)||'{}');}catch(_){return{};}
