@@ -23,6 +23,7 @@ const { dryRunHandler, criarHandler } = require('./src/app/api/campaigns/route')
 const convTemplatesHandler  = require('./src/app/api/conversation-templates/route');
 const adCopiesHandler       = require('./src/app/api/ad-copies-templates/route');
 const intradayHandler       = require('./src/app/api/intraday/route');
+const campanhaIntradayHandler = require('./src/app/api/campanha-intraday/route');
 const orcamentoStatusHandler = require('./src/app/api/orcamento-status/route');
 const { customHandler: relatorioCustomHandler } = require('./src/app/api/relatorios/route');
 const supabase = require('./src/lib/supabase');
@@ -267,6 +268,7 @@ app.get('/api/dashboard', requireAuth, dashboardHandler);
 app.get('/api/reports-gam', requireAuth, reportsGamHandler);
 app.get('/api/gam-status', requireAuth, gamStatusHandler);
 app.get('/api/intraday', requireAuth, intradayHandler);
+app.get('/api/campanha-intraday/:campaignId', requireAuth, campanhaIntradayHandler);
 app.post('/api/relatorios/custom', requireAuth, relatorioCustomHandler);
 
 // ── Contas Meta ──────────────────────────────────────────────────────────────
