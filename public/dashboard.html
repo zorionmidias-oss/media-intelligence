@@ -812,6 +812,11 @@
     .ci-chip{background:var(--sec);border:1px solid var(--border);color:var(--muted);border-radius:.5rem;padding:.3rem .6rem;font-size:.72rem;cursor:pointer;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:all .15s;font-family:inherit}
     .ci-chip:hover{color:var(--fg);border-color:var(--muted)}
     .ci-chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+    /* faixa de totais do dia (GAM exato) no topo do modal intraday */
+    .ci-totais{display:flex;gap:.5rem;flex-wrap:wrap}
+    .ci-stat{flex:1;min-width:92px;background:var(--sec);border:1px solid var(--border);border-radius:.6rem;padding:.5rem .7rem}
+    .ci-stat-l{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:.15rem}
+    .ci-stat-v{font-size:.95rem;font-weight:700;font-variant-numeric:tabular-nums}
 
     /* ── FUNIL ── */
     .funil-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;gap:1rem;flex-wrap:wrap}
@@ -2603,12 +2608,17 @@
     </div>
     <div class="modal-criativos-body">
       <div class="chart-sub" id="ci-sub" style="margin-bottom:.75rem">Hoje vs Ontem · Horário de Brasília</div>
+      <div id="ci-totais-wrap" style="margin-bottom:.9rem">
+        <div style="font-size:.66rem;color:var(--muted);margin-bottom:.35rem">Totais do dia · GAM exato <span style="opacity:.7">(receita/eCPM/ROI/PAR não quebram por hora)</span></div>
+        <div class="ci-totais" id="ci-totais"></div>
+      </div>
+      <div style="font-size:.66rem;color:var(--muted);margin-bottom:.4rem">Por hora · Meta (Hoje vs Ontem)</div>
       <div class="chart-toggles" id="ci-toggles">
-        <button class="ctog on" data-metric="investimento"    onclick="ciSetMetric(this)">Investimento</button>
-        <button class="ctog"    data-metric="resultado"       onclick="ciSetMetric(this)" title="Resultado por hora (bot: sessões · direto: objetivo da campanha)">Resultado</button>
+        <button class="ctog on" data-metric="investimento"   onclick="ciSetMetric(this)">Investimento</button>
+        <button class="ctog"    data-metric="resultado"      onclick="ciSetMetric(this)" title="Resultado por hora (bot: sessões · direto: objetivo da campanha)">Resultado</button>
         <button class="ctog"    data-metric="custo_resultado" onclick="ciSetMetric(this)" title="Investimento ÷ resultado, por hora">Custo/Resultado</button>
-        <button class="ctog"    data-metric="conversas"       onclick="ciSetMetric(this)" title="Conversas por mensagem iniciadas (Meta), por hora">Conversas</button>
-        <button class="ctog"    data-metric="sessoes"         onclick="ciSetMetric(this)" title="Sessões (view_content Meta) por hora">Sessões</button>
+        <button class="ctog"    data-metric="conversas"      onclick="ciSetMetric(this)" title="Conversas por mensagem iniciadas (Meta), por hora">Conversas</button>
+        <button class="ctog"    data-metric="sessoes"        onclick="ciSetMetric(this)" title="Sessões (view_content Meta) por hora">Sessões</button>
       </div>
       <div id="ci-conjuntos" style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.85rem"></div>
       <div style="position:relative;height:300px"><canvas id="ci-canvas"></canvas></div>
@@ -6421,6 +6431,7 @@ async function abrirCampIntraday(campaignId,utm){
   document.getElementById('ci-title').textContent='Intraday — '+(utm||'campanha');
   document.querySelectorAll('#ci-toggles .ctog').forEach(b=>b.classList.toggle('on',b.dataset.metric==='investimento'));
   document.getElementById('ci-conjuntos').innerHTML='';
+  document.getElementById('ci-totais').innerHTML='';
   document.getElementById('modal-camp-intraday').classList.add('on');
   const spinner=document.getElementById('ci-spinner');
   if(spinner)spinner.style.display='';
@@ -6429,6 +6440,7 @@ async function abrirCampIntraday(campaignId,utm){
     const r=await fetch(`/api/campanha-intraday/${encodeURIComponent(campaignId)}`);
     if(!r.ok)throw new Error((await r.json().catch(()=>({}))).error||('HTTP '+r.status));
     _ciData=await r.json();
+    _ciRenderTotais();
     _ciRenderChips();
     _ciRender();
   }catch(e){
@@ -6453,12 +6465,36 @@ function ciSetConj(aid){
   document.querySelectorAll('#ci-conjuntos .ci-chip').forEach(b=>b.classList.toggle('on',b.dataset.aid===aid));
   _ciRender();
 }
+// Rótulo curto do conjunto: só o "V1/V2…" do fim do adset_name (mesma regra do
+// drilldown/expand); cai pro nome completo se não seguir a convenção.
+function _ciShort(name){return (name&&(String(name).match(/\bV\d+$/i)||[])[0])||name||'—';}
 function _ciRenderChips(){
   const box=document.getElementById('ci-conjuntos');
   const conj=(_ciData&&_ciData.conjuntos)||[];
   if(!conj.length){box.innerHTML='';return;}
-  const chip=(aid,label)=>`<button class="ci-chip${aid===_ciConj?' on':''}" data-aid="${esc(aid)}" title="${esc(label)}" onclick="ciSetConj('${esc(aid)}')">${esc(label)}</button>`;
-  box.innerHTML=chip('total','Campanha (total)')+conj.map(c=>chip(c.adset_id,c.adset_name||c.adset_id)).join('');
+  const chip=(aid,label,title)=>`<button class="ci-chip${aid===_ciConj?' on':''}" data-aid="${esc(aid)}" title="${esc(title||label)}" onclick="ciSetConj('${esc(aid)}')">${esc(label)}</button>`;
+  box.innerHTML=chip('total','Campanha (total)')+conj.map(c=>chip(c.adset_id,_ciShort(c.adset_name),c.adset_name||c.adset_id)).join('');
+}
+// Faixa de totais do DIA da campanha (GAM exato de receita_ads). GAM não entrega
+// receita×hora por campanha, então receita/eCPM/ROI/PAR ficam aqui, não no gráfico.
+function _ciRenderTotais(){
+  const box=document.getElementById('ci-totais');
+  if(!box)return;
+  const t=_ciData&&_ciData.totais_dia;
+  if(!t){box.innerHTML='';return;}
+  const hidden=document.body.classList.contains('values-hidden');
+  const money=v=>v==null?'—':(hidden?'••••':BRL(v));
+  const numf=v=>v==null?'—':(hidden?'••':NUM(v));
+  const roiTxt=t.roi==null?'—':(hidden?'••':`${t.roi>=0?'+':''}${loc(t.roi,1)}%`);
+  const roiColor=t.roi==null?'':(t.roi>=0?'var(--color-positive)':'var(--color-negative)');
+  const stat=(l,v,color)=>`<div class="ci-stat"><div class="ci-stat-l">${l}</div><div class="ci-stat-v"${color?` style="color:${color}"`:''}>${v}</div></div>`;
+  box.innerHTML=
+    stat('Investimento',money(t.investimento))+
+    stat('Receita',money(t.receita))+
+    stat('ROI',roiTxt,roiColor)+
+    stat('eCPM',money(t.ecpm))+
+    stat('PAR',t.par==null?'—':(hidden?'••':loc(t.par,2)))+
+    stat('Impressões',numf(t.impressoes));
 }
 function _ciShowMsg(msg){
   if(_ciChart){_ciChart.destroy();_ciChart=null;}
@@ -6475,7 +6511,7 @@ function _ciShowMsg(msg){
 function _ciUpdSub(){
   const sub=document.getElementById('ci-sub');
   if(!sub||!_ciData)return;
-  const conjLabel=_ciConj==='total'?'Campanha':((_ciData.conjuntos||[]).find(c=>c.adset_id===_ciConj)||{}).adset_name||'Conjunto';
+  const conjLabel=_ciConj==='total'?'Campanha':_ciShort(((_ciData.conjuntos||[]).find(c=>c.adset_id===_ciConj)||{}).adset_name)||'Conjunto';
   sub.textContent=`${_ciData.data_hoje||'Hoje'} vs ${_ciData.data_ontem||'Ontem'} · Brasília · ${_CI_LABEL[_ciMetric]||_ciMetric} · ${conjLabel}`;
 }
 function _ciRender(){

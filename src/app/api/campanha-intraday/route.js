@@ -2,7 +2,9 @@
 // Intraday por CAMPANHA (modal do reloginho na aba Campanhas).
 // Meta funnel por hora — investimento, resultado, custo/resultado, conversas, sessões —
 // Hoje vs Ontem no fuso BR, agregado por campanha + quebrado por conjunto.
-// Rápido (só Meta, sem relatório GAM ao vivo). Cache de 60s por campanha.
+// GAM não entrega receita×hora por campanha (CUSTOM_CRITERIA×HOUR é rejeitado pela API),
+// então receita/eCPM/ROI/PAR entram como TOTAL do dia (exato, de receita_ads) em
+// `totais_dia` — uma faixa no topo do modal, não por hora. Cache de 60s por campanha.
 const axios = require('axios');
 const { DateTime } = require('luxon');
 const supabase = require('../../../lib/supabase');
@@ -24,9 +26,9 @@ function spHoraAtual() {
 }
 function minusDays(iso, d) { const [y, m, dd] = iso.split('-').map(Number); return new Date(Date.UTC(y, m - 1, dd - d)).toISOString().slice(0, 10); }
 
-// bucket vazio → estrutura de métricas por hora
+// bucket vazio → estrutura de métricas Meta por hora
 function emptyHour() { return { investimento: 0, resultado: 0, conversas: 0, sessoes: 0 }; }
-// deriva custo/resultado a partir das somas brutas
+// deriva custo/resultado a partir das somas Meta por hora
 function finalizeRows(byHora, horaMax) {
   const out = [];
   for (const [horaStr, m] of Object.entries(byHora)) {
@@ -147,6 +149,42 @@ async function handler(req, res) {
       add(bucket.conj[aid], horaBR);
     }
 
+    // Totais do DIA (hoje) da campanha. GAM não dá receita×hora por campanha, então
+    // receita/eCPM/ROI/PAR entram como total do dia — exatos, de receita_ads (receita
+    // GAM por ad id). ad ids da campanha vêm de meta_entidades (lote de 200 evita o
+    // corte de 1000 do PostgREST). Meta do dia = soma das horas de hoje já agregadas.
+    let recBrutaDia = 0, impDia = 0;
+    try {
+      const { data: entAll } = await supabase.from('meta_entidades')
+        .select('ad_id').eq('campaign_id', campaignId);
+      const adIdsCamp = [...new Set((entAll || []).map(e => String(e.ad_id)))];
+      for (let i = 0; i < adIdsCamp.length; i += 200) {
+        const { data: ra } = await supabase.from('receita_ads')
+          .select('receita_bruta,impressoes').eq('data', dataHoje)
+          .in('ad_id', adIdsCamp.slice(i, i + 200));
+        for (const r of ra || []) { recBrutaDia += Number(r.receita_bruta || 0); impDia += Number(r.impressoes || 0); }
+      }
+    } catch (e) { console.warn('[campanha-intraday] receita_ads read:', e.message); }
+
+    let invDia = 0, resDia = 0, conDia = 0, sesDia = 0;
+    for (const m of Object.values(dias[dataHoje].total)) {
+      invDia += m.investimento; resDia += m.resultado; conDia += m.conversas; sesDia += m.sessoes;
+    }
+    const temGam = recBrutaDia > 0 || impDia > 0;
+    const recLiqDia = +(recBrutaDia * 0.9).toFixed(2);
+    const totais_dia = {
+      investimento:    +invDia.toFixed(2),
+      resultado:       resDia,
+      conversas:       conDia,
+      sessoes:         sesDia,
+      custo_resultado: resDia > 0 ? +(invDia / resDia).toFixed(2) : null,
+      receita:         temGam ? recLiqDia : null,
+      impressoes:      temGam ? impDia : null,
+      ecpm:            temGam && impDia > 0 ? +((recBrutaDia / impDia) * 1000).toFixed(2) : null,
+      roi:             temGam && invDia >= 1 ? +(((recLiqDia - invDia) / invDia) * 100).toFixed(1) : null,
+      par:             temGam && sesDia > 0 ? +(impDia / sesDia).toFixed(2) : null,
+    };
+
     // Conjuntos ordenados por investimento (hoje+ontem) desc
     const conjInvest = {};
     for (const dia of [dataHoje, dataOntem]) {
@@ -167,16 +205,20 @@ async function handler(req, res) {
       };
     }
 
+    const hoje  = finalizeRows(dias[dataHoje].total,  horaAtual);
+    const ontem = finalizeRows(dias[dataOntem].total, null);
+
     const payload = {
       campaign_id: campaignId,
       hora_atual: horaAtual,
       data_hoje: dataHoje,
       data_ontem: dataOntem,
-      hoje:  finalizeRows(dias[dataHoje].total, horaAtual),
-      ontem: finalizeRows(dias[dataOntem].total, null),
+      hoje,
+      ontem,
       conjuntos,
       por_conjunto: porConjunto,
-      sem_dados: rows.length === 0,
+      totais_dia,
+      sem_dados: hoje.length === 0 && ontem.length === 0,
     };
     setCache(cacheKey, payload);
     res.json(payload);
