@@ -1498,6 +1498,30 @@
           </div>
         </div>
 
+        <!-- Meta funnel KPI cards -->
+        <div class="g4 anim" style="animation-delay:90ms" id="meta-kpi-row">
+          <div class="gam-card" title="Sessões (view_content Meta) no período">
+            <div class="gam-card-lbl">Sessões</div>
+            <div class="gam-card-val hideable-value" id="gam-kpi-sessoes">…</div>
+            <div class="gam-card-var" id="gam-kpi-sessoes-var"></div>
+          </div>
+          <div class="gam-card" title="Resultado — bot: view_content · direto: objetivo da campanha">
+            <div class="gam-card-lbl">Resultado</div>
+            <div class="gam-card-val hideable-value" id="gam-kpi-resultado">…</div>
+            <div class="gam-card-var" id="gam-kpi-resultado-var"></div>
+          </div>
+          <div class="gam-card" title="Custo por resultado = investimento ÷ resultado">
+            <div class="gam-card-lbl">Custo/Resultado</div>
+            <div class="gam-card-val hideable-value" id="gam-kpi-custores">…</div>
+            <div class="gam-card-var" id="gam-kpi-custores-var"></div>
+          </div>
+          <div class="gam-card" title="Conversas por mensagem iniciadas (Meta)">
+            <div class="gam-card-lbl">Conversas</div>
+            <div class="gam-card-val hideable-value" id="gam-kpi-conversas">…</div>
+            <div class="gam-card-var" id="gam-kpi-conversas-var"></div>
+          </div>
+        </div>
+
         <div class="card chart-card anim" style="animation-delay:150ms">
           <div class="chart-hd">
             <div>
@@ -4119,6 +4143,14 @@ function renderGamKpis(k){
   setVar('gam-kpi-imp-var', k.impressions, ant?.impressions);
   set('gam-kpi-par',  k.par!=null?loc(k.par,2):'—');
   setVar('gam-kpi-par-var', k.par, ant?.par);
+  set('gam-kpi-sessoes',   k.sessoes!=null?NUM(k.sessoes):'—');
+  setVar('gam-kpi-sessoes-var', k.sessoes, ant?.sessoes);
+  set('gam-kpi-resultado', k.resultado!=null?NUM(k.resultado):'—');
+  setVar('gam-kpi-resultado-var', k.resultado, ant?.resultado);
+  set('gam-kpi-custores',  k.custo_resultado!=null&&k.custo_resultado>0?BRL(k.custo_resultado):'—');
+  setVar('gam-kpi-custores-var', k.custo_resultado, ant?.custo_resultado);
+  set('gam-kpi-conversas', k.conversas!=null?NUM(k.conversas):'—');
+  setVar('gam-kpi-conversas-var', k.conversas, ant?.conversas);
 }
 
 /* ── NETWORKS ── */

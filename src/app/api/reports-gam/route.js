@@ -184,7 +184,7 @@ async function handler(req, res) {
     if (Array.isArray(req.allowedDominios) && (domainId == null || !req.allowedDominios.includes(Number(domainId)))) {
       return res.json({
         fromCache: true,
-        kpis: { ecpm: 0, rps: 0, taxaProgramatica: 0, viewability: 0, cpc: 0, ctr: 0, cliques_gam: 0, faturamento: 0, impressions: 0, anterior: null },
+        kpis: { ecpm: 0, rps: 0, taxaProgramatica: 0, viewability: 0, cpc: 0, ctr: 0, cliques_gam: 0, faturamento: 0, impressions: 0, par: 0, sessoes: 0, resultado: 0, conversas: 0, custo_resultado: 0, anterior: null },
         adUnits: [], advertisers: [], hourly: [], utmCampaigns: [], utmSources: [],
         topUtmCampaign: [], topUtmSource: [], atraso_gam: null,
       });
@@ -210,7 +210,7 @@ async function handler(req, res) {
     const adsQ = () => {
       let q = supabase
         .from('ads_consolidados')
-        .select('viewability,impressoes_gam,cpc_gam,ctr_gam,cliques_gam')
+        .select('viewability,impressoes_gam,cpc_gam,ctr_gam,cliques_gam,valor_gasto,sessoes_meta,resultado,conversas_meta')
         .gte('data', df).lte('data', dt).order('data', { ascending: true }).order('id', { ascending: true });
       if (domainId) q = q.eq('dominio_id', domainId);
       return q;
@@ -294,6 +294,7 @@ async function handler(req, res) {
     let _viewWtSum = 0, _viewWt = 0;
     let _cpcGamWtSum = 0, _cpcGamWt = 0;
     let _cliquesGamTotal = 0, _impGamForCtr = 0;
+    let _sessoes = 0, _resultado = 0, _conversas = 0, _investimento = 0;
     for (const r of adsRows || []) {
       const vw = Number(r.viewability || 0);
       const im = Number(r.impressoes_gam || 0);
@@ -303,6 +304,10 @@ async function handler(req, res) {
       if (cpcG > 0 && clG > 0) { _cpcGamWtSum += cpcG * clG; _cpcGamWt += clG; }
       _cliquesGamTotal += clG;
       _impGamForCtr += im;
+      _sessoes += Number(r.sessoes_meta || 0);
+      _resultado += Number(r.resultado || 0);
+      _conversas += Number(r.conversas_meta || 0);
+      _investimento += Number(r.valor_gasto || 0);
     }
 
     const ecpm = _ecpmWt > 0 ? _ecpmWtSum / _ecpmWt : 0;
@@ -312,6 +317,10 @@ async function handler(req, res) {
     const viewability = _viewWt > 0 ? _viewWtSum / _viewWt : 0;
     const cpc_gam = _cpcGamWt > 0 ? _cpcGamWtSum / _cpcGamWt : 0;
     const ctr_gam = _impGamForCtr > 0 ? (_cliquesGamTotal / _impGamForCtr) * 100 : 0;
+    // Métricas Meta agregadas + derivadas (mesmas fórmulas do gráfico por hora):
+    // PAR = impressões GAM ÷ sessões · custo/resultado = investimento ÷ resultado.
+    const par = totImps > 0 && _sessoes > 0 ? totImps / _sessoes : 0;
+    const custo_resultado = _resultado > 0 ? _investimento / _resultado : 0;
 
     // Aggregate previous period
     let _prevEcpmWtSum = 0, _prevEcpmWt = 0, prevTotImps = 0, prevTotRev = 0;
@@ -365,6 +374,11 @@ async function handler(req, res) {
         cliques_gam: _cliquesGamTotal,
         faturamento: +totRev.toFixed(2),
         impressions: totImps,
+        par: +par.toFixed(2),
+        sessoes: _sessoes,
+        resultado: _resultado,
+        conversas: _conversas,
+        custo_resultado: +custo_resultado.toFixed(4),
         anterior,
       },
       adUnits,
