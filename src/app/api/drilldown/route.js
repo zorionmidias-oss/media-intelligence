@@ -1,9 +1,11 @@
 'use strict';
 const axios = require('axios');
+const { DateTime } = require('luxon');
 const supabase = require('../../../lib/supabase');
 const { getUSDtoBRLByDate } = require('../../../lib/gam');
 const { extractAdUTM, extractTipo } = require('../../../lib/parser');
 const { getResultadoMeta, findAction } = require('../../../services/attribution.service');
+const { converterHoraParaBR } = require('../../../lib/fuso');
 const METRICAS = require('../../../lib/metricas');
 const { hojeBR, diasAtrasBR } = require('../../../lib/datas');
 
@@ -142,6 +144,7 @@ async function handler(req, res) {
               daily_budget: ad.adset.daily_budget ? +(ad.adset.daily_budget / 100).toFixed(2) : null,
               account_id: acc.ad_account_id,
               _token: acc.access_token,
+              _tz: acc.timezone_name || 'America/Sao_Paulo',
               ads: [],
               spend: 0, clicks: 0, cpc: 0, ctr: 0, cpm: 0,
               impressions: 0, results: 0, cost_per_result: 0,
@@ -175,26 +178,45 @@ async function handler(req, res) {
       const token = adset._token;
       const obj = adset.campaign_objective;
 
+      // Fuso: contas ≠ São Paulo (LA/Denver) precisam ser re-bucketed por hora para o
+      // dia BR — senão o total do conjunto fica em dia da conta e diverge da campanha
+      // (ads_consolidados é BR). Conta SP → chamada diária simples (mais leve).
+      const acctTz = adset._tz || 'America/Sao_Paulo';
+      const rebucket = acctTz !== 'America/Sao_Paulo';
+      const sinceReq = rebucket
+        ? DateTime.fromISO(since, { zone: 'America/Sao_Paulo' }).minus({ days: 1 }).toISODate()
+        : since;
+      const adsetParams = rebucket
+        ? { access_token: token, fields: 'spend,clicks,impressions,actions', time_range: JSON.stringify({ since: sinceReq, until }), time_increment: 1, breakdowns: 'hourly_stats_aggregated_by_advertiser_time_zone', limit: 500 }
+        : { access_token: token, fields: 'spend,clicks,impressions,ctr,cpc,cpm,actions,cost_per_action_type', time_range: JSON.stringify({ since, until }) };
+
       insightJobs.push(
-        axios.get(`${META_BASE}/${aid}/insights`, {
-          params: {
-            access_token: token,
-            fields: 'spend,clicks,impressions,ctr,cpc,cpm,actions,cost_per_action_type',
-            time_range: JSON.stringify({ since, until }),
-          },
-          timeout: 12000,
-        }).then(r => {
-          const d = r.data?.data?.[0];
+        axios.get(`${META_BASE}/${aid}/insights`, { params: adsetParams, timeout: 15000 }).then(r => {
+          const rowsI = r.data?.data || [];
+          let d;
+          if (rebucket) {
+            // soma horas re-bucketed para o dia BR dentro de [since, until]
+            let spend = 0, clicks = 0, impressions = 0; const asum = {};
+            for (const row of rowsI) {
+              const conv = converterHoraParaBR(row.date_start, row.hourly_stats_aggregated_by_advertiser_time_zone, acctTz);
+              if (!conv || conv.dataBR < since || conv.dataBR > until) continue;
+              spend += +row.spend || 0; clicks += +row.clicks || 0; impressions += +row.impressions || 0;
+              for (const a of row.actions || []) asum[a.action_type] = (asum[a.action_type] || 0) + (+a.value || 0);
+            }
+            d = { spend, clicks, impressions, actions: Object.entries(asum).map(([action_type, value]) => ({ action_type, value })) };
+          } else {
+            d = rowsI[0];
+          }
           if (!d) return;
           const ra = pickResult(d.actions, obj);
-          const cpa = d.cost_per_action_type?.find(c => c.action_type === resultActionType(obj));
+          const cpa = !rebucket ? d.cost_per_action_type?.find(c => c.action_type === resultActionType(obj)) : null;
           adset.spend       = +d.spend || 0;
           adset.clicks      = +d.clicks || 0;
-          adset.cpc         = +d.cpc || 0;
-          adset.ctr         = +d.ctr || 0;
-          adset.cpm         = +d.cpm || 0;
           adset.impressions = +d.impressions || 0;
           adset.results     = ra ? +ra.value : 0;
+          adset.cpc         = rebucket ? (adset.clicks > 0 ? +(adset.spend / adset.clicks).toFixed(4) : 0) : (+d.cpc || 0);
+          adset.ctr         = rebucket ? (adset.impressions > 0 ? +((adset.clicks / adset.impressions) * 100).toFixed(4) : 0) : (+d.ctr || 0);
+          adset.cpm         = rebucket ? (adset.impressions > 0 ? +((adset.spend / adset.impressions) * 1000).toFixed(4) : 0) : (+d.cpm || 0);
           adset.cost_per_result = cpa ? +cpa.value : (adset.results > 0 ? adset.spend / adset.results : 0);
           // Otimização rápida: resultado = view_content (funil bot) / objetivo (direto),
           // conversas = mensagens iniciadas. Mesma lógica do sync (ads_consolidados).

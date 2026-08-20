@@ -7,6 +7,7 @@ const { fetchGAMReport, fetchGAMFunnelsByUTM, fetchGAMHourlyByDomain, fetchGAMUt
 const { getUSDtoBRL, getUSDtoBRLByDate } = require('../services/exchange.service');
 const { findAction, getResults, OBJECTIVE_ACTION_MAP, getResultadoMeta } = require('../services/attribution.service');
 const { extractDomainPrefix, extractAdUTM, extractTipo, groupAdsByUTM, extractPaisSigla, extractNicho, resolveCountry } = require('./parser');
+const { converterHoraParaBR } = require('./fuso');
 
 const BASE = 'https://graph.facebook.com/v19.0';
 const AD_FIELDS = 'ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name,spend,impressions,inline_link_clicks,outbound_clicks,clicks,ctr,cpc,actions,objective,optimization_goal';
@@ -253,30 +254,8 @@ async function fetchMetaAdsForSync(dateRange) {
   return { ads: allAds, failedBMs, failedAccounts };
 }
 
-// Returns the UTC offset (in whole hours) for an IANA timezone on a given date.
-// e.g. 'America/Los_Angeles' on a PDT day → -7; 'America/Sao_Paulo' in BRT → -3
-function tzOffsetHours(dateStr, timezone) {
-  const ref = new Date(`${dateStr}T12:00:00Z`); // noon UTC on that date
-  const localHour = parseInt(
-    new Intl.DateTimeFormat('en-US', { timeZone: timezone, hour: '2-digit', hour12: false })
-      .formatToParts(ref)
-      .find(p => p.type === 'hour')?.value ?? '12',
-    10
-  );
-  return (localHour === 24 ? 0 : localHour) - 12;
-}
-
-// Converte uma linha horária da Meta para { dataBR, horaBR } no fuso Brasil.
-// horaField: "HH:MM:SS - HH:MM:SS" (breakdown horário Meta) — usa só HH:MM:SS inicial.
-// Resolve DST automaticamente via IANA timezone (luxon) — nunca offset fixo.
-function converterHoraParaBR(dateStr, horaField, accountTz) {
-  const hh = (horaField || '').slice(0, 8);
-  if (!hh || hh.length < 5) return null;
-  const dt = DateTime.fromISO(`${dateStr}T${hh}`, { zone: accountTz });
-  if (!dt.isValid) return null;
-  const dtBR = dt.setZone('America/Sao_Paulo');
-  return { dataBR: dtBR.toISODate(), horaBR: dtBR.hour };
-}
+// converterHoraParaBR / tzOffsetHours agora vivem em ./fuso (compartilhado com
+// o drilldown e a intraday por campanha) — importado no topo.
 
 // ─────────────────────────────────────────────
 // Fetch real currency and timezone_name from Meta API and update meta_accounts.
