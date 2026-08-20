@@ -60,10 +60,10 @@ async function handler(req, res) {
           .eq('dominio_id', did)
           .order('hora', { ascending: true });
 
-      // Meta: investimento por domínio (dados_hora populado pelo fetchAndSaveHourly)
+      // Meta: investimento + actions por hora por domínio (dados_hora do fetchAndSaveHourly)
       const buildMetaQ = (data) =>
         supabase.from('dados_hora')
-          .select('hora,investimento_brl')
+          .select('hora,investimento_brl,resultado,conversas,sessoes')
           .eq('data', data)
           .eq('dominio_id', did)
           .order('hora', { ascending: true });
@@ -75,9 +75,7 @@ async function handler(req, res) {
 
       const mapDom = (gamRows, metaRows) => {
         const gamByHora = Object.fromEntries((gamRows || []).map(r => [r.hora, r]));
-        const metaByHora = Object.fromEntries(
-          (metaRows || []).map(r => [r.hora, +(r.investimento_brl || 0)])
-        );
+        const metaByHora = Object.fromEntries((metaRows || []).map(r => [r.hora, r]));
         // União das horas: GAM (receita) ∪ Meta (investimento). Sem isso, horas
         // com gasto Meta mas sem receita GAM não apareceriam.
         const horas = [...new Set([
@@ -86,16 +84,26 @@ async function handler(req, res) {
         ])].sort((a, b) => a - b);
         return horas.map(hora => {
           const g = gamByHora[hora];
+          const meta = metaByHora[hora];
           const rec = +(((g?.receita || 0) * 0.9)).toFixed(4);
-          const inv = +(metaByHora[hora] || 0).toFixed(4);
+          const inv = +((meta?.investimento_brl) || 0).toFixed(4);
+          const imp = g?.impressoes || 0;
+          const resultado = meta?.resultado || 0;
+          const conversas = meta?.conversas || 0;
+          const sessoes   = meta?.sessoes   || 0;
           const roi = inv >= 1 ? +((rec - inv) / inv * 100).toFixed(4) : null;
           return {
             hora,
-            receita:      rec,
-            ecpm:         +(g?.ecpm || 0),
-            investimento: inv,
+            receita:         rec,
+            ecpm:            +(g?.ecpm || 0),
+            investimento:    inv,
             roi,
-            impressoes:   g?.impressoes || 0,
+            impressoes:      imp,
+            resultado,
+            conversas,
+            sessoes,
+            custo_resultado: resultado > 0 ? +(inv / resultado).toFixed(4) : null,
+            par:             sessoes > 0 ? +(imp / sessoes).toFixed(2) : null,
           };
         });
       };
@@ -116,7 +124,7 @@ async function handler(req, res) {
 
     const buildQuery = (data) =>
       supabase.from('dados_hora')
-        .select('hora,receita_bruta,receita_liquida,ecpm,investimento_brl,roi,impressoes')
+        .select('hora,receita_bruta,receita_liquida,ecpm,investimento_brl,roi,impressoes,resultado,conversas,sessoes')
         .eq('data', data)
         .eq('dominio_id', did)
         .order('hora', { ascending: true });
@@ -129,13 +137,22 @@ async function handler(req, res) {
     const mapRows = (rows) => (rows || []).map(r => {
       const inv = +(r.investimento_brl || 0);
       const roi = r.roi != null && inv >= 1 ? +(r.roi) : null;
+      const imp = r.impressoes || 0;
+      const resultado = r.resultado || 0;
+      const conversas = r.conversas || 0;
+      const sessoes   = r.sessoes   || 0;
       return {
-        hora:         r.hora,
-        receita:      +(r.receita_liquida ?? (r.receita_bruta * 0.9) ?? 0),
-        ecpm:         +(r.ecpm || 0),
-        investimento: inv,
+        hora:            r.hora,
+        receita:         +(r.receita_liquida ?? (r.receita_bruta * 0.9) ?? 0),
+        ecpm:            +(r.ecpm || 0),
+        investimento:    inv,
         roi,
-        impressoes:   r.impressoes || 0,
+        impressoes:      imp,
+        resultado,
+        conversas,
+        sessoes,
+        custo_resultado: resultado > 0 ? +(inv / resultado).toFixed(4) : null,
+        par:             sessoes > 0 ? +(imp / sessoes).toFixed(2) : null,
       };
     });
 

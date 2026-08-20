@@ -1526,11 +1526,16 @@
             <span id="intraday-spinner" style="font-size:.75rem;color:var(--muted);display:none">Carregando…</span>
           </div>
           <div class="chart-toggles" id="intraday-toggles">
-            <button class="ctog on" data-metric="receita"      onclick="intradaySetMetric(this)">Receita</button>
-            <button class="ctog"    data-metric="ecpm"         onclick="intradaySetMetric(this)">eCPM</button>
-            <button class="ctog"    data-metric="investimento" onclick="intradaySetMetric(this)">Investimento</button>
-            <button class="ctog"    data-metric="roi"          onclick="intradaySetMetric(this)">ROI</button>
-            <button class="ctog"    data-metric="impressoes"   onclick="intradaySetMetric(this)">Impressões</button>
+            <button class="ctog on" data-metric="receita"        onclick="intradaySetMetric(this)">Receita</button>
+            <button class="ctog"    data-metric="ecpm"           onclick="intradaySetMetric(this)">eCPM</button>
+            <button class="ctog"    data-metric="investimento"   onclick="intradaySetMetric(this)">Investimento</button>
+            <button class="ctog"    data-metric="roi"            onclick="intradaySetMetric(this)">ROI</button>
+            <button class="ctog"    data-metric="impressoes"     onclick="intradaySetMetric(this)">Impressões</button>
+            <button class="ctog"    data-metric="resultado"      onclick="intradaySetMetric(this)" title="Resultado por hora (bot: view_content · direto: objetivo da campanha)">Resultado</button>
+            <button class="ctog"    data-metric="custo_resultado" onclick="intradaySetMetric(this)" title="Investimento ÷ resultado, por hora">Custo/Resultado</button>
+            <button class="ctog"    data-metric="conversas"      onclick="intradaySetMetric(this)" title="Conversas por mensagem iniciadas (Meta), por hora">Conversas</button>
+            <button class="ctog"    data-metric="sessoes"        onclick="intradaySetMetric(this)" title="Sessões (view_content Meta) por hora">Sessões</button>
+            <button class="ctog"    data-metric="par"            onclick="intradaySetMetric(this)" title="Impressões GAM ÷ sessões, por hora">PAR</button>
           </div>
           <div style="position:relative;height:260px">
             <canvas id="intraday-canvas"></canvas>
@@ -3926,12 +3931,13 @@ function renderIntradayChart(data,metric){
   const hojeMap=Object.fromEntries(hoje.map(h=>[h.hora,h]));
   const ontemMap=Object.fromEntries(ontem.map(h=>[h.hora,h]));
 
-  const metaLabel={receita:'Receita',ecpm:'eCPM',investimento:'Investimento',roi:'ROI',impressoes:'Impressões'}[metric]||metric;
+  const metaLabel={receita:'Receita',ecpm:'eCPM',investimento:'Investimento',roi:'ROI',impressoes:'Impressões',resultado:'Resultado',custo_resultado:'Custo/Resultado',conversas:'Conversas iniciadas',sessoes:'Sessões',par:'PAR'}[metric]||metric;
+  const isCount=(m)=>m==='impressoes'||m==='resultado'||m==='conversas'||m==='sessoes';
 
   function fmt(v){
     if(v===null||v===undefined)return null;
     if(metric==='roi')return +v.toFixed(2);
-    if(metric==='impressoes')return Math.round(+v);
+    if(isCount(metric))return Math.round(+v);
     return +v.toFixed(metric==='ecpm'?4:2);
   }
 
@@ -3955,8 +3961,9 @@ function renderIntradayChart(data,metric){
     if(v===null||v===undefined)return '—';
     if(document.body.classList.contains('values-hidden'))return '••••';
     if(metric==='roi')return `${v>=0?'+':''}${loc(v,1)}%`;
-    if(metric==='ecpm')return `R$${loc(v,2)}`;
-    if(metric==='impressoes')return NUM(v);
+    if(metric==='ecpm'||metric==='custo_resultado')return `R$${loc(v,2)}`;
+    if(metric==='par')return loc(v,2);
+    if(isCount(metric))return NUM(v);
     return BRL(v);
   };
 
@@ -3964,8 +3971,9 @@ function renderIntradayChart(data,metric){
     if(v===null)return '';
     if(document.body.classList.contains('values-hidden'))return '••';
     if(metric==='roi')return `${v>=0?'+':''}${loc(v,0)}%`;
-    if(metric==='ecpm')return `R$${loc(v,1)}`;
-    if(metric==='impressoes')return NUM(v);
+    if(metric==='ecpm'||metric==='custo_resultado')return `R$${loc(v,1)}`;
+    if(metric==='par')return loc(v,1);
+    if(isCount(metric))return NUM(v);
     return BRL(v);
   };
 

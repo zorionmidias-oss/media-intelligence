@@ -403,6 +403,87 @@ async function fetchMetaHourlySpend(date) {
   return { _global_: globalHoraMap, _complete: complete, ...prefixHoraMap };
 }
 
+// Busca ACTIONS por hora (resultado / conversas iniciadas / sessões view_content),
+// SEPARADO do spend de propósito: se a Meta rejeitar actions+breakdown horário numa
+// conta grande (400/1504038), só as métricas daquela conta somem no ciclo — o
+// investimento (fetchMetaHourlySpend) nunca é afetado. Contas em fuso ≠ SP são
+// re-bucketed por hora para o dia BR, igual ao spend.
+async function fetchMetaHourlyActions(date) {
+  const apiInfo = await refreshMetaAccountInfo().catch(() => ({}));
+  const { data: accounts } = await supabase
+    .from('meta_accounts')
+    .select('ad_account_id,access_token')
+    .eq('ativo', true);
+
+  const globalMap = {};  // hora → { resultado, conversas, sessoes }
+  const prefixMap = {};  // prefix → hora → { resultado, conversas, sessoes }
+  let complete = true;
+
+  const addTo = (map, hora, r, c, s) => {
+    const o = map[hora] || (map[hora] = { resultado: 0, conversas: 0, sessoes: 0 });
+    o.resultado += r; o.conversas += c; o.sessoes += s;
+  };
+
+  for (const acc of accounts || []) {
+    const { ad_account_id, access_token: token } = acc;
+    if (!token) continue;
+    const accountId = String(ad_account_id).startsWith('act_') ? String(ad_account_id) : `act_${ad_account_id}`;
+    const accountTz = apiInfo[accountId]?.timezone_name || 'America/Sao_Paulo';
+    const needsRebucket = accountTz !== 'America/Sao_Paulo';
+    const hrSince = needsRebucket
+      ? DateTime.fromISO(date, { zone: 'America/Sao_Paulo' }).minus({ days: 1 }).toISODate()
+      : date;
+    const hrUntil = date;
+
+    try {
+      let nextUrl = `${BASE}/${accountId}/insights`;
+      let params = {
+        access_token: token,
+        level: 'campaign',
+        fields: 'campaign_name,objective,optimization_goal,actions,clicks,date_start',
+        time_range: JSON.stringify({ since: hrSince, until: hrUntil }),
+        time_increment: 1,
+        breakdowns: 'hourly_stats_aggregated_by_advertiser_time_zone',
+        limit: 500,
+      };
+      while (nextUrl) {
+        const res = await axios.get(nextUrl, { params, timeout: 30000 });
+        params = undefined;
+        for (const row of res.data?.data || []) {
+          const hStr = row.hourly_stats_aggregated_by_advertiser_time_zone || '';
+          const conv = converterHoraParaBR(row.date_start || date, hStr, accountTz);
+          if (!conv || conv.dataBR !== date) continue;
+          const { horaBR } = conv;
+          const tipo = extractTipo(row.campaign_name || '');
+          // resultado é tipo-dependente (bot=view_content · direto=objetivo) — mesma
+          // regra canônica do sync diário (getResultadoMeta)
+          const resultado = getResultadoMeta(
+            { actions: row.actions, objective: row.objective, optimization_goal: row.optimization_goal, clicks: row.clicks },
+            tipo,
+          );
+          const conversas = findAction(row.actions, ['onsite_conversion.messaging_conversation_started_7d', 'onsite_conversion.messaging_first_reply']);
+          const sessoes = findAction(row.actions, ['view_content', 'omni_view_content', 'offsite_conversion.fb_pixel_view_content']);
+          if (!resultado && !conversas && !sessoes) continue;
+          addTo(globalMap, horaBR, resultado, conversas, sessoes);
+          const prefix = extractDomainPrefix(row.campaign_name || '');
+          if (prefix) {
+            if (!prefixMap[prefix]) prefixMap[prefix] = {};
+            addTo(prefixMap[prefix], horaBR, resultado, conversas, sessoes);
+          }
+        }
+        nextUrl = res.data?.paging?.next || null;
+      }
+    } catch (e) {
+      complete = false;
+      console.warn(`[hourly Meta actions ${accountId}] falhou (métricas desta conta ausentes no ciclo):`, e.response?.data?.error?.message || e.message);
+    }
+  }
+
+  const totRes = Object.values(globalMap).reduce((a, o) => a + o.resultado, 0);
+  console.log(`[hourly Meta actions] ${date}: ${Object.keys(globalMap).length} horas, Σresultado=${totRes}, complete=${complete}, prefixos:[${Object.keys(prefixMap).join(', ')}]`);
+  return { global: globalMap, byPrefix: prefixMap, complete };
+}
+
 // Fetch GAM + Meta hourly data for one date and upsert into dados_hora.
 async function fetchAndSaveHourly(date) {
   const { data: dominios } = await supabase
@@ -410,13 +491,16 @@ async function fetchAndSaveHourly(date) {
     .select('id,prefixo_campanha,prefixo_ad_unit,codigo_pedido_gam')
     .eq('ativo', true);
 
-  const [gamByDom, metaHoraMap] = await Promise.all([
+  const [gamByDom, metaHoraMap, metaActions] = await Promise.all([
     fetchGAMHourlyByDomain({ since: date, until: date, dominios }).catch(e => { console.warn('[hourly GAM]', e.message); return {}; }),
     fetchMetaHourlySpend(date).catch(e => { console.warn('[hourly Meta]', e.message); return { _global_: {}, _complete: false }; }),
+    fetchMetaHourlyActions(date).catch(e => { console.warn('[hourly Meta actions]', e.message); return { global: {}, byPrefix: {}, complete: false }; }),
   ]);
 
   const gamRows = gamByDom[0] || [];
   const globalHoraMap = metaHoraMap._global_ || {};
+  const metricsGlobal = metaActions.global || {};
+  const metricsByPrefix = metaActions.byPrefix || {};
 
   const gamMap = {};
   for (const h of gamRows) gamMap[h.hora] = h;
@@ -433,13 +517,29 @@ async function fetchAndSaveHourly(date) {
   const metaComplete   = metaHoraMap._complete !== false;
   const metaHourlyEmpty = Object.keys(globalHoraMap).length === 0;
   const preserveMissing = metaHourlyEmpty || !metaComplete;
+  // Métricas Meta (actions) têm ciclo de completude próprio: se a query de actions
+  // falhou/veio parcial, NÃO zerar resultado/conversas/sessões — preservar o já
+  // gravado (mesma proteção do investimento, estendida às novas colunas).
+  const metricsEmpty    = Object.keys(metricsGlobal).length === 0;
+  const preserveMetrics = metricsEmpty || metaActions.complete === false;
+
   const existingInvGlobal = {};
-  if (preserveMissing) {
+  const existingMetGlobal = {};   // hora → { resultado, conversas, sessoes }
+  const existingMetDom = {};      // `${domId}|${hora}` → { resultado, conversas, sessoes }
+  if (preserveMissing || preserveMetrics) {
     const { data: prev } = await supabase.from('dados_hora')
-      .select('hora,investimento_brl')
+      .select('hora,investimento_brl,resultado,conversas,sessoes')
       .eq('data', date).eq('dominio_id', 0);
-    for (const p of prev || []) existingInvGlobal[p.hora] = +(p.investimento_brl || 0);
-    console.warn(`[hourly] ${date}: Meta horária ${metaHourlyEmpty ? 'vazia' : 'parcial'} — preservando investimento existente nas horas ausentes (sem zerar)`);
+    for (const p of prev || []) {
+      existingInvGlobal[p.hora] = +(p.investimento_brl || 0);
+      existingMetGlobal[p.hora] = { resultado: p.resultado || 0, conversas: p.conversas || 0, sessoes: p.sessoes || 0 };
+    }
+    const { data: prevDom } = await supabase.from('dados_hora')
+      .select('dominio_id,hora,resultado,conversas,sessoes')
+      .eq('data', date).neq('dominio_id', 0);
+    for (const p of prevDom || []) existingMetDom[`${p.dominio_id}|${p.hora}`] = { resultado: p.resultado || 0, conversas: p.conversas || 0, sessoes: p.sessoes || 0 };
+    if (preserveMissing) console.warn(`[hourly] ${date}: Meta horária ${metaHourlyEmpty ? 'vazia' : 'parcial'} — preservando investimento existente nas horas ausentes (sem zerar)`);
+    if (preserveMetrics) console.warn(`[hourly] ${date}: Meta actions ${metricsEmpty ? 'vazia' : 'parcial'} — preservando resultado/conversas/sessões existentes nas horas ausentes`);
   }
 
   const rows = [];
@@ -452,9 +552,14 @@ async function fetchAndSaveHourly(date) {
       : preserveMissing
         ? +(existingInvGlobal[hora] || 0).toFixed(4)
         : 0;
+    // Métricas Meta (actions): presente → usa; ausente → preserva (se parcial) ou 0.
+    const mg = metricsGlobal[hora];
+    const resultado = mg ? mg.resultado : (preserveMetrics ? (existingMetGlobal[hora]?.resultado || 0) : 0);
+    const conversas = mg ? mg.conversas : (preserveMetrics ? (existingMetGlobal[hora]?.conversas || 0) : 0);
+    const sessoes   = mg ? mg.sessoes   : (preserveMetrics ? (existingMetGlobal[hora]?.sessoes   || 0) : 0);
     const rec = gam?.receita || 0;
     const imp = gam?.impressoes || 0;
-    if (rec === 0 && inv === 0 && imp === 0) continue;
+    if (rec === 0 && inv === 0 && imp === 0 && resultado === 0 && conversas === 0 && sessoes === 0) continue;
     const ecpm = gam?.ecpm || (imp > 0 ? +((rec / imp) * 1000).toFixed(4) : 0);
     const recLiq = rec * 0.9;
     // Threshold: investimento < R$1 pode ser artefato de distribuição horária — ROI nulo nesses casos
@@ -465,6 +570,7 @@ async function fetchAndSaveHourly(date) {
       impressoes:       imp,
       ecpm:             +ecpm.toFixed(4),
       investimento_brl: inv,
+      resultado, conversas, sessoes,
       roi,
       atualizado_em:    new Date().toISOString(),
     });
@@ -476,18 +582,32 @@ async function fetchAndSaveHourly(date) {
   for (const d of dominios || []) {
     if (d.prefixo_campanha) domByPrefix[d.prefixo_campanha.toUpperCase()] = d.id;
   }
-  for (const [prefix, horaMap] of Object.entries(metaHoraMap)) {
-    if (prefix === '_global_') continue;
+  // União dos prefixos/horas de spend (metaHoraMap) e de actions (metricsByPrefix).
+  const domPrefixes = new Set();
+  for (const p of Object.keys(metaHoraMap)) {
+    if (p === '_global_' || p === '_complete') continue;
+    if (domByPrefix[p.toUpperCase()]) domPrefixes.add(p);
+  }
+  for (const p of Object.keys(metricsByPrefix)) {
+    if (domByPrefix[p.toUpperCase()]) domPrefixes.add(p);
+  }
+  for (const prefix of domPrefixes) {
     const domId = domByPrefix[prefix.toUpperCase()];
-    if (!domId) continue; // prefixo sem domínio cadastrado — ignora
-    for (const [horaStr, spend] of Object.entries(horaMap)) {
-      const hora = Number(horaStr);
-      const inv = +spend.toFixed(4);
-      if (inv <= 0) continue;
+    const spendHoras = metaHoraMap[prefix] || {};
+    const metricHoras = metricsByPrefix[prefix] || {};
+    const horas = new Set([...Object.keys(spendHoras), ...Object.keys(metricHoras)].map(Number));
+    for (const hora of horas) {
+      const inv = +((spendHoras[hora] || 0)).toFixed(4);
+      // actions ausentes desta hora → preserva o existente (se parcial) senão 0.
+      const m = metricHoras[hora]
+        || (preserveMetrics ? existingMetDom[`${domId}|${hora}`] : null)
+        || { resultado: 0, conversas: 0, sessoes: 0 };
+      if (inv <= 0 && !m.resultado && !m.conversas && !m.sessoes) continue;
       rows.push({
         data: date, hora, dominio_id: domId,
         receita_bruta: 0, impressoes: 0, ecpm: 0,
         investimento_brl: inv,
+        resultado: m.resultado, conversas: m.conversas, sessoes: m.sessoes,
         roi: 0,
         atualizado_em: new Date().toISOString(),
       });
