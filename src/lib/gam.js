@@ -188,8 +188,8 @@ async function pollAndDownload(token, networkCode, jobId) {
   return parseCSV(csvText).rows;
 }
 
-async function fetchGAMReport(dateRange) {
-  const networkCode = NETWORK_CODE;
+async function fetchGAMReport(dateRange, networkCodeArg) {
+  const networkCode = networkCodeArg || NETWORK_CODE;
   if (!networkCode) throw new Error('GOOGLE_ADM_NETWORK_CODE not configured');
 
   const { since, until } = dateRange || defaultDateRange();
@@ -583,14 +583,15 @@ async function fetchGAMHourly({ since, until, domain, adUnitPrefix } = {}) {
 }
 
 // Agrega linhas brutas do relatório horário (AD_UNIT_NAME × HOUR) em até 24 buckets.
-// prefix: filtra ad units por prefixo (vazio/null = todas → agregado global).
-function _aggregateHourlyRows(rows, rate, prefix) {
-  const pfx = prefix ? String(prefix).toLowerCase() : '';
+// key: filtra ad units. exact=false (default) → prefixo (GAM-1); exact=true → nome
+// EXATO do bloco filho (GAM-2). key vazio/null = todas → agregado global.
+function _aggregateHourlyRows(rows, rate, key, exact) {
+  const k = key ? String(key).toLowerCase() : '';
   const hourMap = {};
 
   for (const row of rows) {
     const adUnit = row['Dimension.AD_UNIT_NAME'] || row['AD_UNIT_NAME'] || '';
-    if (pfx && !adUnit.toLowerCase().startsWith(pfx)) continue;
+    if (k) { const au = adUnit.toLowerCase(); if (exact ? au !== k : !au.startsWith(k)) continue; }
 
     const horaRaw = row['Dimension.HOUR'] || row['HOUR'] || '0';
     const hora = parseInt(horaRaw, 10);
@@ -643,54 +644,67 @@ function _domainAdUnitPrefix(d) {
 // Roda UM job horário e bucketiza por domínio + global numa única passada.
 // dominios: [{ id, prefixo_ad_unit, codigo_pedido_gam }]
 // Retorna { 0: [horasGlobais], <dominio_id>: [horas], ... }
+// Roda o relatório horário AD_UNIT_NAME × HOUR numa rede e devolve as linhas brutas.
+async function _runHourlyReport(networkCode, dates) {
+  const token = await getAccessToken();
+  const xml = wrapEnvelope(soapHeader(networkCode), `
+    <runReportJob xmlns="https://www.google.com/apis/ads/publisher/${GAM_VERSION}">
+      <reportJob>
+        <reportQuery>
+          <dimensions>AD_UNIT_NAME</dimensions>
+          <dimensions>HOUR</dimensions>
+          <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS</columns>
+          <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_UNFILLED_IMPRESSIONS</columns>
+          <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE</columns>
+          <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM</columns>
+          <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_CTR</columns>
+          <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS</columns>
+          <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_CPC</columns>
+          <startDate>${dateToXML(dates.since)}</startDate>
+          <endDate>${dateToXML(dates.until)}</endDate>
+          <dateRangeType>CUSTOM_DATE</dateRangeType>
+        </reportQuery>
+      </reportJob>
+    </runReportJob>`);
+  const runResp = await soapCall(token, xml);
+  const jobId = extractTag(runResp, 'id');
+  if (!jobId) { console.warn('[GAM hourly/dom] sem jobId:', runResp.slice(0, 500)); return []; }
+  return pollAndDownload(token, networkCode, jobId);
+}
+
+// report_hora por domínio, ciente das duas redes (aditivo):
+//   GAM-1 (rede primária): global(dominio_id=0) + domínios gam_fonte=1 por PREFIXO.
+//   GAM-2 (GAM2_NETWORK_CODE): domínios gam_fonte=2 por NOME EXATO do bloco filho.
+// O global(0) segue só GAM-1 — o GAM-2 é per-domínio (não infla o "todos" do overview).
 async function fetchGAMHourlyByDomain({ since, until, dominios } = {}) {
-  const networkCode = NETWORK_CODE;
-  if (!networkCode) return {};
+  if (!NETWORK_CODE) return {};
   const dates = { since: since || defaultDateRange().since, until: until || defaultDateRange().until };
+  const rate = await getUSDtoBRL().catch(() => 1);
+  const doms = dominios || [];
+  const out = {};
 
+  // GAM-1 (rede atual) — comportamento inalterado
   try {
-    const [token, rate] = await Promise.all([getAccessToken(), getUSDtoBRL()]);
-
-    const xml = wrapEnvelope(soapHeader(networkCode), `
-      <runReportJob xmlns="https://www.google.com/apis/ads/publisher/${GAM_VERSION}">
-        <reportJob>
-          <reportQuery>
-            <dimensions>AD_UNIT_NAME</dimensions>
-            <dimensions>HOUR</dimensions>
-            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS</columns>
-            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_UNFILLED_IMPRESSIONS</columns>
-            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE</columns>
-            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM</columns>
-            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_CTR</columns>
-            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS</columns>
-            <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_CPC</columns>
-            <startDate>${dateToXML(dates.since)}</startDate>
-            <endDate>${dateToXML(dates.until)}</endDate>
-            <dateRangeType>CUSTOM_DATE</dateRangeType>
-          </reportQuery>
-        </reportJob>
-      </runReportJob>`);
-
-    const runResp = await soapCall(token, xml);
-    const jobId = extractTag(runResp, 'id');
-    if (!jobId) {
-      console.warn('[GAM hourly/dom] no jobId — runResp:', runResp.slice(0, 800));
-      return {};
-    }
-
-    const rows = await pollAndDownload(token, networkCode, jobId);
-
-    const out = { 0: _aggregateHourlyRows(rows, rate, '') };
-    for (const d of dominios || []) {
+    const rows1 = await _runHourlyReport(NETWORK_CODE, dates);
+    out[0] = _aggregateHourlyRows(rows1, rate, '');
+    for (const d of doms) {
+      if ((d.gam_fonte || 1) !== 1) continue;
       const pfx = _domainAdUnitPrefix(d);
-      if (!pfx) continue;
-      out[d.id] = _aggregateHourlyRows(rows, rate, pfx);
+      if (pfx) out[d.id] = _aggregateHourlyRows(rows1, rate, pfx);
     }
-    return out;
-  } catch (e) {
-    console.warn('[GAM fetchHourlyByDomain]', e.message);
-    return {};
+  } catch (e) { console.warn('[GAM fetchHourlyByDomain/GAM-1]', e.message); }
+
+  // GAM-2 (rede nova) — match por nome exato do bloco filho
+  const GAM2_NC = process.env.GAM2_NETWORK_CODE;
+  const gam2 = doms.filter(d => (d.gam_fonte || 1) === 2 && d.ad_unit_filho);
+  if (GAM2_NC && gam2.length) {
+    try {
+      const rows2 = await _runHourlyReport(GAM2_NC, dates);
+      for (const d of gam2) out[d.id] = _aggregateHourlyRows(rows2, rate, d.ad_unit_filho, true);
+    } catch (e) { console.warn('[GAM fetchHourlyByDomain/GAM-2]', e.message); }
   }
+
+  return out;
 }
 
 // ─── fetchGAMUtmCampaigns ────────────────────────────────────────────────────
@@ -1039,4 +1053,40 @@ async function fetchGAMBotoesIndependente({ since, until, filtroOrigem, filtroPa
   }
 }
 
-module.exports = { fetchGAMReport, fetchGAMAdvertisers, discoverGAMNetworks, fetchGAMFunnelsByUTM, fetchGAMHourly, fetchGAMHourlyByDomain, fetchGAMUtmCampaigns, fetchGAMUtmSources, fetchGAMBlocosFunil, fetchGAMBotoesIndependente, getUSDtoBRL, getUSDtoBRLByDate };
+// Diagnóstico: lista ad units (blocos) de uma rede com receita/impressões no período.
+// Serve pra (1) validar que a service account acessa a rede e (2) descobrir o nome
+// exato do bloco FILHO ao configurar um domínio GAM-2 (gam_fonte=2, ad_unit_filho).
+async function fetchGAMAdUnitsRaw({ networkCode, since, until } = {}) {
+  const nc = networkCode || NETWORK_CODE;
+  if (!nc) return [];
+  const dates = { since: since || defaultDateRange().since, until: until || defaultDateRange().until };
+  const [token, rate] = await Promise.all([getAccessToken(), getUSDtoBRL()]);
+  const xml = wrapEnvelope(soapHeader(nc), `
+    <runReportJob xmlns="https://www.google.com/apis/ads/publisher/${GAM_VERSION}">
+      <reportJob>
+        <reportQuery>
+          <dimensions>AD_UNIT_NAME</dimensions>
+          <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS</columns>
+          <columns>AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE</columns>
+          <startDate>${dateToXML(dates.since)}</startDate>
+          <endDate>${dateToXML(dates.until)}</endDate>
+          <dateRangeType>CUSTOM_DATE</dateRangeType>
+        </reportQuery>
+      </reportJob>
+    </runReportJob>`);
+  const runResp = await soapCall(token, xml);
+  const jobId = extractTag(runResp, 'id');
+  if (!jobId) { console.warn('[GAM adUnits] sem jobId:', runResp.slice(0, 500)); return []; }
+  const rows = await pollAndDownload(token, nc, jobId);
+  const map = {};
+  for (const row of rows) {
+    const adUnit = row['Dimension.AD_UNIT_NAME'] || row['AD_UNIT_NAME'] || '(sem nome)';
+    const imp = Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_IMPRESSIONS'] || 0);
+    const rev = (Number(row['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE'] || row['AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE'] || 0) / 1_000_000) * rate;
+    if (!map[adUnit]) map[adUnit] = { ad_unit: adUnit, impressoes: 0, receita: 0 };
+    map[adUnit].impressoes += imp; map[adUnit].receita += rev;
+  }
+  return Object.values(map).map(m => ({ ...m, receita: +m.receita.toFixed(2) })).sort((a, b) => b.receita - a.receita);
+}
+
+module.exports = { fetchGAMReport, fetchGAMAdvertisers, discoverGAMNetworks, fetchGAMFunnelsByUTM, fetchGAMHourly, fetchGAMHourlyByDomain, fetchGAMUtmCampaigns, fetchGAMUtmSources, fetchGAMBlocosFunil, fetchGAMBotoesIndependente, fetchGAMAdUnitsRaw, getUSDtoBRL, getUSDtoBRLByDate };

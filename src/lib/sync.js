@@ -467,7 +467,7 @@ async function fetchMetaHourlyActions(date) {
 async function fetchAndSaveHourly(date) {
   const { data: dominios } = await supabase
     .from('dominios')
-    .select('id,prefixo_campanha,prefixo_ad_unit,codigo_pedido_gam')
+    .select('id,prefixo_campanha,prefixo_ad_unit,codigo_pedido_gam,gam_fonte,ad_unit_filho')
     .eq('ativo', true);
 
   const [gamByDom, metaHoraMap, metaActions] = await Promise.all([
@@ -658,6 +658,42 @@ function mergeGamEntries(entries) {
   return out;
 }
 
+// Mescla o byDay de OUTRA rede GAM (ex.: GAM-2 novo) no base, por dia×utm. Os ad ids
+// são disjuntos entre redes (um anúncio vive num domínio → uma rede), então na prática
+// só adiciona chaves novas; se a mesma (dia,utm) existir nas duas, combina ponderado
+// via mergeGamEntries. Aditivo — não altera o cruzamento por id do GAM-1.
+function mergeByDay(base, extra) {
+  for (const [dia, utmMap] of Object.entries(extra || {})) {
+    if (!base[dia]) base[dia] = {};
+    for (const [utm, g] of Object.entries(utmMap)) {
+      base[dia][utm] = base[dia][utm] ? mergeGamEntries([base[dia][utm], g]) : g;
+    }
+  }
+}
+
+// Casa um ad unit (bloco) do GAM ao domínio, ciente da rede de origem.
+//   isGam2=true  (ad unit veio da rede nova): match por NOME EXATO do bloco filho;
+//                sem match, cai no único domínio GAM-2 (se houver 1) — ex.: "Ad
+//                Exchange Display" do próprio network — senão descarta (nunca GAM-1).
+//   isGam2=false (rede legado): PREFIXO do codigo_pedido_gam ("MKU-AdX"→"mku_"),
+//                fallback 1º domínio GAM-1 (comportamento inalterado).
+function matchDomainByAdUnit(unitName, dominios, isGam2) {
+  const u = String(unitName || '').toLowerCase();
+  if (isGam2) {
+    const g2 = dominios.filter(d => (d.gam_fonte || 1) === 2 && d.ad_unit_filho);
+    for (const d of g2) if (u === String(d.ad_unit_filho).toLowerCase()) return d.id;
+    return g2.length === 1 ? g2[0].id : null;
+  }
+  for (const d of dominios) {
+    if ((d.gam_fonte || 1) === 1 && d.codigo_pedido_gam) {
+      const pfx = d.codigo_pedido_gam.split('-')[0].toLowerCase() + '_';
+      if (u.startsWith(pfx)) return d.id;
+    }
+  }
+  const firstG1 = dominios.find(d => (d.gam_fonte || 1) === 1) || dominios[0];
+  return firstG1 ? firstG1.id : null;
+}
+
 // ── Dimensão meta_entidades: hierarquia por id (ad → conjunto → campanha → página) ──
 // Chave de cruzamento é SEMPRE id; nome é só rótulo de exibição. page_id é resolvido
 // incrementalmente (apenas ads ainda sem page_id na dimensão) via batch `?ids=` na
@@ -762,7 +798,7 @@ async function syncAll(dateRange) {
     // Load active domains from Supabase
     const { data: dominios, error: domErr } = await supabase
       .from('dominios')
-      .select('id,nome,prefixo_campanha,codigo_pedido_gam,prefixo_ad_unit')
+      .select('id,nome,prefixo_campanha,codigo_pedido_gam,prefixo_ad_unit,gam_fonte,ad_unit_filho')
       .eq('ativo', true);
 
     // Always refresh Meta account info from API so moedaMap never uses stale DB values
@@ -790,12 +826,22 @@ async function syncAll(dateRange) {
       domainByPrefix[d.prefixo_campanha.toUpperCase()] = d;
     }
 
-    // Fetch Meta ads, GAM report, GAM UTM funnels — all in parallel
-    const [metaRes, gamReport, gamFunnels] = await Promise.all([
+    // GAM-2 (rede nova): só ativa se GAM2_NETWORK_CODE estiver setado. Mesma service
+    // account, network code diferente; cruzamento por id (utm_campaign=ad_id) igual.
+    const GAM2_NC = process.env.GAM2_NETWORK_CODE;
+
+    // Fetch Meta ads, GAM report, GAM UTM funnels (rede 1 + rede 2) — all in parallel
+    const [metaRes, gamReport, gamFunnels, gamFunnels2, gamReport2] = await Promise.all([
       // failedAccounts: null = não sabemos o que falhou → a poda não roda (fail-safe)
       fetchMetaAdsForSync(dr).catch(e => { console.error('[sync] Meta:', e.message); return { ads: [], failedBMs: [`fetch geral: ${e.message}`], failedAccounts: null }; }),
       fetchGAMReport(dr).catch(e => { console.error('[sync] GAM report:', e.message); return null; }),
       fetchGAMFunnelsByUTM(null, dr).catch(e => { console.error('[sync] GAM UTM:', e.message); return { campaigns: [] }; }),
+      GAM2_NC
+        ? fetchGAMFunnelsByUTM(GAM2_NC, dr).catch(e => { console.warn('[sync] GAM-2 UTM:', e.message); return { byDay: {} }; })
+        : Promise.resolve({ byDay: {} }),
+      GAM2_NC
+        ? fetchGAMReport(dr, GAM2_NC).catch(e => { console.warn('[sync] GAM-2 report:', e.message); return null; })
+        : Promise.resolve(null),
     ]);
 
     const metaAds = metaRes.ads;
@@ -813,6 +859,15 @@ async function syncAll(dateRange) {
     // ontem+hoje no dash, com status "success"). Ver merge antes do upsert.
     const gamFunnelsOk = Object.keys(gamByDay).length > 0;
     const gamReportOk = Object.keys(gamReport?.adUnitsByDay || {}).length > 0;
+
+    // Merge da rede nova (GAM-2) no byDay — DEPOIS do gamFunnelsOk (o guard de outage
+    // segue baseado na rede primária/GAM-1). ad ids disjuntos por rede → sem dupla
+    // contagem; o cruzamento por id a jusante trata GAM-1+GAM-2 de forma transparente.
+    if (GAM2_NC && gamFunnels2?.byDay && Object.keys(gamFunnels2.byDay).length) {
+      const nEntradas = Object.values(gamFunnels2.byDay).reduce((s, u) => s + Object.keys(u).length, 0);
+      mergeByDay(gamByDay, gamFunnels2.byDay);
+      console.log(`[sync] GAM-2 (${GAM2_NC}): ${nEntradas} entradas dia×utm mescladas no byDay`);
+    }
 
     // ── Process Meta ads ──────────────────────────
     const pendingPrefixes = new Map(); // prefix → example campaign name
@@ -918,18 +973,22 @@ async function syncAll(dateRange) {
 
     // ── Build viewability map: date|domainId → viewability% (from GAM adUnitsByDay) ──
     const adUnitsByDay = gamReport?.adUnitsByDay || {};
+    // Merge dos ad units da rede nova (GAM-2) — nomes distintos por rede, sem overlap.
+    // gam2Units guarda a origem (rede) pra o match não jogar bloco do GAM-2 num GAM-1.
+    const gam2Units = new Set();
+    if (gamReport2?.adUnitsByDay) {
+      for (const [dia, unitMap] of Object.entries(gamReport2.adUnitsByDay)) {
+        if (!adUnitsByDay[dia]) adUnitsByDay[dia] = {};
+        Object.assign(adUnitsByDay[dia], unitMap);
+        for (const un of Object.keys(unitMap)) gam2Units.add(un);
+      }
+    }
     const viewByDomainDay = {};
     for (const [dayDate, unitMap] of Object.entries(adUnitsByDay)) {
       const domTotals = {}; // domainId → { viewable, measurable }
       for (const [unitName, u] of Object.entries(unitMap)) {
-        let domainId = dominios[0].id;
-        const unitLower = unitName.toLowerCase();
-        for (const d of dominios) {
-          if (d.codigo_pedido_gam) {
-            const pfx = d.codigo_pedido_gam.split('-')[0].toLowerCase() + '_';
-            if (unitLower.startsWith(pfx)) { domainId = d.id; break; }
-          }
-        }
+        const domainId = matchDomainByAdUnit(unitName, dominios, gam2Units.has(unitName));
+        if (domainId == null) continue;
         if (!domTotals[domainId]) domTotals[domainId] = { v: 0, m: 0 };
         domTotals[domainId].v += u.viewable || 0;
         domTotals[domainId].m += u.measurable || 0;
@@ -1297,15 +1356,9 @@ async function syncAll(dateRange) {
       for (const [dayDate, unitMap] of Object.entries(adUnitsByDay)) {
         const blocosRows = [];
         for (const [unitName, u] of Object.entries(unitMap)) {
-          // Match domain by codigo_pedido_gam prefix: "MKU-AdX" → "mku_"
-          let domainId = dominios[0].id;
-          const unitLower = unitName.toLowerCase();
-          for (const d of dominios) {
-            if (d.codigo_pedido_gam) {
-              const prefix = d.codigo_pedido_gam.split('-')[0].toLowerCase() + '_';
-              if (unitLower.startsWith(prefix)) { domainId = d.id; break; }
-            }
-          }
+          // Domínio do bloco: nome EXATO (GAM-2) ou prefixo do codigo_pedido_gam (GAM-1)
+          const domainId = matchDomainByAdUnit(unitName, dominios, gam2Units.has(unitName));
+          if (domainId == null) continue;
           const dayImp = u.impressions || 0;
           const dayRev = u.revenue || 0;
           const dayEcpm = dayImp > 0 ? (dayRev / dayImp) * 1000 : 0;
