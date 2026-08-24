@@ -26,6 +26,7 @@ const intradayHandler       = require('./src/app/api/intraday/route');
 const campanhaIntradayHandler = require('./src/app/api/campanha-intraday/route');
 const orcamentoStatusHandler = require('./src/app/api/orcamento-status/route');
 const { customHandler: relatorioCustomHandler } = require('./src/app/api/relatorios/route');
+const diagnosticoHandler = require('./src/app/api/diagnostico/route');
 const supabase = require('./src/lib/supabase');
 const { syncAll, fetchAndSaveHourly, syncPaginas } = require('./src/lib/sync');
 const { resolveCountry, extractAdUTM } = require('./src/lib/parser');
@@ -268,6 +269,7 @@ app.get('/api/dashboard', requireAuth, dashboardHandler);
 app.get('/api/reports-gam', requireAuth, reportsGamHandler);
 app.get('/api/gam-status', requireAuth, gamStatusHandler);
 app.get('/api/intraday', requireAuth, intradayHandler);
+app.get('/api/diagnostico', requireAuth, diagnosticoHandler);
 app.get('/api/campanha-intraday/:campaignId', requireAuth, campanhaIntradayHandler);
 app.post('/api/relatorios/custom', requireAuth, relatorioCustomHandler);
 

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Análise de Funil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F7F8FA;--card:#fff;--line:#E5E7EB;--ink:#111827;--mut:#6B7280;--mut2:#9CA3AF;
+--grn:#059669;--grn2:#047857;--grnbg:#ECFDF5;--blue:#2563EB;--red:#DC2626;--redbg:#FEF2F2;
+--amb:#D97706;--ambbg:#FFFBEB}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:13px;-webkit-font-smoothing:antialiased}
+.m{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+.wrap{max-width:1200px;margin:0 auto;padding:22px}
+.hd{display:flex;justify-content:space-between;gap:20px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:17px 20px;margin-bottom:14px}
+.hd h1{margin:0 0 5px;font-size:23px;font-weight:800;letter-spacing:-.025em}
+.meta{font-size:11.5px;color:var(--mut);line-height:1.8}
+.vb{font-size:11px;letter-spacing:.06em;padding:6px 13px;border-radius:14px;font-weight:700;text-transform:uppercase;display:inline-block;margin-bottom:7px;background:var(--redbg);color:var(--red)}
+.vd{font-size:11.5px;color:var(--mut);max-width:220px;margin:0;line-height:1.5;text-align:right}
+h2{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin:0 0 13px;font-weight:700}
+h2 span{text-transform:none;letter-spacing:0;color:var(--mut2);font-weight:400;margin-left:7px}
+.grid{display:grid;grid-template-columns:1.32fr 1fr;gap:14px;align-items:start}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px}
+
+/* ====== FUNIL ====== */
+svg{display:block;width:100%;height:auto;overflow:visible}
+.s-name{font:600 13px 'Inter';fill:#fff}
+.s-val{font:700 14px 'JetBrains Mono';fill:#fff}
+.conv-pill{font:600 11px 'Inter';fill:#374151}
+.conv-fx{font:700 11px 'JetBrains Mono'}
+.leak-big{font:800 13px 'Inter';fill:#B91C1C}
+.leak-sm{font:600 10px 'Inter';fill:#DC2626}
+.brace{font:600 11.5px 'Inter';fill:#6B7280}
+
+/* ====== PAINEL DIREITO ====== */
+.goal{background:linear-gradient(135deg,#065F46,#047857);border-radius:12px;padding:18px 20px;color:#fff;margin-bottom:14px}
+.goal .lb{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;opacity:.8;font-weight:600}
+.goal .row{display:flex;align-items:baseline;gap:12px;margin-top:6px}
+.goal .now{font:800 30px 'JetBrains Mono';letter-spacing:-.02em}
+.goal .arr{opacity:.7;font-size:20px}
+.goal .tgt{font:800 30px 'JetBrains Mono';color:#6EE7B7}
+.goal .gap{margin-top:8px;font-size:12px;opacity:.92;line-height:1.5}
+
+.sec-t{font-size:12px;font-weight:700;color:var(--ink);margin:0 0 9px;display:flex;align-items:center;gap:7px}
+.sec-t .ico{width:16px;height:16px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:#fff}
+
+.fix{border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin-bottom:9px;position:relative;overflow:hidden}
+.fix::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+.fix.p1::before{background:var(--red)}.fix.p2::before{background:var(--amb)}.fix.p3::before{background:var(--amb)}
+.fix .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.fix .nm{font-size:13.5px;font-weight:700}
+.fix .imp{font:700 12px 'JetBrains Mono';padding:3px 9px;border-radius:12px}
+.fix.p1 .imp{background:var(--redbg);color:var(--red)}
+.fix.p2 .imp,.fix.p3 .imp{background:var(--ambbg);color:var(--amb)}
+.fix p{margin:0;font-size:12px;color:var(--mut);line-height:1.55}
+.fix .win{margin-top:7px;font:600 11.5px 'JetBrains Mono';color:var(--grn2);background:var(--grnbg);border-radius:6px;padding:6px 9px}
+
+.leakbox{background:var(--redbg);border:1px solid #FCA5A5;border-radius:10px;padding:14px 16px;margin-bottom:14px}
+.leakbox .hl{font:800 22px 'JetBrains Mono';color:var(--red);letter-spacing:-.02em}
+.leakbox .sub{font-size:12px;color:#991B1B;margin-top:2px;line-height:1.5}
+.leakbox .sub b{color:#7F1D1D}
+
+.valid{font-family:'JetBrains Mono';font-size:10.5px;color:var(--mut);background:#F9FAFB;border:1px solid var(--line);border-radius:8px;padding:9px 12px;margin-top:6px}
+.valid b{color:var(--grn)}
+/* metricas cruas */
+.mgroup{margin-bottom:18px}
+.mgroup:last-child{margin-bottom:0}
+.gtitle{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut2);font-weight:700;margin-bottom:9px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.mgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.mc{background:#F9FAFB;border:1px solid var(--line);border-radius:8px;padding:10px 11px;display:flex;flex-direction:column;gap:5px}
+.mc .ml{font-size:10.5px;color:var(--mut);line-height:1.3}
+.mc .mv{font:700 15px 'JetBrains Mono';color:var(--ink);letter-spacing:-.01em}
+@media(max-width:900px){.mgrid{grid-template-columns:repeat(3,1fr)}}
+</style></head><body>
+<div class="wrap">
+
+  <div class="hd">
+    <div>
+      <h1>noluthandombhelefb</h1>
+      <div class="meta">mkuker.com · gancho E12 · África do Sul · Bot · 3º dia<br>
+      Investiu R$ 54,65 · Voltou R$ 28,77</div>
+    </div>
+    <div style="text-align:right">
+      <span class="vb">Última chance</span>
+      <p class="vd">Está dando prejuízo. Se não melhorar até amanhã, desligar.</p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- ================= FUNIL ================= -->
+    <div class="card">
+      <h2>O caminho do dinheiro <span>de cima (o que você paga) até embaixo (o que volta)</span></h2>
+      <svg viewBox="0 0 560 640">
+        <defs>
+          <linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#10B981"/><stop offset="1" stop-color="#047857"/></linearGradient>
+        </defs>
+
+        <!-- ETAPAS: centro x=230. bordas afunilam. -->
+        <!-- 1 investimento -->
+        <path d="M40,16 L420,16 L406,66 L54,66 Z" fill="url(#g)"/>
+        <text x="230" y="39" text-anchor="middle" class="s-name">Investimento</text>
+        <text x="230" y="57" text-anchor="middle" class="s-val">R$ 54,65</text>
+        <!-- conv 1->2 -->
+        <text x="230" y="86" text-anchor="middle" class="conv-pill">quanto do anúncio virou clique · <tspan class="conv-fx" fill="#D97706">ok</tspan></text>
+
+        <!-- 2 cliques -->
+        <path d="M56,96 L404,96 L392,146 L68,146 Z" fill="url(#g)" opacity=".95"/>
+        <text x="230" y="119" text-anchor="middle" class="s-name">Cliques no anúncio</text>
+        <text x="230" y="137" text-anchor="middle" class="s-val">787</text>
+        <!-- conv 2->3 -->
+        <text x="230" y="166" text-anchor="middle" class="conv-pill">quantos mandaram mensagem · <tspan class="conv-fx" fill="#059669">bom</tspan></text>
+
+        <!-- 3 mensagens -->
+        <path d="M70,176 L390,176 L378,226 L82,226 Z" fill="url(#g)" opacity=".9"/>
+        <text x="230" y="199" text-anchor="middle" class="s-name">Mandaram mensagem</text>
+        <text x="230" y="217" text-anchor="middle" class="s-val">365</text>
+        <!-- conv 3->4 -->
+        <text x="230" y="246" text-anchor="middle" class="conv-pill">quantos clicaram no link do bot · <tspan class="conv-fx" fill="#D97706">−18%</tspan></text>
+
+        <!-- 4 cliques no bot -->
+        <path d="M84,256 L376,256 L364,306 L96,306 Z" fill="url(#g)" opacity=".85"/>
+        <text x="230" y="279" text-anchor="middle" class="s-name">Clicaram no link (bot)</text>
+        <text x="230" y="297" text-anchor="middle" class="s-val">392</text>
+
+        <!-- LEAK entre bot e sessao -->
+        <text x="230" y="326" text-anchor="middle" class="conv-pill">chegaram no blog</text>
+        <!-- estreitamento visivel -->
+        <path d="M96,336 L364,336 L300,386 L160,386 Z" fill="url(#g)" opacity=".8"/>
+        <!-- setas de vazamento -->
+        <path d="M96,336 L160,386 L150,384 C120,380 104,362 100,340 Z" fill="#FCA5A5"/>
+        <path d="M364,336 L300,386 L310,384 C340,380 356,362 360,340 Z" fill="#FCA5A5"/>
+        <text x="55" y="360" text-anchor="middle" class="leak-big">−40%</text>
+        <text x="55" y="374" text-anchor="middle" class="leak-sm">vazou aqui</text>
+        <text x="230" y="367" text-anchor="middle" class="s-name" font-size="12">226 chegaram</text>
+
+        <!-- 5 sessoes -->
+        <text x="230" y="406" text-anchor="middle" class="conv-pill">quantas vezes cada um voltou · <tspan class="conv-fx" fill="#059669">bom</tspan></text>
+        <path d="M120,416 L340,416 L328,466 L132,466 Z" fill="url(#g)" opacity=".9"/>
+        <text x="230" y="439" text-anchor="middle" class="s-name">Sessões no blog</text>
+        <text x="230" y="457" text-anchor="middle" class="s-val">365</text>
+
+        <!-- conv 5->6 GARGALO -->
+        <text x="230" y="486" text-anchor="middle" class="conv-pill" fill="#DC2626" font-weight="700">quantos anúncios cada sessão abriu</text>
+
+        <!-- 6 impressoes — degrau que NAO alarga -->
+        <path d="M132,496 L328,496 L316,546 L144,546 Z" fill="#DC2626" opacity=".9"/>
+        <path d="M40,496 L420,496 L406,546 L54,546 Z" fill="none" stroke="#DC2626" stroke-width="1.5" stroke-dasharray="6 5" opacity=".5"/>
+        <text x="230" y="519" text-anchor="middle" class="s-name">Anúncios abertos</text>
+        <text x="230" y="537" text-anchor="middle" class="s-val">369</text>
+        <text x="474" y="516" text-anchor="middle" class="leak-sm" font-size="9">linha tracejada =</text>
+        <text x="474" y="528" text-anchor="middle" class="leak-sm" font-size="9">o que deveria ser</text>
+        <text x="474" y="540" text-anchor="middle" class="leak-sm" font-size="9">(~1.100)</text>
+
+        <!-- conv 6->7 -->
+        <text x="230" y="566" text-anchor="middle" class="conv-pill">quanto cada anúncio rendeu · <tspan class="conv-fx" fill="#059669">ok</tspan></text>
+
+        <!-- 7 receita -->
+        <path d="M150,576 L310,576 L230,626 Z" fill="url(#g)"/>
+        <text x="230" y="598" text-anchor="middle" class="s-name" font-size="12">Receita</text>
+        <text x="230" y="615" text-anchor="middle" class="s-val" font-size="13">R$ 28,77</text>
+      </svg>
+    </div>
+
+    <!-- ================= PAINEL ================= -->
+    <div>
+      <div class="goal">
+        <div class="lb">Onde está e onde queremos chegar</div>
+        <div class="row"><span class="now">0,53x</span><span class="arr">→</span><span class="tgt">2,00x</span></div>
+        <div class="gap">Hoje cada R$ 1,00 investido volta R$ 0,53. Para bater 2,0x, a receita precisa <b>quase quadruplicar</b> — e dá, porque o problema está concentrado em dois pontos, não espalhado.</div>
+      </div>
+
+      <div class="leakbox">
+        <div class="sec-t"><span class="ico" style="background:var(--red)">▼</span> Principal vazamento</div>
+        <div class="hl">40% do dinheiro some antes do blog</div>
+        <div class="sub">De cada 10 pessoas que clicam e você paga, <b>4 nunca chegam a abrir o site</b>. É clique pago e perdido. Causa provável: o navegador que abre dentro do Messenger no Android trava o carregamento.</div>
+      </div>
+
+      <div class="sec-t"><span class="ico" style="background:var(--grn2)">↑</span> O que melhorar para chegar em 2,0x</div>
+
+      <div class="fix p1">
+        <div class="top"><span class="nm">1. Anúncios por sessão</span><span class="imp">vale +85% do ROAS</span></div>
+        <p>Cada visita ao blog está abrindo <b>só 1 anúncio</b>. Deveria abrir 3. É de longe o maior buraco — a página quase não mostra propaganda para quem você trouxe.</p>
+        <div class="win">consertando isto: 0,53x → 1,57x · sozinho já quase chega</div>
+      </div>
+
+      <div class="fix p2">
+        <div class="top"><span class="nm">2. Chegada ao blog</span><span class="imp">vale +40%</span></div>
+        <p>Recuperar parte dos 40% que vazam na ponte entre o clique e o site. Cada ponto que você salva aqui é lead que você <b>já pagou</b>.</p>
+        <div class="win">de 60% para 85% de chegada: 0,53x → 0,75x</div>
+      </div>
+
+      <div class="fix p3">
+        <div class="top"><span class="nm">3. Custo do lead</span><span class="imp">vale +20%</span></div>
+        <p>O lead deste conjunto está 21% mais caro que a média da conta. Ajuste de público ou criativo no topo.</p>
+        <div class="win">no custo médio da conta: ganho de ~20% no ROAS</div>
+      </div>
+
+      <div class="valid">conferência · 1,08 × 1,01 × R$86,62 × 0,9 ÷ (1000 × R$0,162) = <b>0,53x</b> = o ROAS real ✓</div>
+    </div>
+  </div>
+
+  <!-- ================= MÉTRICAS CRUAS ================= -->
+  <div class="card" style="margin-top:14px">
+    <h2>Todas as métricas do conjunto <span>números do dia, sem análise</span></h2>
+
+    <div class="mgroup">
+      <div class="gtitle">Meta / anúncio</div>
+      <div class="mgrid">
+        <div class="mc"><span class="ml">Investimento</span><span class="mv">R$ 54,65</span></div>
+        <div class="mc"><span class="ml">Impressões</span><span class="mv">30.812</span></div>
+        <div class="mc"><span class="ml">Alcance</span><span class="mv">21.604</span></div>
+        <div class="mc"><span class="ml">Frequência</span><span class="mv">1,43</span></div>
+        <div class="mc"><span class="ml">CPM</span><span class="mv">R$ 1,77</span></div>
+        <div class="mc"><span class="ml">Cliques no link</span><span class="mv">787</span></div>
+        <div class="mc"><span class="ml">CTR</span><span class="mv">2,55%</span></div>
+        <div class="mc"><span class="ml">CPC</span><span class="mv">R$ 0,069</span></div>
+        <div class="mc"><span class="ml">Orçamento/dia</span><span class="mv">R$ 60,00</span></div>
+      </div>
+    </div>
+
+    <div class="mgroup">
+      <div class="gtitle">Bot / Messenger</div>
+      <div class="mgrid">
+        <div class="mc"><span class="ml">Mensagens (Meta)</span><span class="mv">365</span></div>
+        <div class="mc"><span class="ml">Leads únicos (bot)</span><span class="mv">157</span></div>
+        <div class="mc"><span class="ml">Cliques → mensagem</span><span class="mv">46,4%</span></div>
+        <div class="mc"><span class="ml">Custo por mensagem</span><span class="mv">R$ 0,150</span></div>
+        <div class="mc"><span class="ml">Custo por lead único</span><span class="mv">R$ 0,348</span></div>
+        <div class="mc"><span class="ml">Cliques no bot</span><span class="mv">392</span></div>
+        <div class="mc"><span class="ml">Cliques no bot / lead</span><span class="mv">2,50</span></div>
+      </div>
+    </div>
+
+    <div class="mgroup">
+      <div class="gtitle">Blog / sessões</div>
+      <div class="mgrid">
+        <div class="mc"><span class="ml">Sessões</span><span class="mv">365</span></div>
+        <div class="mc"><span class="ml">Leads com sessão</span><span class="mv">143</span></div>
+        <div class="mc"><span class="ml">Chegada ao blog</span><span class="mv">91,1%</span></div>
+        <div class="mc"><span class="ml">Vazamento clique→sessão</span><span class="mv">14 leads</span></div>
+        <div class="mc"><span class="ml">Sessões por lead (Meta)</span><span class="mv">1,00</span></div>
+        <div class="mc"><span class="ml">Sessões por lead (bot)</span><span class="mv">2,32</span></div>
+      </div>
+    </div>
+
+    <div class="mgroup">
+      <div class="gtitle">GAM / monetização</div>
+      <div class="mgrid">
+        <div class="mc"><span class="ml">Impressões GAM</span><span class="mv">369</span></div>
+        <div class="mc"><span class="ml">PAR (imp. / sessão)</span><span class="mv">1,01</span></div>
+        <div class="mc"><span class="ml">eCPM</span><span class="mv">R$ 86,62</span></div>
+        <div class="mc"><span class="ml">RPS (receita / sessão)</span><span class="mv">R$ 0,079</span></div>
+        <div class="mc"><span class="ml">CPS (custo / sessão)</span><span class="mv">R$ 0,150</span></div>
+        <div class="mc"><span class="ml">Cliques GAM</span><span class="mv">4</span></div>
+      </div>
+    </div>
+
+    <div class="mgroup">
+      <div class="gtitle">Resultado</div>
+      <div class="mgrid">
+        <div class="mc"><span class="ml">Receita</span><span class="mv">R$ 28,77</span></div>
+        <div class="mc"><span class="ml">Lucro</span><span class="mv">−R$ 25,88</span></div>
+        <div class="mc"><span class="ml">ROAS</span><span class="mv">0,53x</span></div>
+        <div class="mc"><span class="ml">Margem por sessão</span><span class="mv">−R$ 0,071</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>

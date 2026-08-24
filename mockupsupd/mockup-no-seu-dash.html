@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diagnóstico dentro do 2Junior's</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F7F8FA;--card:#fff;--line:#E5E7EB;--ink:#111827;--mut:#6B7280;--mut2:#9CA3AF;
+--grn:#059669;--grn-bg:#ECFDF5;--blue:#2563EB;--red:#DC2626;--red-bg:#FEF2F2;
+--amb:#D97706;--amb-bg:#FFFBEB;--grn2:#047857;--side:232px;--top:56px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:13px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.m{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+/* sidebar */
+.side{position:fixed;left:0;top:0;bottom:0;width:var(--side);background:#fff;border-right:1px solid var(--line);z-index:30;display:flex;flex-direction:column}
+.logo{padding:18px 20px;font-weight:700;font-size:17px;letter-spacing:-.02em}
+.logo i{font-style:normal;color:var(--grn)}
+.newc{margin:0 16px 14px;background:var(--grn2);color:#fff;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.grp{font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--mut2);padding:14px 20px 6px;font-weight:600}
+.nav a{display:flex;align-items:center;gap:11px;padding:9px 20px;color:#374151;font-size:13px;cursor:pointer;text-decoration:none;border-right:3px solid transparent}
+.nav a:hover{background:#F9FAFB}
+.nav a.on{background:var(--grn-bg);color:var(--grn2);font-weight:600;border-right-color:var(--grn)}
+.nav a.new{color:var(--grn2)}
+.pillnew{margin-left:auto;font-size:8.5px;background:var(--grn);color:#fff;padding:2px 6px;border-radius:10px;font-weight:700;letter-spacing:.04em}
+/* topbar */
+.top{position:fixed;left:var(--side);right:0;top:0;height:var(--top);background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:0 22px;z-index:25}
+.top h1{font-size:19px;margin:0;font-weight:700;letter-spacing:-.02em}
+.sp{flex:1}
+.ctl{background:#fff;border:1px solid var(--line);border-radius:7px;padding:7px 11px;font-size:12.5px;color:#374151;cursor:pointer;font-family:inherit}
+.warn{background:var(--amb-bg);border:1px solid #FCD34D;color:#92400E;border-radius:7px;padding:7px 11px;font-size:12px}
+.av{background:var(--grn2);color:#fff;border-radius:7px;padding:7px 10px;font-size:12px;font-weight:700}
+main{margin-left:var(--side);padding:calc(var(--top) + 18px) 22px 50px}
+.screen{display:none}.screen.on{display:block}
+h2{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--mut);margin:22px 0 10px;font-weight:600}
+h2 span{text-transform:none;letter-spacing:0;color:var(--mut2);font-weight:400;margin-left:8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px}
+.pad{padding:15px 17px}
+/* kpis */
+.k4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:10px;padding:15px 17px}
+.kpi .lb{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);font-weight:600;margin-bottom:9px}
+.kpi .v{font-size:26px;font-weight:700;letter-spacing:-.025em;line-height:1}
+.kpi .v.neg{color:var(--red)}.kpi .v.amb{color:var(--amb)}
+.kpi .s{font-size:11.5px;color:var(--mut2);margin-top:5px}
+.dlt{font-size:11px;padding:2px 6px;border-radius:5px;margin-left:7px;font-weight:600}
+.dn{background:var(--red-bg);color:var(--red)}.up{background:var(--grn-bg);color:var(--grn)}
+/* NOVO diagnostico */
+.newband{border:1.5px solid var(--grn);border-radius:10px;background:#fff;position:relative;margin-top:6px}
+.newtag{position:absolute;top:-9px;left:16px;background:var(--grn);color:#fff;font-size:9.5px;font-weight:700;letter-spacing:.1em;padding:3px 9px;border-radius:5px;text-transform:uppercase}
+.alert{border-radius:8px;padding:12px 14px;margin:0 0 14px;display:flex;gap:12px;align-items:flex-start}
+.alert.crit{background:var(--red-bg);border:1px solid #FCA5A5}
+.alert .tg{font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;padding:4px 8px;border-radius:5px;white-space:nowrap;background:var(--red);color:#fff}
+.alert p{margin:0;font-size:12.5px;line-height:1.6;color:#374151}
+.alert b{color:var(--ink)}
+.f4{display:grid;grid-template-columns:repeat(4,1fr) 1.15fr;gap:10px}
+.node{border:1px solid var(--line);border-radius:9px;padding:12px 13px;background:#fff}
+.node .lb{font-size:10.5px;color:var(--mut);margin-bottom:8px;height:30px;line-height:1.35}
+.node .v{font-size:20px;font-weight:700;letter-spacing:-.02em;line-height:1}
+.node .md{font-size:10.5px;color:var(--mut2);margin-top:4px}
+.node .fx{margin-top:9px;padding-top:8px;border-top:1px solid #F3F4F6;display:flex;justify-content:space-between;font-size:11.5px;font-weight:600}
+.node.ok{border-color:#6EE7B7;background:var(--grn-bg)}.node.ok .fx{color:var(--grn)}
+.node.amb{border-color:#FCD34D;background:var(--amb-bg)}.node.amb .fx{color:var(--amb)}
+.node.bad{border-color:#FCA5A5;background:var(--red-bg)}.node.bad .fx{color:var(--red)}.node.bad .v{color:var(--red)}
+.node.neu .fx{color:var(--mut2)}
+.node.res{background:#0F172A;border-color:#0F172A}.node.res .lb,.node.res .md{color:#94A3B8}
+.node.res .v{color:#fff}.node.res .fx{color:#FBBF24;border-top-color:#1E293B}
+.node .cr{position:absolute;margin-top:-26px;margin-left:-4px;background:var(--red);color:#fff;font-size:8.5px;padding:2px 6px;border-radius:4px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.valid{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--mut);background:#F9FAFB;border:1px solid var(--line);border-radius:7px;padding:9px 12px;margin-top:11px}
+.valid b{color:var(--grn)}
+/* tabela */
+.tbl{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.tbar{padding:11px 14px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tab2{font-size:12.5px;padding:6px 13px;border-radius:7px;cursor:pointer;color:var(--mut);border:1px solid transparent}
+.tab2.on{background:var(--grn-bg);color:var(--grn2);font-weight:600;border-color:#A7F3D0}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);text-align:left;padding:9px 9px;border-bottom:1px solid var(--line);font-weight:600;white-space:nowrap;background:#FAFBFC}
+thead th.newcol{background:var(--grn-bg);color:var(--grn2)}
+td{padding:9px 9px;border-bottom:1px solid #F3F4F6;white-space:nowrap}
+tbody tr:hover{background:#F9FAFB;cursor:pointer}
+tbody tr.sel{background:#F0FDF9}
+td.num{font-family:'JetBrains Mono',monospace;text-align:right}
+.fx-cell{font-family:'JetBrains Mono',monospace;text-align:right;font-weight:600}
+.cbad{background:var(--red-bg);color:var(--red)}
+.camb{background:var(--amb-bg);color:var(--amb)}
+.cok{background:var(--grn-bg);color:var(--grn)}
+.blue{color:var(--blue)}.red{color:var(--red)}.ambx{color:var(--amb);font-weight:600}
+.gtag{font-size:10.5px;padding:3px 8px;border-radius:12px;background:var(--red-bg);color:var(--red);font-weight:600;border:1px solid #FCA5A5}
+.gtag.w{background:var(--amb-bg);color:var(--amb);border-color:#FCD34D}
+.gtag.g{background:var(--grn-bg);color:var(--grn);border-color:#A7F3D0}
+.note{font-size:11.5px;color:var(--mut);margin:11px 0 0;line-height:1.6}
+.note b{color:var(--ink)}
+.exp{background:#FAFBFC;border-top:1px solid var(--line);padding:14px 16px}
+.exp h4{margin:0 0 4px;font-size:13px;font-weight:700}
+/* tela 3 */
+.hd3{display:flex;justify-content:space-between;gap:20px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:13px}
+.hd3 h3{margin:0 0 5px;font-size:20px;font-weight:700;letter-spacing:-.02em}
+.meta3{font-size:11.5px;color:var(--mut);line-height:1.8}
+.vb{font-size:11px;letter-spacing:.07em;padding:6px 12px;border-radius:14px;font-weight:700;text-transform:uppercase;display:inline-block;margin-bottom:7px}
+.garg{background:#fff;border:1px solid var(--line);border-left:3px solid var(--red);border-radius:9px;padding:14px 16px;margin-bottom:10px}
+.garg.w{border-left-color:var(--amb)}
+.garg h4{margin:0 0 3px;font-size:14px;font-weight:700}
+.garg .hit{font-size:11.5px;color:var(--red);font-weight:600;margin-bottom:9px}
+.garg.w .hit{color:var(--amb)}
+.garg p{margin:0 0 9px;font-size:12.5px;line-height:1.6;color:#374151}
+.garg b{color:var(--ink)}
+.pot{background:var(--grn-bg);border:1px solid #A7F3D0;border-radius:7px;padding:8px 11px;font-family:'JetBrains Mono',monospace;font-size:11.5px;margin:0 0 9px;color:#065F46}
+.act{font-size:12.5px;color:var(--grn2);font-weight:600;margin:0}
+.ctx{background:#F9FAFB;border:1px dashed var(--line);border-radius:7px;padding:8px 11px;font-size:11.5px;color:var(--mut);margin:9px 0 0;line-height:1.6}
+.ctx b{color:var(--ink)}
+.crow{display:flex;align-items:center;gap:9px;margin-bottom:5px}
+.crow .cn{font-size:10.5px;color:var(--mut2);width:46px;font-family:'JetBrains Mono',monospace}
+.crow .tr{flex:1;height:18px;background:#F3F4F6;border-radius:5px;overflow:hidden}
+.crow .fl{height:100%;background:#A7F3D0}
+.crow.d .fl{background:#FCA5A5}
+.crow .rt{font-size:10.5px;width:40px;text-align:right;font-family:'JetBrains Mono',monospace;color:var(--mut)}
+.crow.d .rt{color:var(--red);font-weight:600}
+@media(max-width:1250px){.k4{grid-template-columns:repeat(2,1fr)}.f4{grid-template-columns:repeat(2,1fr)}}
+</style></head><body>
+
+<aside class="side">
+  <div class="logo">2<i>Junior's</i></div>
+  <button class="newc">+ Criar Campanha</button>
+  <div class="grp">Operação</div>
+  <nav class="nav">
+    <a class="on" onclick="go(1,this)">▦ Overview</a>
+    <a onclick="go(2,this)">▥ Campanhas</a>
+  </nav>
+  <div class="grp">Análise</div>
+  <nav class="nav">
+    <a>⌾ Análise de País</a>
+    <a>▤ Reports GAM</a>
+    <a class="new" onclick="go(3,this)">▽ Análise de Funil <span class="pillnew">novo</span></a>
+    <a>▢ Relatórios</a>
+  </nav>
+  <div class="grp">Gestão</div>
+  <nav class="nav"><a>▣ Contas Meta</a><a>▢ Diretório</a><a>◔ Acessos</a></nav>
+</aside>
+
+<div class="top">
+  <h1 id="ttl">Overview</h1>
+  <div class="sp"></div>
+  <button class="warn">⚠ 3 domínio(s) novo(s)</button>
+  <button class="ctl">US$1 = R$ 5,19 · 1.0h</button>
+  <button class="ctl">📅 Hoje ⌄</button>
+  <button class="ctl">mkuker.com ⌄</button>
+  <span class="av">2J</span>
+</div>
+
+<main>
+<!-- ══════ 1 · OVERVIEW ══════ -->
+<div class="screen on" id="s1">
+  <div class="k4">
+    <div class="kpi"><div class="lb">Faturamento</div><div class="v">R$ 682,68<span class="dlt dn">↓46.2%</span></div><div class="s">$131,54</div></div>
+    <div class="kpi"><div class="lb">Investimento</div><div class="v">R$ 718,06<span class="dlt dn">↓35.1%</span></div><div class="s">$138,35</div></div>
+    <div class="kpi"><div class="lb">Lucro</div><div class="v neg">R$ -35,38<span class="dlt dn">↓121.6%</span></div><div class="s">$-6,82</div></div>
+    <div class="kpi"><div class="lb">ROAS</div><div class="v amb">0,95x</div><div class="s">-4,93% ROI · meta 2,00x</div></div>
+  </div>
+
+  <h2>Diagnóstico do dia <span>o que entra de novo — logo abaixo dos KPIs, antes do pacing</span></h2>
+  <div class="newband"><span class="newtag">novo</span><div class="pad">
+
+    <div class="alert crit">
+      <span class="tg">Piso absoluto · PAR</span>
+      <p><b>1,74 impressões de anúncio por sessão, com 70 blocos cadastrados no GAM para o mkuker.com.</b> Na janela de 33 dias o agregado real foi 1,04 — 542.951 sessões geraram 567.034 impressões. Cada sessão está renderizando praticamente um anúncio só. Isto não aparece como desvio porque está ruim em todo mundo: a mediana da conta <i>é</i> o valor ruim. → Conferir carregamento dos blocos, lazy-load e altura de página no mobile.</p>
+    </div>
+
+    <div class="f4">
+      <div class="node amb"><div class="lb">Custo por lead<br><span style="color:#9CA3AF">(Meta)</span></div><div class="v">R$ 0,317</div><div class="md">med 7d 0,268</div><div class="fx"><span>0,85×</span><span>−15%</span></div></div>
+      <div class="node neu"><div class="lb">Sessões por lead<br><span style="color:#9CA3AF">(bot + técnico)</span></div><div class="v">2,35</div><div class="md">med 7d 2,55</div><div class="fx"><span>0,92×</span><span>−8%</span></div></div>
+      <div class="node bad"><span class="cr">gargalo 1</span><div class="lb">PAR<br><span style="color:#9CA3AF">imp. anúncio / sessão</span></div><div class="v">1,74</div><div class="md">med 7d 2,10 · piso 3,00</div><div class="fx"><span>0,83×</span><span>−17%</span></div></div>
+      <div class="node neu"><div class="lb">eCPM<br><span style="color:#9CA3AF">(GAM líquido)</span></div><div class="v">R$ 82,25</div><div class="md">med 7d 88,40</div><div class="fx"><span>0,93×</span><span>−7%</span></div></div>
+      <div class="node res"><div class="lb">Resultado<br><span style="color:#94A3B8">ROAS</span></div><div class="v">0,95x</div><div class="md">ref. medianas 1,59x</div><div class="fx"><span>0,60×</span><span>−40%</span></div></div>
+    </div>
+
+    <div class="valid">validação · 2,35 × 1,74 × 82,25 × 0,9 ÷ (1000 × 0,317) = <b>0,955</b> &nbsp;│&nbsp; faturamento ÷ investimento = 682,68 ÷ 718,06 = <b>0,951</b> &nbsp;│&nbsp; divergência 0,4% <b>✓</b></div>
+
+    <p class="note"><b>Como ler:</b> cada fator é o quanto aquela etapa está acima ou abaixo da mediana de 7 dias da conta. Multiplicados, reconstroem o ROAS. O menor é o gargalo — e corrigi-lo levaria o dia de <b>0,95x para 1,15x</b>. Mas o alerta de piso vale mais que o fator: o PAR está ruim em todos os dias, então a mediana não denuncia.</p>
+  </div></div>
+
+  <h2>Pacing do dia <span>segue igual está hoje</span></h2>
+  <div class="k4" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi"><div class="lb">Orçamento</div><div class="v" style="font-size:21px">R$ 971,67</div></div>
+    <div class="kpi"><div class="lb">Valor usado</div><div class="v" style="font-size:21px">R$ 718,06</div></div>
+    <div class="kpi"><div class="lb">Falta gastar</div><div class="v" style="font-size:21px">R$ 253,61</div></div>
+  </div>
+</div>
+
+<!-- ══════ 2 · CAMPANHAS ══════ -->
+<div class="screen" id="s2">
+  <div class="k4" style="margin-bottom:16px">
+    <div class="kpi"><div class="lb">Investimento</div><div class="v" style="font-size:22px">R$ 811,65</div></div>
+    <div class="kpi"><div class="lb">Faturamento real</div><div class="v" style="font-size:22px">R$ 697,47</div><div class="s">após 10% taxa</div></div>
+    <div class="kpi"><div class="lb">Lucro</div><div class="v neg" style="font-size:22px">R$ -114,18</div><div class="s">-14.1% ROI</div></div>
+    <div class="kpi"><div class="lb">ROAS</div><div class="v amb" style="font-size:22px">0,86x</div><div class="s">Tráfego Bot</div></div>
+  </div>
+
+  <h2>Tabela de campanhas <span>as 4 colunas da direita são o que entra de novo</span></h2>
+  <div class="tbl">
+    <div class="tbar"><span class="tab2 on">Bot</span><span class="tab2">Tráfego Direto</span>
+      <div class="sp"></div><span style="font-size:11.5px;color:var(--mut2)">ordenado por ROAS ↑</span></div>
+    <div style="overflow-x:auto"><table>
+      <thead><tr>
+        <th>UTM</th><th style="text-align:right">Investido</th><th style="text-align:right">Fat. real</th>
+        <th style="text-align:right">ROAS</th><th style="text-align:right">Result.</th><th style="text-align:right">Imp. GAM</th>
+        <th style="text-align:right">eCPM</th><th style="text-align:right">PAR</th><th style="text-align:right">Sess/conv</th>
+        <th class="newcol" style="text-align:right">f·custo</th><th class="newcol" style="text-align:right">f·sess</th>
+        <th class="newcol" style="text-align:right">f·PAR</th><th class="newcol" style="text-align:right">f·eCPM</th>
+        <th class="newcol">Gargalo</th><th class="newcol" style="text-align:right">Potencial</th>
+      </tr></thead>
+      <tbody id="tb"></tbody>
+    </table></div>
+    <div class="exp">
+      <h4>siphesihlecelefb · 3 conjuntos ativos</h4>
+      <p class="note" style="margin-top:8px">No expandido, cada conjunto ganha o veredito da régua: <span class="gtag">V15 · ROAS 0,25x · MATAR</span> &nbsp; <span class="gtag">V14 · ROAS 0,13x · MATAR</span> &nbsp; <span class="gtag">V2 · ROAS 0,26x · MATAR</span><br>
+      Os três têm o mesmo gargalo — <b>PAR em 0,42×</b>. Não é o criativo: é a página que esses três estão mandando tráfego. Trocar criativo aqui não muda nada.</p>
+    </div>
+  </div>
+  <p class="note"><b>Nada de coluna nova de dado bruto.</b> Investido, ROAS, eCPM, PAR e Sess/conv já existem no seu dash. O que entra é a leitura: cada uma comparada com a mediana de 7 dias, e o gargalo nomeado. Você não passa a coletar mais nada — passa a saber qual dos números está pesando.</p>
+</div>
+
+<!-- ══════ 3 · ANÁLISE DE FUNIL ══════ -->
+<div class="screen" id="s3">
+  <div class="hd3">
+    <div><h3>noluthandombhelefb</h3>
+      <div class="meta3">mkuker.com · gancho E12 · ZA · Bot<br>
+      R$ 54,65 investido · 365 resultados · 369 imp. GAM · R$ 28,77 faturado</div></div>
+    <div style="text-align:right;min-width:240px">
+      <span class="vb" style="background:var(--red-bg);color:var(--red)">Última chance até D4</span>
+      <p style="margin:0;font-size:11.5px;color:var(--mut);line-height:1.6">ROAS 0,53x · faixa 0,20–0,60. Se não cruzar 0,60 no D4, mata.</p></div>
+  </div>
+
+  <h2>Linha do funil</h2>
+  <div class="f4" style="margin-bottom:13px">
+    <div class="node neu"><div class="lb">Custo por lead</div><div class="v">R$ 0,162</div><div class="md">med 0,128</div><div class="fx"><span>0,79×</span><span>−21%</span></div></div>
+    <div class="node neu"><div class="lb">Sessões por lead</div><div class="v">1,08</div><div class="md">med 1,32</div><div class="fx"><span>0,82×</span><span>−18%</span></div></div>
+    <div class="node bad"><span class="cr">gargalo 1</span><div class="lb">PAR</div><div class="v">1,01</div><div class="md">med 1,86 · piso 3,00</div><div class="fx"><span>0,54×</span><span>−46%</span></div></div>
+    <div class="node neu"><div class="lb">eCPM</div><div class="v">R$ 86,62</div><div class="md">med 88,40</div><div class="fx"><span>0,98×</span><span>−2%</span></div></div>
+    <div class="node res"><div class="lb">ROAS</div><div class="v">0,53x</div><div class="md">ref 1,53x</div><div class="fx"><span>0,34×</span><span>−66%</span></div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:13px">
+  <div>
+    <h2>Gargalos</h2>
+    <div class="garg">
+      <h4>PAR — impressões de anúncio por sessão</h4>
+      <div class="hit">está tirando 46% do seu ROAS · fator 0,54×</div>
+      <p>1,01 impressão por sessão, contra mediana de 1,86 e piso esperado de 3,00. As sessões chegam e quase não carregam anúncio — <b>o tráfego está sendo comprado e entregue numa página que não monetiza</b>.</p>
+      <div class="pot">corrigindo o PAR: ROAS 0,53x → <b>0,97x</b> &nbsp;│&nbsp; atingindo o piso 3,00: <b>1,57x</b></div>
+      <p class="act">→ Não é criativo nem bot. Conferir os blocos que carregam nesta landing page, lazy-load e altura de página no mobile.</p>
+      <p class="ctx">Este problema está em <b>78% dos conjuntos</b> e concentra <b>86% do gasto</b> da operação. Classificação: <b>SISTÊMICO</b>. Consertar aqui resolve pouco — resolver no blog levanta a conta inteira.</p>
+    </div>
+    <div class="garg w">
+      <h4>Custo por lead · atenção à medição</h4>
+      <div class="hit">fator 0,79× · mas o número absoluto está errado</div>
+      <p>A Meta contou 472.432 conversas na janela; o bot viu <b>203.709 leads únicos</b>. Razão de <b>2,32×</b>. O custo por lead real é R$ 0,134, não R$ 0,058.</p>
+      <p class="act">→ O fator continua válido (o erro é constante e se cancela na razão), mas qualquer meta absoluta de custo precisa usar o contador do bot.</p>
+    </div>
+  </div>
+  <div>
+    <h2>Chegada ao blog <span>o vazamento</span></h2>
+    <div class="card pad" style="margin-bottom:13px">
+      <div class="crow"><span class="cn">clicou</span><div class="tr"><div class="fl" style="width:100%"></div></div><span class="rt">203.709</span></div>
+      <div class="crow d"><span class="cn">chegou</span><div class="tr"><div class="fl" style="width:62%"></div></div><span class="rt">62%</span></div>
+      <div class="crow"><span class="cn">sessões</span><div class="tr"><div class="fl" style="width:100%"></div></div><span class="rt">542.951</span></div>
+      <p class="note"><b>82.347 leads clicaram e nunca viraram sessão</b> — 40% do que você paga. Suspeito: navegador in-app do Messenger no Android.<br><br>
+      Do outro lado, quem chega dá <b>4,29 sessões por lead</b>. Seu fluxo do bot é ótimo. O problema é a ponte, não o fluxo.</p>
+    </div>
+    <h2>Drop-off card a card</h2>
+    <div class="card pad">
+      <p class="note" style="margin:0"><b>Não disponível ainda.</b> O nível de card do fluxo não vive em nenhum banco — mora na ferramenta de vocês. É o único bloco do diagnóstico que ainda está cego, e é o que separa "fluxo comprido" de "card específico quebrado".</p>
+    </div>
+  </div></div>
+</div>
+</main>
+
+<script>
+const rows=[
+['siphesihlecelefb',11.16,2.39,'0,21x',68,54,49.24,0.79,1.10,.709,.833,.425,.557,'PAR',58,0.50],
+['sibongakonkemasebefb',4.32,1.03,'0,24x',17,25,45.79,1.47,0.68,.741,.515,.790,.518,'Sessão/lead',48,0.46],
+['thandolulhemabuzafb',36.90,17.09,'0,46x',129,183,103.78,1.42,0.77,.581,.583,.763,1.174,'Custo/lead',42,0.80],
+['nourbeseachebefb',6.79,3.38,'0,50x',39,53,70.93,1.36,1.22,.603,.924,.731,.802,'Custo/lead',40,0.83],
+['noluthandombhelefb',54.65,28.77,'0,53x',365,369,86.62,1.01,1.08,.792,.818,.543,.980,'PAR',46,0.97],
+['zimasamhlongofb',61.09,34.14,'0,56x',261,400,94.84,1.53,0.77,.710,.583,.823,1.073,'Sessão/lead',42,0.96],
+['noluthandomthembufb',54.55,32.33,'0,59x',374,436,82.40,1.17,0.89,.986,.674,.629,.932,'PAR',37,0.95],
+['zethembisomotaungfb',13.44,8.08,'0,60x',80,120,74.79,1.50,1.05,.726,.795,.806,.846,'Custo/lead',27,0.83],
+['nqobilekamshengufb',46.09,31.10,'0,67x',301,360,95.99,1.20,1.06,.789,.803,.645,1.086,'PAR',35,1.05],
+['wangarikamaufb',16.61,11.86,'0,71x',76,103,127.98,1.36,1.23,.476,.932,.731,1.448,'Custo/lead',52,1.51],
+['nolwazimsimangfb',51.07,38.95,'0,76x',311,443,97.70,1.42,0.97,.804,.735,.763,1.105,'Sessão/lead',27,1.03]];
+const cls=v=>v<0.75?'cbad':(v<0.90?'camb':(v>=1?'cok':''));
+const br=n=>'R$ '+n.toFixed(2).replace('.',',');
+document.getElementById('tb').innerHTML=rows.map((r,i)=>{
+ const f=[r[9],r[10],r[11],r[12]];
+ const gcls=r[14]>=40?'':(r[14]>=30?'w':'g');
+ return `<tr class="${i===4?'sel':''}" onclick="go(3,document.querySelectorAll('.nav a')[4])">
+ <td><b>${r[0]}</b></td><td class="num">${br(r[1])}</td><td class="num blue">${br(r[2])}</td>
+ <td class="num ambx">${r[3]}</td><td class="num">${r[4]}</td><td class="num">${r[5]}</td>
+ <td class="num">${br(r[6])}</td><td class="num">${r[7].toFixed(2).replace('.',',')}</td>
+ <td class="num">${r[8].toFixed(2).replace('.',',')}</td>
+ ${f.map(v=>`<td class="fx-cell ${cls(v)}">${v.toFixed(2).replace('.',',')}×</td>`).join('')}
+ <td><span class="gtag ${gcls}">${r[13]} −${r[14]}%</span></td>
+ <td class="num">${r[15].toFixed(2).replace('.',',')}x</td></tr>`}).join('');
+function go(n,el){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+ document.getElementById('s'+n).classList.add('on');
+ document.querySelectorAll('.nav a').forEach(a=>a.classList.remove('on'));if(el)el.classList.add('on');
+ document.getElementById('ttl').textContent=['','Overview','Campanhas','Análise de Funil'][n];window.scrollTo(0,0);}
+</script></body></html>

@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel de Diagnóstico de Funil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#000;
+    --card:#0C0E10;
+    --card2:#111417;
+    --line:#1E2328;
+    --line2:#171B1F;
+    --txt:#FFFFFF;
+    --mut:#8A939B;
+    --mut2:#5C656D;
+    --mint:#2EE5A8;
+    --mint-dim:rgba(46,229,168,.12);
+    --red:#FF6B6B;
+    --red-dim:rgba(255,107,107,.10);
+    --amber:#F5B84B;
+    --amber-dim:rgba(245,184,75,.10);
+    --blue:#4FA3E3;
+    --sidebar:224px; --topbar:60px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+    font-family:'Inter',-apple-system,system-ui,sans-serif;font-size:13px;line-height:1.45;
+    -webkit-font-smoothing:antialiased}
+  .m{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+
+  /* ══ SIDEBAR ══ */
+  .side{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar);background:#050607;
+    border-right:1px solid var(--line);display:flex;flex-direction:column;z-index:30}
+  .brand{padding:17px 18px 15px;border-bottom:1px solid var(--line)}
+  .brand b{font-size:15px;font-weight:700;letter-spacing:-.02em;display:block;line-height:1.2}
+  .brand span{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut2);
+    display:block;margin-top:4px}
+  .nav{padding:10px 10px;flex:1}
+  .nav a{display:flex;align-items:center;gap:10px;padding:9px 11px;color:var(--mut);
+    text-decoration:none;font-size:12.5px;border-radius:9px;cursor:pointer;margin-bottom:2px}
+  .nav a:hover{color:#D3DAE0;background:#0E1114}
+  .nav a.on{color:var(--mint);background:var(--mint-dim);font-weight:600}
+  .nav a .ic{width:15px;text-align:center;font-size:12px;opacity:.85}
+  .nav a .cnt{margin-left:auto;font-size:10px;color:var(--mut2);font-family:'JetBrains Mono',monospace}
+  .nav .grp{font-size:9px;letter-spacing:.17em;text-transform:uppercase;color:var(--mut2);
+    padding:15px 11px 6px;font-weight:600}
+  .sfoot{padding:13px 18px;border-top:1px solid var(--line);font-size:10px;color:var(--mut2);line-height:1.8}
+  .sfoot b{color:var(--red);display:flex;align-items:center;gap:6px;font-size:11px;margin-bottom:4px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--red);
+    box-shadow:0 0 0 3px rgba(255,107,107,.15)}
+
+  /* ══ TOPBAR ══ */
+  .top{position:fixed;left:var(--sidebar);right:0;top:0;height:var(--topbar);background:#000;
+    border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:0 20px;z-index:25}
+  .crumb{font-size:12px;color:var(--mut)}
+  .crumb b{color:var(--txt);font-weight:600}
+  .top .sp{flex:1}
+  .ctl{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:8px 13px;
+    font-size:12px;color:#D3DAE0;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:7px}
+  .ctl.acc{border-color:rgba(245,184,75,.45);color:var(--amber)}
+  .ctl.icon{padding:8px 11px;color:var(--mut)}
+  .ctl:hover{border-color:#2C3339}
+
+  main{margin-left:var(--sidebar);padding:calc(var(--topbar) + 18px) 20px 50px}
+  .screen{display:none} .screen.on{display:block}
+
+  h2{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--mut);
+    margin:22px 0 10px;font-weight:600}
+  h2:first-of-type{margin-top:0}
+  h2 .sub{text-transform:none;letter-spacing:0;color:var(--mut2);font-weight:400;margin-left:8px;font-size:11px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px}
+  .pad{padding:15px 16px}
+
+  /* KPI */
+  .kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 15px}
+  .kpi .k{font-size:11.5px;color:var(--mut);margin-bottom:9px;display:flex;align-items:center;gap:6px}
+  .kpi .tagm{font-size:8.5px;letter-spacing:.09em;background:var(--mint-dim);color:var(--mint);
+    padding:2px 5px;border-radius:4px;font-weight:600}
+  .kpi .v{font-size:25px;font-weight:700;line-height:1;letter-spacing:-.02em}
+  .kpi .s{font-size:12px;color:var(--mut2);margin-top:5px}
+  .kpi .d{font-size:12px;margin-top:5px;font-weight:500}
+  .up{color:var(--mint)} .down{color:var(--red)} .flat{color:var(--mut2)}
+  .amber{color:var(--amber)}
+
+  /* banner */
+  .banner{background:var(--red-dim);border:1px solid rgba(255,107,107,.3);border-radius:14px;
+    padding:14px 16px;margin-bottom:14px;display:flex;gap:14px;align-items:flex-start}
+  .banner .tag{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#000;
+    background:var(--red);padding:5px 8px;border-radius:6px;white-space:nowrap;font-weight:700;margin-top:1px}
+  .banner p{margin:0;font-size:12.5px;line-height:1.6;color:#D8DEE3}
+  .banner b{color:#fff;font-weight:600}
+
+  /* funil */
+  .funnel{display:grid;grid-template-columns:repeat(8,1fr);gap:9px}
+  .node{background:var(--card);border:1px solid var(--line);border-radius:13px;
+    padding:13px 13px 12px;position:relative;min-width:0}
+  .node .lbl{font-size:10.5px;color:var(--mut);line-height:1.35;margin-bottom:9px;height:28px}
+  .node .val{font-size:20px;font-weight:700;line-height:1;letter-spacing:-.02em}
+  .node .med{font-size:10.5px;color:var(--mut2);margin-top:4px}
+  .node .fx{font-size:11.5px;font-weight:600;margin-top:10px;padding-top:8px;
+    border-top:1px solid var(--line2);display:flex;justify-content:space-between}
+  .node.ok{border-color:rgba(46,229,168,.32)} .node.ok .fx{color:var(--mint)}
+  .node.neutro .fx{color:var(--mut2)}
+  .node.amb{border-color:rgba(245,184,75,.4);background:var(--amber-dim)} .node.amb .fx{color:var(--amber)}
+  .node.bad{border-color:rgba(255,107,107,.45);background:var(--red-dim)} .node.bad .fx{color:var(--red)}
+  .node.bad .val{color:var(--red)}
+  .node.top-g{box-shadow:0 0 0 1px var(--red),0 0 26px rgba(255,107,107,.16)}
+  .node .crown{position:absolute;top:-8px;right:9px;background:var(--red);color:#000;
+    font-size:8.5px;letter-spacing:.09em;padding:3px 7px;border-radius:5px;font-weight:700;text-transform:uppercase}
+  .node.res{background:linear-gradient(160deg,#0F1A17,#0A0D0C);border-color:rgba(46,229,168,.28)}
+  .node.res .val{color:var(--mint)}
+  .node.res .fx{color:var(--amber);border-top-color:rgba(255,255,255,.09)}
+
+  .row2{display:grid;grid-template-columns:1.12fr 1fr;gap:12px}
+
+  /* table */
+  .tbl{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .tbar{display:flex;align-items:center;gap:7px;padding:12px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .chip{font-size:11px;padding:6px 12px;border:1px solid var(--line);border-radius:20px;
+    background:transparent;cursor:pointer;color:var(--mut)}
+  .chip:hover{border-color:#2C3339;color:#D3DAE0}
+  .chip.on{background:var(--mint);color:#000;border-color:var(--mint);font-weight:600}
+  .tbar .sp{flex:1}
+  .cnt2{font-size:11px;color:var(--mut2)}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  thead th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut2);
+    text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);font-weight:500;white-space:nowrap}
+  td{padding:11px 12px;border-bottom:1px solid var(--line2);white-space:nowrap}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:#0F1215;cursor:pointer}
+  tbody tr.sel{background:rgba(46,229,168,.05);box-shadow:inset 2px 0 0 var(--mint)}
+  td.num{font-family:'JetBrains Mono',monospace;text-align:right;font-variant-numeric:tabular-nums}
+  td.id b{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600}
+  td.id span{color:var(--mut2);font-size:11px;display:block;margin-top:2px}
+  .c-kill{color:var(--red);font-weight:600}
+  .c-hold{color:var(--amber);font-weight:600}
+  .c-ok{color:var(--mint);font-weight:600}
+  .c-mute{color:var(--mut2)}
+  .badge{font-size:10px;padding:4px 9px;border-radius:20px;white-space:nowrap;font-weight:500}
+  .bg-kill{color:var(--red);background:var(--red-dim);border:1px solid rgba(255,107,107,.28)}
+  .bg-hold{color:var(--amber);background:var(--amber-dim);border:1px solid rgba(245,184,75,.28)}
+  .bg-ok{color:var(--mint);background:var(--mint-dim);border:1px solid rgba(46,229,168,.28)}
+  .bg-mute{color:var(--mut2);background:#0F1215;border:1px solid var(--line)}
+  .partial{font-size:9.5px;color:var(--amber)}
+
+  /* hist */
+  .hist{display:flex;align-items:flex-end;gap:9px;height:130px}
+  .hb{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;cursor:pointer}
+  .hb .bar{width:100%;border-radius:7px 7px 3px 3px}
+  .hb:hover .bar{filter:brightness(1.25)}
+  .hb .n{font-size:12px;font-weight:700;margin-bottom:6px}
+  .hb .x{font-size:9.5px;color:var(--mut2);margin-top:8px;text-align:center;line-height:1.3}
+
+  /* dropoff */
+  .crow{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  .crow .cn{font-size:10.5px;color:var(--mut2);width:48px;font-family:'JetBrains Mono',monospace}
+  .crow .track{flex:1;height:20px;background:#0A0C0E;border:1px solid var(--line2);border-radius:6px;overflow:hidden}
+  .crow .fill{height:100%;background:linear-gradient(90deg,rgba(46,229,168,.55),rgba(46,229,168,.28))}
+  .crow.drop .fill{background:linear-gradient(90deg,rgba(255,107,107,.6),rgba(255,107,107,.3))}
+  .crow .rt{font-size:11px;width:42px;text-align:right;font-family:'JetBrains Mono',monospace;color:var(--mut)}
+  .crow.drop .rt{color:var(--red);font-weight:600}
+  .note{font-size:11.5px;color:var(--mut2);margin:12px 0 0;line-height:1.65}
+  .note b{color:#C9D1D7}
+
+  /* tela 2 */
+  .back{font-size:11.5px;color:var(--mint);cursor:pointer;margin-bottom:12px;display:inline-block}
+  .head2{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;
+    background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:13px}
+  .head2 h3{font-size:22px;margin:0 0 6px;letter-spacing:-.025em;font-weight:700;
+    font-family:'JetBrains Mono',monospace}
+  .meta{font-size:11.5px;color:var(--mut2);line-height:1.8}
+  .verdict{text-align:right;min-width:265px}
+  .vb{font-size:11.5px;letter-spacing:.09em;padding:7px 13px;border-radius:20px;
+    display:inline-block;margin-bottom:8px;font-weight:700;text-transform:uppercase}
+  .verdict p{margin:0;font-size:11.5px;color:var(--mut);line-height:1.6}
+
+  .garg{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:15px 16px;margin-bottom:10px;position:relative;overflow:hidden}
+  .garg::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--red)}
+  .garg.second::before{background:var(--amber)}
+  .garg h4{font-size:14.5px;margin:0 0 3px;font-weight:700;letter-spacing:-.01em}
+  .garg .hit{font-size:11.5px;color:var(--red);font-weight:600;margin-bottom:10px}
+  .garg.second .hit{color:var(--amber)}
+  .garg p{margin:0 0 10px;font-size:12.5px;line-height:1.65;color:#B9C2C9}
+  .garg b{color:#fff}
+  .garg .act{font-size:12.5px;color:var(--mint);font-weight:500;margin:0}
+  .pot{background:var(--mint-dim);border:1px solid rgba(46,229,168,.25);border-radius:9px;
+    padding:9px 12px;font-size:12px;margin:0 0 10px;font-family:'JetBrains Mono',monospace;color:#B9C2C9}
+  .pot b{color:var(--mint)}
+  .ctx{background:#0A0C0E;border:1px solid var(--line2);border-radius:9px;padding:9px 12px;
+    font-size:11.5px;color:var(--mut2);margin:0;line-height:1.6}
+  .ctx b{color:#C9D1D7}
+  .valid{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--mut2);
+    background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 15px;margin-bottom:14px}
+  .valid b{color:var(--mint)}
+
+  .spark{display:flex;align-items:flex-end;gap:8px;height:80px;padding-top:18px}
+  .spark div{flex:1;background:linear-gradient(180deg,rgba(46,229,168,.55),rgba(46,229,168,.15));
+    border-radius:7px 7px 3px 3px;position:relative;border:1px solid rgba(46,229,168,.3);border-bottom:none}
+  .spark div span{position:absolute;top:-17px;left:0;right:0;text-align:center;
+    font-size:10.5px;color:var(--mut);font-family:'JetBrains Mono',monospace}
+  .actions{display:flex;gap:6px;flex-wrap:wrap}
+  .abtn{font-size:11px;padding:9px 13px;border:1px solid var(--line);background:transparent;
+    border-radius:9px;cursor:pointer;color:var(--mut);font-family:inherit}
+  .abtn:hover{border-color:#2C3339;color:#D3DAE0}
+  .abtn.pre{border-color:var(--mint);color:#000;background:var(--mint);font-weight:600}
+
+  @media(max-width:1300px){
+    .kpis{grid-template-columns:repeat(3,1fr)}
+    .funnel{grid-template-columns:repeat(4,1fr)}
+    .row2{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<aside class="side">
+  <div class="brand">
+    <b>Diagnóstico de Funil</b>
+    <span>ads → bot → blog → adx</span>
+  </div>
+  <nav class="nav">
+    <div class="grp">Operação</div>
+    <a class="on" onclick="go(1)"><span class="ic">▣</span> Overview</a>
+    <a onclick="go(2)"><span class="ic">◉</span> Conjuntos <span class="cnt">412</span></a>
+    <a><span class="ic">◈</span> Fluxo do bot</a>
+    <a><span class="ic">$</span> GAM <span class="cnt">!</span></a>
+    <a><span class="ic">⌾</span> Países</a>
+    <div class="grp">Processo</div>
+    <a><span class="ic">◇</span> Testes</a>
+    <a><span class="ic">≡</span> Log de decisões</a>
+    <a><span class="ic">⚙</span> Parâmetros</a>
+  </nav>
+  <div class="sfoot">
+    <b><span class="dot"></span>1 alerta sistêmico</b>
+    fuso conta · los angeles<br>dia fechou 04:12 brt
+  </div>
+</aside>
+
+<div class="top">
+  <span class="crumb">Operação / <b id="crumb">Overview</b></span>
+  <div class="sp"></div>
+  <button class="ctl">📅 Dia fechado · 20/08 ⌄</button>
+  <button class="ctl">receitasmenu ⌄</button>
+  <button class="ctl acc">◷ 1h</button>
+  <button class="ctl">mediana 7d ⌄</button>
+  <button class="ctl icon">👁</button>
+  <button class="ctl icon">⟳</button>
+</div>
+
+<main>
+
+<!-- ═══════ TELA 1 ═══════ -->
+<div class="screen on" id="s1">
+
+  <div class="kpis">
+    <div class="kpi"><div class="k">Investimento</div><div class="v">R$ 22.418</div><div class="s">412 conjuntos ativos</div></div>
+    <div class="kpi"><div class="k">Faturamento</div><div class="v">R$ 30.040</div><div class="d down">↓ 11,4% vs med 7d</div></div>
+    <div class="kpi"><div class="k">Lucro</div><div class="v up">R$ 7.622</div><div class="d down">↓ R$ 2.180</div></div>
+    <div class="kpi"><div class="k">ROI</div><div class="v amber">+34,0%</div><div class="d down">↓ 21,4pp · med +55%</div></div>
+    <div class="kpi"><div class="k">CPS</div><div class="v">R$ 0,104</div><div class="d flat">med R$ 0,101</div></div>
+    <div class="kpi"><div class="k">Sessões / lead</div><div class="v">1,41</div><div class="d flat">6 links · 24% aproveitado</div></div>
+  </div>
+
+  <div class="banner">
+    <span class="tag">Sistêmico · ECP</span>
+    <p>Rendimento por página caiu em <b>76% dos conjuntos ativos</b> (R$0,071 contra mediana de R$0,082 em 7d). Como o funil é único, isto é o <b>ad server ou a demanda de AdX</b> — não são seus criativos. Conferir fill rate e viewability antes de mexer em price floor. <b>Sugestões de decisão ligadas a ECP estão suspensas hoje.</b></p>
+  </div>
+
+  <h2>Funil da conta <span class="sub">ontem vs. mediana móvel de 7 dias</span></h2>
+  <div class="funnel">
+    <div class="node ok"><div class="lbl">Leilão<br>CPM</div><div class="val">R$3,44</div><div class="med">med 3,50</div><div class="fx"><span>1,02×</span><span>ok</span></div></div>
+    <div class="node neutro"><div class="lbl">Criativo<br>CTR</div><div class="val">4,38%</div><div class="med">med 4,50%</div><div class="fx"><span>0,97×</span><span>local</span></div></div>
+    <div class="node neutro"><div class="lbl">Anúncio→<br>conversa</div><div class="val">54,1%</div><div class="med">med 55,0%</div><div class="fx"><span>0,98×</span><span>ok</span></div></div>
+    <div class="node neutro"><div class="lbl">Fluxo<br>do bot</div><div class="val">1,57</div><div class="med">med 1,60</div><div class="fx"><span>0,98×</span><span>ok</span></div></div>
+    <div class="node amb"><div class="lbl">Clique→<br>sessão</div><div class="val">81,2%</div><div class="med">med 88,0%</div><div class="fx"><span>0,92×</span><span>local</span></div></div>
+    <div class="node neutro"><div class="lbl">Navegação<br>PAR</div><div class="val">1,89</div><div class="med">med 1,90</div><div class="fx"><span>0,99×</span><span>ok</span></div></div>
+    <div class="node bad"><div class="crown">sistêmico</div><div class="lbl">Página<br>ECP</div><div class="val">0,071</div><div class="med">med 0,082</div><div class="fx"><span>0,87×</span><span>−13%</span></div></div>
+    <div class="node res"><div class="lbl">Resultado<br>ROI</div><div class="val">1,34</div><div class="med">med 1,55</div><div class="fx"><span>0,86×</span><span>−14%</span></div></div>
+  </div>
+
+  <div class="row2" style="margin-top:14px">
+    <div>
+      <h2>Distribuição de ROI <span class="sub">412 conjuntos com veredito liberado</span></h2>
+      <div class="card pad">
+        <div class="hist">
+          <div class="hb"><span class="n c-kill">31</span><div class="bar" style="height:22%;background:linear-gradient(180deg,#FF6B6B,rgba(255,107,107,.35))"></div><span class="x">&lt;0,20<br>matar</span></div>
+          <div class="hb"><span class="n c-kill">58</span><div class="bar" style="height:41%;background:linear-gradient(180deg,#E08060,rgba(224,128,96,.3))"></div><span class="x">0,20–0,60<br>última chance</span></div>
+          <div class="hb"><span class="n c-hold">74</span><div class="bar" style="height:52%;background:linear-gradient(180deg,#F5B84B,rgba(245,184,75,.3))"></div><span class="x">0,60–0,90<br>maturação</span></div>
+          <div class="hb"><span class="n c-hold">142</span><div class="bar" style="height:100%;background:linear-gradient(180deg,#D9C66A,rgba(217,198,106,.3))"></div><span class="x">0,90–1,40<br>vivo</span></div>
+          <div class="hb"><span class="n c-ok">78</span><div class="bar" style="height:55%;background:linear-gradient(180deg,#7FE0BC,rgba(127,224,188,.3))"></div><span class="x">1,40–2,00<br>bom</span></div>
+          <div class="hb"><span class="n c-ok">29</span><div class="bar" style="height:20%;background:linear-gradient(180deg,#2EE5A8,rgba(46,229,168,.3))"></div><span class="x">&gt;2,00<br>escala</span></div>
+        </div>
+        <p class="note">A massa está empilhada em <b>0,90–1,40</b> — a faixa "ruim porém viva". Com apenas 29 conjuntos acima de 2,00, o ganho não virá de otimizar unidade: virá de destravar o ECP sistêmico e o fluxo do bot.</p>
+      </div>
+    </div>
+    <div>
+      <h2>Fluxo do bot <span class="sub">drop-off card a card · v7 · 8 cards · 6 links</span></h2>
+      <div class="card pad">
+        <div class="crow"><span class="cn">card 1</span><div class="track"><div class="fill" style="width:100%"></div></div><span class="rt">1000</span></div>
+        <div class="crow"><span class="cn">card 2</span><div class="track"><div class="fill" style="width:90%"></div></div><span class="rt">0,90</span></div>
+        <div class="crow"><span class="cn">card 3</span><div class="track"><div class="fill" style="width:86%"></div></div><span class="rt">0,95</span></div>
+        <div class="crow"><span class="cn">card 4</span><div class="track"><div class="fill" style="width:84%"></div></div><span class="rt">0,97</span></div>
+        <div class="crow drop"><span class="cn">card 5</span><div class="track"><div class="fill" style="width:51%"></div></div><span class="rt">0,61</span></div>
+        <div class="crow"><span class="cn">card 6</span><div class="track"><div class="fill" style="width:49%"></div></div><span class="rt">0,95</span></div>
+        <div class="crow"><span class="cn">card 7</span><div class="track"><div class="fill" style="width:47%"></div></div><span class="rt">0,97</span></div>
+        <div class="crow"><span class="cn">card 8</span><div class="track"><div class="fill" style="width:46%"></div></div><span class="rt">0,98</span></div>
+        <p class="note"><b style="color:var(--red)">DROPOFF_DEGRAU:</b> retenção de 0,61 entre o card 4 e o card 5, contra 0,90+ em todos os outros. O fluxo vinha bem até ali — o problema é o <b>card 4</b> especificamente. → Reescrever só esse card, sem mexer no resto.</p>
+      </div>
+    </div>
+  </div>
+
+  <h2>Conjuntos ativos</h2>
+  <div class="tbl">
+    <div class="tbar">
+      <span class="chip on">Todos</span>
+      <span class="chip">D2 · emergência · 34</span>
+      <span class="chip">D3 · veredito · 61</span>
+      <span class="chip">Candidatos a escala · 29</span>
+      <span class="chip">Sem volume · 48</span>
+      <div class="sp"></div>
+      <span class="cnt2">gasto acumulado ↓ · 8 de 412</span>
+    </div>
+    <table>
+      <thead><tr>
+        <th>Conjunto</th><th>Dias</th><th style="text-align:right">Gasto acum.</th>
+        <th style="text-align:right">Sessões</th><th style="text-align:right">CPS</th><th style="text-align:right">RPS</th>
+        <th style="text-align:right">ROI</th><th style="text-align:right">SPL</th>
+        <th>Gargalo nº1</th><th>Veredito</th>
+      </tr></thead>
+      <tbody>
+        <tr class="sel" onclick="go(2)">
+          <td class="id"><b>BR-RCT-0412</b><span>receitasmenu · gancho A</span></td>
+          <td class="num">D3</td><td class="num">R$ 110,00</td><td class="num">689</td>
+          <td class="num c-kill">0,160</td><td class="num">0,153</td>
+          <td class="num c-hold">0,96</td><td class="num c-kill">1,00</td>
+          <td>Clique→sessão <span class="c-kill">−28%</span></td>
+          <td><span class="badge bg-hold">vivo · não escala</span></td>
+        </tr>
+        <tr>
+          <td class="id"><b>BR-RCT-0398</b><span>receitasmenu · gancho C</span></td>
+          <td class="num">D5</td><td class="num">R$ 268,00</td><td class="num">2.812</td>
+          <td class="num c-ok">0,095</td><td class="num">0,220</td>
+          <td class="num c-ok">2,31</td><td class="num c-ok">2,44</td>
+          <td class="c-mute">—</td>
+          <td><span class="badge bg-ok">escalar +30%</span></td>
+        </tr>
+        <tr>
+          <td class="id"><b>BR-MKU-0221</b><span>mkuker · gancho B</span></td>
+          <td class="num">D4</td><td class="num">R$ 214,00</td><td class="num">1.984</td>
+          <td class="num">0,108</td><td class="num">0,127</td>
+          <td class="num c-hold">1,18</td><td class="num c-hold">1,41</td>
+          <td>ECP <span class="c-kill">−13%</span></td>
+          <td><span class="badge bg-mute">suspenso · sistêmico</span></td>
+        </tr>
+        <tr>
+          <td class="id"><b>BR-RCT-0431</b><span>receitasmenu · gancho A</span></td>
+          <td class="num">D3</td><td class="num">R$ 106,00</td><td class="num">1.031</td>
+          <td class="num">0,103</td><td class="num">0,167</td>
+          <td class="num c-ok">1,62</td><td class="num c-hold">1,72</td>
+          <td>CPM <span class="c-hold">−11%</span></td>
+          <td><span class="badge bg-ok">bom · escala leve</span></td>
+        </tr>
+        <tr>
+          <td class="id"><b>BR-MKU-0244</b><span>mkuker · gancho D</span></td>
+          <td class="num">D3</td><td class="num">R$ 98,00</td><td class="num">742</td>
+          <td class="num c-kill">0,132</td><td class="num">0,054</td>
+          <td class="num c-kill">0,41</td><td class="num c-hold">1,38</td>
+          <td>CTR <span class="c-kill">−34%</span></td>
+          <td><span class="badge bg-kill">última chance · D4</span></td>
+        </tr>
+        <tr>
+          <td class="id"><b>BR-RCT-0447</b><span>receitasmenu · gancho C</span></td>
+          <td class="num">D3</td><td class="num">R$ 92,00</td><td class="num">418</td>
+          <td class="num c-kill">0,220</td><td class="num">0,031</td>
+          <td class="num c-kill">0,14</td><td class="num c-hold">1,52</td>
+          <td>Espiral de fadiga <span class="c-kill">−52%</span></td>
+          <td><span class="badge bg-kill">matar</span></td>
+        </tr>
+        <tr>
+          <td class="id"><b>BR-MKU-0251</b><span>mkuker · gancho B</span></td>
+          <td class="num">D2</td><td class="num">R$ 57,00</td><td class="num">521</td>
+          <td class="num">0,109</td><td class="num">0,079</td>
+          <td class="num c-hold">0,72 <span class="partial">◷ parcial</span></td><td class="num c-hold">1,49</td>
+          <td class="c-mute">—</td>
+          <td><span class="badge bg-mute">janela aberta</span></td>
+        </tr>
+        <tr>
+          <td class="id"><b>BR-RCT-0455</b><span>receitasmenu · gancho E</span></td>
+          <td class="num">D1</td><td class="num">R$ 22,00</td><td class="num">188</td>
+          <td class="num">0,117</td><td class="num c-mute">—</td>
+          <td class="num c-mute">—</td><td class="num c-mute">—</td>
+          <td class="c-mute">—</td>
+          <td><span class="badge bg-mute">aguardando volume</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">Conjuntos abaixo de R$60 acumulados não recebem veredito de ROI — só gatilhos de topo. Conjuntos em D2 exibem ROI marcado como <b>parcial</b>, porque leads do fim do D1 ainda estão dentro da janela de 24h e a receita ainda está pingando.</p>
+</div>
+
+<!-- ═══════ TELA 2 ═══════ -->
+<div class="screen" id="s2">
+  <span class="back" onclick="go(1)">← voltar para o overview</span>
+
+  <div class="head2">
+    <div>
+      <h3>BR-RCT-0412</h3>
+      <div class="meta">campanha CMP-RCT-08 · criativo CR-1183 · gancho A · BR · mobile<br>
+      D3 · R$110,00 acumulados · 30.812 impressões · 1.276 cliques · 688 leads · 1.087 cliques no bot · 689 sessões · R$105,20 de receita</div>
+    </div>
+    <div class="verdict">
+      <span class="vb bg-hold">Ruim porém vivo</span>
+      <p>ROI 0,96 · faixa 0,90–1,40. Mantém rodando, mas não é candidato a orçamento. Não escala e não mexe.</p>
+    </div>
+  </div>
+
+  <h2>Linha do funil <span class="sub">valor · mediana 7d · fator · impacto no ROI</span></h2>
+  <div class="funnel" style="margin-bottom:14px">
+    <div class="node neutro"><div class="lbl">Leilão<br>CPM</div><div class="val">R$3,57</div><div class="med">med 3,50</div><div class="fx"><span>0,98×</span><span>−2%</span></div></div>
+    <div class="node neutro"><div class="lbl">Criativo<br>CTR</div><div class="val">4,14%</div><div class="med">med 4,50%</div><div class="fx"><span>0,92×</span><span>−8%</span></div></div>
+    <div class="node neutro"><div class="lbl">Anúncio→<br>conversa</div><div class="val">53,9%</div><div class="med">med 55,0%</div><div class="fx"><span>0,98×</span><span>−2%</span></div></div>
+    <div class="node ok"><div class="lbl">Fluxo<br>do bot</div><div class="val">1,58</div><div class="med">med 1,60</div><div class="fx"><span>0,99×</span><span>−1%</span></div></div>
+    <div class="node bad top-g"><div class="crown">gargalo 1</div><div class="lbl">Clique→<br>sessão</div><div class="val">63,4%</div><div class="med">med 88,0%</div><div class="fx"><span>0,72×</span><span>−28%</span></div></div>
+    <div class="node neutro"><div class="lbl">Navegação<br>PAR</div><div class="val">1,88</div><div class="med">med 1,90</div><div class="fx"><span>0,99×</span><span>−1%</span></div></div>
+    <div class="node neutro"><div class="lbl">Página<br>ECP</div><div class="val">0,0812</div><div class="med">med 0,082</div><div class="fx"><span>0,99×</span><span>−1%</span></div></div>
+    <div class="node res"><div class="lbl">Resultado<br>ROI</div><div class="val">0,96</div><div class="med">ref 1,55</div><div class="fx"><span>0,62×</span><span>−38%</span></div></div>
+  </div>
+
+  <div class="valid">
+    validação · 1000 × 0,0414 × 0,539 × 1,58 × 0,634 × 1,88 × 0,0812 ÷ 3,57 = <b>0,957</b> &nbsp;│&nbsp; receita ÷ gasto = 105,20 ÷ 110,00 = <b>0,956</b> &nbsp;│&nbsp; divergência 0,1% <b>✓ consistente</b>
+  </div>
+
+  <div class="row2">
+    <div>
+      <h2>Gargalos <span class="sub">ordenados por impacto no ROI</span></h2>
+
+      <div class="garg">
+        <h4>Clique → sessão (perda técnica)</h4>
+        <div class="hit">está tirando 28% do seu ROI · fator 0,72×</div>
+        <p>As pessoas estão clicando normalmente no bot, mas a sessão não acontece. A taxa clique→sessão está em 0,72× a mediana. Isto <b>não</b> é problema de fluxo — é clique já pago sendo jogado fora.</p>
+        <div class="pot">corrigindo isto: ROI 0,96 → <b>1,33</b></div>
+        <p class="act">→ Verificar redirect, velocidade da LP, navegador in-app do Messenger, bloqueio e tracking. Conferir se está concentrado em algum device.</p>
+        <p class="ctx">Este problema está em <b>18% dos conjuntos ativos</b> — classificação <b>LOCAL</b>. Não é o blog: é este conjunto. Consertar aqui resolve.</p>
+      </div>
+
+      <div class="garg second">
+        <h4>Sessões por lead · termômetro do fluxo</h4>
+        <div class="hit">1,00 sessão por lead · fluxo oferece 6 links</div>
+        <p>O lead está vendo 6 oportunidades de clicar e aproveitando <b>17%</b> delas — abaixo do piso de 22%. Mas o fluxo do bot está em 0,99× a mediana, ou seja, <b>as pessoas estão clicando</b>. O SPL baixo aqui é consequência da perda técnica acima, não de fluxo ruim.</p>
+        <div class="pot">SPL = 1,58 cliques/lead × 0,634 clique→sessão = <b>1,00</b></div>
+        <p class="act">→ Não mexer no fluxo por causa deste conjunto. Resolver o gargalo nº1 leva o SPL para ~1,39 sozinho.</p>
+      </div>
+
+      <div class="garg second">
+        <h4>Força do criativo (CTR)</h4>
+        <div class="hit">está tirando 8% do seu ROI · fator 0,92×</div>
+        <p>CTR em 4,14% contra mediana de 4,50%. Segundo maior peso, mas uma ordem de grandeza abaixo do gargalo principal.</p>
+        <div class="pot">corrigindo isto: ROI 0,96 → <b>1,04</b></div>
+        <p class="act">→ Baixa prioridade. Não trocar criativo antes de resolver o vazamento técnico — você estaria trocando a peça de um conjunto cujo problema não é a peça.</p>
+      </div>
+    </div>
+
+    <div>
+      <h2>ROI dia a dia</h2>
+      <div class="card pad" style="margin-bottom:12px">
+        <div class="spark">
+          <div style="height:57%"><span>0,88</span></div>
+          <div style="height:66%"><span>1,02</span></div>
+          <div style="height:62%"><span>0,96</span></div>
+        </div>
+        <p class="note">D1 · D2 · D3 — estável na faixa, sem tendência de subida. Referência da conta ontem: 1,34. Mediana 7d: 1,55.</p>
+      </div>
+
+      <h2>Cortes</h2>
+      <div class="card" style="margin-bottom:12px;overflow:hidden">
+        <table style="font-size:12px">
+          <thead><tr><th>Device</th><th style="text-align:right">Sessões</th><th style="text-align:right">Clique→sessão</th><th style="text-align:right">ROI</th></tr></thead>
+          <tbody>
+            <tr><td>Android</td><td class="num">497</td><td class="num c-kill">54,1%</td><td class="num c-kill">0,78</td></tr>
+            <tr><td>iOS</td><td class="num">171</td><td class="num c-ok">89,2%</td><td class="num c-ok">1,51</td></tr>
+            <tr><td>Desktop</td><td class="num">21</td><td class="num c-mute">—</td><td class="num c-mute">—</td></tr>
+          </tbody>
+        </table>
+        <div class="pad" style="padding-top:0"><p class="note">O vazamento está <b>concentrado em Android</b>: 54,1% contra 89,2% no iOS. Isso aponta para o navegador in-app do Messenger, não para a LP em si.</p></div>
+      </div>
+
+      <h2>Registrar decisão</h2>
+      <div class="card pad">
+        <div class="actions">
+          <button class="abtn pre">Manter</button>
+          <button class="abtn">Matar</button>
+          <button class="abtn">Segurar</button>
+          <button class="abtn">Escalar</button>
+          <button class="abtn">Ampliar público</button>
+          <button class="abtn">Reduzir orçamento</button>
+        </div>
+        <p class="note">Sugestão do painel pré-selecionada. Divergir abre campo de motivo e grava <b>origem = manual</b>. É este log que vai calibrar os thresholds contra o histórico real depois de duas semanas.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+  function go(n){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+    document.getElementById('s'+n).classList.add('on');
+    document.querySelectorAll('.nav a').forEach(a=>a.classList.remove('on'));
+    document.querySelectorAll('.nav a')[n-1].classList.add('on');
+    document.getElementById('crumb').textContent = n===1 ? 'Overview' : 'Conjuntos / BR-RCT-0412';
+    window.scrollTo(0,0);
+  }
+</script>
+</body>
+</html>
