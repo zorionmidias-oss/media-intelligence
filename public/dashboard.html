@@ -1661,12 +1661,25 @@
               </div>
             </div>
           </div>
+          <style>
+            /* Frente 2 — colunas de diagnóstico (fatores vs mediana 7d) fixas, destacadas */
+            #camp-table th.newcol{background:color-mix(in oklch,var(--accent) 13%,transparent);color:var(--accent);border-bottom-color:color-mix(in oklch,var(--accent) 45%,transparent)}
+            #camp-table td.newcol{background:color-mix(in oklch,var(--accent) 4%,transparent)}
+            #camp-table td.dg{font-family:var(--font-mono)!important;text-align:right;font-variant-numeric:tabular-nums;font-size:.75rem}
+            #camp-table td.dg.gcell{text-align:left}
+            .dg-mute{color:var(--muted-light)}
+            .dg-pill{font-size:.6rem;padding:.08rem .4rem;border-radius:10px;font-weight:600;white-space:nowrap;font-family:var(--font-ui)!important}
+            .dg-pill.k{color:var(--danger);background:var(--danger-soft);border:1px solid color-mix(in oklch,var(--danger) 30%,transparent)}
+            .dg-pill.w{color:var(--warning);background:var(--warning-soft);border:1px solid color-mix(in oklch,var(--warning) 30%,transparent)}
+            .dg-pill.g{color:var(--success);background:var(--success-soft);border:1px solid color-mix(in oklch,var(--success) 30%,transparent)}
+            .dg-pill.n{color:var(--muted);background:var(--sec-strong);border:1px solid var(--border)}
+          </style>
           <table id="camp-table">
             <thead><tr>
               <th>UTM</th><th>Domínio</th><th>Investido</th><th>Fat. Real</th><th>Lucro</th><th>ROAS</th>
-              <th class="col-h" data-col="cpc">CPC</th><th class="col-h" data-col="custo-res">Custo/Result.</th><th class="col-h" data-col="resultados">Resultados</th><th class="col-h" data-col="imp-gam">Imp. GAM</th><th class="col-h" data-col="ecpm">eCPM <span title="eCPM atribuído por UTM campaign via relatórios GAM. O eCPM nos KPIs globais (aba GAM) vem de blocos_anuncio e pode divergir, pois agrega todos os blocos independente da campanha." style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="rps">RPS <span title="Retorno por sessão: faturamento real ÷ sessões (view_content Meta)" style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="sessoes-meta">Sessões (Meta)</th><th class="col-h" data-col="par">PAR <span title="Impressões GAM ÷ sessões (view_content Meta) — anúncios exibidos por sessão do site" style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="sessao-conv">Sessão/Conversa</th><th class="col-h" data-col="breakeven">Breakeven <span title="Custo por sessão ÷ RPS — abaixo de 1 = gastando menos do que ganha" style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="inicio">Início <span title="Primeiro dia em que a campanha teve gasto real" style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-acoes">Ações</th>
+              <th class="col-h" data-col="cpc">CPC</th><th class="col-h" data-col="custo-res">Custo/Result.</th><th class="col-h" data-col="resultados">Resultados</th><th class="col-h" data-col="imp-gam">Imp. GAM</th><th class="col-h" data-col="ecpm">eCPM <span title="eCPM atribuído por UTM campaign via relatórios GAM. O eCPM nos KPIs globais (aba GAM) vem de blocos_anuncio e pode divergir, pois agrega todos os blocos independente da campanha." style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="rps">RPS <span title="Retorno por sessão: faturamento real ÷ sessões (view_content Meta)" style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="sessoes-meta">Sessões (Meta)</th><th class="col-h" data-col="par">PAR <span title="Impressões GAM ÷ sessões (view_content Meta) — anúncios exibidos por sessão do site" style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="sessao-conv">Sessão/Conversa</th><th class="col-h" data-col="breakeven">Breakeven <span title="Custo por sessão ÷ RPS — abaixo de 1 = gastando menos do que ganha" style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="inicio">Início <span title="Primeiro dia em que a campanha teve gasto real" style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="newcol" title="Custo por lead vs mediana 7d — <1 = pior que o normal (custo/lead usa leads do bot, não conversas Meta)">f·custo</th><th class="newcol" title="Sessões por lead vs mediana 7d — <1 = pior">f·sess</th><th class="newcol" title="PAR (imp. GAM ÷ sessão) vs mediana 7d — <1 = pior">f·PAR</th><th class="newcol" title="eCPM GAM vs mediana 7d — <1 = pior">f·eCPM</th><th class="newcol" title="Etapa que mais puxa o ROAS pra baixo (menor fator)">Gargalo</th><th class="newcol" title="ROAS se o gargalo voltar à mediana 7d">Potencial</th><th class="col-acoes">Ações</th>
             </tr></thead>
-            <tbody id="camp-db-body"><tr><td colspan="18" class="empty">Carregando…</td></tr></tbody>
+            <tbody id="camp-db-body"><tr><td colspan="24" class="empty">Carregando…</td></tr></tbody>
           </table>
           <div class="tbl-foot">
             <span style="font-size:.875rem;color:var(--muted)" id="camp-db-count">—</span>
@@ -4919,7 +4932,7 @@ async function loadCampaignsDB(tipo){
   const tb=document.getElementById('camp-db-body');
   const ct=document.getElementById('camp-db-count');
   const kpiStrip=document.getElementById('camp-kpis');
-  if(tb)tb.innerHTML='<tr><td colspan="18" class="empty">Carregando…</td></tr>';
+  if(tb)tb.innerHTML='<tr><td colspan="24" class="empty">Carregando…</td></tr>';
   if(kpiStrip)kpiStrip.style.display='none';
   const since=document.getElementById('f-since').value;
   const until=document.getElementById('f-until').value;
@@ -4935,8 +4948,9 @@ async function loadCampaignsDB(tipo){
     S.campKPIs=d.kpis||{};
     renderCampKPIs(d.kpis||{},tipo);
     renderCampTable(S.campRows);
+    loadDiagCampanhas(since,until,domain);
   }catch(e){
-    if(tb)tb.innerHTML=`<tr><td colspan="18" class="empty" style="color:var(--bad)">${esc(e.message)}</td></tr>`;
+    if(tb)tb.innerHTML=`<tr><td colspan="24" class="empty" style="color:var(--bad)">${esc(e.message)}</td></tr>`;
     if(ct)ct.textContent='Erro';
   }
 }
@@ -4967,12 +4981,65 @@ function renderCampKPIs(k,tipo){
   strip.style.display='grid';
 }
 
+/* ═══ FRENTE 2 — diagnóstico por campanha (colunas de fator) ═══ */
+S.diagByCamp=S.diagByCamp||{};
+const DG_SHORT={custo_lead:'Custo/lead',spl:'Sess/lead',par:'PAR',ecpm:'eCPM'};
+function _dgFactorSpan(n){
+  if(!n||n.fator==null)return '<span class="dg-mute">·</span>';
+  const col=n.classe==='bad'?'var(--danger)':n.classe==='amb'?'var(--warning)':n.classe==='ok'?'var(--success)':'var(--muted)';
+  const piso=n.piso_falha?' <span title="abaixo do piso absoluto" style="color:var(--warning)">▾</span>':'';
+  return `<span style="color:${col};font-weight:600">${loc(n.fator,2)}×</span>${piso}`;
+}
+function _dgGargSpan(c){
+  const g=c&&c.gargalo;
+  if(!g)return '<span class="dg-mute">·</span>';
+  const cls=g.classe==='bad'?'k':g.classe==='amb'?'w':(g.classe==='ok'?'g':'n');
+  const d=g.delta!=null?` ${g.delta>=0?'+':''}${Math.round(g.delta*100)}%`:'';
+  return `<span class="dg-pill ${cls}">${DG_SHORT[g.chave]||g.label}${d}</span>`;
+}
+function _dgPotSpan(c){
+  const p=c&&c.potencial&&c.potencial.corrigido;
+  if(p==null)return '<span class="dg-mute">·</span>';
+  return `<span style="color:var(--accent);font-weight:600">${loc(p,2)}x</span>`;
+}
+function _dgFat(c,k){const n=c&&(c.fatores||[]).find(x=>x.chave===k);return _dgFactorSpan(n);}
+function dgCellsHTML(campId){
+  const c=(S.diagByCamp||{})[campId];
+  return `<td class="dg newcol" data-dg="fcusto">${_dgFat(c,'custo_lead')}</td>`
+    +`<td class="dg newcol" data-dg="fsess">${_dgFat(c,'spl')}</td>`
+    +`<td class="dg newcol" data-dg="fpar">${_dgFat(c,'par')}</td>`
+    +`<td class="dg newcol" data-dg="fecpm">${_dgFat(c,'ecpm')}</td>`
+    +`<td class="dg newcol gcell" data-dg="gargalo">${_dgGargSpan(c)}</td>`
+    +`<td class="dg newcol" data-dg="potencial">${_dgPotSpan(c)}</td>`;
+}
+function patchDiagCamp(){
+  document.querySelectorAll('#camp-db-body tr.utm-row').forEach(tr=>{
+    const c=(S.diagByCamp||{})[tr.dataset.key];
+    const set=(dg,html)=>{const td=tr.querySelector(`[data-dg="${dg}"]`);if(td)td.innerHTML=html;};
+    set('fcusto',_dgFat(c,'custo_lead'));set('fsess',_dgFat(c,'spl'));
+    set('fpar',_dgFat(c,'par'));set('fecpm',_dgFat(c,'ecpm'));
+    set('gargalo',_dgGargSpan(c));set('potencial',_dgPotSpan(c));
+  });
+}
+async function loadDiagCampanhas(since,until,domain){
+  try{
+    let q=`nivel=campanha&since=${since}&until=${until}`;
+    if(domain&&domain!=='all')q+=`&domain=${encodeURIComponent(domain)}`;
+    const res=await fetch(`/api/diagnostico?${q}`);
+    if(!res.ok)return;
+    const d=await res.json();
+    S.diagByCamp={};
+    for(const c of (d.campanhas||[]))if(c.campaign_id)S.diagByCamp[c.campaign_id]=c;
+    patchDiagCamp();
+  }catch(e){console.warn('[diag-camp]',e);}
+}
+
 function renderCampTable(rows){
   const tb=document.getElementById('camp-db-body');
   const ct=document.getElementById('camp-db-count');
 
   if(!rows.length){
-    tb.innerHTML='<tr><td colspan="17" class="empty">Sem dados no banco para o período selecionado.</td></tr>';
+    tb.innerHTML='<tr><td colspan="24" class="empty">Sem dados no banco para o período selecionado.</td></tr>';
     ct.textContent='0 UTMs';
     return;
   }
@@ -5033,6 +5100,7 @@ function renderCampTable(rows){
       <td class="mo col-h" data-col="sessao-conv" data-sort="${spc!==null&&spc!==undefined?spc:-1}">${spcHtml}</td>
       <td class="mo col-h" data-col="breakeven" data-sort="${be!==null&&be!==undefined?be:-1}">${beHtml}</td>
       <td class="mo col-h" data-col="inicio" data-sort="${r.data_inicio||''}">${inicio}</td>
+      ${dgCellsHTML(r.campaign_id)}
       <td class="col-acoes" style="white-space:nowrap">
         ${r.campaign_id?`<button class="act-btn" onclick="abrirCampIntraday('${esc(r.campaign_id)}','${esc(r.ad_utm||'')}')" title="Intraday por hora · hoje vs ontem" aria-label="Intraday da campanha"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>`:''}
         <button class="act-btn" onclick="abrirHistorico('${esc(r.ad_utm||'')}')" title="Histórico" aria-label="Histórico da UTM"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg></button>
@@ -5075,6 +5143,7 @@ function renderCampTable(rows){
     <td class="mo col-h" data-col="sessao-conv"><strong>${totSpcHtml}</strong></td>
     <td class="mo col-h" data-col="breakeven"><strong>${bePill(totBe)}</strong></td>
     <td class="mo col-h" data-col="inicio">—</td>
+    <td class="dg newcol"></td><td class="dg newcol"></td><td class="dg newcol"></td><td class="dg newcol"></td><td class="dg newcol gcell"></td><td class="dg newcol"></td>
     <td class="col-acoes"></td>
   </tr>`;
 

@@ -8,6 +8,7 @@ const { getUSDtoBRL, getUSDtoBRLByDate } = require('../services/exchange.service
 const { findAction, getResults, OBJECTIVE_ACTION_MAP, getResultadoMeta } = require('../services/attribution.service');
 const { extractDomainPrefix, extractAdUTM, extractTipo, groupAdsByUTM, extractPaisSigla, extractNicho, resolveCountry } = require('./parser');
 const { converterHoraParaBR } = require('./fuso');
+const { syncFunilConjunto } = require('./syncFunil');
 
 const BASE = 'https://graph.facebook.com/v19.0';
 const AD_FIELDS = 'ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name,spend,impressions,inline_link_clicks,outbound_clicks,clicks,ctr,cpc,actions,objective,optimization_goal';
@@ -785,6 +786,69 @@ function yesterday() {
   return diasAtrasBR(1);
 }
 
+// Agrega métricas Meta por conjunto(adset)×dia → meta_conjunto. Mesma conversão do
+// ads_consolidados (taxa USD por data + imposto por conta), só que agrupada por adset em vez
+// de UTM (soma linear por data/conta → o total por conta bate). Orçamento do adset repete em
+// toda linha do adset — NÃO somar (assign do maior). Base do motor de diagnóstico (custo/lead,
+// ROAS por conjunto) e da ficha Meta da Frente 3. conversas_meta/sessoes_meta ficam como rótulo.
+async function upsertMetaConjunto(adsForGrouping, moedaMap, impostoMap) {
+  const acc = new Map();
+  const taxaCache = {};
+  for (const a of adsForGrouping) {
+    if (!a.adsetId) continue;
+    const key = `${a.date}|${a.adsetId}`;
+    let o = acc.get(key);
+    if (!o) {
+      o = { data: a.date, adset_id: String(a.adsetId), campaign_id: a.campaignId || null,
+        campaign_name: a.campaignName || null, adset_name: a.conjuntoMeta || null,
+        account_id: a.accountId || null, dominio_id: a.domainId ?? null,
+        moeda: 'BRL', taxa_usd: 1, imposto_perc: 0,
+        gasto_original: 0, gasto_brl: 0, impressoes: 0, cliques_link: 0,
+        conversas_meta: 0, sessoes_meta: 0, results: 0,
+        _orc_orig: 0, _taxa: 1, _fator: 1 };
+      acc.set(key, o);
+    }
+    const moeda = a.accountId ? (moedaMap[a.accountId] || 'BRL') : 'BRL';
+    let taxa = 1;
+    if (moeda === 'USD') {
+      if (taxaCache[a.date] == null) taxaCache[a.date] = await getUSDtoBRLByDate(a.date);
+      taxa = taxaCache[a.date];
+    }
+    const impostoPerc = a.accountId ? (impostoMap[a.accountId] || 0) : 0;
+    const fator = 1 + impostoPerc / 100;
+    o.moeda = moeda; o.taxa_usd = +taxa.toFixed(4); o.imposto_perc = impostoPerc;
+    o._taxa = taxa; o._fator = fator;
+    o.gasto_original += Number(a.spend || 0);
+    o.gasto_brl += Number(a.spend || 0) * taxa * fator;
+    o.impressoes += Number(a.impressions || 0);
+    o.cliques_link += Number(a.clicks || 0);
+    o.conversas_meta += Number(a.conversas_meta || 0);
+    o.sessoes_meta += Number(a.sessoes_meta || 0);
+    o.results += Number(a.results || 0);
+    if (Number(a.adsetBudget || 0) > o._orc_orig) o._orc_orig = Number(a.adsetBudget || 0);
+  }
+  if (acc.size === 0) return 0;
+  const now = new Date().toISOString();
+  const rows = [...acc.values()].map(o => ({
+    data: o.data, adset_id: o.adset_id, campaign_id: o.campaign_id, campaign_name: o.campaign_name,
+    adset_name: o.adset_name, account_id: o.account_id, dominio_id: o.dominio_id,
+    moeda: o.moeda, taxa_usd: o.taxa_usd, imposto_perc: o.imposto_perc,
+    gasto_original: +o.gasto_original.toFixed(4), gasto_brl: +o.gasto_brl.toFixed(2),
+    impressoes: o.impressoes, cliques_link: o.cliques_link, conversas_meta: o.conversas_meta,
+    sessoes_meta: o.sessoes_meta, results: o.results,
+    orcamento_brl: +(o._orc_orig * o._taxa * o._fator).toFixed(2),
+    updated_at: now,
+  }));
+  let n = 0;
+  for (let i = 0; i < rows.length; i += 500) {
+    const chunk = rows.slice(i, i + 500);
+    const { error } = await supabase.from('meta_conjunto').upsert(chunk, { onConflict: 'data,adset_id' });
+    if (error) { console.warn('[sync] upsert meta_conjunto:', error.message); break; }
+    n += chunk.length;
+  }
+  return n;
+}
+
 async function syncAll(dateRange) {
   const startMs = Date.now();
   let rowsProcessed = 0;
@@ -1351,6 +1415,14 @@ async function syncAll(dateRange) {
       console.warn('[sync] receita_ads:', e.message);
     }
 
+    // ── meta_conjunto: métricas Meta por conjunto(adset) — base do motor de diagnóstico ──
+    try {
+      const n = await upsertMetaConjunto(adsForGrouping, moedaMap, impostoMap);
+      if (n) console.log(`[sync] meta_conjunto: ${n} conjuntos×dia`);
+    } catch (e) {
+      console.warn('[sync] meta_conjunto:', e.message);
+    }
+
     // ── Upsert blocos_anuncio (per day, from adUnitsByDay) ────
     if (Object.keys(adUnitsByDay).length && dominios?.length) {
       for (const [dayDate, unitMap] of Object.entries(adUnitsByDay)) {
@@ -1465,6 +1537,15 @@ async function syncAll(dateRange) {
       if (since !== until) await fetchAndSaveHourly(since);
     } catch (e) {
       console.warn('[sync] hourly save:', e.message);
+    }
+
+    // ── Ponte trakeamento→dash: leads/sessões por conjunto (funil_conjunto) ──
+    // Não-fatal: se o trakeamento não estiver configurado ou falhar, o sync principal segue.
+    try {
+      const n = await syncFunilConjunto({ since, until });
+      if (n) console.log(`[sync] funil_conjunto: ${n} linhas conjunto×dia`);
+    } catch (e) {
+      console.warn('[sync] funil_conjunto:', e.message);
     }
 
     // Sync de páginas removido do cron — o wizard de Criar Campanha dispara
