@@ -27,6 +27,7 @@ const campanhaIntradayHandler = require('./src/app/api/campanha-intraday/route')
 const orcamentoStatusHandler = require('./src/app/api/orcamento-status/route');
 const { customHandler: relatorioCustomHandler } = require('./src/app/api/relatorios/route');
 const diagnosticoHandler = require('./src/app/api/diagnostico/route');
+const revenueByUtmHandler = require('./src/app/api/revenue-by-utm/route');
 const supabase = require('./src/lib/supabase');
 const { syncAll, fetchAndSaveHourly, syncPaginas } = require('./src/lib/sync');
 const { resolveCountry, extractAdUTM } = require('./src/lib/parser');
@@ -65,7 +66,7 @@ async function loadUser(userId) {
 // não está explicitamente concedido no catálogo retorna 403. Rotas novas nascem
 // bloqueadas para colaboradores.
 app.use(async (req, res, next) => {
-  if (!req.path.startsWith('/api/') || req.path.startsWith('/api/auth/')) return next();
+  if (!req.path.startsWith('/api/') || req.path.startsWith('/api/auth/') || req.path === '/api/revenue-by-utm') return next();
   const token = req.cookies?.[COOKIE_NAME] || req.headers.authorization?.replace('Bearer ', '');
   const payload = verifyToken(token);
   if (!payload) return next(); // sem token: auth real (401) fica nas rotas
@@ -272,6 +273,8 @@ app.get('/api/intraday', requireAuth, intradayHandler);
 app.get('/api/diagnostico', requireAuth, diagnosticoHandler);
 app.get('/api/campanha-intraday/:campaignId', requireAuth, campanhaIntradayHandler);
 app.post('/api/relatorios/custom', requireAuth, relatorioCustomHandler);
+// M2M (bot 2Junior's) — auth própria via x-api-key, SEM requireAuth (ver porteiro global acima)
+app.get('/api/revenue-by-utm', revenueByUtmHandler);
 
 // ── Contas Meta ──────────────────────────────────────────────────────────────
 app.get('/api/contas', requireAuth, async (req, res) => {
