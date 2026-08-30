@@ -1,0 +1,32 @@
+/* public/css/components/badge.css */
+
+.badge {
+  display: inline-block;
+  background-color: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 500;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  border: none;
+}
+
+.badge-success {
+  background-color: rgba(52, 199, 89, 0.1);
+  color: var(--success);
+}
+
+.badge-warning {
+  background-color: rgba(255, 149, 0, 0.1);
+  color: var(--warning);
+}
+
+.badge-danger {
+  background-color: rgba(255, 59, 48, 0.1);
+  color: var(--danger);
+}
+
+.badge-info {
+  background-color: var(--accent-soft);
+  color: var(--accent);
+}
