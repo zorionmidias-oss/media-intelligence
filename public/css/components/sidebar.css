@@ -1,4 +1,4 @@
-/* public/css/components/sidebar.css */
+/* public/css/components/sidebar.css - Apple macOS 27 Sidebar */
 
 .sidebar {
   position: fixed;
@@ -24,8 +24,8 @@
   align-items: center;
   gap: var(--spacing-lg);
   width: 100%;
-  padding: var(--spacing-lg);
-  font-size: 14px;
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: 13px;
   color: var(--fg-secondary);
   border: none;
   border-left: 3px solid transparent;
@@ -41,9 +41,9 @@
 }
 
 .nav-btn.on {
-  border-left-color: var(--accent);
-  background-color: var(--accent-soft);
-  color: var(--accent);
+  border-left-color: var(--blue);
+  background-color: rgba(10, 132, 255, 0.08);
+  color: var(--blue);
   font-weight: 600;
 }
 

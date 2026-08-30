@@ -1,4 +1,4 @@
-/* public/css/components/tooltip.css */
+/* public/css/components/tooltip.css - Apple macOS 27 Tooltips */
 
 .tooltip {
   position: relative;
@@ -7,8 +7,8 @@
 
 .tooltip-text {
   visibility: hidden;
-  background-color: var(--fg);
-  color: var(--bg);
+  background-color: rgba(0, 0, 0, 0.9);
+  color: #FFFFFF;
   text-align: center;
   padding: 8px 12px;
   border-radius: var(--radius-sm);
@@ -33,7 +33,7 @@
   margin-left: -4px;
   border-width: 4px;
   border-style: solid;
-  border-color: var(--fg) transparent transparent transparent;
+  border-color: rgba(0, 0, 0, 0.9) transparent transparent transparent;
 }
 
 .tooltip:hover .tooltip-text {

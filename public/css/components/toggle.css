@@ -1,57 +1,57 @@
-/* public/css/components/toggle.css */
+/* public/css/components/toggle.css - Apple macOS 27 Toggles */
 
 .toggle {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  cursor: pointer;
-  user-select: none;
-}
-
-.toggle-btn {
-  position: relative;
-  width: 50px;
+  appearance: none;
+  width: 48px;
   height: 28px;
-  background-color: var(--border);
-  border-radius: var(--radius-pill);
-  transition: background-color var(--duration-quick) var(--ease-out);
+  border-radius: 14px;
+  background-color: var(--bg-secondary);
   border: none;
-  padding: 0;
-  margin: 0;
   cursor: pointer;
+  transition: background-color var(--duration-quick) var(--ease-out);
+  position: relative;
+  padding: 0;
+  flex-shrink: 0;
 }
 
-.toggle-btn::after {
+.toggle::before {
   content: "";
   position: absolute;
-  top: 2px;
-  left: 2px;
   width: 24px;
   height: 24px;
-  background-color: var(--bg);
-  border-radius: 50%;
+  border-radius: 12px;
+  background-color: #FFFFFF;
+  top: 2px;
+  left: 2px;
   transition: left var(--duration-quick) var(--ease-out);
+  box-shadow: var(--shadow-sm);
 }
 
-.toggle input[type="checkbox"] {
-  display: none;
+.toggle:checked {
+  background-color: var(--green);
 }
 
-.toggle input[type="checkbox"]:checked + .toggle-btn {
-  background-color: var(--accent);
+.toggle:checked::before {
+  left: 22px;
 }
 
-.toggle input[type="checkbox"]:checked + .toggle-btn::after {
-  left: 24px;
-}
-
-.toggle input[type="checkbox"]:disabled + .toggle-btn {
+.toggle:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
+.toggle-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
 .toggle-label {
-  margin-left: var(--spacing-sm);
-  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
   color: var(--fg);
+  cursor: pointer;
+  user-select: none;
 }

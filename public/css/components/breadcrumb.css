@@ -1,46 +1,32 @@
-/* public/css/components/breadcrumb.css */
+/* public/css/components/breadcrumb.css - Apple macOS 27 Breadcrumbs */
 
 .breadcrumb {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   gap: var(--spacing-sm);
-  font-size: 12px;
+  font-size: 13px;
   color: var(--fg-secondary);
-  margin-bottom: var(--spacing-lg);
 }
 
 .breadcrumb-item {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.breadcrumb-item a {
-  color: var(--accent);
+  color: var(--fg-secondary);
   text-decoration: none;
   transition: color var(--duration-quick) var(--ease-out);
 }
 
-.breadcrumb-item a:hover {
-  color: var(--accent-hover);
-  text-decoration: underline;
+.breadcrumb-item:hover {
+  color: var(--blue);
 }
 
-.breadcrumb-item.current {
+.breadcrumb-item.active {
   color: var(--fg);
-  font-weight: 600;
+  font-weight: 500;
+  pointer-events: none;
 }
 
 .breadcrumb-separator {
-  color: var(--border-strong);
-}
-
-@media (max-width: 768px) {
-  .breadcrumb-item:not(.current) {
-    display: none;
-  }
-
-  .breadcrumb-item.current .breadcrumb-separator {
-    display: none;
-  }
+  color: var(--border);
+  margin: 0 var(--spacing-xs);
 }

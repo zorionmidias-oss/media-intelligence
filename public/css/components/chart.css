@@ -1,58 +1,69 @@
-/* public/css/components/chart.css */
+/* public/css/components/chart.css - Apple macOS 27 Charts */
 
 .chart-container {
-  position: relative;
-  background-color: var(--card-glass);
-  backdrop-filter: var(--card-blur);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background-color: var(--card);
   border: 1px solid var(--border);
-  padding: 20px;
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-sm);
 }
 
 .chart-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  margin-bottom: var(--spacing-lg);
   color: var(--fg);
+  margin: 0;
 }
 
-.chart-canvas {
-  width: 100%;
-  height: auto;
-  min-height: 300px;
+.chart-subtitle {
+  font-size: 12px;
+  color: var(--fg-secondary);
+  margin: 0;
+}
+
+.chart-content {
+  position: relative;
+  height: 200px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: var(--spacing-md);
+}
+
+.chart-bar {
+  flex: 1;
+  background: linear-gradient(180deg, var(--blue), rgba(10, 132, 255, 0.6));
+  border-radius: 4px 4px 0 0;
+  transition: all var(--duration-quick) var(--ease-out);
+  position: relative;
+  min-height: 4px;
+}
+
+.chart-bar:hover {
+  opacity: 0.8;
+  filter: brightness(1.1);
 }
 
 .chart-legend {
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-lg);
-  margin-top: var(--spacing-lg);
-  padding-top: var(--spacing-lg);
-  border-top: 1px solid var(--border);
   font-size: 12px;
+  color: var(--fg-secondary);
+  margin-top: var(--spacing-md);
 }
 
 .chart-legend-item {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: 6px;
 }
 
-.chart-legend-dot {
+.chart-legend-color {
   width: 12px;
   height: 12px;
-  border-radius: 50%;
-}
-
-.chart-tooltip {
-  position: absolute;
-  background-color: var(--fg);
-  color: var(--bg);
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  pointer-events: none;
-  z-index: 100;
-  box-shadow: var(--shadow-md);
+  border-radius: 2px;
 }

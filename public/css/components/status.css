@@ -1,64 +1,68 @@
-/* public/css/components/status.css */
-
-.status-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  animation: pulse 2s var(--ease-in-out) infinite;
-}
-
-.status-online {
-  background-color: var(--success);
-}
-
-.status-offline {
-  background-color: var(--border-strong);
-  animation: none;
-}
-
-.status-busy {
-  background-color: var(--warning);
-}
-
-.status-error {
-  background-color: var(--danger);
-}
-
-.status-indicator {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--fg-secondary);
-}
+/* public/css/components/status.css - Apple macOS 27 Status Indicators */
 
 .status-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 4px 8px;
-  border-radius: var(--radius-sm);
+  border-radius: 12px;
   font-size: 11px;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .status-badge.success {
-  background-color: var(--success-soft);
-  color: var(--success);
+  background-color: rgba(52, 199, 89, 0.1);
+  color: var(--green);
 }
 
-.status-badge.offline {
-  background-color: var(--bg-tertiary);
-  color: var(--fg-secondary);
+.status-badge.warning {
+  background-color: rgba(255, 159, 64, 0.1);
+  color: var(--orange);
 }
 
-.status-badge.busy {
-  background-color: var(--warning-soft);
-  color: var(--warning);
+.status-badge.danger {
+  background-color: rgba(255, 59, 48, 0.1);
+  color: var(--red);
 }
 
-.status-badge.error {
-  background-color: var(--danger-soft);
-  color: var(--danger);
+.status-badge.info {
+  background-color: rgba(10, 132, 255, 0.1);
+  color: var(--blue);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.success {
+  background-color: var(--green);
+}
+
+.status-dot.warning {
+  background-color: var(--orange);
+}
+
+.status-dot.danger {
+  background-color: var(--red);
+}
+
+.status-dot.info {
+  background-color: var(--blue);
+}
+
+.status-dot.pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }

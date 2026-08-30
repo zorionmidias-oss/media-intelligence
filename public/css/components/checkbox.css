@@ -1,48 +1,52 @@
-/* public/css/components/checkbox.css */
+/* public/css/components/checkbox.css - Apple macOS 27 Checkboxes */
 
-input[type="checkbox"],
-input[type="radio"] {
-  width: 20px;
-  height: 20px;
-  margin: 0;
+.checkbox {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
   cursor: pointer;
-  accent-color: var(--accent);
+  background-color: var(--bg);
+  transition: all var(--duration-quick) var(--ease-out);
+  flex-shrink: 0;
 }
 
-input[type="radio"] {
-  border-radius: 50%;
+.checkbox:hover:not(:disabled) {
+  border-color: var(--blue);
+  background-color: rgba(10, 132, 255, 0.08);
 }
 
-input[type="checkbox"]:checked,
-input[type="radio"]:checked {
-  background-color: var(--accent);
-  border-color: var(--accent);
+.checkbox:checked {
+  background-color: var(--blue);
+  border-color: var(--blue);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='white' d='M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 11-1.06-1.06l7.25-7.25a.75.75 0 011.06 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 12px;
 }
 
-input[type="checkbox"]:focus-visible,
-input[type="radio"]:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-input[type="checkbox"]:disabled,
-input[type="radio"]:disabled {
+.checkbox:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.checkbox-label,
-.radio-label {
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.checkbox-label {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  font-size: 14px;
+  gap: 8px;
+  font-size: 13px;
   color: var(--fg);
   cursor: pointer;
   user-select: none;
 }
 
-.checkbox-label input,
-.radio-label input {
-  margin: 0;
+.checkbox-label:hover .checkbox:not(:disabled) {
+  border-color: var(--blue);
 }

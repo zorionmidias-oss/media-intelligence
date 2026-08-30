@@ -1,9 +1,9 @@
-/* public/css/components/badge.css */
+/* public/css/components/badge.css - Apple macOS 27 Badges */
 
 .badge {
   display: inline-block;
-  background-color: var(--accent-soft);
-  color: var(--accent);
+  background-color: rgba(10, 132, 255, 0.1);
+  color: var(--blue);
   font-weight: 500;
   font-size: 12px;
   padding: 4px 8px;
@@ -11,22 +11,62 @@
   border: none;
 }
 
+.badge-red {
+  background-color: rgba(255, 59, 48, 0.1);
+  color: var(--red);
+}
+
+.badge-orange {
+  background-color: rgba(255, 149, 0, 0.1);
+  color: var(--orange);
+}
+
+.badge-yellow {
+  background-color: rgba(255, 204, 0, 0.1);
+  color: var(--yellow);
+}
+
+.badge-green {
+  background-color: rgba(52, 199, 89, 0.1);
+  color: var(--green);
+}
+
+.badge-cyan {
+  background-color: rgba(0, 212, 255, 0.1);
+  color: var(--cyan);
+}
+
+.badge-blue {
+  background-color: rgba(10, 132, 255, 0.1);
+  color: var(--blue);
+}
+
+.badge-purple {
+  background-color: rgba(88, 86, 214, 0.1);
+  color: var(--purple);
+}
+
+.badge-magenta {
+  background-color: rgba(255, 45, 85, 0.1);
+  color: var(--magenta);
+}
+
 .badge-success {
   background-color: rgba(52, 199, 89, 0.1);
-  color: var(--success);
+  color: var(--green);
 }
 
 .badge-warning {
   background-color: rgba(255, 149, 0, 0.1);
-  color: var(--warning);
+  color: var(--orange);
 }
 
 .badge-danger {
   background-color: rgba(255, 59, 48, 0.1);
-  color: var(--danger);
+  color: var(--red);
 }
 
 .badge-info {
-  background-color: var(--accent-soft);
-  color: var(--accent);
+  background-color: rgba(10, 132, 255, 0.1);
+  color: var(--blue);
 }

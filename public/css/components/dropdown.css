@@ -1,4 +1,4 @@
-/* public/css/components/dropdown.css */
+/* public/css/components/dropdown.css - Apple macOS 27 Dropdowns */
 
 [data-dropdown] {
   position: relative;
@@ -11,7 +11,7 @@
   left: 0;
   min-width: 160px;
   background-color: var(--card-glass);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(20px);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 8px 0;
@@ -32,7 +32,7 @@
   display: block;
   width: 100%;
   padding: 8px 16px;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--fg);
   background-color: transparent;
   border: none;
@@ -46,7 +46,7 @@
 }
 
 [data-dropdown-item].active {
-  background-color: var(--accent-soft);
-  color: var(--accent);
+  background-color: rgba(10, 132, 255, 0.08);
+  color: var(--blue);
   font-weight: 600;
 }

@@ -1,10 +1,10 @@
-/* public/css/components/card.css */
+/* public/css/components/card.css - Apple macOS 27 Cards */
 
 .card {
   background-color: var(--card-glass);
   backdrop-filter: var(--card-blur);
   border: 1px solid var(--border);
-  padding: 20px;
+  padding: 16px;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   transition: all var(--duration-normal) var(--ease-out);
@@ -12,7 +12,7 @@
 
 .card:hover {
   box-shadow: var(--shadow-lg);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 .card-header {
@@ -25,15 +25,15 @@
 }
 
 .card-title {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 700;
   color: var(--fg);
-  line-height: 1.4;
+  line-height: 1.3;
   margin-bottom: var(--spacing-md);
 }
 
 .card-body {
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1.5;
   color: var(--fg);
 }
@@ -61,6 +61,7 @@
 
 .card-kpi .card-title {
   font-size: 28px;
+  font-weight: 700;
   margin-bottom: var(--spacing-sm);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
@@ -71,5 +72,14 @@
   font-weight: 400;
 }
 
-.card-kpi .card-delta.positive { color: var(--success); }
-.card-kpi .card-delta.negative { color: var(--danger); }
+.card-kpi .card-delta.positive {
+  color: var(--green);
+}
+
+.card-kpi .card-delta.negative {
+  color: var(--red);
+}
+
+.card-kpi .card-delta.neutral {
+  color: var(--fg-secondary);
+}
