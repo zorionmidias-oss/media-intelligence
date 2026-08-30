@@ -1,29 +1,36 @@
-/* public/css/_variables.css */
+/* public/css/_variables.css - Apple macOS 27 Design System */
 
 :root {
   /* ══ LIGHT MODE (Default) ══ */
 
   /* Backgrounds */
   --bg: #FFFFFF;
-  --bg-secondary: #F5F5F7;
-  --bg-tertiary: #EFEFEF;
+  --bg-secondary: #F8F8F8;
+  --bg-tertiary: #F0F0F0;
 
   /* Borders */
-  --border: #E5E5EA;
-  --border-strong: #D2D2D7;
+  --border: #D9D9D9;
+  --border-strong: #C5C5C5;
 
   /* Text */
   --fg: #000000;
   --fg-secondary: #666666;
   --fg-tertiary: #999999;
 
-  /* Accent */
-  --accent: #0A84FF;
-  --accent-hover: #0056B3;
-  --accent-soft: rgba(10, 132, 255, 0.1);
-  --accent-fg: #FFFFFF;
+  /* Primary Colors (Apple Vibrancy) */
+  --red: #FF3B30;
+  --orange: #FF9500;
+  --yellow: #FFCC00;
+  --green: #34C759;
+  --cyan: #00D4FF;
+  --blue: #0A84FF;
+  --purple: #5856D6;
+  --magenta: #FF2D55;
+  --pink: #FF2D55;
+  --brown: #A2845E;
+  --gray: #8E8E93;
 
-  /* Semantic Colors */
+  /* Semantic (same as primaries for Apple) */
   --success: #34C759;
   --success-soft: rgba(52, 199, 89, 0.1);
   --warning: #FF9500;
@@ -33,24 +40,28 @@
   --info: #0A84FF;
   --info-soft: rgba(10, 132, 255, 0.1);
 
+  /* Accent (Blue primary) */
+  --accent: #0A84FF;
+  --accent-hover: #0056B3;
+  --accent-soft: rgba(10, 132, 255, 0.1);
+  --accent-fg: #FFFFFF;
+
   /* Glassmorphism */
-  --card-glass: rgba(255, 255, 255, 0.5);
-  --card-blur: blur(10px);
-  --overlay-glass: rgba(0, 0, 0, 0.08);
+  --card-glass: rgba(255, 255, 255, 0.6);
+  --card-blur: blur(20px);
+  --overlay-glass: rgba(0, 0, 0, 0.05);
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.05),
-               0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.1),
-               0 16px 40px rgba(0, 0, 0, 0.15);
+  /* Shadows - refined, subtle */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
 
-  /* Typography */
-  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-display: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono: "Menlo", "Monaco", "Courier New", monospace;
+  /* Typography - Apple system font */
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "SF Mono", "Monaco", "Menlo", monospace;
 
-  /* Spacing */
+  /* Spacing (Apple standard) */
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 12px;
@@ -59,8 +70,8 @@
   --spacing-2xl: 24px;
   --spacing-3xl: 32px;
 
-  /* Border Radius */
-  --radius-sm: 6px;
+  /* Border Radius - Apple (softer) */
+  --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
@@ -70,9 +81,9 @@
   --sidebar-width: 260px;
   --sidebar-width-collapsed: 72px;
   --topbar-height: 64px;
-  --button-height: 40px;
+  --button-height: 32px;
 
-  /* Easing */
+  /* Easing - Apple smooth */
   --ease-in: cubic-bezier(0.4, 0, 1, 1);
   --ease-out: cubic-bezier(0, 0, 0.2, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
@@ -95,72 +106,73 @@
   --z-toast: 100;
 }
 
-/* ══ DARK MODE ══ */
+/* ══ DARK MODE (Apple OLED) ══ */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #000000;
-    --bg-secondary: #1D1D1F;
-    --bg-tertiary: #424245;
-    --border: #424245;
-    --border-strong: #636366;
+    --bg-secondary: #1C1C1E;
+    --bg-tertiary: #2C2C2E;
+    --border: #3A3A3C;
+    --border-strong: #545456;
     --fg: #FFFFFF;
     --fg-secondary: #A1A1A6;
-    --fg-tertiary: #767676;
-    --accent: #0A84FF;
-    --accent-hover: #54B1FF;
-    --accent-soft: rgba(10, 132, 255, 0.15);
-    --success: #30B0C0;
-    --success-soft: rgba(52, 199, 89, 0.15);
-    --warning: #FFB340;
-    --warning-soft: rgba(255, 159, 69, 0.15);
-    --danger: #FF6B7A;
-    --danger-soft: rgba(255, 107, 122, 0.15);
-    --card-glass: rgba(29, 29, 31, 0.8);
-    --overlay-glass: rgba(0, 0, 0, 0.4);
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
-    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.2),
-                 0 4px 12px rgba(0, 0, 0, 0.25);
-    --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.3),
-                 0 16px 40px rgba(0, 0, 0, 0.4);
+    --fg-tertiary: #656570;
+
+    /* Primary colors - adjusted for dark mode */
+    --red: #FF453A;
+    --orange: #FF9500;
+    --yellow: #FFD60A;
+    --green: #32AE47;
+    --cyan: #00D4FF;
+    --blue: #0A84FF;
+    --purple: #7C3AED;
+    --magenta: #FF453A;
+    --pink: #FF453A;
+    --brown: #A2845E;
+    --gray: #A1A1A6;
+
+    --accent-soft: rgba(10, 132, 255, 0.2);
+    --card-glass: rgba(28, 28, 30, 0.9);
+    --overlay-glass: rgba(0, 0, 0, 0.3);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
   }
 }
 
 /* Explicit light theme */
 [data-theme="light"] {
   --bg: #FFFFFF;
-  --bg-secondary: #F5F5F7;
-  --bg-tertiary: #EFEFEF;
-  --border: #E5E5EA;
-  --border-strong: #D2D2D7;
+  --bg-secondary: #F8F8F8;
+  --bg-tertiary: #F0F0F0;
+  --border: #D9D9D9;
+  --border-strong: #C5C5C5;
   --fg: #000000;
   --fg-secondary: #666666;
   --fg-tertiary: #999999;
   --accent-soft: rgba(10, 132, 255, 0.1);
-  --card-glass: rgba(255, 255, 255, 0.5);
-  --overlay-glass: rgba(0, 0, 0, 0.08);
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.05),
-               0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.1),
-               0 16px 40px rgba(0, 0, 0, 0.15);
+  --card-glass: rgba(255, 255, 255, 0.6);
+  --overlay-glass: rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 /* Explicit dark theme */
 [data-theme="dark"] {
   --bg: #000000;
-  --bg-secondary: #1D1D1F;
-  --bg-tertiary: #424245;
-  --border: #424245;
-  --border-strong: #636366;
+  --bg-secondary: #1C1C1E;
+  --bg-tertiary: #2C2C2E;
+  --border: #3A3A3C;
+  --border-strong: #545456;
   --fg: #FFFFFF;
   --fg-secondary: #A1A1A6;
-  --fg-tertiary: #767676;
-  --accent-soft: rgba(10, 132, 255, 0.15);
-  --card-glass: rgba(29, 29, 31, 0.8);
-  --overlay-glass: rgba(0, 0, 0, 0.4);
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.2),
-               0 4px 12px rgba(0, 0, 0, 0.25);
-  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.3),
-               0 16px 40px rgba(0, 0, 0, 0.4);
+  --fg-tertiary: #656570;
+  --accent-soft: rgba(10, 132, 255, 0.2);
+  --card-glass: rgba(28, 28, 30, 0.9);
+  --overlay-glass: rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
