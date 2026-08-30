@@ -1,0 +1,36 @@
+/* public/css/layouts/responsive.css */
+
+/* Tablet breakpoint (640px - 1024px) */
+@media (max-width: 1024px) {
+  .grid-cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .container { padding: 0 var(--spacing-2xl); }
+
+  .hide-tablet { display: none; }
+}
+
+/* Mobile breakpoint (< 640px) */
+@media (max-width: 768px) {
+  .grid-cols-4,
+  .grid-cols-3,
+  .grid-cols-2 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+
+  .container { padding: 0 var(--spacing-lg); }
+
+  .hide-mobile { display: none; }
+  .show-mobile { display: block; }
+
+  /* Sidebar on mobile */
+  .sidebar {
+    width: var(--sidebar-width-collapsed) !important;
+  }
+
+  .sidebar-text { display: none; }
+  .main-content { margin-left: var(--sidebar-width-collapsed); }
+}
+
+@media (max-width: 640px) {
+  body { font-size: 15px; }
+  .hide-small { display: none; }
+}
