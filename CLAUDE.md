@@ -2,6 +2,40 @@
 
 Dashboard de arbitragem de tráfego: compra mídia na Meta (Facebook Ads) que leva a sites monetizados com Google Ad Manager (GAM). Lucro = receita GAM líquida − gasto Meta. Single-tenant, deploy no Render (auto-deploy no push para `main`).
 
+
+## Diretrizes de comportamento
+
+1. **Pensar antes de codar** — declare suposições. Se houver mais de uma
+   interpretação, apresente as duas em vez de escolher em silêncio. Se estiver
+   genuinamente ambíguo, pare e pergunte.
+2. **Simplicidade primeiro** — o mínimo de código que resolve. Sem feature
+   especulativa, sem abstração para uso único, sem tratar erro impossível.
+3. **Mudança cirúrgica** — mexa só no que o pedido exige. Não refatore,
+   reformate nem "melhore" código adjacente que não foi pedido.
+4. **Execução verificável** — transforme a tarefa em algo checável. Como este
+   projeto não tem teste automatizado, a verificação é: rodar o script de
+   diagnóstico relevante em `scripts/`, ou uma query read-only no Supabase.
+   Nunca declare pronto sem ter verificado.
+5. **Invariantes acima de tudo** — antes de tocar em cálculo de receita, gasto,
+   fuso ou upsert, releia a seção "Invariantes de negócio" e confirme que a
+   mudança não viola nenhuma.
+   
+   
+    ## Como falar comigo
+
+- Uma pergunta por vez. Nunca despeje uma lista de 5 perguntas de uma vez.
+- Toda pergunta vem com opções numeradas (2 ou 3), não em aberto.
+  Em vez de "como você quer tratar isso?", pergunte "1) ignora a linha,
+  2) grava com aviso, 3) para o sync — qual?"
+- Diga o que acontece na prática em cada opção, em português comum, com o
+  efeito no dashboard ou nos números — não em jargão de implementação.
+- Se houver uma recomendação clara, diga qual você escolheria e por quê.
+  Eu decido, mas quero sua opinião junto.
+- Se eu responder algo vago ou fora do que você perguntou, não adivinhe:
+  reformule mais simples e pergunte de novo.
+- Nunca assuma que eu conheço um termo técnico. Explique na primeira vez
+  que aparecer, numa linha.
+
 ## Rodar
 
 - `node server.js` — Express na porta 3000, serve `public/` e inicia o scheduler (sync a cada 30min + diário 06h).
@@ -62,6 +96,29 @@ Backfill de histórico: `scripts/backfill-meta-entidades.js`.
 - UTMs com typo entre Meta e site quebram matching de receita: ex. `yetudefb`(Meta) vs `yetundefb`(site). Guardrail: alerta `utm_sem_receita` (dia fechado com gasto ≥ R$5 e zero receita casada).
 - Planilha Gestão de páginas: match token×linha por prefixo de palavras; token ambíguo (2+ linhas) NÃO escolhe vencedor — zera com aviso na Observação + notificação. Aba definida por `SHEET_GESTAO_ABA` — se renomearem a aba no Sheets, o sync da planilha falha silenciosamente (só loga).
 - PowerShell 5.1 no Windows do dev: redirecionar saída cria arquivos UTF-16; usar node para manipular arquivos.
+
+## Quem depende de quem
+
+- `supabase.js` — quase todos (sync, gam, meta, orçamento, alertas, histórico, câmbio, server) — se mudar, o sistema inteiro perde acesso ao banco.
+- `sync.js` — chamado pelo scheduler e pelo server.js — se quebrar, nenhum dado novo da Meta ou do GAM entra no banco.
+- `parser.js` — usado por sync.js, orcamento.js e server.js — se mudar, a extração de UTM/país/domínio falha e o cruzamento de receita GAM erra.
+- `exchange.service.js` — usado por sync.js, gam.js e orcamento.js — se mudar, gasto e receita convertidos pra BRL saem errados.
+- `datas.js` — usado por sync, gam, alertas, histórico e scheduler — se mudar, o "hoje" no fuso de São Paulo vira o dia errado.
+- `gam.js` — chamado só por sync.js — se mudar, a receita do Google Ad Manager para de entrar.
+- `orcamento.js` — usado por alertas.js e sheetsGestao.js — se mudar, os alertas de conta parada e a planilha de gestão saem errados.
+- `metricas.js` — usado pelas rotas dashboard, overview e drilldown — se mudar, os números derivados (break even, ROI) mudam no dashboard.
+- `fetchAll.js` — usado pelas rotas de leitura (dashboard, overview, reports-gam, diagnóstico) e por scripts — se sumir, as queries cortam em 1000 linhas e o ROI fica falso.
+- `auth.js` — chamado só pelo server.js — se mudar, o login/JWT quebra e ninguém entra (ou tudo fica aberto).
+
+## Visual Design — Mach Tahoe (ago/2026)
+
+Dashboard redesignado com Apple's Mach Tahoe design language: **paleta cinza neutro + Apple Blue**, glassmorphism, light/dark mode, 18 componentes CSS, animações suaves, WCAG AA accessibility. Veja `docs/CSS-ARCHITECTURE.md` para arquitetura e manutenção. Sem mudanças de API/dados — puro CSS+JS.
+
+- **CSS Foundation:** reset, variables (light/dark), typography, animations, layouts (grid, responsive 640/768/1024px, a11y)
+- **18 Componentes:** button, input, card, badge, table, modal, sidebar, topbar, tooltip, dropdown, checkbox, toggle, chart, alert, breadcrumb, pagination, progress, skeleton, status + helpers
+- **JavaScript:** ThemeManager (toggle + localStorage + system preference sync), sidebar/modal/dropdown interactions
+- **HTML:** Linkado em dashboard.html, login.html, mobile.html, privacidade.html
+- **Docs:** `docs/CSS-ARCHITECTURE.md` — referência completa
 
 ## Tabelas principais (Supabase)
 
