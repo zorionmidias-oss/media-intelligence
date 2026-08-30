@@ -1,0 +1,45 @@
+/* public/css/components/table.css */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+thead {
+  background-color: var(--bg-tertiary);
+}
+
+th {
+  padding: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg-secondary);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  letter-spacing: 0.05em;
+}
+
+td {
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--fg);
+  border-bottom: 1px solid var(--border);
+}
+
+tbody tr {
+  transition: background-color var(--duration-quick) var(--ease-out);
+}
+
+tbody tr:hover {
+  background-color: var(--bg-secondary);
+}
+
+/* Numeric alignment */
+td.text-right {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
