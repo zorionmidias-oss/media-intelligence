@@ -1,0 +1,50 @@
+/* public/css/components/topbar.css */
+
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--topbar-height);
+  background-color: var(--card-glass);
+  backdrop-filter: blur(15px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 var(--spacing-3xl);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: var(--z-topbar);
+  box-shadow: var(--shadow-sm);
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.topbar-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.topbar-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--fg);
+  margin: 0;
+}
+
+.topbar-subtitle {
+  font-size: 12px;
+  color: var(--fg-secondary);
+  margin: 0;
+}
