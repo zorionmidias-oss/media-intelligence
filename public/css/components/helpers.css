@@ -1,0 +1,91 @@
+/* public/css/components/helpers.css */
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.empty-state-icon {
+  width: 64px;
+  height: 64px;
+  margin-bottom: var(--spacing-lg);
+  opacity: 0.5;
+}
+
+.empty-state-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--fg);
+  margin-bottom: var(--spacing-sm);
+}
+
+.empty-state-description {
+  font-size: 14px;
+  color: var(--fg-secondary);
+  margin-bottom: var(--spacing-lg);
+}
+
+.empty-state-action {
+  display: inline-block;
+}
+
+/* Timeline */
+.timeline {
+  position: relative;
+  padding-left: 40px;
+}
+
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: var(--border);
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: var(--spacing-xl);
+}
+
+.timeline-dot {
+  position: absolute;
+  left: -35px;
+  top: 0;
+  width: 16px;
+  height: 16px;
+  background-color: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: 50%;
+}
+
+.timeline-item.complete .timeline-dot {
+  background-color: var(--success);
+  border-color: var(--success);
+}
+
+.timeline-item.error .timeline-dot {
+  background-color: var(--danger);
+  border-color: var(--danger);
+}
+
+.timeline-content {
+  padding: 8px 0;
+}
+
+.timeline-title {
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.timeline-description {
+  font-size: 13px;
+  color: var(--fg-secondary);
+}
