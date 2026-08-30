@@ -20,11 +20,7 @@
   to { transform: scale(1); opacity: 1; }
 }
 
-@keyframes bounceIn {
-  0% { transform: scale(0.9); opacity: 0; }
-  50% { opacity: 1; }
-  100% { transform: scale(1); }
-}
+/* bounceIn keyframe removed — use scaleIn for minimalist effect */
 
 @keyframes pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
@@ -48,9 +44,7 @@
   animation: slideUp var(--duration-normal) var(--ease-out) both;
 }
 
-.animate-bounce {
-  animation: bounceIn var(--duration-slow) var(--ease-spring);
-}
+/* .animate-bounce removed — bounce easing is dated; use ease-out instead */
 
 .animate-spin {
   animation: spin 1s linear infinite;

@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": [
+          "public/css/components/sidebar.css"
+        ],
+        "createdAt": "2026-08-30T18:19:24.100Z",
+        "reason": "Sidebar collapse animation is standard UX pattern; approved in Mach Tahoe spec"
+      }
+    ]
+  }
+}
