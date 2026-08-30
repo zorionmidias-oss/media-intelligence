@@ -1,0 +1,52 @@
+/* public/css/components/dropdown.css */
+
+[data-dropdown] {
+  position: relative;
+  display: inline-block;
+}
+
+[data-dropdown-menu] {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 160px;
+  background-color: var(--card-glass);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px 0;
+  margin-top: 8px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--duration-quick) var(--ease-out), visibility var(--duration-quick) var(--ease-out);
+  z-index: var(--z-dropdown);
+  box-shadow: var(--shadow-md);
+}
+
+[data-dropdown-menu].open {
+  opacity: 1;
+  visibility: visible;
+}
+
+[data-dropdown-item] {
+  display: block;
+  width: 100%;
+  padding: 8px 16px;
+  font-size: 14px;
+  color: var(--fg);
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color var(--duration-quick) var(--ease-out);
+}
+
+[data-dropdown-item]:hover {
+  background-color: var(--bg-secondary);
+}
+
+[data-dropdown-item].active {
+  background-color: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
