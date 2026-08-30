@@ -1,0 +1,75 @@
+/* public/css/components/card.css */
+
+.card {
+  background-color: var(--card-glass);
+  backdrop-filter: var(--card-blur);
+  border: 1px solid var(--border);
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  transition: all var(--duration-normal) var(--ease-out);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-1px);
+}
+
+.card-header {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg-secondary);
+  margin-bottom: var(--spacing-md);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--fg);
+  line-height: 1.4;
+  margin-bottom: var(--spacing-md);
+}
+
+.card-body {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--fg);
+}
+
+.card-body > * + * {
+  margin-top: var(--spacing-lg);
+}
+
+.card-footer {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--border);
+}
+
+/* KPI Card variant */
+.card-kpi {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 160px;
+}
+
+.card-kpi .card-title {
+  font-size: 28px;
+  margin-bottom: var(--spacing-sm);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.card-kpi .card-delta {
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.card-kpi .card-delta.positive { color: var(--success); }
+.card-kpi .card-delta.negative { color: var(--danger); }
