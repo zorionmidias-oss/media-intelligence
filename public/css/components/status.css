@@ -1,0 +1,64 @@
+/* public/css/components/status.css */
+
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: pulse 2s var(--ease-in-out) infinite;
+}
+
+.status-online {
+  background-color: var(--success);
+}
+
+.status-offline {
+  background-color: var(--border-strong);
+  animation: none;
+}
+
+.status-busy {
+  background-color: var(--warning);
+}
+
+.status-error {
+  background-color: var(--danger);
+}
+
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--fg-secondary);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.status-badge.success {
+  background-color: var(--success-soft);
+  color: var(--success);
+}
+
+.status-badge.offline {
+  background-color: var(--bg-tertiary);
+  color: var(--fg-secondary);
+}
+
+.status-badge.busy {
+  background-color: var(--warning-soft);
+  color: var(--warning);
+}
+
+.status-badge.error {
+  background-color: var(--danger-soft);
+  color: var(--danger);
+}
