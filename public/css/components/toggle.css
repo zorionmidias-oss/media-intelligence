@@ -1,0 +1,57 @@
+/* public/css/components/toggle.css */
+
+.toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-btn {
+  position: relative;
+  width: 50px;
+  height: 28px;
+  background-color: var(--border);
+  border-radius: var(--radius-pill);
+  transition: background-color var(--duration-quick) var(--ease-out);
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.toggle-btn::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  background-color: var(--bg);
+  border-radius: 50%;
+  transition: left var(--duration-quick) var(--ease-out);
+}
+
+.toggle input[type="checkbox"] {
+  display: none;
+}
+
+.toggle input[type="checkbox"]:checked + .toggle-btn {
+  background-color: var(--accent);
+}
+
+.toggle input[type="checkbox"]:checked + .toggle-btn::after {
+  left: 24px;
+}
+
+.toggle input[type="checkbox"]:disabled + .toggle-btn {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toggle-label {
+  margin-left: var(--spacing-sm);
+  font-size: 14px;
+  color: var(--fg);
+}
