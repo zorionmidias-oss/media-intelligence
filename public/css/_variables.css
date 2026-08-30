@@ -1,0 +1,166 @@
+/* public/css/_variables.css */
+
+:root {
+  /* ══ LIGHT MODE (Default) ══ */
+
+  /* Backgrounds */
+  --bg: #FFFFFF;
+  --bg-secondary: #F5F5F7;
+  --bg-tertiary: #EFEFEF;
+
+  /* Borders */
+  --border: #E5E5EA;
+  --border-strong: #D2D2D7;
+
+  /* Text */
+  --fg: #000000;
+  --fg-secondary: #666666;
+  --fg-tertiary: #999999;
+
+  /* Accent */
+  --accent: #0A84FF;
+  --accent-hover: #0056B3;
+  --accent-soft: rgba(10, 132, 255, 0.1);
+  --accent-fg: #FFFFFF;
+
+  /* Semantic Colors */
+  --success: #34C759;
+  --success-soft: rgba(52, 199, 89, 0.1);
+  --warning: #FF9500;
+  --warning-soft: rgba(255, 149, 0, 0.1);
+  --danger: #FF3B30;
+  --danger-soft: rgba(255, 59, 48, 0.1);
+  --info: #0A84FF;
+  --info-soft: rgba(10, 132, 255, 0.1);
+
+  /* Glassmorphism */
+  --card-glass: rgba(255, 255, 255, 0.5);
+  --card-blur: blur(10px);
+  --overlay-glass: rgba(0, 0, 0, 0.08);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.05),
+               0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.1),
+               0 16px 40px rgba(0, 0, 0, 0.15);
+
+  /* Typography */
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Menlo", "Monaco", "Courier New", monospace;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-2xl: 24px;
+  --spacing-3xl: 32px;
+
+  /* Border Radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-pill: 999px;
+
+  /* Component Sizes */
+  --sidebar-width: 260px;
+  --sidebar-width-collapsed: 72px;
+  --topbar-height: 64px;
+  --button-height: 40px;
+
+  /* Easing */
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Durations */
+  --duration-instant: 0ms;
+  --duration-micro: 100ms;
+  --duration-quick: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+
+  /* Z-Index Stack */
+  --z-sidebar: 20;
+  --z-topbar: 30;
+  --z-dropdown: 40;
+  --z-modal-overlay: 50;
+  --z-modal: 51;
+  --z-tooltip: 60;
+  --z-toast: 100;
+}
+
+/* ══ DARK MODE ══ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #000000;
+    --bg-secondary: #1D1D1F;
+    --bg-tertiary: #424245;
+    --border: #424245;
+    --border-strong: #636366;
+    --fg: #FFFFFF;
+    --fg-secondary: #A1A1A6;
+    --fg-tertiary: #767676;
+    --accent: #0A84FF;
+    --accent-hover: #54B1FF;
+    --accent-soft: rgba(10, 132, 255, 0.15);
+    --success: #30B0C0;
+    --success-soft: rgba(52, 199, 89, 0.15);
+    --warning: #FFB340;
+    --warning-soft: rgba(255, 159, 69, 0.15);
+    --danger: #FF6B7A;
+    --danger-soft: rgba(255, 107, 122, 0.15);
+    --card-glass: rgba(29, 29, 31, 0.8);
+    --overlay-glass: rgba(0, 0, 0, 0.4);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.2),
+                 0 4px 12px rgba(0, 0, 0, 0.25);
+    --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.3),
+                 0 16px 40px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* Explicit light theme */
+[data-theme="light"] {
+  --bg: #FFFFFF;
+  --bg-secondary: #F5F5F7;
+  --bg-tertiary: #EFEFEF;
+  --border: #E5E5EA;
+  --border-strong: #D2D2D7;
+  --fg: #000000;
+  --fg-secondary: #666666;
+  --fg-tertiary: #999999;
+  --accent-soft: rgba(10, 132, 255, 0.1);
+  --card-glass: rgba(255, 255, 255, 0.5);
+  --overlay-glass: rgba(0, 0, 0, 0.08);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.05),
+               0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.1),
+               0 16px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Explicit dark theme */
+[data-theme="dark"] {
+  --bg: #000000;
+  --bg-secondary: #1D1D1F;
+  --bg-tertiary: #424245;
+  --border: #424245;
+  --border-strong: #636366;
+  --fg: #FFFFFF;
+  --fg-secondary: #A1A1A6;
+  --fg-tertiary: #767676;
+  --accent-soft: rgba(10, 132, 255, 0.15);
+  --card-glass: rgba(29, 29, 31, 0.8);
+  --overlay-glass: rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.2),
+               0 4px 12px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.3),
+               0 16px 40px rgba(0, 0, 0, 0.4);
+}
