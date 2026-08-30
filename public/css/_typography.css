@@ -1,46 +1,132 @@
-/* public/css/_typography.css */
+/* public/css/_typography.css - Apple macOS 27 Typography System */
 
+/* Apple Typography Hierarchy */
+
+/* Large Title - Hero/Main headings */
+.large-title,
 h1 {
   font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-family: var(--font-display);
+}
+
+/* Title 1 - Major section headings */
+.title-1,
+h2 {
+  font-size: 28px;
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: -0.01em;
   font-family: var(--font-display);
 }
 
-h2 {
-  font-size: 24px;
-  font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: 0.01em;
+/* Title 2 - Subsection headings */
+.title-2,
+h3 {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
   font-family: var(--font-display);
 }
 
-h3 {
-  font-size: 18px;
+/* Title 3 - Minor headings */
+.title-3 {
+  font-size: 20px;
   font-weight: 600;
-  line-height: 1.4;
-  letter-spacing: 0em;
+  line-height: 1.3;
+  font-family: var(--font-display);
 }
 
-p, span, div {
+/* Headline - Prominent text */
+.headline {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.4;
+  font-family: var(--font-display);
+}
+
+/* Body - Regular paragraph text */
+body,
+p,
+.body {
   font-size: 16px;
   font-weight: 400;
   line-height: 1.5;
+  font-family: var(--font-ui);
 }
 
-.text-sm { font-size: 13px; line-height: 1.5; }
-.text-xs { font-size: 12px; line-height: 1.4; }
-.text-lg { font-size: 18px; line-height: 1.5; }
+/* Callout - Emphasized text */
+.callout {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  font-family: var(--font-ui);
+}
 
-.font-regular { font-weight: 400; }
-.font-medium { font-weight: 500; }
-.font-semibold { font-weight: 600; }
-.font-bold { font-weight: 700; }
+/* Subheadline - Secondary headings */
+.subheadline {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.5;
+  font-family: var(--font-ui);
+}
 
-code, pre, .mono {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
+/* Footnote - Small text */
+.footnote {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  font-family: var(--font-ui);
+}
+
+/* Caption 1 - Very small text */
+.caption-1 {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+  font-family: var(--font-ui);
+}
+
+/* Caption 2 - Smallest text */
+.caption-2 {
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
+  font-family: var(--font-ui);
+}
+
+/* Utility classes */
+.text-sm {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.text-xs {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.text-lg {
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.font-regular {
+  font-weight: 400;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.font-bold {
+  font-weight: 700;
 }
 
 .label {
@@ -56,9 +142,36 @@ code, pre, .mono {
   font-weight: 400;
 }
 
+/* Monospace for data */
+code,
+pre,
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Responsive typography adjustments */
 @media (max-width: 768px) {
-  h1 { font-size: 28px; }
-  h2 { font-size: 20px; }
-  h3 { font-size: 16px; }
-  p { font-size: 15px; }
+  .large-title,
+  h1 {
+    font-size: 28px;
+  }
+
+  .title-1,
+  h2 {
+    font-size: 24px;
+  }
+
+  .title-2,
+  h3 {
+    font-size: 20px;
+  }
+
+  .title-3 {
+    font-size: 18px;
+  }
+
+  .headline {
+    font-size: 16px;
+  }
 }
