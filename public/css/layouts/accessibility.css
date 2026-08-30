@@ -1,0 +1,70 @@
+/* public/css/layouts/accessibility.css */
+
+/* Skip to content link */
+.skip-to-content {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--accent);
+  color: white;
+  padding: 8px 16px;
+  z-index: 100;
+}
+
+.skip-to-content:focus {
+  top: 0;
+}
+
+/* Keyboard focus indicator */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Ensure links visible and underlined */
+a[href] {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+a[href]:hover {
+  color: var(--accent-hover);
+}
+
+/* Ensure buttons have sufficient touch target (min 44px) */
+button, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Contrast for disabled states */
+[disabled], [aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Text alternatives */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* High contrast mode */
+@media (prefers-contrast: more) {
+  --border: #333333;
+  --border-strong: #000000;
+}
