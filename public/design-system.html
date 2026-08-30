@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#FFFFFF">
+  <title>Mach Tahoe Design System</title>
+  <link rel="stylesheet" href="/css/index.css">
+  <style>
+    body {
+      padding-top: 80px;
+      min-height: 100vh;
+    }
+    .design-section {
+      padding: var(--spacing-3xl);
+      border-bottom: 1px solid var(--border);
+    }
+    .design-section h2 {
+      margin-top: 0;
+      margin-bottom: var(--spacing-2xl);
+    }
+    .component-grid {
+      display: grid;
+      gap: var(--spacing-xl);
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      margin-bottom: var(--spacing-2xl);
+    }
+    .component-box {
+      padding: var(--spacing-lg);
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+    }
+  </style>
+</head>
+<body>
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1 style="margin: 0; font-size: 20px;">Mach Tahoe Design System</h1>
+    </div>
+    <div class="topbar-right">
+      <button id="themeToggle" class="btn-icon" aria-label="Toggle theme" style="width: 40px; height: 40px;">
+        <svg class="icon-sun" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Buttons -->
+  <section class="design-section">
+    <h2>Buttons</h2>
+    <div class="component-grid">
+      <div class="component-box">
+        <button class="btn-primary">Primary Button</button>
+        <p class="text-sm">Main action</p>
+      </div>
+      <div class="component-box">
+        <button class="btn-secondary">Secondary</button>
+        <p class="text-sm">Alternative action</p>
+      </div>
+      <div class="component-box">
+        <button class="btn-ghost">Ghost Button</button>
+        <p class="text-sm">Minimal action</p>
+      </div>
+      <div class="component-box">
+        <button class="btn-primary btn-sm">Small Button</button>
+        <p class="text-sm">Compact size</p>
+      </div>
+      <div class="component-box">
+        <button class="btn-primary btn-lg">Large Button</button>
+        <p class="text-sm">Prominent size</p>
+      </div>
+      <div class="component-box">
+        <button class="btn-primary" disabled>Disabled</button>
+        <p class="text-sm">Not clickable</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cards -->
+  <section class="design-section">
+    <h2>Cards & KPI</h2>
+    <div class="component-grid">
+      <div class="card">
+        <div class="card-header">Revenue</div>
+        <div class="card-title">R$ 12.450</div>
+        <div class="card-delta positive">↑ 12% vs last week</div>
+      </div>
+      <div class="card card-kpi">
+        <div class="card-header">ROI</div>
+        <div class="card-title">2.45x</div>
+        <div class="card-delta negative">↓ 0.3x vs target</div>
+      </div>
+      <div class="card">
+        <div class="card-header">Status</div>
+        <div style="margin-top: var(--spacing-lg);">
+          <span class="badge badge-success">Active</span>
+          <span class="badge badge-warning">Paused</span>
+          <span class="badge badge-danger">Error</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Forms -->
+  <section class="design-section">
+    <h2>Forms & Inputs</h2>
+    <div class="component-grid">
+      <div class="form-group">
+        <label>Text Input</label>
+        <input type="text" placeholder="Enter text...">
+      </div>
+      <div class="form-group">
+        <label>Select</label>
+        <select>
+          <option>Option 1</option>
+          <option>Option 2</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Checkbox</label>
+        <label class="checkbox-label">
+          <input type="checkbox" checked>
+          Remember me
+        </label>
+      </div>
+      <div class="form-group">
+        <label>Toggle</label>
+        <label class="toggle">
+          <input type="checkbox" checked>
+          <span class="toggle-btn"></span>
+        </label>
+      </div>
+      <div class="form-group">
+        <label>Radio</label>
+        <label class="radio-label">
+          <input type="radio" name="example" checked>
+          Option A
+        </label>
+        <label class="radio-label">
+          <input type="radio" name="example">
+          Option B
+        </label>
+      </div>
+      <div class="form-group">
+        <label>Textarea</label>
+        <textarea placeholder="Enter message..."></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tables -->
+  <section class="design-section">
+    <h2>Table</h2>
+    <table style="width: 100%; border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden;">
+      <thead>
+        <tr>
+          <th>Campaign</th>
+          <th>Spend</th>
+          <th>Revenue</th>
+          <th class="text-right">ROI</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Summer Sale</td>
+          <td>R$ 5.000</td>
+          <td>R$ 12.500</td>
+          <td class="text-right">2.5x</td>
+        </tr>
+        <tr>
+          <td>Black Friday</td>
+          <td>R$ 8.200</td>
+          <td>R$ 18.900</td>
+          <td class="text-right">2.3x</td>
+        </tr>
+        <tr>
+          <td>Clearance</td>
+          <td>R$ 2.100</td>
+          <td>R$ 4.050</td>
+          <td class="text-right">1.9x</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Badges & Status -->
+  <section class="design-section">
+    <h2>Badges & Status</h2>
+    <div style="display: flex; gap: var(--spacing-lg); flex-wrap: wrap; align-items: center;">
+      <span class="badge">Default</span>
+      <span class="badge badge-success">Success</span>
+      <span class="badge badge-warning">Warning</span>
+      <span class="badge badge-danger">Error</span>
+      <span class="badge badge-info">Info</span>
+
+      <div class="status-indicator">
+        <span class="status-dot status-online"></span>
+        Online
+      </div>
+      <div class="status-indicator">
+        <span class="status-dot status-offline"></span>
+        Offline
+      </div>
+    </div>
+  </section>
+
+  <!-- Alerts -->
+  <section class="design-section">
+    <h2>Alerts</h2>
+    <div style="display: flex; flex-direction: column; gap: var(--spacing-lg);">
+      <div class="alert alert-info">
+        <strong>Info:</strong> This is an informational message.
+      </div>
+      <div class="alert alert-success">
+        <strong>Success:</strong> Operation completed successfully!
+      </div>
+      <div class="alert alert-warning">
+        <strong>Warning:</strong> Please review your settings.
+      </div>
+      <div class="alert alert-danger">
+        <strong>Error:</strong> Something went wrong. Please try again.
+      </div>
+    </div>
+  </section>
+
+  <!-- Progress -->
+  <section class="design-section">
+    <h2>Progress Bars</h2>
+    <div style="display: flex; flex-direction: column; gap: var(--spacing-xl);">
+      <div>
+        <div class="progress-label">
+          <span>Processing</span>
+          <span class="progress-value">65%</span>
+        </div>
+        <div class="progress">
+          <div class="progress-fill" style="width: 65%;"></div>
+        </div>
+      </div>
+      <div>
+        <div class="progress-label">
+          <span>Success</span>
+          <span class="progress-value">100%</span>
+        </div>
+        <div class="progress">
+          <div class="progress-fill success" style="width: 100%;"></div>
+        </div>
+      </div>
+      <div>
+        <div class="progress-label">
+          <span>Warning</span>
+          <span class="progress-value">45%</span>
+        </div>
+        <div class="progress">
+          <div class="progress-fill warning" style="width: 45%;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Animations -->
+  <section class="design-section">
+    <h2>Animations</h2>
+    <div class="component-grid">
+      <div style="padding: var(--spacing-lg); background: var(--bg-secondary); border-radius: var(--radius-lg); text-align: center;">
+        <div class="animate-fade-in" style="padding: var(--spacing-lg); background: var(--accent); color: white; border-radius: var(--radius-md);">
+          Fade In
+        </div>
+      </div>
+      <div style="padding: var(--spacing-lg); background: var(--bg-secondary); border-radius: var(--radius-lg); text-align: center;">
+        <div class="animate-slide-up" style="padding: var(--spacing-lg); background: var(--accent); color: white; border-radius: var(--radius-md);">
+          Slide Up
+        </div>
+      </div>
+      <div style="padding: var(--spacing-lg); background: var(--bg-secondary); border-radius: var(--radius-lg); text-align: center;">
+        <div class="animate-spin" style="display: inline-block; padding: var(--spacing-lg); background: var(--accent); color: white; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+          ⚙️
+        </div>
+      </div>
+      <div style="padding: var(--spacing-lg); background: var(--bg-secondary); border-radius: var(--radius-lg); text-align: center;">
+        <div class="animate-pulse" style="padding: var(--spacing-lg); background: var(--accent); color: white; border-radius: var(--radius-md);">
+          Pulse
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Grid System -->
+  <section class="design-section">
+    <h2>Grid System (Responsive)</h2>
+    <div class="grid grid-cols-4" style="margin-bottom: var(--spacing-lg);">
+      <div class="card" style="text-align: center; padding: var(--spacing-2xl);">
+        <p class="text-sm">4 Columns (Desktop)</p>
+      </div>
+      <div class="card" style="text-align: center; padding: var(--spacing-2xl);">
+        <p class="text-sm">4 Columns (Desktop)</p>
+      </div>
+      <div class="card" style="text-align: center; padding: var(--spacing-2xl);">
+        <p class="text-sm">4 Columns (Desktop)</p>
+      </div>
+      <div class="card" style="text-align: center; padding: var(--spacing-2xl);">
+        <p class="text-sm">4 Columns (Desktop)</p>
+      </div>
+    </div>
+    <p class="text-sm text-disabled">Resize to see: desktop 4-col → tablet 2-col → mobile 1-col</p>
+  </section>
+
+  <!-- Modal Demo -->
+  <section class="design-section">
+    <h2>Modal</h2>
+    <button class="btn-primary" data-modal-trigger="modal-demo">Open Modal</button>
+  </section>
+
+  <div id="modal-demo" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Modal Dialog</h2>
+        <button class="btn-ghost" data-modal-close style="width: 30px; height: 30px; padding: 0;">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>This is a modal dialog demonstrating the Mach Tahoe glassmorphic design.</p>
+        <p>Click outside or the X button to close.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" data-modal-close>Cancel</button>
+        <button class="btn-primary">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Color Palette -->
+  <section class="design-section">
+    <h2>Color Palette</h2>
+    <div class="component-grid">
+      <div style="padding: var(--spacing-lg); background: var(--accent); color: white; border-radius: var(--radius-lg); text-align: center;">
+        <strong>Accent</strong><br>#0A84FF
+      </div>
+      <div style="padding: var(--spacing-lg); background: var(--success); color: white; border-radius: var(--radius-lg); text-align: center;">
+        <strong>Success</strong><br>#34C759
+      </div>
+      <div style="padding: var(--spacing-lg); background: var(--warning); color: white; border-radius: var(--radius-lg); text-align: center;">
+        <strong>Warning</strong><br>#FF9500
+      </div>
+      <div style="padding: var(--spacing-lg); background: var(--danger); color: white; border-radius: var(--radius-lg); text-align: center;">
+        <strong>Danger</strong><br>#FF3B30
+      </div>
+      <div style="padding: var(--spacing-lg); background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-lg); text-align: center;">
+        <strong>Background</strong><br>Secondary
+      </div>
+      <div style="padding: var(--spacing-lg); background: var(--fg); color: white; border-radius: var(--radius-lg); text-align: center;">
+        <strong>Text</strong><br>Primary
+      </div>
+    </div>
+  </section>
+
+  <!-- Scripts -->
+  <script src="/js/theme.js"></script>
+  <script src="/js/components/modal.js"></script>
+  <script src="/js/components/dropdown.js"></script>
+</body>
+</html>
