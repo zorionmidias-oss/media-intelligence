@@ -59,6 +59,26 @@ body {
 .ds-gauge .big { font-size: 34px; font-weight: 700; line-height: 1; }
 .ds-gauge .cap { font-size: 12px; color: var(--fg-2); margin-top: 4px; }
 
+/* KPI */
+.ds-kpi { padding: 16px 17px; }
+.ds-kpi .lbl { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--fg-2); }
+.ds-kpi .val { font-size: 26px; font-weight: 700; margin-top: 9px; }
+.ds-kpi .foot { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12px; color: var(--fg-2); }
+.ds-kpi .spark { margin-top: 12px; height: 26px; width: 100%; }
+.chip { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 7px; white-space: nowrap; }
+.chip.up { color: var(--pos); background: color-mix(in srgb, var(--pos) 15%, transparent); }
+.chip.down { color: var(--neg); background: color-mix(in srgb, var(--neg) 15%, transparent); }
+
+/* Tabela de vidro */
+.ds-tbl-wrap { padding: 18px; }
+.ds-tbl-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.ds-tbl-hd h3 { font-size: 14px; font-weight: 600; letter-spacing: -.01em; }
+.ds-tbl { width: 100%; border-collapse: collapse; margin-top: 2px; }
+.ds-tbl th { text-align: left; font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--fg-3); padding: 8px 10px; border-bottom: 1px solid var(--hair); }
+.ds-tbl td { padding: 11px 10px; font-size: 13px; border-bottom: 1px solid var(--hair-soft); }
+.ds-tbl tr:last-child td { border-bottom: 0; }
+.ds-tbl td.r, .ds-tbl th.r { text-align: right; }
+
 @media (prefers-reduced-motion: reduce) {
   * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
