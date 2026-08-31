@@ -1,6 +1,13 @@
 // Galeria de primitivos do design system — só para validação por screenshot (?demo=1).
 import { useState } from 'react';
-import { GlassCard, Segment, ThemeToggle, Gauge, KpiCard, GlassTable } from './index.js';
+import { GlassCard, Segment, ThemeToggle, Gauge, KpiCard, GlassTable, AreaTrend, BarList } from './index.js';
+
+const TREND = [
+  { date: '16/08', receita: 8200, gasto: 6100 }, { date: '18/08', receita: 9400, gasto: 6400 },
+  { date: '20/08', receita: 10800, gasto: 6900 }, { date: '22/08', receita: 12100, gasto: 7200 },
+  { date: '24/08', receita: 14500, gasto: 7800 }, { date: '26/08', receita: 17200, gasto: 8300 },
+  { date: '28/08', receita: 19800, gasto: 8700 }, { date: '29/08', receita: 21350, gasto: 9000 },
+];
 
 function Section({ title, children }) {
   return (
@@ -59,12 +66,41 @@ export default function Demo() {
           { key: 'roi', label: 'ROI', align: 'right', render: (r) => <span className={`num ${r.pos ? 'pos' : 'neg'}`}>{r.roi}</span> },
         ]}
         rows={[
-          { camp: 'E1 · khanyisafb', pais: '🇿🇦 ZA', gasto: 'R$ 3.210', rec: 'R$ 6.480', roi: '+102%', pos: true },
-          { camp: 'E2 · yetundefb', pais: '🇳🇬 NG', gasto: 'R$ 2.740', rec: 'R$ 4.120', roi: '+50%', pos: true },
-          { camp: 'E1 · amarafb', pais: '🇰🇪 KE', gasto: 'R$ 1.980', rec: 'R$ 2.610', roi: '+32%', pos: true },
-          { camp: 'E3 · kwamefb', pais: '🇬🇭 GH', gasto: 'R$ 1.640', rec: 'R$ 1.510', roi: '−8%', pos: false },
+          { camp: 'E1 · khanyisafb', pais: 'ZA', gasto: 'R$ 3.210', rec: 'R$ 6.480', roi: '+102%', pos: true },
+          { camp: 'E2 · yetundefb', pais: 'NG', gasto: 'R$ 2.740', rec: 'R$ 4.120', roi: '+50%', pos: true },
+          { camp: 'E1 · amarafb', pais: 'KE', gasto: 'R$ 1.980', rec: 'R$ 2.610', roi: '+32%', pos: true },
+          { camp: 'E3 · kwamefb', pais: 'GH', gasto: 'R$ 1.640', rec: 'R$ 1.510', roi: '−8%', pos: false },
         ]}
       />
+
+      <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--fg-3)', margin: '28px 0 12px' }}>AreaTrend + BarList</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1.9fr 1fr', gap: 14 }}>
+        <GlassCard className="ds-panel">
+          <div className="ds-panel-hd">
+            <h3>Receita × Gasto</h3>
+            <div className="ds-legend">
+              <span><i style={{ background: 'var(--pos)' }} />Receita</span>
+              <span><i style={{ background: 'var(--accent)' }} />Gasto</span>
+            </div>
+          </div>
+          <AreaTrend
+            data={TREND}
+            series={[
+              { key: 'receita', color: 'var(--pos)', label: 'Receita' },
+              { key: 'gasto', color: 'var(--accent)', label: 'Gasto' },
+            ]}
+          />
+        </GlassCard>
+        <GlassCard className="ds-panel">
+          <div className="ds-panel-hd"><h3>Receita por país</h3></div>
+          <BarList items={[
+            { label: 'África do Sul', value: 'R$ 9.120', pct: 86 },
+            { label: 'Nigéria', value: 'R$ 6.340', pct: 60 },
+            { label: 'Quênia', value: 'R$ 3.480', pct: 33 },
+            { label: 'Gana', value: 'R$ 2.410', pct: 23 },
+          ]} />
+        </GlassCard>
+      </div>
     </div>
   );
 }
