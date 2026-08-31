@@ -1,0 +1,28 @@
+/* Design tokens — Apple Liquid Glass (claro/escuro). Valores validados no mockup. */
+:root{
+  --accent:#0A84FF;
+  --pos:#30D158;
+  --neg:#FF453A;
+  --warn:#FF9F0A;
+  --radius:20px;
+}
+
+[data-mode="dark"]{
+  --page-1:#0b0b0f; --page-2:#0e1014;
+  --blob-1:rgba(10,132,255,.30); --blob-2:rgba(48,209,88,.16); --blob-3:rgba(191,90,242,.16);
+  --fg:#f5f5f7; --fg-2:rgba(235,235,245,.62); --fg-3:rgba(235,235,245,.35);
+  --glass:rgba(255,255,255,.06); --glass-strong:rgba(255,255,255,.09);
+  --hair:rgba(255,255,255,.10); --hair-soft:rgba(255,255,255,.06);
+  --shadow:0 10px 40px rgba(0,0,0,.45); --inset:inset 0 1px 0 rgba(255,255,255,.10);
+  --track:rgba(255,255,255,.10);
+}
+
+[data-mode="light"]{
+  --page-1:#eef0f5; --page-2:#e7ebf3;
+  --blob-1:rgba(10,132,255,.22); --blob-2:rgba(48,209,88,.16); --blob-3:rgba(191,90,242,.14);
+  --fg:#1d1d1f; --fg-2:rgba(60,60,67,.62); --fg-3:rgba(60,60,67,.38);
+  --glass:rgba(255,255,255,.55); --glass-strong:rgba(255,255,255,.72);
+  --hair:rgba(0,0,0,.08); --hair-soft:rgba(0,0,0,.05);
+  --shadow:0 10px 40px rgba(0,0,0,.10); --inset:inset 0 1px 0 rgba(255,255,255,.7);
+  --track:rgba(0,0,0,.08);
+}
