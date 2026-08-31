@@ -94,6 +94,33 @@ body {
 .ds-legend { display: flex; gap: 14px; font-size: 11.5px; color: var(--fg-2); }
 .ds-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; vertical-align: middle; }
 
+/* DateRange (seletor de período) */
+.ds-daterange { position: relative; }
+.ds-dr-trigger { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--hair); background: var(--glass); color: var(--fg); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); transition: .15s; }
+.ds-dr-trigger:hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--hair)); }
+.ds-dr-panel { position: absolute; right: 0; top: calc(100% + 8px); z-index: 40; padding: 14px; }
+.ds-dr-presets { display: flex; gap: 6px; margin-bottom: 10px; }
+.ds-dr-presets button { flex: 1; border: 1px solid var(--hair); background: var(--glass); color: var(--fg-2); font: inherit; font-size: 12px; font-weight: 600; padding: 6px 8px; border-radius: 8px; cursor: pointer; transition: .15s; }
+.ds-dr-presets button:hover { color: var(--fg); border-color: color-mix(in srgb, var(--accent) 40%, var(--hair)); }
+
+/* Tema Apple para o react-day-picker */
+.ds-dr-panel .rdp-root {
+  --rdp-accent-color: var(--accent);
+  --rdp-accent-background-color: color-mix(in srgb, var(--accent) 20%, transparent);
+  --rdp-today-color: var(--accent);
+  --rdp-day-width: 36px; --rdp-day-height: 36px;
+  font-size: 13px; margin: 0;
+}
+.ds-dr-panel .rdp-month_caption { color: var(--fg); font-weight: 600; padding: 2px 4px 8px; }
+.ds-dr-panel .rdp-weekday { color: var(--fg-3); font-weight: 600; text-transform: none; }
+.ds-dr-panel .rdp-day_button { color: var(--fg); border-radius: 9px; border: 0; }
+.ds-dr-panel .rdp-day_button:hover { background: var(--hair-soft); }
+.ds-dr-panel .rdp-selected .rdp-day_button { background: var(--accent); color: #fff; }
+.ds-dr-panel .rdp-range_middle .rdp-day_button { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--fg); border-radius: 0; }
+.ds-dr-panel .rdp-today:not(.rdp-selected) .rdp-day_button { box-shadow: inset 0 0 0 1.5px var(--accent); }
+.ds-dr-panel .rdp-chevron { fill: var(--fg-2); }
+.ds-dr-panel .rdp-nav button:hover { background: var(--hair-soft); border-radius: 8px; }
+
 @media (prefers-reduced-motion: reduce) {
   * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }

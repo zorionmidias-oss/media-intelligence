@@ -1,6 +1,6 @@
 // Galeria de primitivos do design system — só para validação por screenshot (?demo=1).
 import { useState } from 'react';
-import { GlassCard, Segment, ThemeToggle, Gauge, KpiCard, GlassTable, AreaTrend, BarList } from './index.js';
+import { GlassCard, Segment, ThemeToggle, Gauge, KpiCard, GlassTable, AreaTrend, BarList, DateRange } from './index.js';
 
 const TREND = [
   { date: '16/08', receita: 8200, gasto: 6100 }, { date: '18/08', receita: 9400, gasto: 6400 },
@@ -20,6 +20,8 @@ function Section({ title, children }) {
 
 export default function Demo() {
   const [seg, setSeg] = useState('14d');
+  const [range, setRange] = useState({ from: new Date(2026, 7, 16), to: new Date(2026, 7, 29) });
+  const calOpen = new URLSearchParams(window.location.search).get('cal') === 'open';
   return (
     <div style={{ maxWidth: 1000, margin: '0 auto', padding: 32 }}>
       <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-.03em', marginBottom: 24 }}>Design System · Primitivos</h1>
@@ -39,6 +41,10 @@ export default function Demo() {
 
       <Section title="ThemeToggle">
         <ThemeToggle />
+      </Section>
+
+      <Section title="DateRange">
+        <DateRange value={range} onChange={setRange} today={new Date(2026, 7, 29)} defaultOpen={calOpen} />
       </Section>
 
       <Section title="Gauge">
