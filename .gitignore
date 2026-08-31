@@ -17,5 +17,6 @@ C:*
 _shots/
 reports/
 .agents/
+.superpowers/
 .mcp.json
 skills-lock.json
