@@ -1,4 +1,4 @@
-import { AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 // Tooltip de vidro (usado pelo AreaTrend).
 function GlassTooltip({ active, payload, label }) {
@@ -42,6 +42,27 @@ export function AreaTrend({ data = [], series = [], xKey = 'date', height = 220 
           />
         ))}
       </AreaChart>
+    </ResponsiveContainer>
+  );
+}
+
+// Gráfico por hora: hoje (sólido) vs ontem (tracejado). hoje/ontem: [{ hora, [metricKey] }].
+export function HourLines({ hoje = [], ontem = [], metricKey, color = 'var(--accent)', height = 240 }) {
+  const byH = {};
+  for (const r of ontem) byH[r.hora] = { hora: r.hora, ontem: r[metricKey] };
+  for (const r of hoje) byH[r.hora] = { ...(byH[r.hora] || { hora: r.hora }), hoje: r[metricKey] };
+  const data = Object.values(byH).sort((a, b) => a.hora - b.hora)
+    .map((d) => ({ ...d, hora: String(d.hora).padStart(2, '0') + 'h' }));
+  return (
+    <ResponsiveContainer width="100%" height={height}>
+      <LineChart data={data} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
+        <CartesianGrid vertical={false} stroke="var(--hair-soft)" />
+        <XAxis dataKey="hora" tick={{ fill: 'var(--fg-3)', fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={18} />
+        <YAxis tick={{ fill: 'var(--fg-3)', fontSize: 11 }} axisLine={false} tickLine={false} width={48} />
+        <Tooltip content={<GlassTooltip />} cursor={{ stroke: 'var(--hair)' }} />
+        <Line dataKey="ontem" name="Ontem" stroke="var(--fg-3)" strokeWidth={2} strokeDasharray="4 4" dot={false} connectNulls />
+        <Line dataKey="hoje" name="Hoje" stroke={color} strokeWidth={2.5} dot={false} connectNulls />
+      </LineChart>
     </ResponsiveContainer>
   );
 }

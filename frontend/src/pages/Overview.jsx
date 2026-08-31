@@ -1,14 +1,34 @@
+import { useState } from 'react';
 import { useApi } from '../hooks/useApi.js';
-import { GlassCard, KpiCard, StatTile, GlassTable, AreaTrend } from '../design-system/index.js';
+import { GlassCard, KpiCard, StatTile, GlassTable, AreaTrend, HourLines } from '../design-system/index.js';
 import { BRL, NUM, PCT } from '../lib/format.js';
 
-// Formatação local para valores com casas decimais (eCPM, RPS, CPC, PAR, ROAS).
 const money = (n, d = 2) => 'R$ ' + (Number(n) || 0).toFixed(d).replace('.', ',');
 const ratio = (n, d = 2) => (Number(n) || 0).toFixed(d).replace('.', ',');
-
-// Variação para o chip: número → "+3,4%" (ou " pts") + tom.
 const pctLabel = (v, pts = false) => (v == null ? null : `${v >= 0 ? '' : '−'}${Math.abs(v).toFixed(1)}${pts ? ' pts' : '%'}`);
 const pctTone = (v) => (v == null ? 'up' : v >= 0 ? 'up' : 'down');
+
+const HOUR_METRICS = [
+  { key: 'receita', label: 'Receita' },
+  { key: 'investimento', label: 'Investimento' },
+  { key: 'roi', label: 'ROI' },
+  { key: 'ecpm', label: 'eCPM' },
+  { key: 'impressoes', label: 'Impressões' },
+  { key: 'sessoes', label: 'Sessões' },
+  { key: 'resultado', label: 'Resultado' },
+  { key: 'conversas', label: 'Conversas' },
+  { key: 'custo_resultado', label: 'Custo/Result' },
+  { key: 'par', label: 'PAR' },
+];
+
+function qs(period, domain) {
+  const q = new URLSearchParams();
+  if (period?.since) q.set('since', period.since);
+  if (period?.until) q.set('until', period.until);
+  if (domain && domain !== 'all') q.set('domain', domain);
+  const s = q.toString();
+  return s ? `?${s}` : '';
+}
 
 function Skeleton() {
   return (
@@ -20,8 +40,10 @@ function Skeleton() {
   );
 }
 
-export default function Overview() {
-  const { data, loading, error } = useApi('/overview', []);
+export default function Overview({ period, domain }) {
+  const [metric, setMetric] = useState('receita');
+  const { data, loading, error } = useApi(`/overview${qs(period, domain)}`, [period?.since, period?.until, domain]);
+  const intra = useApi(`/intraday${domain && domain !== 'all' ? `?domain=${encodeURIComponent(domain)}` : ''}`, [domain]);
 
   if (loading) return <Skeleton />;
   if (error) return <GlassCard style={{ padding: 20 }}><span className="neg">Erro ao carregar: {error}</span></GlassCard>;
@@ -35,6 +57,7 @@ export default function Overview() {
   const spark = (key) => trend.map((t) => Number(t[key]) || 0);
   const chartData = trend.map((t) => ({ ...t, date: t.date ? `${t.date.slice(8, 10)}/${t.date.slice(5, 7)}` : '' }));
   const topCamps = (data.topCampaigns || []).slice(0, 8);
+  const curMetric = HOUR_METRICS.find((m) => m.key === metric) || HOUR_METRICS[0];
 
   return (
     <div>
@@ -83,7 +106,7 @@ export default function Overview() {
         </>
       )}
 
-      {/* Gráfico + top campanhas */}
+      {/* Gráfico por dia + resumo */}
       <div className="ov-charts" style={{ marginTop: 22 }}>
         <GlassCard className="ds-panel">
           <div className="ds-panel-hd">
@@ -93,14 +116,7 @@ export default function Overview() {
               <span><i style={{ background: 'var(--accent)' }} />Gasto</span>
             </div>
           </div>
-          <AreaTrend
-            data={chartData}
-            xKey="date"
-            series={[
-              { key: 'faturamento', color: 'var(--pos)', label: 'Receita' },
-              { key: 'investimento', color: 'var(--accent)', label: 'Gasto' },
-            ]}
-          />
+          <AreaTrend data={chartData} xKey="date" series={[{ key: 'faturamento', color: 'var(--pos)', label: 'Receita' }, { key: 'investimento', color: 'var(--accent)', label: 'Gasto' }]} />
         </GlassCard>
         <GlassCard className="ds-panel">
           <div className="ds-panel-hd"><h3>Resumo</h3></div>
@@ -113,6 +129,28 @@ export default function Overview() {
           </div>
         </GlassCard>
       </div>
+
+      {/* Gráfico por hora (intraday) */}
+      <div className="ov-sec-lbl">Performance por hora <span className="ds-stat-badge">hoje vs ontem</span></div>
+      <GlassCard className="ds-panel">
+        <div className="ds-panel-hd" style={{ marginBottom: 10 }}>
+          <div className="ds-hour-legend">
+            <span><i style={{ background: 'var(--accent)' }} />Hoje</span>
+            <span><i style={{ background: 'var(--fg-3)' }} />Ontem</span>
+          </div>
+          {intra.data?.hora_atual != null && <span style={{ fontSize: 12, color: 'var(--fg-2)' }}>até {String(intra.data.hora_atual).padStart(2, '0')}h · Brasília</span>}
+        </div>
+        <div className="ds-ctogs">
+          {HOUR_METRICS.map((m) => (
+            <button key={m.key} className={`ds-ctog ${metric === m.key ? 'on' : ''}`} onClick={() => setMetric(m.key)}>{m.label}</button>
+          ))}
+        </div>
+        {intra.loading && <div style={{ height: 240 }} className="ds-skel" />}
+        {!intra.loading && intra.data?.sem_dados && <div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--fg-3)' }}>Sem dados intraday para o período.</div>}
+        {!intra.loading && intra.data && !intra.data.sem_dados && (
+          <HourLines hoje={intra.data.hoje || []} ontem={intra.data.ontem || []} metricKey={curMetric.key} color="var(--accent)" />
+        )}
+      </GlassCard>
 
       {/* Top campanhas */}
       <div className="ov-sec-lbl">Top campanhas</div>

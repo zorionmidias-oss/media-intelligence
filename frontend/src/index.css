@@ -122,7 +122,7 @@ body {
 .ds-dr-panel .rdp-nav button:hover { background: var(--hair-soft); border-radius: 8px; }
 
 /* Shell (sidebar + topbar + conteúdo) */
-.ds-shell { display: grid; grid-template-columns: 236px 1fr; gap: 18px; max-width: 1320px; margin: 0 auto; padding: 18px; }
+.ds-shell { display: grid; grid-template-columns: 236px minmax(0, 1fr); gap: 18px; width: 100%; margin: 0; padding: 18px 24px; }
 .ds-side { padding: 16px 12px; align-self: start; position: sticky; top: 18px; }
 .ds-brand { display: flex; align-items: center; gap: 10px; padding: 6px 8px 16px; }
 .ds-brand .logo { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), #5E5CE6); display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 15px; box-shadow: 0 6px 18px rgba(10,132,255,.4); }
@@ -167,6 +167,20 @@ body {
 .ds-skel { position: relative; overflow: hidden; background: var(--glass); border: 1px solid var(--hair); border-radius: var(--radius); }
 .ds-skel::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, var(--hair-soft), transparent); transform: translateX(-100%); animation: ds-shimmer 1.4s infinite; }
 @keyframes ds-shimmer { 100% { transform: translateX(100%); } }
+
+/* Select de vidro (filtro de domínio) */
+.ds-select { height: 36px; padding: 0 30px 0 12px; border-radius: 10px; border: 1px solid var(--hair); background: var(--glass); color: var(--fg); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); appearance: none; max-width: 200px;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a8a8e' stroke-width='2.5' stroke-linecap='round'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 9px center; background-size: 14px; }
+.ds-select:focus { outline: none; border-color: var(--accent); }
+.ds-select option { background: var(--page-2); color: var(--fg); }
+
+/* Toggle de métrica (gráfico por hora) */
+.ds-ctogs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.ds-ctog { border: 1px solid var(--hair); background: var(--glass); color: var(--fg-2); font: inherit; font-size: 12px; font-weight: 600; padding: 5px 11px; border-radius: 8px; cursor: pointer; transition: .15s; }
+.ds-ctog:hover { color: var(--fg); }
+.ds-ctog.on { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, var(--hair)); }
+.ds-hour-legend { display: flex; gap: 14px; font-size: 11.5px; color: var(--fg-2); align-items: center; }
+.ds-hour-legend i { display: inline-block; width: 14px; height: 2px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
 
 @media (prefers-reduced-motion: reduce) {
   * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
