@@ -41,6 +41,24 @@ body {
   .glass { background: var(--glass-strong); }
 }
 
+/* Lift no hover (cartões interativos) */
+.ds-hover { transition: transform .3s cubic-bezier(.4,0,.2,1), box-shadow .3s cubic-bezier(.4,0,.2,1), border-color .3s; cursor: default; }
+.ds-hover:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--accent) 40%, var(--hair)); box-shadow: 0 16px 48px rgba(0,0,0,.28), var(--inset); }
+
+/* Controle segmentado */
+.ds-seg { display: inline-flex; background: var(--track); border-radius: 10px; padding: 3px; }
+.ds-seg button { border: 0; background: transparent; color: var(--fg-2); font: inherit; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 8px; cursor: pointer; transition: .15s; }
+.ds-seg button.on { background: var(--glass-strong); color: var(--fg); box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+
+/* Botão de ícone (toggle, sino) */
+.ds-icbtn { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--hair); background: var(--glass); color: var(--fg); cursor: pointer; font-size: 15px; display: grid; place-items: center; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); transition: .15s; }
+.ds-icbtn:hover { transform: translateY(-1px); }
+
+/* Medidor em anel */
+.ds-gauge { display: flex; align-items: center; gap: 16px; }
+.ds-gauge .big { font-size: 34px; font-weight: 700; line-height: 1; }
+.ds-gauge .cap { font-size: 12px; color: var(--fg-2); margin-top: 4px; }
+
 @media (prefers-reduced-motion: reduce) {
   * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
