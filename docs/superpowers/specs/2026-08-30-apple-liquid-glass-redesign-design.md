@@ -32,6 +32,7 @@ O **backend Express e as APIs `/api/*` não mudam** — é uma reconstrução de
 ## 3. Restrições globais (invioláveis)
 
 - **Sem mudança de API/dados.** As telas consomem os endpoints de leitura que já existem (`/api/overview`, `/api/dashboard`, `/api/reports-gam`, etc.). Nenhum cálculo de receita/gasto/ROI/fuso é reimplementado no front — os números vêm prontos do backend (invariantes de negócio permanecem no servidor).
+- **Paridade total de métricas (regra dura).** Toda métrica/dado que a tela equivalente mostra hoje no dashboard atual DEVE continuar existindo na versão React. As telas não são o subconjunto enxuto do mockup — o mockup validou o *estilo*; o conteúdo é o conjunto completo de hoje. Antes de montar cada tela, auditar a atual e mapear item por item. Nada é descartado; telas fora da Fase 1 são reprogramadas (completas) nas Fases 2/3.
 - **Não deployar durante a obra.** Todo o trabalho fica numa **branch** dedicada, **fora do `main`** (que faz auto-deploy no Render). Só se faz merge/deploy na virada final, com aprovação explícita.
 - **Validação local a cada passo:** `node server.js` + `frontend` em dev, conferência em `localhost`, e **screenshots** (Playwright/Chrome, padrão `scripts/_shot.js`) antes de pedir aprovação de cada tela.
 - O **dashboard atual (`public/dashboard.html`) continua funcionando** e sendo o que está no ar durante toda a obra.
