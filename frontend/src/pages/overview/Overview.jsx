@@ -2,6 +2,7 @@ import { useApi } from '../../hooks/useApi.js';
 import HeroCard from './HeroCard.jsx';
 import MetricCard from './MetricCard.jsx';
 import DailyChart from './DailyChart.jsx';
+import HourTable from './HourTable.jsx';
 import { BRL, PCT, NUM } from '../../lib/format.js';
 import './overview.css';
 
@@ -110,7 +111,9 @@ export default function Overview() {
           ))}
         </div>
       </div>
-      {/* Próximas seções (performance por hora, top campanhas) entram aqui em tasks futuras. */}
+      <HourTable />
+
+      {/* Próxima seção (top campanhas) entra aqui em task futura. */}
     </div>
   );
 }

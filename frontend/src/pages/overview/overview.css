@@ -182,6 +182,48 @@
 .overview-page .daily-tip-row i.roi { background: var(--warn); }
 .overview-page .daily-tip-row b { margin-left: auto; color: var(--fg); font-weight: 640; font-variant-numeric: tabular-nums; }
 
+/* Performance por hora (intraday) — porta .ivbar/.pill/.sub de overview-v3.html
+   (linhas ~92-99, ~145-149). HourLines faz o gráfico (design-system/Chart.jsx). */
+.overview-page .iv-panel { margin-top: -6px; }
+
+.overview-page .iv-panel .sub {
+  font-size: 12px;
+  color: var(--mut);
+  font-variant-numeric: tabular-nums;
+}
+.overview-page .iv-hoje { color: var(--rev); font-weight: 600; }
+.overview-page .iv-ontem { color: var(--spend); font-weight: 600; }
+
+.overview-page .ivbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.overview-page .pill {
+  font-size: 11.5px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--bd);
+  color: var(--mut);
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  transition: color .15s ease, border-color .15s ease, background .15s ease;
+}
+.overview-page .pill:hover { color: var(--fg); border-color: var(--acc); }
+.overview-page .pill.on { background: var(--acc); color: var(--onacc); border-color: transparent; }
+
+.overview-page .iv-skel { min-height: 240px; border-radius: 14px; }
+.overview-page .iv-empty {
+  min-height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mut);
+  font-size: 13px;
+}
+
 /* estados de carregamento/erro */
 .overview-page .ov-skel {
   position: relative;
