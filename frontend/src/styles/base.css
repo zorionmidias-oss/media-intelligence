@@ -1,0 +1,10 @@
+*,*::before,*::after{box-sizing:border-box}
+html,body,#root{margin:0;height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-ui);font-variant-numeric:tabular-nums;font-size:13px;-webkit-font-smoothing:antialiased}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--mut);font-weight:600;padding:15px 16px}
+th.r,td.r{text-align:right}
+td{padding:15px 16px;border-top:1px solid transparent;color:var(--fg)}
+tbody tr:nth-child(even) td{background:var(--zebra)}
+.num{font-variant-numeric:tabular-nums}
+.pos{color:var(--pos)} .neg{color:var(--neg)}

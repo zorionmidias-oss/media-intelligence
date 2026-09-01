@@ -1,0 +1,16 @@
+:root{
+  color-scheme:dark;
+  --acc:#00E5B4; --onacc:#04120e;
+  --bg:#000000; --side:#000000; --panel:#000000; --panel2:#0d0d0d;
+  --fg:#eaf2ef; --fg2:#8b968f; --mut:#8b968f;
+  --bd:#242a28; --bd2:#161616;
+  --pos:#00E5B4; --neg:#fb7185; --warn:#f0b429; --rev:#00E5B4; --spend:#5b6b66;
+  --font-ui:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Inter,sans-serif;
+  --zebra:#0d0d0d;
+}
+[data-theme="light"]{
+  color-scheme:light;
+  --bg:#eef3f1; --side:#f6f9f8; --panel:#ffffff; --panel2:#f3f6f5;
+  --fg:#0f1613; --fg2:#5b6b66; --mut:#77837d;
+  --bd:#e2e9e6; --bd2:#eef2f0; --zebra:#f3f6f5; --onacc:#04120e;
+}
