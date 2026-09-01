@@ -97,6 +97,10 @@ app.get('/mobile', requireAuth, (_req, res) => res.sendFile(path.join(__dirname,
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/lib/chart.umd.min.js', (_req, res) => res.sendFile(path.join(__dirname, 'node_modules/chart.js/dist/chart.umd.min.js')));
 
+// ── React app (build) ─────────────────────────────────────────────────────────
+app.use('/app', requireAuth, express.static(path.join(__dirname, 'frontend', 'dist')));
+app.get('/app/*', requireAuth, (_req, res) => res.sendFile(path.join(__dirname, 'frontend', 'dist', 'index.html')));
+
 // ── Auth routes (public) ─────────────────────────────────────────────────────
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body || {};

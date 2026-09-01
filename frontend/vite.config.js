@@ -5,6 +5,10 @@ import { defineConfig } from 'vite';
 // preservando o cookie de sessão (mesmo host localhost → cookie é enviado).
 export default defineConfig({
   plugins: [react()],
+  base: '/app/',
+  build: {
+    outDir: 'dist',
+  },
   server: {
     port: 5173,
     proxy: {
