@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Shell from './app/Shell.jsx';
+import Overview from './pages/overview/Overview.jsx';
 
 const TITLES = {
   overview: 'Visão geral',
@@ -15,7 +16,9 @@ export default function App() {
 
   return (
     <Shell active={active} title={TITLES[active]} onNavigate={setActive}>
-      <p className="placeholder">{TITLES[active]} — em construção</p>
+      {active === 'overview'
+        ? <Overview />
+        : <p className="placeholder">{TITLES[active]} — em construção</p>}
     </Shell>
   );
 }

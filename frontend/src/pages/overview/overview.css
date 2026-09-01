@@ -1,0 +1,109 @@
+/* Visão geral — herói de KPIs em barras.
+   Porta .ov-hero/.pcard/.pbig/.pfoot/.region de
+   .superpowers/brainstorm/1352-1788215844/content/overview-v3.html (tokens de theme/tokens.css).
+   Tudo prefixado por .overview-page para não colidir com a classe global .ov-hero
+   já existente em src/index.css (design system antigo, ainda importado em main.jsx). */
+
+.overview-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.overview-page .ov-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 1050px) {
+  .overview-page .ov-hero { grid-template-columns: 1fr; }
+}
+
+.overview-page .pcard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 196px;
+  border: 1px solid var(--bd);
+  background: var(--panel);
+  border-radius: 22px;
+  overflow: hidden;
+}
+
+.overview-page .region {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 60%;
+  z-index: 0;
+}
+.overview-page .region .grad { position: absolute; inset: 0; }
+.overview-page .region .dots {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(currentColor 1px, transparent 1px);
+  background-size: 13px 13px;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 55%);
+  mask-image: linear-gradient(to right, transparent, #000 55%);
+}
+.overview-page .pchart { position: absolute; inset: 0; width: 100%; height: 100%; }
+.overview-page .pbar { opacity: .5; }
+
+.overview-page .pcontent {
+  position: relative;
+  z-index: 2;
+  padding: 16px 18px 0;
+  pointer-events: none;
+}
+.overview-page .phead { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.overview-page .pleft h3 { margin: 0; font-size: 14px; font-weight: 640; color: var(--fg); }
+.overview-page .pright { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+.overview-page .ptrend { display: inline-flex; align-items: center; gap: 3px; font-weight: 640; color: var(--mut); }
+.overview-page .ptrend.pos { color: var(--pos); }
+.overview-page .ptrend.neg { color: var(--neg); }
+.overview-page .pperiod { color: var(--fg2); white-space: nowrap; }
+.overview-page .pbig { margin-top: 14px; font-size: 40px; font-weight: 640; line-height: 1; letter-spacing: -.02em; color: var(--fg); }
+
+.overview-page .pfoot {
+  position: relative;
+  z-index: 2;
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  border-top: 1px solid var(--bd2);
+  background: var(--panel);
+  padding: 10px 18px;
+  font-size: 11.5px;
+}
+.overview-page .pstats { color: var(--mut); font-size: 10.5px; }
+.overview-page .pstats b { color: var(--fg2); font-weight: 640; }
+
+/* estados de carregamento/erro */
+.overview-page .ov-skel {
+  position: relative;
+  overflow: hidden;
+  min-height: 196px;
+  border: 1px solid var(--bd);
+  background: var(--panel2);
+  border-radius: 22px;
+}
+.overview-page .ov-skel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--fg2) 14%, transparent), transparent);
+  transform: translateX(-100%);
+  animation: ov-shimmer 1.4s infinite;
+}
+@keyframes ov-shimmer { 100% { transform: translateX(100%); } }
+
+.overview-page .ov-error {
+  border: 1px solid var(--bd);
+  background: var(--panel);
+  border-radius: 14px;
+  padding: 20px;
+  color: var(--neg);
+}
