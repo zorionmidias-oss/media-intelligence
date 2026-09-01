@@ -112,6 +112,76 @@
 .overview-page .schg.neg { color: var(--neg); }
 .overview-page .sval { margin-top: 4px; font-size: 18px; font-weight: 640; letter-spacing: -.01em; color: var(--fg); font-variant-numeric: tabular-nums; }
 
+/* Performance por dia (DailyChart) + Resumo — porta .grid2/.panel/.ph/.lg/.resumo
+   de overview-v3.html (linhas ~61-67, ~138-143). */
+.overview-page .grid2 {
+  display: grid;
+  grid-template-columns: 1.9fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 1050px) {
+  .overview-page .grid2 { grid-template-columns: 1fr; }
+}
+
+.overview-page .panel {
+  background: var(--panel);
+  border: 1px solid var(--bd);
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+
+.overview-page .ph {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.overview-page .ph h3 { margin: 0; font-size: 14px; font-weight: 650; color: var(--fg); }
+
+.overview-page .lg { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11px; color: var(--mut); }
+.overview-page .lg span { display: inline-flex; align-items: center; gap: 5px; }
+.overview-page .lg i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+.overview-page .lg i.rev { background: var(--rev); }
+.overview-page .lg i.spd { background: var(--spend); }
+.overview-page .lg i.roi { background: var(--warn); }
+
+.overview-page .resumo .rr {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--bd2);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+.overview-page .resumo .rr:last-child { border-bottom: none; }
+.overview-page .resumo .rr span { color: var(--mut); }
+.overview-page .resumo .rr b { font-weight: 620; color: var(--fg); }
+
+/* tooltip do DailyChart (Recharts injeta como filho absoluto dentro do .panel) */
+.overview-page .daily-tip {
+  min-width: 150px;
+  border: 1px solid var(--bd);
+  background: var(--panel2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 12px;
+}
+.overview-page .daily-tip-date { color: var(--mut); margin-bottom: 6px; font-variant-numeric: tabular-nums; }
+.overview-page .daily-tip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--fg2);
+  padding: 2px 0;
+}
+.overview-page .daily-tip-row i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; flex: none; }
+.overview-page .daily-tip-row i.rev { background: var(--rev); }
+.overview-page .daily-tip-row i.spd { background: var(--spend); }
+.overview-page .daily-tip-row i.roi { background: var(--warn); }
+.overview-page .daily-tip-row b { margin-left: auto; color: var(--fg); font-weight: 640; font-variant-numeric: tabular-nums; }
+
 /* estados de carregamento/erro */
 .overview-page .ov-skel {
   position: relative;

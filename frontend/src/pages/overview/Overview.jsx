@@ -1,7 +1,8 @@
 import { useApi } from '../../hooks/useApi.js';
 import HeroCard from './HeroCard.jsx';
 import MetricCard from './MetricCard.jsx';
-import { NUM } from '../../lib/format.js';
+import DailyChart from './DailyChart.jsx';
+import { BRL, PCT, NUM } from '../../lib/format.js';
 import './overview.css';
 
 // Dinheiro com decimais configuráveis (mesmo helper de frontend/src/pages/Overview.jsx antigo).
@@ -73,6 +74,14 @@ export default function Overview() {
     { label: 'Sessão / lead', value: num1(sessaoLead, 1) },
   ];
 
+  const resumo = [
+    { label: 'Receita bruta GAM', value: BRL(k.faturamento_bruto) },
+    { label: 'ROAS', value: num1(k.roas, 2) },
+    { label: 'Taxa programática', value: PCT(k.taxaProgramatica, 1) },
+    { label: 'CPA ideal', value: money(k.cpaIdeal, 4) },
+    { label: 'Câmbio USD→BRL', value: money(k.usdToBrl, 4) },
+  ];
+
   return (
     <div className="overview-page">
       <div className="ov-hero">
@@ -81,7 +90,27 @@ export default function Overview() {
       <div className="ov-minis">
         {minis.map((m) => <MetricCard key={m.label} {...m} />)}
       </div>
-      {/* Próximas seções (performance por dia/hora, top campanhas) entram aqui em tasks futuras. */}
+
+      <div className="grid2">
+        <div className="panel">
+          <div className="ph">
+            <h3>Performance por dia</h3>
+            <div className="lg">
+              <span><i className="rev" />Receita</span>
+              <span><i className="spd" />Gasto</span>
+              <span><i className="roi" />ROI %</span>
+            </div>
+          </div>
+          <DailyChart trend={trend} />
+        </div>
+        <div className="panel resumo">
+          <div className="ph"><h3>Resumo</h3></div>
+          {resumo.map((r) => (
+            <div className="rr" key={r.label}><span>{r.label}</span><b>{r.value}</b></div>
+          ))}
+        </div>
+      </div>
+      {/* Próximas seções (performance por hora, top campanhas) entram aqui em tasks futuras. */}
     </div>
   );
 }
