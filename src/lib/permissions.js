@@ -47,6 +47,7 @@ const ROUTES = [
   R('GET', '/api/orcamento-status', ['overview', 'campaigns'], 'read'),
   R('GET', '/api/gam-status', ['overview', 'gam'], 'read'),
   R('GET', '/api/intraday', ['overview'], 'read'),
+  R('GET', '/api/roi-por-pais', ['overview'], 'read'),
   R('GET', '/api/sync/log', ['overview'], 'read'),
   R('POST', '/api/sync/forcar', ['overview'], 'write'),
   R('POST', '/api/sync/hourly', ['overview'], 'write'),

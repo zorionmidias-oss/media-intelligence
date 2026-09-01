@@ -3,6 +3,7 @@ import HeroCard from './HeroCard.jsx';
 import MetricCard from './MetricCard.jsx';
 import DailyChart from './DailyChart.jsx';
 import HourTable from './HourTable.jsx';
+import RoiPorPais from './RoiPorPais.jsx';
 import { BRL, PCT, NUM } from '../../lib/format.js';
 import './overview.css';
 
@@ -145,6 +146,8 @@ export default function Overview() {
           </tbody>
         </table>
       </div>
+
+      <RoiPorPais />
     </div>
   );
 }

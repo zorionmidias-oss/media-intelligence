@@ -255,3 +255,71 @@
   padding: 20px;
   color: var(--neg);
 }
+
+/* ROI por país — grade de mini gráficos de barras, 1 por país (7 dias).
+   Porta .paisgrid/.pcard2/.pcchart de overview-v3.html (roi4dBlock/paisgrid,
+   linhas ~105-116, ~247-268), adaptado de 4 para 7 dias e sem hover (valor
+   fixo acima de cada barra em vez de tooltip). */
+.overview-page .sec {
+  margin: 4px 2px 2px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--mut);
+  font-weight: 600;
+}
+
+.overview-page .paisgrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+@media (max-width: 1050px) {
+  .overview-page .paisgrid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  .overview-page .paisgrid { grid-template-columns: 1fr; }
+}
+
+.overview-page .pcard2 {
+  background: var(--panel);
+  border: 1px solid var(--bd);
+  border-radius: 14px;
+  padding: 13px 14px 8px;
+}
+.overview-page .pc-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.overview-page .pc-title { font-size: 12.5px; font-weight: 640; color: var(--fg); }
+.overview-page .pc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 6px;
+  color: var(--pos);
+  background: color-mix(in srgb, var(--pos) 13%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+.overview-page .pc-badge.neg {
+  color: var(--neg);
+  background: color-mix(in srgb, var(--neg) 13%, transparent);
+}
+.overview-page .pc-desc {
+  font-size: 10px;
+  color: var(--mut);
+  margin: 2px 0 6px;
+}
+
+.overview-page .pcchart { width: 100%; height: auto; display: block; font-variant-numeric: tabular-nums; }
+.overview-page .pcchart .pcbar { transition: fill-opacity .18s; }
+.overview-page .pcchart .pcval { font-size: 8.5px; font-weight: 700; }
+.overview-page .pcchart .pcaxis { fill: var(--mut); font-size: 8.5px; }
+
+.overview-page .pc-skel { min-height: 168px; border-radius: 14px; }
+.overview-page .pc-empty { color: var(--mut); text-align: center; }
