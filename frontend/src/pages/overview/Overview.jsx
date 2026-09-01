@@ -75,6 +75,9 @@ export default function Overview() {
     { label: 'Sessão / lead', value: num1(sessaoLead, 1) },
   ];
 
+  // Top campanhas — tabela do rodapé (slice para as ~8 mais relevantes vindas da API).
+  const topCampaigns = (data?.topCampaigns || []).slice(0, 8);
+
   const resumo = [
     { label: 'Receita bruta GAM', value: BRL(k.faturamento_bruto) },
     { label: 'ROAS', value: num1(k.roas, 2) },
@@ -113,7 +116,35 @@ export default function Overview() {
       </div>
       <HourTable />
 
-      {/* Próxima seção (top campanhas) entra aqui em task futura. */}
+      <div className="panel">
+        <div className="ph"><h3>Top campanhas</h3></div>
+        <table>
+          <thead>
+            <tr>
+              <th>Campanha</th>
+              <th>Domínio</th>
+              <th className="r">Investido</th>
+              <th className="r">Faturamento</th>
+              <th className="r">Lucro</th>
+              <th className="r">ROAS</th>
+              <th className="r">ROI</th>
+            </tr>
+          </thead>
+          <tbody>
+            {topCampaigns.map((c) => (
+              <tr key={c.ad_utm}>
+                <td>{c.name}</td>
+                <td className="dom">{c.domain || '—'}</td>
+                <td className="r">{BRL(c.spend)}</td>
+                <td className="r">{BRL(c.faturado)}</td>
+                <td className={`r ${Number(c.lucro) >= 0 ? 'pos' : 'neg'}`}>{BRL(c.lucro)}</td>
+                <td className="r">{num1(c.roas, 2)}</td>
+                <td className={`r ${Number(c.roi) >= 0 ? 'pos' : 'neg'}`}>{PCT(c.roi, 1)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

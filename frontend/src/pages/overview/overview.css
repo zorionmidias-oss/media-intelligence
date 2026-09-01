@@ -224,6 +224,10 @@
   font-size: 13px;
 }
 
+/* Top campanhas — porta td.dom (coluna Domínio, cor mut) de overview-v3.html
+   (a tabela base — th/td/zebra/.pos/.neg — já vem de styles/base.css). */
+.overview-page td.dom { color: var(--mut); }
+
 /* estados de carregamento/erro */
 .overview-page .ov-skel {
   position: relative;
