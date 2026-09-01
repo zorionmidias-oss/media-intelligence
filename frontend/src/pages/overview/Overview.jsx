@@ -1,11 +1,26 @@
 import { useApi } from '../../hooks/useApi.js';
 import HeroCard from './HeroCard.jsx';
+import MetricCard from './MetricCard.jsx';
+import { NUM } from '../../lib/format.js';
 import './overview.css';
+
+// Dinheiro com decimais configuráveis (mesmo helper de frontend/src/pages/Overview.jsx antigo).
+const money = (n, d = 2) => 'R$ ' + (Number(n) || 0).toFixed(d).replace('.', ',');
+// Número simples com decimais configuráveis (PAR, sessão/lead).
+const num1 = (n, d = 1) => (Number(n) || 0).toFixed(d).replace('.', ',');
 
 function HeroSkeleton() {
   return (
     <div className="ov-hero">
       {[0, 1, 2, 3].map((i) => <div key={i} className="ov-skel" />)}
+    </div>
+  );
+}
+
+function MinisSkeleton() {
+  return (
+    <div className="ov-minis">
+      {[0, 1, 2, 3, 4, 5].map((i) => <div key={i} className="ov-skel ov-skel-sm" />)}
     </div>
   );
 }
@@ -17,6 +32,7 @@ export default function Overview() {
     return (
       <div className="overview-page">
         <HeroSkeleton />
+        <MinisSkeleton />
       </div>
     );
   }
@@ -43,12 +59,29 @@ export default function Overview() {
     { label: 'ROI', value: k.roi, deltaPct: c.roi, deltaUnit: 'pts', trend: roiSerie, fmt: 'pct', tone: k.roi >= 0 ? 'pos' : 'neg' },
   ];
 
+  // Faixa de cards menores — sem sparkline (decisão do dono, 01/09: /api/overview.trend[]
+  // não traz série diária dessas métricas; delta só onde `comparacao` fornece).
+  const custoResultado = k.results > 0 ? k.investimento / k.results : 0;
+  const sessaoLead = k.results > 0 ? k.sessoes / k.results : 0;
+
+  const minis = [
+    { label: 'eCPM', value: money(k.ecpm, 2), deltaPct: c.gamEcpm, up: c.gamEcpm >= 0 },
+    { label: 'RPS', value: money(k.rps, 4) },
+    { label: 'Impressões', value: NUM(k.impressions), deltaPct: c.gamImpressions, up: c.gamImpressions >= 0 },
+    { label: 'Custo / result', value: money(custoResultado, 2) },
+    { label: 'PAR', value: num1(k.par, 1) },
+    { label: 'Sessão / lead', value: num1(sessaoLead, 1) },
+  ];
+
   return (
     <div className="overview-page">
       <div className="ov-hero">
         {heroes.map((h) => <HeroCard key={h.label} {...h} />)}
       </div>
-      {/* Próximas seções (cards menores, performance por dia/hora, top campanhas) entram aqui em tasks futuras. */}
+      <div className="ov-minis">
+        {minis.map((m) => <MetricCard key={m.label} {...m} />)}
+      </div>
+      {/* Próximas seções (performance por dia/hora, top campanhas) entram aqui em tasks futuras. */}
     </div>
   );
 }
