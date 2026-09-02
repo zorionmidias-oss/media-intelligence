@@ -19,10 +19,11 @@ const isoRange = (since, until) => {
 
 async function handler(req, res) {
   try {
-    const { since, until, domain } = req.query;
-    // Janela padrão: últimos 7 dias no fuso BR (hoje inclusive).
-    const dt = until || hojeBR();
-    const df = since || addDiasISO(dt, -6);
+    const { domain } = req.query;
+    // Task 14: janela FIXA — SEMPRE os últimos 7 dias no fuso BR (hoje inclusive),
+    // desacoplada do calendário (since/until do topo não afeta este endpoint).
+    const dt = hojeBR();
+    const df = addDiasISO(dt, -6);
     const dias = Math.round((new Date(dt) - new Date(df)) / 86400000) + 1;
 
     // Janela anterior: mesma duração, terminando no dia anterior à janela atual.

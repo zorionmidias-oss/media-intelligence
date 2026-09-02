@@ -10,9 +10,9 @@ import { PCT, filterQs } from '../../lib/format.js';
  * (média 7d vs. 7d anteriores) e data sob cada barra.
  *
  * Consome `GET /api/roi-por-pais` — [{ pais, roi7d:[7 números], deltaPct }],
- * já ordenado por ROI médio desc pelo backend. Recebe period/domain do App: domain
- * refiltra o país; until ancora a janela de 7 dias (o endpoint sempre mostra os últimos
- * 7 dias terminando em `until`, ver src/app/api/roi-por-pais/route.js).
+ * já ordenado por ROI médio desc pelo backend. Recebe domain do App (refiltra o
+ * país); Task 14: janela é SEMPRE os últimos 7 dias, fixa e desacoplada do
+ * calendário — não recebe/envia since/until (ver src/app/api/roi-por-pais/route.js).
  */
 
 // Sigla → nome de exibição. `pais_sigla` de ads_consolidados é normalmente ISO-2,
@@ -104,9 +104,10 @@ function PaisGridSkeleton() {
   );
 }
 
-export default function RoiPorPais({ period, domain }) {
-  const qs = filterQs({ since: period?.since, until: period?.until, domain });
-  const { data, loading, error } = useApi(`/roi-por-pais${qs}`, [period?.since, period?.until, domain]);
+export default function RoiPorPais({ domain }) {
+  // Task 14: janela fixa de 7 dias no backend — não passamos since/until (só domain).
+  const qs = filterQs({ domain });
+  const { data, loading, error } = useApi(`/roi-por-pais${qs}`, [domain]);
   const paises = data || [];
 
   return (

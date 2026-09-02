@@ -51,6 +51,9 @@ export default function Overview({ period, domain }) {
 
   const k = data?.kpis || {};
   const c = data?.comparacao || {};
+  // Task 14: trend[] é SEMPRE os últimos 30 dias (fixo no backend), independente
+  // do período do calendário — hero/Performance por dia/sparklines não mudam ao
+  // trocar since/until; só os KPIs (k) e comparacao (c) acima seguem o calendário.
   const trend = data?.trend || [];
   const serie = (key) => trend.map((t) => Number(t[key]) || 0);
   // ROI não vem no trend diário — deriva de ROAS (ROI% = (ROAS-1)*100, mesma fórmula de src/lib/metricas.js).
@@ -151,7 +154,7 @@ export default function Overview({ period, domain }) {
         </table>
       </div>
 
-      <RoiPorPais period={period} domain={domain} />
+      <RoiPorPais domain={domain} />
     </div>
   );
 }

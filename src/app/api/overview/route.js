@@ -46,6 +46,12 @@ async function handler(req, res) {
     const prevDf = addDiasISO(df, -dias);
     const prevDt = addDiasISO(df, -1);
 
+    // Task 14: janela do trend[] (gráficos hero/Performance por dia/sparklines) é
+    // SEMPRE os últimos 30 dias, desacoplada do since/until que define os KPIs —
+    // trocar o período do calendário não deve mexer nos gráficos.
+    const trendDf = diasAtrasBR(30);
+    const trendDt = hojeBR();
+
     // Fábricas de query: fetchAll pagina além do corte de 1000 linhas do PostgREST
     // (junho tinha 1.215 linhas de ads → investimento subcontado → ROI 117% falso)
     const restrito = Array.isArray(req.allowedDominios)
@@ -87,35 +93,39 @@ async function handler(req, res) {
       if (domainId) q = q.eq('dominio_id', domainId);
       return q;
     };
+    // Task 14: queries dedicadas do trend fixo (30d) — independentes de since/until.
+    const trendAdsQ = () => {
+      let q = supabase
+        .from('ads_consolidados')
+        .select('data,valor_gasto,sessoes_meta,resultado')
+        .gte('data', trendDf).lte('data', trendDt).order('data', { ascending: true });
+      if (domainId) q = q.eq('dominio_id', domainId);
+      if (restrito) q = q.in('dominio_id', restrito);
+      return q;
+    };
+    const trendGamQ = () => {
+      let q = supabase
+        .from('blocos_anuncio')
+        .select('data,impressoes,receita_total,ecpm_medio')
+        .gte('data', trendDf).lte('data', trendDt).order('data', { ascending: true });
+      if (domainId) q = q.eq('dominio_id', domainId);
+      if (restrito) q = q.in('dominio_id', restrito);
+      return q;
+    };
 
-    const [{ data: ads, error: adsErr }, { data: gam }, { data: prevAds }, { data: prevGam }] =
-      await Promise.all([fetchAll(adsQ), fetchAll(gamQ), fetchAll(prevAdsQ), fetchAll(prevGamQ)]);
+    const [{ data: ads, error: adsErr }, { data: gam }, { data: prevAds }, { data: prevGam }, { data: trendAds }, { data: trendGam }] =
+      await Promise.all([fetchAll(adsQ), fetchAll(gamQ), fetchAll(prevAdsQ), fetchAll(prevGamQ), fetchAll(trendAdsQ), fetchAll(trendGamQ)]);
     if (adsErr) return res.status(500).json({ error: adsErr.message });
 
     // ─── Aggregate ads_consolidados (Meta spend + UTM attribution) ───
-    const invByDay = {};
-    // AUDITORIA jul/2026: o trend usava faturamento de ads_consolidados (só receita
-    // ATRIBUÍDA a campanha) enquanto o KPI usa blocos_anuncio (receita TOTAL) — a
-    // mesma tela mostrava duas verdades. Trend agora soma blocos por dia (×0.9),
-    // consistente com o KPI.
-    const fatBlocosByDay = {}; // blocos_anuncio ×0.9 — mesma fonte do KPI faturamento
-    // Task 11: séries diárias para os sparklines dos 6 cards menores (rps, custo_result,
-    // par, sessao_lead precisam de sessões/resultados por dia — mesma fonte do ads loop).
-    const sessoesByDay = {};
-    const resultsByDay = {};
+    // Task 14: invByDay/sessoesByDay/resultsByDay (usados só pelo trend) saíram
+    // daqui — o trend agora vem de trendAds/trendGam (janela fixa 30d), não deste
+    // loop (janela since/until dos KPIs). Ver aggregation de trendAds mais abaixo.
     const utmMap = {};
     let totSpend = 0, totResults = 0, totClicks = 0, totSessoes = 0;
     let _viewWtSum = 0, _viewWt = 0;
 
     for (const r of ads || []) {
-      const day = r.data;
-      if (!invByDay[day]) invByDay[day] = 0;
-      invByDay[day] += Number(r.valor_gasto || 0);
-      if (!sessoesByDay[day]) sessoesByDay[day] = 0;
-      sessoesByDay[day] += Number(r.sessoes_meta || 0);
-      if (!resultsByDay[day]) resultsByDay[day] = 0;
-      resultsByDay[day] += Number(r.resultado || 0);
-
       const key = `${r.dominio_id}|${r.ad_utm}`;
       if (!utmMap[key]) {
         utmMap[key] = {
@@ -149,16 +159,12 @@ async function handler(req, res) {
     }
 
     // ─── Aggregate blocos_anuncio (GAM: ecpm, impressions, viewability only) ───
-    const ecpmByDay = {};
-    const impsByDay = {}; // Task 11: impressões GAM por dia (série do card "Impressões" e base do PAR diário)
     let gamImps = 0, gamClicks = 0;
     let _ecpmWtSum = 0, _ecpmWt = 0, _pmrWtSum = 0, _pmrWt = 0;
     const adUnitMap = {};
 
     for (const r of gam || []) {
-      const day = r.data;
       const revBruto = Number(r.receita_total || 0);
-      fatBlocosByDay[day] = (fatBlocosByDay[day] || 0) + revBruto * 0.9;
 
       const imp = Number(r.impressoes || 0);
       const clk = Number(r.total_clicks || 0);
@@ -166,12 +172,7 @@ async function handler(req, res) {
       const pmr = Number(r.taxa_correspondencia_programatica || 0);
       gamImps += imp;
       gamClicks += clk;
-      impsByDay[day] = (impsByDay[day] || 0) + imp;
-      if (imp > 0 && em > 0) {
-        _ecpmWtSum += em * imp; _ecpmWt += imp;
-        if (!ecpmByDay[day]) ecpmByDay[day] = { s: 0, w: 0 };
-        ecpmByDay[day].s += em * imp; ecpmByDay[day].w += imp;
-      }
+      if (imp > 0 && em > 0) { _ecpmWtSum += em * imp; _ecpmWt += imp; }
       if (imp > 0) { _pmrWtSum += pmr * imp; _pmrWt += imp; }
 
       const bk = r.nome_bloco;
@@ -197,18 +198,47 @@ async function handler(req, res) {
     // sessão. Usa gamImps (mesma base da KPI "Impressões") ÷ sessões atribuídas.
     const par = METRICAS.par({ impressoes: gamImps, sessoes: totSessoes });
 
-    // ─── Trend: merge daily faturamento (blocos GAM ×0.9 — mesma fonte do KPI) + investimento (Meta) ───
-    const allDays = new Set([...Object.keys(invByDay), ...Object.keys(fatBlocosByDay)]);
+    // ─── Trend (Task 14: janela FIXA de 30 dias, desacoplada do since/until dos KPIs) ───
+    // Mesma agregação/fórmulas de antes (blocos GAM ×0.9 — mesma fonte do KPI —
+    // + investimento Meta por dia), só que sourced de trendAds/trendGam (30d fixos)
+    // em vez de ads/gam (janela since/until).
+    const trendInvByDay = {};
+    const trendSessoesByDay = {};
+    const trendResultsByDay = {};
+    for (const r of trendAds || []) {
+      const day = r.data;
+      trendInvByDay[day] = (trendInvByDay[day] || 0) + Number(r.valor_gasto || 0);
+      trendSessoesByDay[day] = (trendSessoesByDay[day] || 0) + Number(r.sessoes_meta || 0);
+      trendResultsByDay[day] = (trendResultsByDay[day] || 0) + Number(r.resultado || 0);
+    }
+    const trendFatBlocosByDay = {}; // blocos_anuncio ×0.9 — mesma fonte do KPI faturamento
+    const trendEcpmByDay = {};
+    const trendImpsByDay = {};
+    for (const r of trendGam || []) {
+      const day = r.data;
+      const revBruto = Number(r.receita_total || 0);
+      trendFatBlocosByDay[day] = (trendFatBlocosByDay[day] || 0) + revBruto * 0.9;
+      const imp = Number(r.impressoes || 0);
+      const em = Number(r.ecpm_medio || 0);
+      trendImpsByDay[day] = (trendImpsByDay[day] || 0) + imp;
+      if (imp > 0 && em > 0) {
+        if (!trendEcpmByDay[day]) trendEcpmByDay[day] = { s: 0, w: 0 };
+        trendEcpmByDay[day].s += em * imp;
+        trendEcpmByDay[day].w += imp;
+      }
+    }
+
+    const allDays = new Set([...Object.keys(trendInvByDay), ...Object.keys(trendFatBlocosByDay)]);
     const trend = [...allDays].sort().map(d => {
-      const fat = fatBlocosByDay[d] || 0;
-      const inv = invByDay[d] || 0;
-      const ed  = ecpmByDay[d];
+      const fat = trendFatBlocosByDay[d] || 0;
+      const inv = trendInvByDay[d] || 0;
+      const ed  = trendEcpmByDay[d];
       // Task 11 — sparklines dos 6 cards menores: mesmas fórmulas de src/lib/metricas.js
       // (rps, par) e do Overview.jsx (custo_result, sessao_lead), só que por dia em vez
       // de somado no período. faturamento_real já é líquido (×0.9 no sync) — não reaplicar.
-      const ses = sessoesByDay[d] || 0;
-      const res = resultsByDay[d] || 0;
-      const imp = impsByDay[d] || 0;
+      const ses = trendSessoesByDay[d] || 0;
+      const res = trendResultsByDay[d] || 0;
+      const imp = trendImpsByDay[d] || 0;
       return {
         date: d,
         faturamento:  +fat.toFixed(2),
