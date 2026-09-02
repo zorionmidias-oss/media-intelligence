@@ -81,8 +81,9 @@
 .overview-page .pstats { color: var(--mut); font-size: 10.5px; }
 .overview-page .pstats b { color: var(--fg2); font-weight: 640; }
 
-/* Faixa de cards menores (sem sparkline — ver MetricCard.jsx).
-   Porta o lado esquerdo (.sleft) de .scard de overview-v3.html. */
+/* Faixa de cards menores — porta .scard (.sleft + .sright/.spark) de overview-v3.html.
+   Sparkline plota a série diária real vinda de trend[] (Task 11); sem série → sem .sright
+   (ver MetricCard.jsx — degrada limpo, nada de dado fabricado). */
 .overview-page .ov-minis {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -98,6 +99,7 @@
 .overview-page .scard {
   display: flex;
   align-items: center;
+  gap: 8px;
   min-height: 76px;
   border: 1px solid var(--bd);
   background: var(--panel);
@@ -111,6 +113,18 @@
 .overview-page .schg.pos { color: var(--pos); }
 .overview-page .schg.neg { color: var(--neg); }
 .overview-page .sval { margin-top: 4px; font-size: 18px; font-weight: 640; letter-spacing: -.01em; color: var(--fg); font-variant-numeric: tabular-nums; }
+
+.overview-page .sright { position: relative; width: 44%; align-self: stretch; min-height: 40px; flex: none; }
+.overview-page .sright .spark { position: absolute; inset: 0; width: 100%; height: 100%; }
+.overview-page .sright .parea { fill: var(--acc); opacity: .14; stroke: none; }
+.overview-page .sright .pline {
+  fill: none;
+  stroke: var(--acc);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
 
 /* Performance por dia (DailyChart) + Resumo — porta .grid2/.panel/.ph/.lg/.resumo
    de overview-v3.html (linhas ~61-67, ~138-143). */

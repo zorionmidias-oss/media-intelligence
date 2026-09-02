@@ -98,6 +98,10 @@ async function handler(req, res) {
     // mesma tela mostrava duas verdades. Trend agora soma blocos por dia (×0.9),
     // consistente com o KPI.
     const fatBlocosByDay = {}; // blocos_anuncio ×0.9 — mesma fonte do KPI faturamento
+    // Task 11: séries diárias para os sparklines dos 6 cards menores (rps, custo_result,
+    // par, sessao_lead precisam de sessões/resultados por dia — mesma fonte do ads loop).
+    const sessoesByDay = {};
+    const resultsByDay = {};
     const utmMap = {};
     let totSpend = 0, totResults = 0, totClicks = 0, totSessoes = 0;
     let _viewWtSum = 0, _viewWt = 0;
@@ -106,6 +110,10 @@ async function handler(req, res) {
       const day = r.data;
       if (!invByDay[day]) invByDay[day] = 0;
       invByDay[day] += Number(r.valor_gasto || 0);
+      if (!sessoesByDay[day]) sessoesByDay[day] = 0;
+      sessoesByDay[day] += Number(r.sessoes_meta || 0);
+      if (!resultsByDay[day]) resultsByDay[day] = 0;
+      resultsByDay[day] += Number(r.resultado || 0);
 
       const key = `${r.dominio_id}|${r.ad_utm}`;
       if (!utmMap[key]) {
@@ -141,6 +149,7 @@ async function handler(req, res) {
 
     // ─── Aggregate blocos_anuncio (GAM: ecpm, impressions, viewability only) ───
     const ecpmByDay = {};
+    const impsByDay = {}; // Task 11: impressões GAM por dia (série do card "Impressões" e base do PAR diário)
     let gamImps = 0, gamClicks = 0;
     let _ecpmWtSum = 0, _ecpmWt = 0, _pmrWtSum = 0, _pmrWt = 0;
     const adUnitMap = {};
@@ -156,6 +165,7 @@ async function handler(req, res) {
       const pmr = Number(r.taxa_correspondencia_programatica || 0);
       gamImps += imp;
       gamClicks += clk;
+      impsByDay[day] = (impsByDay[day] || 0) + imp;
       if (imp > 0 && em > 0) {
         _ecpmWtSum += em * imp; _ecpmWt += imp;
         if (!ecpmByDay[day]) ecpmByDay[day] = { s: 0, w: 0 };
@@ -192,6 +202,12 @@ async function handler(req, res) {
       const fat = fatBlocosByDay[d] || 0;
       const inv = invByDay[d] || 0;
       const ed  = ecpmByDay[d];
+      // Task 11 — sparklines dos 6 cards menores: mesmas fórmulas de src/lib/metricas.js
+      // (rps, par) e do Overview.jsx (custo_result, sessao_lead), só que por dia em vez
+      // de somado no período. faturamento_real já é líquido (×0.9 no sync) — não reaplicar.
+      const ses = sessoesByDay[d] || 0;
+      const res = resultsByDay[d] || 0;
+      const imp = impsByDay[d] || 0;
       return {
         date: d,
         faturamento:  +fat.toFixed(2),
@@ -199,6 +215,11 @@ async function handler(req, res) {
         lucro:        +(fat - inv).toFixed(2),
         ecpm:         ed?.w > 0 ? +(ed.s / ed.w).toFixed(2) : 0,
         roas:         inv > 0   ? +(fat / inv).toFixed(4)   : 0,
+        rps:          ses > 0 ? +(fat / ses).toFixed(4) : 0,
+        impressions:  imp,
+        custo_result: res > 0 ? +(inv / res).toFixed(2) : 0,
+        par:          ses > 0 ? +(imp / ses).toFixed(2) : 0,
+        sessao_lead:  res > 0 ? +(ses / res).toFixed(2) : 0,
       };
     });
 

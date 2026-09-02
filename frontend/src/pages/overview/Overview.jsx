@@ -63,18 +63,19 @@ export default function Overview({ period, domain }) {
     { label: 'ROI', value: k.roi, deltaPct: c.roi, deltaUnit: 'pts', trend: roiSerie, fmt: 'pct', tone: k.roi >= 0 ? 'pos' : 'neg' },
   ];
 
-  // Faixa de cards menores — sem sparkline (decisão do dono, 01/09: /api/overview.trend[]
-  // não traz série diária dessas métricas; delta só onde `comparacao` fornece).
+  // Faixa de cards menores — sparkline com a série diária real de cada métrica,
+  // vinda de trend[] (Task 11, 02/09: /api/overview enriquecido; delta só onde
+  // `comparacao` fornece — mesma regra de antes).
   const custoResultado = k.results > 0 ? k.investimento / k.results : 0;
   const sessaoLead = k.results > 0 ? k.sessoes / k.results : 0;
 
   const minis = [
-    { label: 'eCPM', value: money(k.ecpm, 2), deltaPct: c.gamEcpm, up: c.gamEcpm >= 0 },
-    { label: 'RPS', value: money(k.rps, 4) },
-    { label: 'Impressões', value: NUM(k.impressions), deltaPct: c.gamImpressions, up: c.gamImpressions >= 0 },
-    { label: 'Custo / result', value: money(custoResultado, 2) },
-    { label: 'PAR', value: num1(k.par, 1) },
-    { label: 'Sessão / lead', value: num1(sessaoLead, 1) },
+    { label: 'eCPM', value: money(k.ecpm, 2), deltaPct: c.gamEcpm, up: c.gamEcpm >= 0, series: serie('ecpm') },
+    { label: 'RPS', value: money(k.rps, 4), series: serie('rps') },
+    { label: 'Impressões', value: NUM(k.impressions), deltaPct: c.gamImpressions, up: c.gamImpressions >= 0, series: serie('impressions') },
+    { label: 'Custo / result', value: money(custoResultado, 2), series: serie('custo_result') },
+    { label: 'PAR', value: num1(k.par, 1), series: serie('par') },
+    { label: 'Sessão / lead', value: num1(sessaoLead, 1), series: serie('sessao_lead') },
   ];
 
   // Top campanhas — tabela do rodapé (slice para as ~8 mais relevantes vindas da API).
