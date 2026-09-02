@@ -1,6 +1,11 @@
-import { PCT } from '../../lib/format.js';
+import { useState } from 'react';
+import { PCT, DDMM } from '../../lib/format.js';
 
 const f2 = (v) => v.toFixed(2);
+
+// Mesma escala vertical (viewBox 0..100) usada por curvePaths() — reaproveitada
+// no cálculo do hover (porta yT/yB de hoverCard() de overview-v3.html).
+const Y_TOP = 12, Y_BOTTOM = 86;
 
 // Curva suavizada (Catmull-Rom-ish via bezier ponto-a-ponto) — porta smooth(pts) de
 // overview-v3.html, usada por metricSVG(series,'curva',...) para o sparkline do lado
@@ -44,10 +49,38 @@ function curvePaths(vals) {
  * @param {boolean} [up] - direção do delta (cor/seta); só usado quando `deltaPct` é informado
  * @param {number[]} [series] - série diária real da métrica (vinda de trend[]); se vazia/ausente
  *   ou com menos de 2 pontos, o card degrada limpo SEM sparkline (nada de dado fabricado)
+ * @param {string[]} [dates] - datas (ISO, `trend[].date`) casadas 1:1 com `series`, para o tooltip de hover
+ * @param {(v:number)=>string} [fmt] - formata um ponto de `series` no tooltip de hover (mesmo estilo de `value`)
  */
-export default function MetricCard({ label, value, deltaPct, up, series = [] }) {
+export default function MetricCard({ label, value, deltaPct, up, series = [], dates = [], fmt = String }) {
   const hasDelta = deltaPct != null;
   const paths = curvePaths(series);
+  const n = series.length;
+
+  // Hover (crosshair + ponto + tooltip) — porta hoverCard(region,series,fmt) de
+  // overview-v3.html: cursor x → índice mais próximo → valor/data da série real.
+  const [hoverIdx, setHoverIdx] = useState(null);
+  const mn = paths ? Math.min(...series) : 0;
+  const mx = paths ? Math.max(...series) : 0;
+  const sp = mx - mn || 1;
+
+  function handleMove(e) {
+    if (!paths) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (!rect.width) return;
+    const fr = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    setHoverIdx(Math.round(fr * (n - 1)));
+  }
+  function handleLeave() {
+    setHoverIdx(null);
+  }
+
+  const hover = hoverIdx != null && paths
+    ? {
+        fx: (100 * hoverIdx) / (n - 1),
+        fy: Y_BOTTOM - ((series[hoverIdx] - mn) / sp) * (Y_BOTTOM - Y_TOP),
+      }
+    : null;
 
   return (
     <div className="scard">
@@ -63,11 +96,21 @@ export default function MetricCard({ label, value, deltaPct, up, series = [] }) 
         <div className="sval">{value}</div>
       </div>
       {paths && (
-        <div className="sright">
+        <div className={`sright${hover ? ' hov' : ''}`} onMouseMove={handleMove} onMouseLeave={handleLeave}>
           <svg className="spark" viewBox="0 0 100 100" preserveAspectRatio="none">
             <path className="parea" d={paths.area} />
             <path className="pline" d={paths.line} />
           </svg>
+          {hover && (
+            <>
+              <div className="hcross" style={{ left: `${hover.fx}%` }} />
+              <div className="hdot" style={{ left: `${hover.fx}%`, top: `${hover.fy}%` }} />
+              <div className="htip" style={{ left: `${Math.max(16, Math.min(84, hover.fx))}%`, top: `${hover.fy}%` }}>
+                <b>{fmt(series[hoverIdx])}</b>
+                <span>{DDMM(dates[hoverIdx])}</span>
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>

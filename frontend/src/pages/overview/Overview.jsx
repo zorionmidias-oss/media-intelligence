@@ -56,6 +56,9 @@ export default function Overview({ period, domain }) {
   // trocar since/until; só os KPIs (k) e comparacao (c) acima seguem o calendário.
   const trend = data?.trend || [];
   const serie = (key) => trend.map((t) => Number(t[key]) || 0);
+  // Datas (dd/mm) casadas 1:1 com as séries acima — mesma janela fixa de 30 dias
+  // para hero e minis (Task 14); usadas no tooltip de hover (Task 15).
+  const dates = trend.map((t) => t.date);
   // ROI não vem no trend diário — deriva de ROAS (ROI% = (ROAS-1)*100, mesma fórmula de src/lib/metricas.js).
   const roiSerie = serie('roas').map((r) => (r - 1) * 100);
 
@@ -74,13 +77,15 @@ export default function Overview({ period, domain }) {
   const custoResultado = k.results > 0 ? k.investimento / k.results : 0;
   const sessaoLead = k.results > 0 ? k.sessoes / k.results : 0;
 
+  // `fmt` de cada mini formata um ponto da série no tooltip de hover no mesmo
+  // estilo do `value` grande do card (Task 15).
   const minis = [
-    { label: 'eCPM', value: money(k.ecpm, 2), deltaPct: c.gamEcpm, up: c.gamEcpm >= 0, series: serie('ecpm') },
-    { label: 'RPS', value: money(k.rps, 4), deltaPct: c.rps, up: c.rps >= 0, series: serie('rps') },
-    { label: 'Impressões', value: NUM(k.impressions), deltaPct: c.gamImpressions, up: c.gamImpressions >= 0, series: serie('impressions') },
-    { label: 'Custo / result', value: money(custoResultado, 2), deltaPct: c.custoResult, up: c.custoResult >= 0, series: serie('custo_result') },
-    { label: 'PAR', value: num1(k.par, 1), deltaPct: c.par, up: c.par >= 0, series: serie('par') },
-    { label: 'Sessão / lead', value: num1(sessaoLead, 1), deltaPct: c.sessaoLead, up: c.sessaoLead >= 0, series: serie('sessao_lead') },
+    { label: 'eCPM', value: money(k.ecpm, 2), deltaPct: c.gamEcpm, up: c.gamEcpm >= 0, series: serie('ecpm'), fmt: (v) => money(v, 2) },
+    { label: 'RPS', value: money(k.rps, 4), deltaPct: c.rps, up: c.rps >= 0, series: serie('rps'), fmt: (v) => money(v, 4) },
+    { label: 'Impressões', value: NUM(k.impressions), deltaPct: c.gamImpressions, up: c.gamImpressions >= 0, series: serie('impressions'), fmt: NUM },
+    { label: 'Custo / result', value: money(custoResultado, 2), deltaPct: c.custoResult, up: c.custoResult >= 0, series: serie('custo_result'), fmt: (v) => money(v, 2) },
+    { label: 'PAR', value: num1(k.par, 1), deltaPct: c.par, up: c.par >= 0, series: serie('par'), fmt: (v) => num1(v, 1) },
+    { label: 'Sessão / lead', value: num1(sessaoLead, 1), deltaPct: c.sessaoLead, up: c.sessaoLead >= 0, series: serie('sessao_lead'), fmt: (v) => num1(v, 1) },
   ];
 
   // Top campanhas — tabela do rodapé (slice para as ~8 mais relevantes vindas da API).
@@ -97,10 +102,10 @@ export default function Overview({ period, domain }) {
   return (
     <div className="overview-page">
       <div className="ov-hero">
-        {heroes.map((h) => <HeroCard key={h.label} {...h} />)}
+        {heroes.map((h) => <HeroCard key={h.label} dates={dates} {...h} />)}
       </div>
       <div className="ov-minis">
-        {minis.map((m) => <MetricCard key={m.label} {...m} />)}
+        {minis.map((m) => <MetricCard key={m.label} dates={dates} {...m} />)}
       </div>
 
       <div className="grid2">
