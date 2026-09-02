@@ -61,10 +61,10 @@ export function HourLines({ hoje = [], ontem = [], metricKey, color = 'var(--rev
   return (
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={data} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
-        <CartesianGrid vertical={false} stroke="var(--hair-soft)" />
-        <XAxis dataKey="hora" tick={{ fill: 'var(--fg-3)', fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={18} />
-        <YAxis tick={{ fill: 'var(--fg-3)', fontSize: 11 }} axisLine={false} tickLine={false} width={48} />
-        <Tooltip content={<GlassTooltip formatValue={valueFormatter} />} cursor={{ stroke: 'var(--hair)' }} />
+        <CartesianGrid vertical={false} stroke="var(--bd2)" />
+        <XAxis dataKey="hora" tick={{ fill: 'var(--mut)', fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={18} />
+        <YAxis tick={{ fill: 'var(--mut)', fontSize: 11 }} axisLine={false} tickLine={false} width={48} />
+        <Tooltip content={<GlassTooltip formatValue={valueFormatter} />} cursor={{ stroke: 'var(--bd)' }} />
         {nowX && (
           <ReferenceLine
             x={nowX}

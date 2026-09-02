@@ -17,6 +17,7 @@ import { PCT } from '../../lib/format.js';
 // exceto África do Sul, que o cliente grava como "AFS" (ver src/lib/parser.js
 // COUNTRY_OVERRIDES) — daí o alias 'za'/'afs' apontando para o mesmo nome.
 const PAIS_NOMES = {
+  br: 'Brasil',
   za: 'África do Sul', afs: 'África do Sul',
   ng: 'Nigéria', ke: 'Quênia', gh: 'Gana',
   tz: 'Tanzânia', ug: 'Uganda', zm: 'Zâmbia', mz: 'Moçambique',
