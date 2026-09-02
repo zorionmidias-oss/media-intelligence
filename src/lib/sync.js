@@ -923,6 +923,12 @@ async function syncAll(dateRange) {
     // ontem+hoje no dash, com status "success"). Ver merge antes do upsert.
     const gamFunnelsOk = Object.keys(gamByDay).length > 0;
     const gamReportOk = Object.keys(gamReport?.adUnitsByDay || {}).length > 0;
+    // GAM-2 (rede nova) precisa do MESMO guard de outage da GAM-1. O upsert de
+    // blocos_anuncio abaixo é delete+insert por dia; se a rede nova falhar num ciclo
+    // (report null/vazio) mas a GAM-1 estiver OK, o delete zerava a receita já casada
+    // dos domínios GAM-2 (receitasmenu). gam2ReportOk=false → preservar essas linhas.
+    const gam2ReportOk = !GAM2_NC || Object.keys(gamReport2?.adUnitsByDay || {}).length > 0;
+    const gam2DomainIds = (dominios || []).filter(d => (d.gam_fonte || 1) === 2).map(d => d.id);
 
     // Merge da rede nova (GAM-2) no byDay — DEPOIS do gamFunnelsOk (o guard de outage
     // segue baseado na rede primária/GAM-1). ad ids disjuntos por rede → sem dupla
@@ -1448,7 +1454,15 @@ async function syncAll(dateRange) {
           });
         }
         if (blocosRows.length) {
-          await supabase.from('blocos_anuncio').delete().eq('data', dayDate);
+          // Guard de outage GAM-2: se a rede nova falhou neste ciclo, NÃO apagar as
+          // linhas dos domínios GAM-2 — senão o delete zera a receita já casada da
+          // receitasmenu (blocosRows só tem GAM-1 quando gam2ReportOk=false).
+          let del = supabase.from('blocos_anuncio').delete().eq('data', dayDate);
+          if (!gam2ReportOk && gam2DomainIds.length) {
+            del = del.not('dominio_id', 'in', `(${gam2DomainIds.join(',')})`);
+          }
+          const { error: dErr } = await del;
+          if (dErr) console.error(`[sync] delete blocos_anuncio ${dayDate}:`, dErr.message);
           const { error: bErr } = await supabase.from('blocos_anuncio').insert(blocosRows);
           if (bErr) console.error(`[sync] insert blocos_anuncio ${dayDate}:`, bErr.message);
           rowsProcessed += blocosRows.length;
@@ -1556,6 +1570,7 @@ async function syncAll(dateRange) {
     const gamNotes = [];
     if (!gamFunnelsOk) gamNotes.push('FALHA GAM UTM: receita preservada do ciclo anterior');
     if (!gamReportOk) gamNotes.push('FALHA GAM report: blocos/viewability não atualizados');
+    if (GAM2_NC && !gam2ReportOk) gamNotes.push('FALHA GAM-2 report: blocos da rede nova preservados do ciclo anterior');
     const syncStatus = (metaFailedBMs.length > 0 || gamNotes.length > 0) ? 'partial' : 'success';
     const failNote = (metaFailedBMs.length > 0 ? ` | FALHA Meta: ${metaFailedBMs.join('; ')}` : '')
       + (gamNotes.length > 0 ? ` | ${gamNotes.join('; ')}` : '');
