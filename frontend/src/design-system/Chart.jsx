@@ -1,4 +1,5 @@
-import { AreaChart, Area, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts';
+import { useId } from 'react';
+import { AreaChart, Area, ComposedChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts';
 
 // Tooltip de vidro (usado pelo AreaTrend e pelo HourLines).
 // `formatValue`: formatador opcional por valor (ex.: BRL/PCT) — sem ele, mostra o valor cru (comportamento anterior).
@@ -48,23 +49,73 @@ export function AreaTrend({ data = [], series = [], xKey = 'date', height = 220 
   );
 }
 
-// Gráfico por hora: hoje (sólido) vs ontem (tracejado). hoje/ontem: [{ hora, [metricKey] }].
-// `nowHour`: hora atual (SP) — desenha marcador "agora Xh" (ReferenceLine + ponto na linha de hoje).
+// Cor por sinal (menta ≥0, vermelho <0) — usada no marcador "agora", no dot ativo do
+// hover e no swatch do tooltip da série Hoje (ver GlassTooltip mais abaixo).
+const signColor = (v) => (v == null || Number(v) >= 0 ? 'var(--pos)' : 'var(--neg)');
+
+// Offset (0=topo/valor máximo, 1=base/valor mínimo) onde y=0 cai dentro do bounding box
+// da própria área "Hoje" — mesma receita oficial do Recharts p/ "area fill by value"
+// (offset = yMax / (yMax - yMin)). yMax<=0 → tudo vermelho; yMin>=0 → tudo menta.
+function zeroOffset(values) {
+  const nums = values.filter((v) => v != null).map(Number).filter((v) => !Number.isNaN(v));
+  if (!nums.length) return 1;
+  const yMax = Math.max(...nums);
+  const yMin = Math.min(...nums);
+  if (yMax <= 0) return 0;
+  if (yMin >= 0) return 1;
+  return Math.min(1, Math.max(0, yMax / (yMax - yMin)));
+}
+
+// Gráfico por hora: hoje (área suave, menta/vermelho por sinal) vs ontem (linha tracejada
+// cinza, suave, sem preenchimento). hoje/ontem: [{ hora, [metricKey] }].
+// `nowHour`: hora atual (SP) — desenha marcador "agora Xh" (ReferenceLine + ponto na área de hoje).
 // `valueFormatter`: formata o valor no tooltip (BRL/PCT/etc. — ver frontend/src/lib/format.js).
-export function HourLines({ hoje = [], ontem = [], metricKey, color = 'var(--rev)', height = 240, nowHour = null, valueFormatter }) {
+export function HourLines({ hoje = [], ontem = [], metricKey, color: _color = 'var(--rev)', height = 240, nowHour = null, valueFormatter }) {
+  const gradId = `hl-grad-${useId()}`;
   const byH = {};
   for (const r of ontem) byH[r.hora] = { hora: r.hora, ontem: r[metricKey] };
   for (const r of hoje) byH[r.hora] = { ...(byH[r.hora] || { hora: r.hora }), hoje: r[metricKey] };
   const data = Object.values(byH).sort((a, b) => a.hora - b.hora)
     .map((d) => ({ ...d, hora: String(d.hora).padStart(2, '0') + 'h' }));
   const nowX = nowHour != null ? String(nowHour).padStart(2, '0') + 'h' : null;
+
+  // Split do gradiente no y=0: menta esvaindo p/ transparente perto do zero, sólida no
+  // topo (valor máximo); vermelho esvaindo p/ transparente perto do zero, sólido na base
+  // (valor mínimo). Se não cruza zero, vira um fade simples de 2 stops numa cor só.
+  const off = zeroOffset(data.map((d) => d.hoje));
+  const FADE = 0.38; // opacidade "sólida" nos extremos (topo/base), some perto do zero
+  const stops = off >= 1
+    ? [{ o: 0, c: 'var(--pos)', a: FADE }, { o: 1, c: 'var(--pos)', a: 0 }]
+    : off <= 0
+      ? [{ o: 0, c: 'var(--neg)', a: 0 }, { o: 1, c: 'var(--neg)', a: FADE }]
+      : [
+          { o: 0, c: 'var(--pos)', a: FADE },
+          { o: off, c: 'var(--pos)', a: 0 },
+          { o: off, c: 'var(--neg)', a: 0 },
+          { o: 1, c: 'var(--neg)', a: FADE },
+        ];
+
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <LineChart data={data} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
+      <ComposedChart data={data} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            {stops.map((s, i) => <stop key={i} offset={s.o} stopColor={s.c} stopOpacity={s.a} />)}
+          </linearGradient>
+        </defs>
         <CartesianGrid vertical={false} stroke="var(--bd2)" />
         <XAxis dataKey="hora" tick={{ fill: 'var(--mut)', fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={18} />
         <YAxis tick={{ fill: 'var(--mut)', fontSize: 11 }} axisLine={false} tickLine={false} width={48} />
-        <Tooltip content={<GlassTooltip formatValue={valueFormatter} />} cursor={{ stroke: 'var(--bd)' }} />
+        <Tooltip
+          content={(props) => (
+            <GlassTooltip
+              {...props}
+              payload={props.payload?.map((p) => (p.dataKey === 'hoje' ? { ...p, color: signColor(p.value) } : p))}
+              formatValue={valueFormatter}
+            />
+          )}
+          cursor={{ stroke: 'var(--bd)' }}
+        />
         {nowX && (
           <ReferenceLine
             x={nowX}
@@ -75,14 +126,28 @@ export function HourLines({ hoje = [], ontem = [], metricKey, color = 'var(--rev
             label={{ value: `agora ${nowHour}h`, position: 'insideTopRight', fill: 'var(--acc)', fontSize: 10.5, fontWeight: 600 }}
           />
         )}
-        <Line dataKey="ontem" name="Ontem" stroke="var(--spend)" strokeWidth={2} strokeDasharray="4 4" dot={false} connectNulls />
-        <Line
-          dataKey="hoje" name="Hoje" stroke={color} strokeWidth={2.5} connectNulls
+        <Line type="monotone" dataKey="ontem" name="Ontem" stroke="var(--spend)" strokeWidth={2} strokeDasharray="4 4" dot={false} connectNulls />
+        <Area
+          type="monotone"
+          dataKey="hoje"
+          name="Hoje"
+          stroke={`url(#${gradId})`}
+          strokeWidth={2.5}
+          fill={`url(#${gradId})`}
+          fillOpacity={1}
+          connectNulls
           dot={(props) => (nowX && props.payload?.hora === nowX
-            ? <circle key={props.key ?? `now-${props.cx}-${props.cy}`} cx={props.cx} cy={props.cy} r={3} fill={color} stroke="none" />
+            ? <circle key={props.key ?? `now-${props.cx}-${props.cy}`} cx={props.cx} cy={props.cy} r={3} fill={signColor(props.payload?.hoje)} stroke="none" />
             : null)}
+          activeDot={(props) => (
+            <circle
+              key={props.key ?? `act-${props.cx}-${props.cy}`}
+              cx={props.cx} cy={props.cy} r={4}
+              fill={signColor(props.payload?.hoje)} stroke="var(--panel)" strokeWidth={1.5}
+            />
+          )}
         />
-      </LineChart>
+      </ComposedChart>
     </ResponsiveContainer>
   );
 }
