@@ -34,13 +34,13 @@ export default function DateRange({ value, onChange, today = new Date(), default
   const preset = (days) => onChange?.({ from: subDays(today, days - 1), to: today });
 
   return (
-    <div className="ds-daterange" ref={ref}>
-      <button className="ds-dr-trigger" onClick={() => setOpen((o) => !o)}>
+    <div className="flt-daterange" ref={ref}>
+      <button className="flt-trigger" onClick={() => setOpen((o) => !o)}>
         <CalIcon /> {label}
       </button>
       {open && (
-        <div className="ds-dr-panel glass">
-          <div className="ds-dr-presets">
+        <div className="flt-panel">
+          <div className="flt-presets">
             <button onClick={() => preset(7)}>7 dias</button>
             <button onClick={() => preset(14)}>14 dias</button>
             <button onClick={() => preset(30)}>30 dias</button>

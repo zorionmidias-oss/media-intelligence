@@ -10,3 +10,14 @@ export const PCT = (n, d = 1) =>
 
 // Percentual com sinal explícito (+ / −), usando o traço tipográfico de menos.
 export const SIGNPCT = (n, d = 1) => (Number(n) >= 0 ? '+' : '−') + PCT(Math.abs(Number(n) || 0), d);
+
+// Querystring dos filtros globais (período + domínio) — omite domain quando 'all'
+// (backend trata ausência = todos os domínios). Usado por Overview/HourTable/RoiPorPais.
+export function filterQs({ since, until, domain } = {}) {
+  const p = new URLSearchParams();
+  if (since) p.set('since', since);
+  if (until) p.set('until', until);
+  if (domain && domain !== 'all') p.set('domain', domain);
+  const s = p.toString();
+  return s ? `?${s}` : '';
+}

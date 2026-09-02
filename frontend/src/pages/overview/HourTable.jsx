@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useApi } from '../../hooks/useApi.js';
 import { HourLines } from '../../design-system/Chart.jsx';
-import { BRL, PCT, NUM } from '../../lib/format.js';
+import { BRL, PCT, NUM, filterQs } from '../../lib/format.js';
 
 // Dinheiro com 2 casas (mesmo padrão de Overview.jsx — R$ 0,00).
 const money = (n) => 'R$ ' + (Number(n) || 0).toFixed(2).replace('.', ',');
@@ -29,11 +29,15 @@ const HOUR_METRICS = [
  * overview-v3.html (linhas ~145-149, ~218-242), sem o toggle de estilo linhas/barras/área
  * (fora do escopo desta task — só o modo "linhas" do protótipo).
  *
- * Consome `GET /api/intraday` (2ª fonte de dados, separada de /api/overview).
+ * Consome `GET /api/intraday` (2ª fonte de dados, separada de /api/overview). Recebe
+ * period/domain do App (mesmos filtros globais); domain refiltra o hoje/ontem no backend,
+ * since/until vão na querystring por consistência mas a janela do intraday é sempre
+ * hoje vs. ontem (o endpoint os ignora — ver src/app/api/intraday/route.js).
  */
-export default function HourTable() {
+export default function HourTable({ period, domain }) {
   const [metric, setMetric] = useState('receita');
-  const { data, loading, error } = useApi('/intraday', []);
+  const qs = filterQs({ since: period?.since, until: period?.until, domain });
+  const { data, loading, error } = useApi(`/intraday${qs}`, [period?.since, period?.until, domain]);
 
   const curMetric = HOUR_METRICS.find((m) => m.key === metric) || HOUR_METRICS[0];
   const horaAtual = data?.hora_atual;

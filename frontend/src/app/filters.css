@@ -1,0 +1,136 @@
+/* Barra de filtros do shell — Período + Domínio + Tema (tokens novos, theme/tokens.css).
+   Porta .top .rt / .chip / .themeseg de
+   .superpowers/brainstorm/1352-1788215844/content/overview-v3.html.
+   Prefixo flt- para não colidir com .ds-* (design system antigo, ainda importado por
+   src/index.css — ver comentário em pages/overview/overview.css). */
+
+.flt-bar { display: flex; align-items: center; gap: 10px; }
+
+/* Trigger comum (Período + Domínio) — visual de chip. */
+.flt-daterange { position: relative; }
+.flt-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 9px;
+  border: 1px solid var(--bd);
+  background: var(--panel);
+  color: var(--fg2);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color .15s ease, border-color .15s ease;
+}
+.flt-trigger:hover { color: var(--fg); border-color: var(--acc); }
+.flt-trigger svg { flex-shrink: 0; }
+.flt-chev { margin-left: 2px; opacity: .7; }
+
+/* Painel flutuante (calendário / lista de domínios) */
+.flt-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 40;
+  padding: 14px;
+  background: var(--panel2);
+  border: 1px solid var(--bd);
+  border-radius: 14px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .45);
+}
+.flt-presets { display: flex; gap: 6px; margin-bottom: 10px; }
+.flt-presets button {
+  flex: 1;
+  border: 1px solid var(--bd);
+  background: var(--panel);
+  color: var(--fg2);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: .15s;
+}
+.flt-presets button:hover { color: var(--fg); border-color: var(--acc); }
+
+/* react-day-picker — tema Black & Menta */
+.flt-panel .rdp-root {
+  --rdp-accent-color: var(--acc);
+  --rdp-accent-background-color: color-mix(in srgb, var(--acc) 20%, transparent);
+  --rdp-today-color: var(--acc);
+  --rdp-day-width: 34px;
+  --rdp-day-height: 34px;
+  font-size: 13px;
+  margin: 0;
+  color: var(--fg);
+}
+.flt-panel .rdp-month_caption { color: var(--fg); font-weight: 600; padding: 2px 4px 8px; }
+.flt-panel .rdp-weekday { color: var(--mut); font-weight: 600; text-transform: none; }
+.flt-panel .rdp-day_button { color: var(--fg); border-radius: 8px; border: 0; }
+.flt-panel .rdp-day_button:hover { background: var(--bd2); }
+.flt-panel .rdp-selected .rdp-day_button { background: var(--acc); color: var(--onacc); }
+.flt-panel .rdp-range_middle .rdp-day_button { background: color-mix(in srgb, var(--acc) 18%, transparent); color: var(--fg); border-radius: 0; }
+.flt-panel .rdp-today:not(.rdp-selected) .rdp-day_button { box-shadow: inset 0 0 0 1.5px var(--acc); }
+.flt-panel .rdp-chevron { fill: var(--fg2); }
+.flt-panel .rdp-nav button:hover { background: var(--bd2); border-radius: 8px; }
+
+/* Dropdown de domínio (lista com busca) */
+.flt-menu { min-width: 220px; padding: 8px; }
+.flt-menu-search {
+  width: 100%;
+  height: 32px;
+  border: 1px solid var(--bd);
+  background: var(--panel);
+  color: var(--fg);
+  border-radius: 8px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 13px;
+  margin-bottom: 6px;
+  outline: none;
+}
+.flt-menu-search:focus { border-color: var(--acc); }
+.flt-menu-list { max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 1px; }
+.flt-menu-item {
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-size: 13px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: .12s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.flt-menu-item:hover { background: var(--bd2); }
+.flt-menu-item.on { background: color-mix(in srgb, var(--acc) 16%, transparent); color: var(--acc); font-weight: 600; }
+.flt-menu-empty { padding: 10px; color: var(--mut); font-size: 12px; text-align: center; }
+
+/* Tema — segmented control Escuro/Claro (porta .themeseg de overview-v3.html) */
+.flt-theme-seg {
+  display: inline-flex;
+  background: var(--panel);
+  border: 1px solid var(--bd);
+  border-radius: 9px;
+  padding: 3px;
+}
+.flt-theme-seg button {
+  font-size: 11.5px;
+  padding: 5px 11px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--mut);
+  font-weight: 600;
+  cursor: pointer;
+  transition: .15s;
+}
+.flt-theme-seg button.on { background: var(--acc); color: var(--onacc); }

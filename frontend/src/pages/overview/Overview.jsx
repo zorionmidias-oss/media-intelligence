@@ -4,7 +4,7 @@ import MetricCard from './MetricCard.jsx';
 import DailyChart from './DailyChart.jsx';
 import HourTable from './HourTable.jsx';
 import RoiPorPais from './RoiPorPais.jsx';
-import { BRL, PCT, NUM } from '../../lib/format.js';
+import { BRL, PCT, NUM, filterQs } from '../../lib/format.js';
 import './overview.css';
 
 // Dinheiro com decimais configuráveis (mesmo helper de frontend/src/pages/Overview.jsx antigo).
@@ -28,8 +28,9 @@ function MinisSkeleton() {
   );
 }
 
-export default function Overview() {
-  const { data, loading, error } = useApi('/overview', []);
+export default function Overview({ period, domain }) {
+  const qs = filterQs({ since: period?.since, until: period?.until, domain });
+  const { data, loading, error } = useApi(`/overview${qs}`, [period?.since, period?.until, domain]);
 
   if (loading) {
     return (
@@ -115,7 +116,7 @@ export default function Overview() {
           ))}
         </div>
       </div>
-      <HourTable />
+      <HourTable period={period} domain={domain} />
 
       <div className="panel">
         <div className="ph"><h3>Top campanhas</h3></div>
@@ -147,7 +148,7 @@ export default function Overview() {
         </table>
       </div>
 
-      <RoiPorPais />
+      <RoiPorPais period={period} domain={domain} />
     </div>
   );
 }
