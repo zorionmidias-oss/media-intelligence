@@ -928,6 +928,10 @@ async function syncAll(dateRange) {
     // (report null/vazio) mas a GAM-1 estiver OK, o delete zerava a receita já casada
     // dos domínios GAM-2 (receitasmenu). gam2ReportOk=false → preservar essas linhas.
     const gam2ReportOk = !GAM2_NC || Object.keys(gamReport2?.adUnitsByDay || {}).length > 0;
+    // Funil GAM-2 (receita por ad id → receita_ads + faturamento atribuído em ads_consolidados).
+    // Falha independente do report de ad units: gam2FunnelsOk=false → preservar a receita
+    // atribuída dos domínios GAM-2 (senão zera fatAtrib/impGAM/gam_match da receitasmenu).
+    const gam2FunnelsOk = !GAM2_NC || Object.keys(gamFunnels2?.byDay || {}).length > 0;
     const gam2DomainIds = (dominios || []).filter(d => (d.gam_fonte || 1) === 2).map(d => d.id);
 
     // Merge da rede nova (GAM-2) no byDay — DEPOIS do gamFunnelsOk (o guard de outage
@@ -1210,7 +1214,7 @@ async function syncAll(dateRange) {
     // O gasto Meta continua fresco; só os campos derivados do GAM voltam do
     // banco. lucro/roas são recalculados com o gasto NOVO. Some no próximo
     // ciclo bom, tudo é reescrito com dado real.
-    if ((!gamFunnelsOk || !gamReportOk) && adsRows.length > 0) {
+    if ((!gamFunnelsOk || !gamReportOk || !gam2FunnelsOk) && adsRows.length > 0) {
       const datas = [...new Set(adsRows.map(r => r.data))];
       const { data: prevRows, error: prevErr } = await supabase
         .from('ads_consolidados')
@@ -1225,7 +1229,10 @@ async function syncAll(dateRange) {
         for (const r of adsRows) {
           const p = prevMap.get(kOf(r));
           if (!p) continue;
-          if (!gamFunnelsOk) {
+          // GAM-1 funnel caiu → restaura todas as linhas; só o funil GAM-2 caiu (GAM-1 ok)
+          // → restaura só os domínios GAM-2 (senão sobrescreve receita boa da GAM-1 com stale).
+          const restaurarFat = !gamFunnelsOk || (!gam2FunnelsOk && gam2DomainIds.includes(r.dominio_id));
+          if (restaurarFat) {
             r.faturamento_bruto = Number(p.faturamento_bruto || 0);
             r.faturamento_real = Number(p.faturamento_real || 0);
             r.impressoes_gam = Number(p.impressoes_gam || 0);
@@ -1241,7 +1248,7 @@ async function syncAll(dateRange) {
           }
           if (!gamReportOk) r.viewability = Number(p.viewability || 0);
         }
-        console.warn(`[sync] GAM indisponível (funnels=${gamFunnelsOk ? 'ok' : 'FALHOU'}, report=${gamReportOk ? 'ok' : 'FALHOU'}) — receita preservada do ciclo anterior em ${preservadas}/${adsRows.length} linhas`);
+        console.warn(`[sync] GAM indisponível (funnels=${gamFunnelsOk ? 'ok' : 'FALHOU'}, report=${gamReportOk ? 'ok' : 'FALHOU'}, gam2Funnels=${gam2FunnelsOk ? 'ok' : 'FALHOU'}) — receita preservada do ciclo anterior em ${preservadas}/${adsRows.length} linhas`);
       }
     }
 
@@ -1571,6 +1578,7 @@ async function syncAll(dateRange) {
     if (!gamFunnelsOk) gamNotes.push('FALHA GAM UTM: receita preservada do ciclo anterior');
     if (!gamReportOk) gamNotes.push('FALHA GAM report: blocos/viewability não atualizados');
     if (GAM2_NC && !gam2ReportOk) gamNotes.push('FALHA GAM-2 report: blocos da rede nova preservados do ciclo anterior');
+    if (GAM2_NC && !gam2FunnelsOk) gamNotes.push('FALHA GAM-2 UTM: receita atribuída da rede nova preservada do ciclo anterior');
     const syncStatus = (metaFailedBMs.length > 0 || gamNotes.length > 0) ? 'partial' : 'success';
     const failNote = (metaFailedBMs.length > 0 ? ` | FALHA Meta: ${metaFailedBMs.join('; ')}` : '')
       + (gamNotes.length > 0 ? ` | ${gamNotes.join('; ')}` : '');
