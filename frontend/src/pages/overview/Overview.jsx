@@ -64,18 +64,20 @@ export default function Overview({ period, domain }) {
   ];
 
   // Faixa de cards menores — sparkline com a série diária real de cada métrica,
-  // vinda de trend[] (Task 11, 02/09: /api/overview enriquecido; delta só onde
-  // `comparacao` fornece — mesma regra de antes).
+  // vinda de trend[] (Task 11, 02/09: /api/overview enriquecido; Task 13:
+  // `comparacao` agora cobre as 6 métricas — delta ▲/▼ colorido só pelo sinal
+  // numérico do delta, mesma convenção do HeroCard (`up = deltaPct >= 0`), sem
+  // inverter cor p/ métricas "de custo" — mantém regra única e previsível).
   const custoResultado = k.results > 0 ? k.investimento / k.results : 0;
   const sessaoLead = k.results > 0 ? k.sessoes / k.results : 0;
 
   const minis = [
     { label: 'eCPM', value: money(k.ecpm, 2), deltaPct: c.gamEcpm, up: c.gamEcpm >= 0, series: serie('ecpm') },
-    { label: 'RPS', value: money(k.rps, 4), series: serie('rps') },
+    { label: 'RPS', value: money(k.rps, 4), deltaPct: c.rps, up: c.rps >= 0, series: serie('rps') },
     { label: 'Impressões', value: NUM(k.impressions), deltaPct: c.gamImpressions, up: c.gamImpressions >= 0, series: serie('impressions') },
-    { label: 'Custo / result', value: money(custoResultado, 2), series: serie('custo_result') },
-    { label: 'PAR', value: num1(k.par, 1), series: serie('par') },
-    { label: 'Sessão / lead', value: num1(sessaoLead, 1), series: serie('sessao_lead') },
+    { label: 'Custo / result', value: money(custoResultado, 2), deltaPct: c.custoResult, up: c.custoResult >= 0, series: serie('custo_result') },
+    { label: 'PAR', value: num1(k.par, 1), deltaPct: c.par, up: c.par >= 0, series: serie('par') },
+    { label: 'Sessão / lead', value: num1(sessaoLead, 1), deltaPct: c.sessaoLead, up: c.sessaoLead >= 0, series: serie('sessao_lead') },
   ];
 
   // Top campanhas — tabela do rodapé (slice para as ~8 mais relevantes vindas da API).

@@ -73,7 +73,8 @@ async function handler(req, res) {
     const prevAdsQ = () => {
       let q = supabase
         .from('ads_consolidados')
-        .select('ad_utm,valor_gasto,faturamento_real')
+        // Task 13: sessoes_meta/resultado adicionados para comparativo de rps/custo_result/sessao_lead
+        .select('ad_utm,valor_gasto,faturamento_real,sessoes_meta,resultado')
         .gte('data', prevDf).lte('data', prevDt).order('data', { ascending: true });
       if (domainId) q = q.eq('dominio_id', domainId);
       return q;
@@ -295,11 +296,16 @@ async function handler(req, res) {
 
     // ─── Previous period comparison ──────────────────────────────────────────
     const prevUtmMap = {};
+    // Task 13: totais do período anterior p/ os 4 comparativos que faltavam
+    // (rps, custo_result, par, sessao_lead) — mesma fonte (prevAds) das outras.
+    let prevSessoes = 0, prevResults = 0;
     for (const r of prevAds || []) {
       const k = r.ad_utm;
       if (!prevUtmMap[k]) prevUtmMap[k] = { spend: 0, fat: 0 };
       prevUtmMap[k].spend += Number(r.valor_gasto || 0);
       prevUtmMap[k].fat   += Number(r.faturamento_real || 0);
+      prevSessoes += Number(r.sessoes_meta || 0);
+      prevResults += Number(r.resultado || 0);
     }
     const prevTotSpend = Object.values(prevUtmMap).reduce((s, v) => s + v.spend, 0);
     const prevTotFat   = Object.values(prevUtmMap).reduce((s, v) => s + v.fat,   0);
@@ -309,6 +315,17 @@ async function handler(req, res) {
       if (!ant || ant === 0) return null;
       return +((atual - ant) / Math.abs(ant) * 100).toFixed(1);
     };
+    // Task 13: as mesmas fórmulas do trend diário (linhas ~208-222) e de
+    // src/lib/metricas.js, somadas no período inteiro (atual e anterior) em vez
+    // de por dia — base dos 4 comparativos que faltavam nos cards menores.
+    const rpsCur          = totSessoes > 0 ? totFat / totSessoes : 0;
+    const rpsPrev         = prevSessoes > 0 ? prevTotFat / prevSessoes : 0;
+    const custoResultCur  = totResults > 0 ? totSpend / totResults : 0;
+    const custoResultPrev = prevResults > 0 ? prevTotSpend / prevResults : 0;
+    const parCur          = totSessoes > 0 ? gamImps / totSessoes : 0;
+    const parPrev         = prevSessoes > 0 ? prevGamImps / prevSessoes : 0;
+    const sessaoLeadCur   = totResults > 0 ? totSessoes / totResults : 0;
+    const sessaoLeadPrev  = prevResults > 0 ? prevSessoes / prevResults : 0;
     const comparacao = {
       periodo_anterior: { since: prevDf, until: prevDt },
       faturamento:  varPct(totFat,    prevTotFat),
@@ -318,6 +335,10 @@ async function handler(req, res) {
       gamEcpm:       prevGamImps > 0 ? varPct(ecpm,    prevEcpm)   : null,
       gamImpressions: prevGamImps > 0 ? varPct(gamImps, prevGamImps) : null,
       gamCtr:        prevGamImps > 0 ? varPct(gamCtr,  prevGamCtr) : null,
+      rps:          varPct(rpsCur, rpsPrev),
+      custoResult:  varPct(custoResultCur, custoResultPrev),
+      par:          varPct(parCur, parPrev),
+      sessaoLead:   varPct(sessaoLeadCur, sessaoLeadPrev),
       porUtm: Object.fromEntries(allUTMs.map(u => {
         const p = prevUtmMap[u.ad_utm] || { spend: 0, fat: 0 };
         return [u.ad_utm, {
