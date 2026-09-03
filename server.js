@@ -278,6 +278,25 @@ app.get('/api/intraday', requireAuth, intradayHandler);
 app.get('/api/roi-por-pais', requireAuth, roiPorPaisHandler);
 app.get('/api/diagnostico', requireAuth, diagnosticoHandler);
 app.get('/api/campanha-intraday/:campaignId', requireAuth, campanhaIntradayHandler);
+// Marcar campanha como otimizada HOJE (botão ✓ na aba Campanhas do redesign).
+// Upsert em `campanha_otimizacao` (1 linha por campaign_id); a aba lê ultima_otimizacao daí.
+app.post('/api/campanha/:campaignId/otimizada', requireAuth, async (req, res) => {
+  const campaignId = req.params.campaignId;
+  if (!campaignId) return res.status(400).json({ error: 'campaign_id é obrigatório' });
+  try {
+    const ultima_otimizacao = new Date().toISOString();
+    const { error } = await supabase.from('campanha_otimizacao').upsert({
+      campaign_id: campaignId,
+      ultima_otimizacao,
+      updated_by: req.userId || null,
+    }, { onConflict: 'campaign_id' });
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true, campaign_id: campaignId, ultima_otimizacao });
+  } catch (err) {
+    console.error('[otimizada]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 app.post('/api/relatorios/custom', requireAuth, relatorioCustomHandler);
 // M2M (bot 2Junior's) — auth própria via x-api-key, SEM requireAuth (ver porteiro global acima)
 app.get('/api/revenue-by-utm', revenueByUtmHandler);

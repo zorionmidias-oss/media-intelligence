@@ -52,9 +52,19 @@ async function handler(req, res) {
       inicioUtmQ = inicioUtmQ.in('dominio_id', ids);
     }
 
-    const [{ data: rows, error }, { data: inicioCampRows }, { data: inicioUtmRows }] =
-      await Promise.all([fetchAll(query), inicioCampQ, inicioUtmQ]);
+    // Última otimização por campanha (tabela dedicada `campanha_otimizacao`, 1 linha/campaign_id).
+    // fetchAll p/ não cortar em 1000. Alimentada pelo botão ✓ (POST /api/campanha/:id/otimizada).
+    const otimQ = () => supabase.from('campanha_otimizacao').select('campaign_id,ultima_otimizacao');
+
+    const [{ data: rows, error }, { data: inicioCampRows }, { data: inicioUtmRows }, { data: otimRows }] =
+      await Promise.all([fetchAll(query), inicioCampQ, inicioUtmQ, fetchAll(otimQ)]);
     if (error) return res.status(500).json({ error: error.message });
+
+    // Mapa campaign_id -> ultima_otimizacao (timestamp ISO; BR-bucket fica pro frontend/datas.js)
+    const ultimaOtimMap = {};
+    for (const r of otimRows || []) {
+      if (r.campaign_id && r.ultima_otimizacao) ultimaOtimMap[r.campaign_id] = r.ultima_otimizacao;
+    }
 
     // Chave de agrupamento anti-erro: campaign_id quando a linha tem (id nunca é
     // ambíguo — duas páginas homônimas ficam separadas); fallback legado por nome
@@ -104,9 +114,17 @@ async function handler(req, res) {
           previsao_faturamento_real: 0,
           previsao_lucro: 0,
           previsao_roas: 0,
+          // Série diária p/ sparkline de tendência (ROI por dia). data -> {gasto,fat}
+          _serie: {},
         };
       }
       const g = utmMap[key];
+      // Acumula por dia (mantém granularidade p/ a série de ROI da tendência)
+      if (r.data) {
+        const s = g._serie[r.data] || (g._serie[r.data] = { gasto: 0, fat: 0 });
+        s.gasto += Number(r.valor_gasto || 0);
+        s.fat += Number(r.faturamento_real || 0);
+      }
       g.valor_gasto += Number(r.valor_gasto || 0);
       g.faturamento_real += Number(r.faturamento_real || 0);
       g.faturamento_bruto += Number(r.faturamento_bruto || 0);
@@ -154,6 +172,13 @@ async function handler(req, res) {
         const brackets = [...String(g.campanha_meta || '').matchAll(/\[([^\]]+)\]/g)];
         const pagina = brackets.length >= 2 ? brackets[brackets.length - 1][1].trim() : null;
 
+        // Série diária de ROI (%) p/ sparkline de tendência — ordenada por data.
+        // ROI = (fat − gasto)/gasto × 100 (faturamento_real já é líquido; NÃO reaplicar ×0.9).
+        const roi_serie = Object.keys(g._serie).sort().map(data => {
+          const s = g._serie[data];
+          return { data, roi: s.gasto > 0 ? +(((s.fat - s.gasto) / s.gasto) * 100).toFixed(2) : 0 };
+        });
+
         return {
           ad_utm: g.ad_utm,
           campaign_id: g.campaign_id,
@@ -192,6 +217,10 @@ async function handler(req, res) {
           rps_sessao: m.rps,
           breakeven: m.breakeven,
           data_inicio: inicioMap[g._key] || null,
+          // Última otimização (timestamp ISO) — só p/ linhas com campaign_id carimbado.
+          ultima_otimizacao: g.campaign_id ? (ultimaOtimMap[g.campaign_id] || null) : null,
+          // Série diária de ROI (%) do período — tendência (vermelha na baixa) no frontend.
+          roi_serie,
         };
       })
       .sort((a, b) => b.valor_gasto - a.valor_gasto);
