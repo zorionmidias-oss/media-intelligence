@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Shell from './app/Shell.jsx';
 import Filters from './app/Filters.jsx';
 import Overview from './pages/overview/Overview.jsx';
+import Campanhas from './pages/campanhas/Campanhas.jsx';
 import { periodPresets } from './lib/datas.js';
 
 const TITLES = {
@@ -30,9 +31,11 @@ export default function App() {
 
   return (
     <Shell active={active} title={TITLES[active]} onNavigate={setActive} headerRight={headerRight}>
-      {active === 'overview'
-        ? <Overview period={period} domain={domain} />
-        : <p className="placeholder">{TITLES[active]} — em construção</p>}
+      {active === 'overview' && <Overview period={period} domain={domain} />}
+      {active === 'campanhas' && <Campanhas period={period} domain={domain} />}
+      {active !== 'overview' && active !== 'campanhas' && (
+        <p className="placeholder">{TITLES[active]} — em construção</p>
+      )}
     </Shell>
   );
 }

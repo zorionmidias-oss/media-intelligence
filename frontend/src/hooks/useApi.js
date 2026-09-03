@@ -12,6 +12,20 @@ export async function apiGet(path) {
   return data;
 }
 
+// Escrita (POST) a uma rota /api/* — same-origin, cookie de auth incluso.
+export async function apiPost(path, body) {
+  const res = await fetch(`/api${path}`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: body != null ? JSON.stringify(body) : undefined,
+  });
+  if (res.status === 401) { window.location.href = '/login.html'; return null; }
+  const data = await res.json();
+  if (!res.ok) throw new Error((data && (data.error || data.erro)) || `HTTP ${res.status}`);
+  return data;
+}
+
 // Hook de leitura: refaz o fetch quando `deps` muda. Retorna { data, loading, error }.
 export function useApi(endpoint, deps = []) {
   const [data, setData] = useState(null);
