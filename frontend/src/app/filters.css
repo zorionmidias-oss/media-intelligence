@@ -41,21 +41,35 @@
   border-radius: 14px;
   box-shadow: 0 18px 50px rgba(0, 0, 0, .45);
 }
-.flt-presets { display: flex; gap: 6px; margin-bottom: 10px; }
+
+/* Popover do calendário — barra lateral de presets + calendário range (Task 16) */
+.flt-panel.flt-panel-cal { display: flex; align-items: stretch; padding: 10px; gap: 0; }
+.flt-presets {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 172px;
+  flex-shrink: 0;
+  padding: 2px 10px 2px 2px;
+  margin-right: 10px;
+  border-right: 1px solid var(--bd);
+}
 .flt-presets button {
-  flex: 1;
-  border: 1px solid var(--bd);
-  background: var(--panel);
+  text-align: left;
+  border: 0;
+  background: transparent;
   color: var(--fg2);
   font: inherit;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
-  padding: 6px 8px;
+  padding: 7px 10px;
   border-radius: 8px;
   cursor: pointer;
-  transition: .15s;
+  white-space: nowrap;
+  transition: background .15s ease, color .15s ease;
 }
-.flt-presets button:hover { color: var(--fg); border-color: var(--acc); }
+.flt-presets button:hover { color: var(--fg); background: var(--bd2); }
+.flt-presets button.on { color: var(--acc); background: color-mix(in srgb, var(--acc) 16%, transparent); }
 
 /* react-day-picker — tema Black & Menta */
 .flt-panel .rdp-root {
@@ -70,11 +84,24 @@
 }
 .flt-panel .rdp-month_caption { color: var(--fg); font-weight: 600; padding: 2px 4px 8px; }
 .flt-panel .rdp-weekday { color: var(--mut); font-weight: 600; text-transform: none; }
-.flt-panel .rdp-day_button { color: var(--fg); border-radius: 8px; border: 0; }
+.flt-panel .rdp-day_button { position: relative; color: var(--fg); border-radius: 8px; border: 0; }
 .flt-panel .rdp-day_button:hover { background: var(--bd2); }
 .flt-panel .rdp-selected .rdp-day_button { background: var(--acc); color: var(--onacc); }
 .flt-panel .rdp-range_middle .rdp-day_button { background: color-mix(in srgb, var(--acc) 18%, transparent); color: var(--fg); border-radius: 0; }
-.flt-panel .rdp-today:not(.rdp-selected) .rdp-day_button { box-shadow: inset 0 0 0 1.5px var(--acc); }
+/* Hoje = ponto menta sob o número (some quando o dia também está no range selecionado). */
+.flt-panel .rdp-today:not(.rdp-selected) .rdp-day_button { font-weight: 700; }
+.flt-panel .rdp-today:not(.rdp-selected) .rdp-day_button::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--acc);
+}
+.flt-panel .rdp-day_button:disabled { color: var(--mut); opacity: .4; cursor: default; }
 .flt-panel .rdp-chevron { fill: var(--fg2); }
 .flt-panel .rdp-nav button:hover { background: var(--bd2); border-radius: 8px; }
 
