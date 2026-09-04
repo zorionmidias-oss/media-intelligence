@@ -5,11 +5,13 @@ const { fetchAll } = require('../../../lib/fetchAll');
 const { hojeBR, diasAtrasBR, addDiasISO } = require('../../../lib/datas');
 const METRICAS = require('../../../lib/metricas');
 
-async function getMetasProgresso(totFat, totSpend, totLucro, roi) {
+// Progresso das metas — recebe as linhas de `metas` já buscadas (em paralelo com o
+// restante), então só calcula (síncrono). Antes fazia a própria query no fim do
+// handler, em série depois de tudo — latência à toa na tela inicial.
+function computeMetasProgresso(metasRows, totFat, totSpend, totLucro, roi) {
   try {
-    const { data } = await supabase.from('metas').select('*').eq('ativa', true).is('dominio_id', null);
     const byTipo = {};
-    for (const m of data || []) byTipo[m.tipo] = m;
+    for (const m of metasRows || []) byTipo[m.tipo] = m;
     const prog = (atual, meta) => meta > 0 ? +((atual / meta) * 100).toFixed(1) : null;
     return {
       faturamento: byTipo.faturamento_diario
@@ -113,8 +115,31 @@ async function handler(req, res) {
       return q;
     };
 
-    const [{ data: ads, error: adsErr }, { data: gam }, { data: prevAds }, { data: prevGam }, { data: trendAds }, { data: trendGam }] =
-      await Promise.all([fetchAll(adsQ), fetchAll(gamQ), fetchAll(prevAdsQ), fetchAll(prevGamQ), fetchAll(trendAdsQ), fetchAll(trendGamQ)]);
+    // Auxiliares independentes da agregação — buscados EM PARALELO com os 6 fetchAll
+    // (antes eram 3 awaits em série no fim: câmbio, previsão de hoje e metas).
+    const todayStr = hojeBR();
+    const inRange = todayStr >= df && todayStr <= dt;
+    const usdToBrlP = getUSDtoBRL();
+    const metasP = supabase.from('metas').select('*').eq('ativa', true).is('dominio_id', null);
+    let previsaoRowsP = Promise.resolve({ data: [] });
+    if (inRange) {
+      let pq = supabase
+        .from('ads_consolidados')
+        .select('orcamento_total,valor_gasto,resultado,impressoes_gam,ecpm,account_id,updated_at')
+        .eq('data', todayStr);
+      if (domainId) pq = pq.eq('dominio_id', domainId);
+      previsaoRowsP = pq;
+    }
+
+    const [
+      { data: ads, error: adsErr }, { data: gam }, { data: prevAds }, { data: prevGam },
+      { data: trendAds }, { data: trendGam },
+      usdToBrl, { data: metasRows }, { data: previsaoRows },
+    ] = await Promise.all([
+      fetchAll(adsQ), fetchAll(gamQ), fetchAll(prevAdsQ), fetchAll(prevGamQ),
+      fetchAll(trendAdsQ), fetchAll(trendGamQ),
+      usdToBrlP, metasP, previsaoRowsP,
+    ]);
     if (adsErr) return res.status(500).json({ error: adsErr.message });
 
     // ─── Aggregate ads_consolidados (Meta spend + UTM attribution) ───
@@ -378,18 +403,11 @@ async function handler(req, res) {
       })),
     };
 
-    // Previsão: query direta para hoje (respeita filtro de domínio; null se hoje não está no range)
-    const todayStr = hojeBR();
+    // Previsão de hoje — usa as linhas já buscadas em paralelo (previsaoRows).
     let previsao = null;
     let delayHours = 0;
-    if (todayStr >= df && todayStr <= dt) {
-      let prevQ = supabase
-        .from('ads_consolidados')
-        .select('orcamento_total,valor_gasto,resultado,impressoes_gam,ecpm,account_id,updated_at')
-        .eq('data', todayStr);
-      if (domainId) prevQ = prevQ.eq('dominio_id', domainId);
-      const { data: prevData } = await prevQ;
-      const dados = prevData || [];
+    if (inRange) {
+      const dados = previsaoRows || [];
 
       // Atraso de dados: a conta mais defasada define o delay (sync de uma conta pode
       // falhar e deixar o gasto congelado enquanto as outras seguem atualizando)
@@ -468,7 +486,7 @@ async function handler(req, res) {
         cpc: totSpend > 0 && totClicks > 0 ? +(totSpend / totClicks).toFixed(4) : 0,
         cpaIdeal: rps / 1000,
         delayHours,
-        usdToBrl: await getUSDtoBRL(),
+        usdToBrl,
         roas: totSpend > 0 ? +(totFat / totSpend).toFixed(4) : 0,
       },
       trend,
@@ -482,7 +500,7 @@ async function handler(req, res) {
       gamUTMMap,
       networks: [],
       previsao,
-      metas_progresso: await getMetasProgresso(totFat, totSpend, totLucro, roi),
+      metas_progresso: computeMetasProgresso(metasRows, totFat, totSpend, totLucro, roi),
       comparacao,
     });
   } catch (err) {
