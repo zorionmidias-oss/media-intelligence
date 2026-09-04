@@ -1217,9 +1217,6 @@
     .ap-dr>td{padding:0;border-bottom:1px solid var(--border)}
     .ap-cr-name{font-size:.875rem;font-weight:600;color:var(--fg)}
   </style>
-  <!-- Mach Tahoe Design System -->
-  <link rel="stylesheet" href="/css/index.css">
-  <meta name="theme-color" content="#FFFFFF">
 </head>
 <body>
 
@@ -1452,49 +1449,6 @@
             </div>
             <button class="meta-edit-btn" id="meta-add-roas" onclick="openMetaModal('roas_diario')" title="Definir meta" style="font-size:.68rem;opacity:.3;margin-top:.5rem">+ meta</button>
           </div>
-        </div>
-
-        <!-- Diagnóstico do dia (Frente 1) — banda de 4 fatores + resultado -->
-        <style>
-          #diag-section{margin-top:1.35rem}
-          .diag-sec-lbl{font-family:var(--font-display)!important;font-size:.68rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 .55rem;display:flex;align-items:center;gap:.5rem}
-          .diag-sec-lbl .sub{text-transform:none;letter-spacing:0;color:var(--muted-light);font-weight:400}
-          .diag-band{border:1px solid color-mix(in oklch,var(--accent) 45%,var(--border));border-radius:var(--rl);background:var(--card);position:relative;padding:1.05rem 1.1rem}
-          .diag-band::before{content:'novo';position:absolute;top:-.6rem;left:1rem;background:var(--accent);color:var(--accent-fg);font-family:var(--font-display)!important;font-size:.58rem;font-weight:700;letter-spacing:.12em;padding:.16rem .5rem;border-radius:.28rem;text-transform:uppercase}
-          .diag-alert{border-radius:var(--r);padding:.7rem .85rem;margin:.25rem 0 .95rem;display:flex;gap:.7rem;align-items:flex-start;background:var(--danger-soft);border:1px solid color-mix(in oklch,var(--danger) 45%,transparent)}
-          .diag-alert.warn{background:var(--warning-soft);border-color:color-mix(in oklch,var(--warning) 45%,transparent)}
-          .diag-alert .tg{font-family:var(--font-display)!important;font-size:.56rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:.24rem .48rem;border-radius:.28rem;white-space:nowrap;background:var(--danger);color:#fff;flex-shrink:0}
-          .diag-alert.warn .tg{background:var(--warning);color:#2A1A00}
-          .diag-alert p{margin:0;font-size:.78rem;line-height:1.55;color:var(--fg-soft)}
-          .diag-alert b{color:var(--fg);font-weight:600}
-          .diag-nodes{display:grid;grid-template-columns:repeat(4,1fr) 1.15fr;gap:.6rem}
-          .diag-node{border:1px solid var(--border);border-radius:var(--r);padding:.7rem .8rem;background:var(--sec);position:relative;min-width:0}
-          .diag-node .lb{font-size:.66rem;color:var(--muted);margin-bottom:.5rem;line-height:1.3;min-height:2.1em}
-          .diag-node .lb small{color:var(--muted-light);font-weight:400}
-          .diag-node .v{font-family:var(--font-mono)!important;font-variant-numeric:tabular-nums;font-size:1.3rem;font-weight:700;letter-spacing:-.02em;line-height:1}
-          .diag-node .md{font-family:var(--font-mono)!important;font-size:.66rem;color:var(--muted-light);margin-top:.28rem}
-          .diag-node .fx{margin-top:.55rem;padding-top:.5rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-family:var(--font-mono)!important;font-size:.72rem;font-weight:600;color:var(--muted)}
-          .diag-node.ok{border-color:color-mix(in oklch,var(--success) 55%,var(--border));background:var(--success-soft)}.diag-node.ok .fx{color:var(--success)}
-          .diag-node.amb{border-color:color-mix(in oklch,var(--warning) 55%,var(--border));background:var(--warning-soft)}.diag-node.amb .fx{color:var(--warning)}
-          .diag-node.bad{border-color:color-mix(in oklch,var(--danger) 55%,var(--border));background:var(--danger-soft)}.diag-node.bad .fx{color:var(--danger)}.diag-node.bad .v{color:var(--danger)}
-          .diag-node.res{background:linear-gradient(150deg,color-mix(in oklch,var(--accent) 14%,var(--sec-strong)),var(--sec-strong));border-color:color-mix(in oklch,var(--accent) 40%,var(--border))}
-          .diag-node.res .lb,.diag-node.res .md{color:color-mix(in oklch,var(--fg) 55%,transparent)}
-          .diag-node.res .v{color:var(--fg)}.diag-node.res .fx{color:var(--accent);border-top-color:color-mix(in oklch,var(--fg) 12%,transparent)}
-          .diag-node.res.rok .fx{color:var(--success)}.diag-node.res.ramb .fx{color:var(--warning)}.diag-node.res.rbad .fx{color:var(--danger)}
-          .diag-node .cr{position:absolute;top:-.55rem;right:.55rem;background:var(--danger);color:#fff;font-family:var(--font-display)!important;font-size:.52rem;padding:.14rem .42rem;border-radius:.26rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
-          .diag-node.piso .cr{background:var(--warning);color:#2A1A00}
-          .diag-valid{font-family:var(--font-mono)!important;font-size:.68rem;color:var(--muted);background:var(--sec);border:1px solid var(--border);border-radius:var(--r);padding:.55rem .75rem;margin-top:.75rem;overflow-x:auto;white-space:nowrap}
-          .diag-valid b{color:var(--accent)}.diag-valid .ok{color:var(--success)}
-          .diag-note{font-size:.74rem;color:var(--muted);margin:.7rem 0 0;line-height:1.6}
-          .diag-note b{color:var(--fg-soft)}
-          .diag-empty{font-size:.78rem;color:var(--muted);padding:.4rem 0}
-          @media(max-width:960px){.diag-nodes{grid-template-columns:repeat(2,1fr)}}
-        </style>
-        <div id="diag-section" style="display:none">
-          <div class="diag-sec-lbl">Diagnóstico <span class="sub" id="diag-periodo"></span>
-            <button onclick="openFicha('geral')" title="Abrir análise global detalhada" style="margin-left:auto;font-family:var(--font-ui);font-size:.7rem;font-weight:600;color:var(--accent);background:var(--accent-soft);border:1px solid color-mix(in oklch,var(--accent) 35%,transparent);border-radius:var(--r-sm);padding:.3rem .7rem;cursor:pointer;text-transform:none;letter-spacing:0">Ver detalhado →</button>
-          </div>
-          <div class="diag-band" id="diag-band"><div class="diag-empty">Carregando…</div></div>
         </div>
 
         <!-- Pacing do dia -->
@@ -2050,7 +2004,6 @@
       </div>
     </div>
 
-
     <!-- RELATÓRIOS CUSTOM -->
     <div id="tab-relatorios" class="tab-panel">
       <div class="sec">
@@ -2557,139 +2510,6 @@
       <button class="btn btn-p" id="btn-salvar-acesso" onclick="salvarAcesso()">Salvar</button>
     </div>
   </div>
-</div>
-
-<!-- MODAL DIAGNÓSTICO (ficha campanha/conjunto/global) — Frente 3 redesenhada -->
-<div class="modal-fs" id="modal-diag">
-  <style>
-    #modal-diag .fd-body{flex:1;overflow:auto;padding:1.1rem 1.4rem 2.5rem}
-    #modal-diag .fd-hd{display:flex;justify-content:space-between;gap:1.2rem;flex-wrap:wrap;background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:1rem 1.15rem;margin-bottom:.9rem}
-    #modal-diag .fd-hd h3{margin:0 0 .35rem;font-size:1.3rem;font-weight:700;letter-spacing:-.02em;font-family:var(--font-mono)!important}
-    #modal-diag .fd-hd .lvl{font-family:var(--font-display)!important;font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);padding:.15rem .45rem;border-radius:.28rem;margin-right:.5rem}
-    #modal-diag .fd-meta{font-size:.72rem;color:var(--muted);line-height:1.75}
-    #modal-diag .fd-verd{text-align:right;min-width:230px}
-    #modal-diag .fd-verd .vb{font-size:.68rem;letter-spacing:.06em;padding:.35rem .7rem;border-radius:16px;font-weight:700;text-transform:uppercase;display:inline-block;margin-bottom:.45rem}
-    #modal-diag .fd-verd p{margin:0;font-size:.72rem;color:var(--muted);line-height:1.5}
-    #modal-diag .vb.kill{color:var(--danger);background:var(--danger-soft)}#modal-diag .vb.hold{color:var(--warning);background:var(--warning-soft)}
-    #modal-diag .vb.ok{color:var(--success);background:var(--success-soft)}#modal-diag .vb.mute{color:var(--muted);background:var(--sec-strong)}
-    #modal-diag .fd-lbl{font-family:var(--font-display)!important;font-size:.64rem;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin:.2rem 0 .5rem;display:flex;align-items:center;gap:.5rem}
-    #modal-diag .fd-lbl .s{text-transform:none;letter-spacing:0;color:var(--muted-light);font-weight:400}
-    /* funil 8 nós */
-    #modal-diag .fnl{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:.5rem;margin-bottom:.6rem}
-    #modal-diag .fnode{border:1px solid var(--border);border-radius:var(--r-sm);padding:.55rem .55rem;background:var(--sec);position:relative;min-width:0}
-    #modal-diag .fnode .lb{font-size:.62rem;color:var(--muted);line-height:1.25;min-height:2.4em;margin-bottom:.35rem}
-    #modal-diag .fnode .lb small{display:block;color:var(--muted-light);font-size:.56rem}
-    #modal-diag .fnode .v{font-family:var(--font-mono)!important;font-variant-numeric:tabular-nums;font-size:.98rem;font-weight:700;letter-spacing:-.02em;line-height:1}
-    #modal-diag .fnode .md{font-family:var(--font-mono)!important;font-size:.58rem;color:var(--muted-light);margin-top:.2rem}
-    #modal-diag .fnode .fx{margin-top:.4rem;padding-top:.35rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-family:var(--font-mono)!important;font-size:.62rem;font-weight:600;color:var(--muted)}
-    #modal-diag .fnode.ok{border-color:color-mix(in oklch,var(--success) 50%,var(--border));background:var(--success-soft)}#modal-diag .fnode.ok .fx{color:var(--success)}
-    #modal-diag .fnode.amb{border-color:color-mix(in oklch,var(--warning) 50%,var(--border));background:var(--warning-soft)}#modal-diag .fnode.amb .fx{color:var(--warning)}
-    #modal-diag .fnode.bad{border-color:color-mix(in oklch,var(--danger) 50%,var(--border));background:var(--danger-soft)}#modal-diag .fnode.bad .fx{color:var(--danger)}#modal-diag .fnode.bad .v{color:var(--danger)}
-    #modal-diag .fnode.res{background:linear-gradient(150deg,color-mix(in oklch,var(--accent) 14%,var(--sec-strong)),var(--sec-strong));border-color:color-mix(in oklch,var(--accent) 40%,var(--border))}
-    #modal-diag .fnode.res .lb,#modal-diag .fnode.res .md{color:color-mix(in oklch,var(--fg) 55%,transparent)}
-    #modal-diag .fnode.res .v{color:var(--fg)}#modal-diag .fnode.res .fx{color:var(--accent)}
-    #modal-diag .fnode.res.rok .fx{color:var(--success)}#modal-diag .fnode.res.ramb .fx{color:var(--warning)}#modal-diag .fnode.res.rbad .fx{color:var(--danger)}
-    #modal-diag .fnode .cr{position:absolute;top:-.5rem;right:.4rem;background:var(--danger);color:#fff;font-family:var(--font-display)!important;font-size:.48rem;padding:.1rem .35rem;border-radius:.24rem;font-weight:700;text-transform:uppercase}
-    #modal-diag .fnode.pisohit .cr{background:var(--warning);color:#2A1A00}
-    #modal-diag .fd-valid{font-family:var(--font-mono)!important;font-size:.66rem;color:var(--muted);background:var(--sec);border:1px solid var(--border);border-radius:var(--r);padding:.5rem .7rem;margin-bottom:.9rem;overflow-x:auto;white-space:nowrap}
-    #modal-diag .fd-valid b{color:var(--accent)}#modal-diag .fd-valid .ok{color:var(--success)}
-    #modal-diag .fd-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:.9rem}
-    #modal-diag .garg{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--danger);border-radius:var(--r);padding:.8rem .95rem;margin-bottom:.6rem}
-    #modal-diag .garg.w{border-left-color:var(--warning)}#modal-diag .garg.g{border-left-color:var(--success)}
-    #modal-diag .garg h4{margin:0 0 .18rem;font-size:.88rem;font-weight:700}
-    #modal-diag .garg .hit{font-size:.7rem;color:var(--danger);font-weight:600;margin-bottom:.5rem}
-    #modal-diag .garg.w .hit{color:var(--warning)}#modal-diag .garg.g .hit{color:var(--success)}
-    #modal-diag .garg p{margin:0 0 .5rem;font-size:.74rem;line-height:1.55;color:var(--fg-soft)}
-    #modal-diag .garg b{color:var(--fg)}
-    #modal-diag .garg .pot{background:var(--accent-soft);border:1px solid color-mix(in oklch,var(--accent) 25%,transparent);border-radius:var(--r-sm);padding:.45rem .65rem;font-family:var(--font-mono)!important;font-size:.7rem;margin:0 0 .5rem;color:var(--fg-soft)}
-    #modal-diag .garg .pot b{color:var(--accent)}
-    #modal-diag .garg .act{font-size:.74rem;color:var(--accent);font-weight:500;margin:0}
-    #modal-diag .garg .ctx{background:var(--sec);border:1px dashed var(--border);border-radius:var(--r-sm);padding:.45rem .65rem;font-size:.7rem;color:var(--muted);margin:.5rem 0 0;line-height:1.5}
-    #modal-diag .garg .ctx b{color:var(--fg-soft)}
-    #modal-diag .leak{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:.9rem 1rem;margin-bottom:.9rem}
-    #modal-diag .lrow{display:flex;align-items:center;gap:.6rem;margin-bottom:.35rem}
-    #modal-diag .lrow .cn{font-size:.66rem;color:var(--muted-light);width:64px;font-family:var(--font-mono)!important}
-    #modal-diag .lrow .tr{flex:1;height:18px;background:var(--sec);border:1px solid var(--border);border-radius:5px;overflow:hidden}
-    #modal-diag .lrow .fl{height:100%;background:color-mix(in oklch,var(--success) 45%,transparent)}
-    #modal-diag .lrow.d .fl{background:color-mix(in oklch,var(--danger) 50%,transparent)}
-    #modal-diag .lrow .rt{font-size:.68rem;width:74px;text-align:right;font-family:var(--font-mono)!important;color:var(--muted)}
-    #modal-diag .lrow.d .rt{color:var(--danger);font-weight:600}
-    /* card a card */
-    #modal-diag .crow{display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem}
-    #modal-diag .crow .cn{font-size:.62rem;color:var(--muted-light);width:82px;font-family:var(--font-mono)!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    #modal-diag .crow .tr{flex:1;height:16px;background:var(--sec);border:1px solid var(--border);border-radius:4px;overflow:hidden}
-    #modal-diag .crow .fl{height:100%;background:color-mix(in oklch,var(--success) 40%,transparent)}
-    #modal-diag .crow.drop .fl{background:color-mix(in oklch,var(--danger) 50%,transparent)}
-    #modal-diag .crow .rt{font-size:.62rem;width:44px;text-align:right;font-family:var(--font-mono)!important;color:var(--muted)}
-    #modal-diag .crow.drop .rt{color:var(--danger);font-weight:600}
-    /* histograma + tabela filhos */
-    #modal-diag .hist{display:flex;align-items:flex-end;gap:.5rem;height:110px;margin:.2rem 0 .3rem}
-    #modal-diag .hb{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%}
-    #modal-diag .hb .bar{width:100%;border-radius:5px 5px 2px 2px;min-height:3px}
-    #modal-diag .hb .n{font-size:.72rem;font-weight:700;margin-bottom:.3rem;font-family:var(--font-mono)!important}
-    #modal-diag .hb .x{font-size:.56rem;color:var(--muted-light);margin-top:.35rem;text-align:center;line-height:1.25}
-    #modal-diag table.fkids{width:100%;border-collapse:collapse;font-size:.72rem}
-    #modal-diag table.fkids th{font-size:.58rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-light);text-align:left;padding:.4rem .5rem;border-bottom:1px solid var(--border);font-weight:600}
-    #modal-diag table.fkids td{padding:.4rem .5rem;border-bottom:1px solid var(--border);white-space:nowrap}
-    #modal-diag table.fkids td.n{font-family:var(--font-mono)!important;text-align:right}
-    #modal-diag table.fkids tbody tr{cursor:pointer}
-    #modal-diag table.fkids tbody tr:hover{background:var(--sec)}
-    #modal-diag .fbadge{font-size:.58rem;padding:.1rem .4rem;border-radius:10px;font-weight:600}
-    #modal-diag .fbadge.k{color:var(--danger);background:var(--danger-soft)}#modal-diag .fbadge.h{color:var(--warning);background:var(--warning-soft)}
-    #modal-diag .fbadge.o{color:var(--success);background:var(--success-soft)}#modal-diag .fbadge.m{color:var(--muted);background:var(--sec-strong)}
-    /* layout 2 colunas (desenho + painel) */
-    #modal-diag .fd-2col{display:grid;grid-template-columns:1.25fr 1fr;gap:.9rem;margin-bottom:.9rem;align-items:start}
-    #modal-diag .fd-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:1rem 1.1rem}
-    /* desenho SVG */
-    #modal-diag .fsvg{display:block;width:100%;height:auto;overflow:visible}
-    #modal-diag .fsvg-name{font:600 12px var(--font-ui);fill:#fff}
-    #modal-diag .fsvg-val{font:700 13px var(--font-mono);fill:#fff}
-    #modal-diag .fsvg-conv{font:500 10.5px var(--font-ui);fill:var(--muted)}
-    #modal-diag .fsvg-fx{font:700 10.5px var(--font-mono)}
-    #modal-diag .fsvg-leakbig{font:800 12px var(--font-ui);fill:var(--danger)}
-    #modal-diag .fsvg-leaksm{font:600 9px var(--font-ui);fill:var(--danger)}
-    #modal-diag .fsvg-note{font:600 9px var(--font-ui);fill:var(--danger)}
-    /* caixa meta */
-    #modal-diag .fd-goal{background:linear-gradient(135deg,#065F46,#047857);border-radius:var(--rl);padding:.9rem 1rem;color:#fff;margin-bottom:.7rem}
-    #modal-diag .fd-goal .lb{font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;opacity:.85;font-weight:600}
-    #modal-diag .fd-goal .row{display:flex;align-items:baseline;gap:.7rem;margin-top:.3rem}
-    #modal-diag .fd-goal .now{font:800 1.7rem var(--font-mono);letter-spacing:-.02em}
-    #modal-diag .fd-goal .arr{opacity:.7;font-size:1.1rem}
-    #modal-diag .fd-goal .tgt{font:800 1.7rem var(--font-mono);color:#6EE7B7}
-    #modal-diag .fd-goal .gap{margin-top:.45rem;font-size:.72rem;opacity:.94;line-height:1.5}
-    /* caixa vazamento */
-    #modal-diag .fd-leakbox{background:var(--danger-soft);border:1px solid color-mix(in oklch,var(--danger) 40%,transparent);border-radius:var(--rl);padding:.8rem 1rem;margin-bottom:.7rem}
-    #modal-diag .fd-leakbox .sec-t{font-size:.72rem;font-weight:700;margin:0 0 .4rem;display:flex;align-items:center;gap:.4rem}
-    #modal-diag .fd-leakbox .sec-t .ico{width:16px;height:16px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;color:#fff}
-    #modal-diag .fd-leakbox .hl{font:800 1.25rem var(--font-mono);color:var(--danger);letter-spacing:-.02em}
-    #modal-diag .fd-leakbox .sub{font-size:.72rem;color:var(--fg-soft);margin-top:.15rem;line-height:1.5}
-    #modal-diag .fd-leakbox .sub b{color:var(--fg)}
-    /* fixes */
-    #modal-diag .fd-fix{border:1px solid var(--border);border-left:3px solid var(--danger);border-radius:var(--r);padding:.7rem .85rem;margin-bottom:.55rem;background:var(--card)}
-    #modal-diag .fd-fix.p2{border-left-color:var(--warning)}#modal-diag .fd-fix.p3{border-left-color:var(--warning)}
-    #modal-diag .fd-fix .top{display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-bottom:.3rem}
-    #modal-diag .fd-fix .nm{font-size:.82rem;font-weight:700}
-    #modal-diag .fd-fix .imp{font:700 .66rem var(--font-mono);padding:.15rem .5rem;border-radius:12px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
-    #modal-diag .fd-fix p{margin:0;font-size:.73rem;color:var(--muted);line-height:1.5}
-    #modal-diag .fd-fix .win{margin-top:.4rem;font:600 .68rem var(--font-mono);color:var(--success);background:var(--success-soft);border-radius:var(--r-sm);padding:.35rem .55rem}
-    #modal-diag .fd-fix .win b{color:var(--success)}
-    #modal-diag .fd-fix .fix-act{margin-top:.35rem;color:var(--accent);font-weight:500}
-    #modal-diag .fd-fix .fix-ctx{margin-top:.35rem;font-size:.68rem;color:var(--muted-light)}
-    #modal-diag .fd-fix .fix-ctx b{color:var(--fg-soft)}
-    /* métricas cruas */
-    #modal-diag .mgroup{margin-bottom:1rem}#modal-diag .mgroup:last-child{margin-bottom:0}
-    #modal-diag .gtitle{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-light);font-weight:700;margin-bottom:.5rem;padding-bottom:.35rem;border-bottom:1px solid var(--border)}
-    #modal-diag .mgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem}
-    #modal-diag .mc{background:var(--sec);border:1px solid var(--border);border-radius:var(--r-sm);padding:.55rem .6rem;display:flex;flex-direction:column;gap:.3rem}
-    #modal-diag .mc .ml{font-size:.62rem;color:var(--muted);line-height:1.25}
-    #modal-diag .mc .mv{font:700 .9rem var(--font-mono);color:var(--fg);letter-spacing:-.01em}
-    @media(max-width:1100px){#modal-diag .fnl{grid-template-columns:repeat(4,minmax(0,1fr))}#modal-diag .fd-grid,#modal-diag .fd-2col{grid-template-columns:1fr}#modal-diag .mgrid{grid-template-columns:repeat(3,1fr)}}
-  </style>
-  <div class="modal-fs-hd">
-    <div class="modal-fs-hd-left"><span style="font-family:var(--font-display);font-weight:700;font-size:1rem" id="modal-diag-title">Diagnóstico</span></div>
-    <button class="modal-fs-close" onclick="closeModal('modal-diag')">✕ Fechar</button>
-  </div>
-  <div class="fd-body" id="modal-diag-body"></div>
 </div>
 
 <!-- MODAL IMPOSTO -->
@@ -3766,91 +3586,6 @@ async function loadData(force=false){
   loadGamKpis();
   loadPaises();
   loadOrcamentoStatus(since,until);
-  loadDiagnostico(since,until,domain);
-}
-
-/* ═══ DIAGNÓSTICO DO DIA (Frente 1) ═══ */
-async function loadDiagnostico(since,until,domain){
-  const sec=document.getElementById('diag-section');
-  try{
-    let q=`nivel=geral&since=${since}&until=${until}`;
-    if(domain&&domain!=='all')q+=`&domain=${encodeURIComponent(domain)}`;
-    const res=await fetch(`/api/diagnostico?${q}`);
-    if(!res.ok)throw new Error('http '+res.status);
-    const d=await res.json();
-    renderDiagBand(d,since,until);
-    if(sec)sec.style.display='';
-  }catch(e){console.warn('[diagnostico]',e);if(sec)sec.style.display='none';}
-}
-
-function renderDiagBand(d,since,until){
-  const g=d?.geral;
-  const band=document.getElementById('diag-band');
-  const perEl=document.getElementById('diag-periodo');
-  const dma=iso=>{const p=String(iso).slice(0,10).split('-');return p.length===3?`${p[2]}/${p[1]}`:iso;};
-  if(perEl)perEl.textContent = since===until ? `do dia · ${dma(until)}` : `· ${dma(since)}–${dma(until)}`;
-  if(!band)return;
-  if(!g||g.roas==null){band.innerHTML='<div class="diag-empty">Sem dados suficientes de funil (leads/sessões) para reconstruir o ROAS nesta janela.</div>';return;}
-
-  const brl=(v,dec)=>v==null?'—':'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:dec,maximumFractionDigits:dec});
-  const nBRL=v=>brl(v,Math.abs(Number(v))<10?3:2);
-  const nNum=v=>v==null?'—':Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-  const pct=v=>v==null?'':(v>=0?'+':'')+Math.round(v*100)+'%';
-  const fx=v=>v==null?'—':nNum(v)+'×';
-  const fVal=(n)=> n.unidade==='brl'?nBRL(n.valor):nNum(n.valor);
-  const fMed=(n)=> n.unidade==='brl'?nBRL(n.mediana):nNum(n.mediana);
-  const byKey={};(g.fatores||[]).forEach(n=>byKey[n.chave]=n);
-  const gargChave=g.gargalo?.chave;
-
-  // labels amigáveis + sub
-  const SUB={custo_lead:'Meta ÷ leads do bot',spl:'sessões ÷ leads',par:'imp. GAM ÷ sessão',ecpm:'GAM bruto ÷ 1000 imp.'};
-
-  // ── nós de fator ──
-  let nodes = (g.fatores||[]).map(n=>{
-    const isGarg = n.chave===gargChave;
-    const cls = [n.classe, n.piso_falha?'piso':'', isGarg?'':''].filter(Boolean).join(' ');
-    const crown = n.piso_falha ? `<span class="cr">piso</span>` : (isGarg ? `<span class="cr">gargalo 1</span>` : '');
-    const medTxt = n.piso!=null ? `med 7d ${fMed(n)} · piso ${nNum(n.piso)}` : `med 7d ${fMed(n)}`;
-    return `<div class="diag-node ${cls}">${crown}
-      <div class="lb">${n.label}<br><small>${SUB[n.chave]||''}</small></div>
-      <div class="v">${fVal(n)}</div>
-      <div class="md">${medTxt}</div>
-      <div class="fx"><span>${fx(n.fator)}</span><span>${pct(n.delta)}</span></div></div>`;
-  }).join('');
-
-  // ── nó resultado (cor do fator pela saúde do ROAS: ≥1 lucro, ≥0,90 atenção, abaixo prejuízo) ──
-  const prodDelta = g.produto!=null ? g.produto-1 : null;
-  const resCls = g.roas>=1 ? 'rok' : (g.roas>=(Number(d.cfg?.roi_maturacao)||0.90) ? 'ramb' : 'rbad');
-  nodes += `<div class="diag-node res ${resCls}">
-      <div class="lb">Resultado<br><small>ROAS reconstruído</small></div>
-      <div class="v">${nNum(g.roas)}x</div>
-      <div class="md">ref. medianas ${nNum(g.roas_ref)}x</div>
-      <div class="fx"><span>${fx(g.produto)}</span><span>${pct(prodDelta)}</span></div></div>`;
-
-  // ── alerta de piso (sistêmico pesa mais que o fator) ──
-  let alertHtml='';
-  for(const a of (d.alertas_piso||[])){
-    const cl=a.classificacao||{};
-    const sist = cl.classe==='SISTEMICO';
-    alertHtml += `<div class="diag-alert ${sist?'':'warn'}">
-      <span class="tg">Piso absoluto · ${a.label}</span>
-      <p><b>${nNum(a.valor)} ${a.label==='PAR'?'impressões de anúncio por sessão':''} contra piso saudável de ${nNum(a.piso)}.</b>
-      Está ruim em ${Math.round((cl.pct_conjuntos||0)*100)}% dos conjuntos ativos (${Math.round((cl.pct_gasto||0)*100)}% do gasto) — a mediana não denuncia porque o valor ruim <i>é</i> a mediana. Classificação <b>${sist?'sistêmico':'local'}</b>: ${sist?'é a página/AdX, não o criativo.':'concentrado em conjuntos específicos.'}</p></div>`;
-  }
-
-  // ── validação ──
-  const cl=byKey.custo_lead,sp=byKey.spl,pa=byKey.par,ec=byKey.ecpm;
-  const taxa=Number(d.cfg?.taxa_gam??0.10);
-  const vld=g.validacao||{};
-  const validHtml = (cl&&sp&&pa&&ec) ? `<div class="diag-valid hideable-value">validação · ${nNum(sp.valor)} × ${nNum(pa.valor)} × ${nNum(ec.valor)} × ${nNum(1-taxa)} ÷ (1000 × ${nBRL(cl.valor)}) = <b>${nNum(vld.reconstruido)}x</b> &nbsp;│&nbsp; faturamento ÷ investimento = ${nBRL(g.receita_liq)} ÷ ${nBRL(g.gasto)} = <b>${nNum(vld.direto)}x</b> &nbsp;│&nbsp; divergência ${((vld.divergencia||0)*100).toFixed(1)}% <span class="ok">✓</span></div>` : '';
-
-  // ── nota "como ler" ──
-  const garg=g.gargalo, pot=g.potencial;
-  const gargTxt = garg ? `O menor fator é <b>${garg.label.toLowerCase()}</b> (${fx(garg.fator)})${pot?.corrigido!=null?` — corrigi-lo levaria o ROAS de <b>${nNum(g.roas)}x</b> para <b>${nNum(pot.corrigido)}x</b>`:''}.` : '';
-  const noteHtml = `<p class="diag-note"><b>Como ler:</b> cada fator é o quanto a etapa está acima/abaixo da mediana de 7 dias. Multiplicados, reconstroem o ROAS. ${gargTxt} ${(d.alertas_piso||[]).length?'Mas o alerta de piso vale mais que o fator: o problema está ruim em todos os dias, então a mediana não o denuncia.':''}</p>`;
-
-  band.innerHTML = alertHtml + `<div class="diag-nodes">${nodes}</div>` + validHtml + noteHtml;
-  if(typeof aplicarClasseHideable==='function')setTimeout(aplicarClasseHideable,30);
 }
 
 /* ═══ PACING DO DIA ═══ */
@@ -5299,265 +5034,6 @@ async function loadDiagCampanhas(since,until,domain){
   }catch(e){console.warn('[diag-camp]',e);}
 }
 
-/* ═══ FICHA DE DIAGNÓSTICO (modal) — campanha / conjunto / global ═══ */
-S.diagFichaList=[];
-const G_DESC={
-  custo_lead:{h:'Custo por lead',t:'O custo para trazer cada lead está acima do normal. Como lead = cid único do bot (não conversa da Meta), é eficiência de mídia — público, criativo, CPM — não a página.',a:'→ Revisar público e criativo; comparar CPM/CTR com os conjuntos irmãos.'},
-  spl:{h:'Sessões por lead',t:'Cada lead gera menos sessões que o normal. Pode ser fluxo do bot ou vazamento técnico clique→sessão. Veja a chegada ao blog.',a:'→ Se a perda é clique→sessão, é ponte técnica (navegador in-app do Messenger no Android), não o fluxo.'},
-  par:{h:'PAR — impressões de anúncio por sessão',t:'As sessões chegam e quase não carregam anúncio — o tráfego está sendo entregue numa página que monetiza mal.',a:'→ Não é criativo nem bot. Conferir os blocos que carregam na landing page, lazy-load e altura no mobile.'},
-  ecpm:{h:'eCPM — rendimento por impressão',t:'O rendimento por impressão está abaixo do normal. É o ad server ou a demanda de AdX, não os criativos.',a:'→ Conferir fill rate, viewability e price floor antes de mexer em criativo.'},
-};
-function _fClassifica(chave){
-  const ativos=(S.diagFichaList||[]).filter(c=>c.gargalo);
-  if(!ativos.length)return null;
-  const af=ativos.filter(c=>c.gargalo.chave===chave);
-  const gTot=ativos.reduce((s,c)=>s+(c.gasto||0),0),gAf=af.reduce((s,c)=>s+(c.gasto||0),0);
-  const pc=af.length/ativos.length,pg=gTot>0?gAf/gTot:0;
-  return{pc,pg,sist:Math.max(pc,pg)>=(Number(S.dgcCfg?.sistemico_pct)||0.6),n:af.length,tot:ativos.length};
-}
-async function openFicha(tipo,id){
-  const body=document.getElementById('modal-diag-body');
-  const title=document.getElementById('modal-diag-title');
-  title.textContent=tipo==='geral'?'Diagnóstico global':(tipo==='campanha'?'Diagnóstico da campanha':'Diagnóstico do conjunto');
-  body.innerHTML='<div style="padding:2rem;color:var(--muted)">Carregando diagnóstico…</div>';
-  openModal('modal-diag');
-  const since=document.getElementById('f-since').value,until=document.getElementById('f-until').value,domain=document.getElementById('f-domain').value;
-  let q=`since=${since}&until=${until}`;
-  if(domain&&domain!=='all')q+=`&domain=${encodeURIComponent(domain)}`;
-  if(tipo==='campanha')q+=`&nivel=campanha&campaign_id=${encodeURIComponent(id)}`;
-  else if(tipo==='conjunto')q+=`&nivel=conjunto&adset_id=${encodeURIComponent(id)}`;
-  else q+=`&nivel=geral`;
-  try{
-    const res=await fetch(`/api/diagnostico?${q}`);
-    if(!res.ok)throw new Error('http '+res.status);
-    const d=await res.json();
-    S.dgcCfg=d.cfg||{};
-    body.innerHTML=fichaHTML(d,tipo);
-    if(typeof aplicarClasseHideable==='function')setTimeout(aplicarClasseHideable,30);
-    loadCardACard(tipo);
-  }catch(e){console.warn('[ficha]',e);body.innerHTML=`<div style="padding:2rem;color:var(--bad)">Erro: ${esc(e.message)}</div>`;}
-}
-// abre a ficha de um conjunto filho a partir da tabela (drill)
-function openFichaConj(adsetId){openFicha('conjunto',adsetId);}
-
-function fichaHTML(d,tipo){
-  const main=tipo==='geral'?d.geral:(tipo==='campanha'?d.campanha:d.conjunto);
-  if(!main)return '<div style="padding:2rem;color:var(--muted)">Sem dados para este item no período selecionado.</div>';
-  S.diagFichaList=d.conjuntos||[];
-  const cfg=d.cfg||{},taxa=Number(cfg.taxa_gam??0.10),meta=Number(cfg.roi_bom||2);
-  const b=main.brutos||{};
-  const nNum=v=>v==null?'—':Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-  const nBRLd=(v,dec)=>v==null?'—':'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:dec,maximumFractionDigits:dec});
-  const nBRL=v=>nBRLd(v,Math.abs(Number(v))<10?3:2);
-  const iNUM=v=>v==null?'—':Number(v).toLocaleString('pt-BR');
-  const pctv=v=>v==null?'—':(v*100).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
-  const pctS=v=>v==null?'':(v>=0?'+':'')+Math.round(v*100)+'%';
-  const fx=v=>v==null?'—':nNum(v)+'×';
-  const fVal=n=>n.unidade==='brl'?nBRL(n.valor):(n.unidade==='pct'?pctv(n.valor):nNum(n.valor));
-  const fMed=n=>n.unidade==='brl'?nBRL(n.mediana):(n.unidade==='pct'?pctv(n.mediana):nNum(n.mediana));
-
-  // ── header ──
-  const lvlTag=tipo==='geral'?'Global':(tipo==='campanha'?'Campanha':'Conjunto');
-  const domSel=document.getElementById('f-domain')?.value;
-  const nome=tipo==='geral'?(domSel&&domSel!=='all'?domSel:'Conta · todos os domínios'):(tipo==='campanha'?(main.campaign_name||'Campanha'):(main.adset_name||main.adset_id));
-  const metaLine=`D${main.dias} · ${nBRL(main.gasto)} investido · ${iNUM(main.imp_gam)} imp. GAM · ${iNUM(main.leads)} leads · ${iNUM(main.sessoes)} sessões · ${nBRL(main.receita_liq)} faturado`;
-  let verd='';
-  if(tipo!=='geral'&&main.veredito){verd=`<div class="fd-verd"><span class="vb ${main.veredito.classe}">${esc(main.veredito.rotulo)}</span><p>${esc(main.veredito.texto||'')}</p></div>`;}
-  else{verd=`<div class="fd-verd"><span class="vb ${main.roas>=1?'ok':(main.roas>=0.9?'hold':'kill')}">ROAS ${nNum(main.roas)}x</span><p>ref. medianas ${nNum(main.roas_ref)}x</p></div>`;}
-  const head=`<div class="fd-hd"><div><h3><span class="lvl">${lvlTag}</span>${esc(nome)}</h3>
-    <div class="fd-meta">${tipo==='conjunto'&&main.campaign_name?esc(main.campaign_name)+'<br>':''}${metaLine}</div></div>${verd}</div>`;
-
-  // ── caixa de meta ──
-  const mult=main.roas>0?(meta/main.roas):null;
-  const goal=`<div class="fd-goal"><div class="lb">Onde está e onde queremos chegar</div>
-    <div class="row"><span class="now">${nNum(main.roas)}x</span><span class="arr">→</span><span class="tgt">${nNum(meta)}x</span></div>
-    <div class="gap">Hoje cada R$ 1,00 investido volta ${nBRLd(main.roas,2)}. Para bater ${nNum(meta)}x, a receita precisa ${mult?'≈ '+nNum(mult)+'×':'crescer'} — e o problema está concentrado em poucos pontos, não espalhado.</div></div>`;
-
-  // ── principal vazamento (chegada) ──
-  let vazBox='';
-  if(b.chegada!=null&&b.leads>0){
-    const leakPct=Math.round((1-b.chegada)*100);
-    if(leakPct>=12)vazBox=`<div class="fd-leakbox"><div class="sec-t"><span class="ico" style="background:var(--danger)">▼</span> Principal vazamento</div>
-      <div class="hl">${leakPct}% some antes do blog</div>
-      <div class="sub">De cada 10 pessoas que clicam e você paga, <b>${Math.round(leakPct/10)} nunca chegam a abrir o site</b> — clique pago e perdido. Suspeito: navegador in-app do Messenger no Android trava o carregamento.</div></div>`;
-  }
-
-  // ── o que melhorar (gargalos como fixes) ──
-  const gs=(d.gargalos||[]).filter(g=>g.classe==='bad'||g.classe==='amb');
-  let fixes='';
-  gs.forEach((g,i)=>{
-    const desc=G_DESC[g.chave]||{h:g.label,t:'',a:''};
-    const gain=main.roas>0&&g.potencial!=null?Math.round((g.potencial/main.roas-1)*100):null;
-    let win=`consertando isto: ${nNum(main.roas)}x → <b>${nNum(g.potencial)}x</b>`;
-    if(g.potencial_piso!=null)win+=` · atingindo o piso: <b>${nNum(g.potencial_piso)}x</b>`;
-    let ctx='';
-    if(i===0&&tipo!=='conjunto'){const cf=_fClassifica(g.chave);if(cf)ctx=`<p class="fix-ctx">Em <b>${Math.round(cf.pc*100)}% dos conjuntos</b> (${Math.round(cf.pg*100)}% do gasto) · <b>${cf.sist?'SISTÊMICO':'LOCAL'}</b></p>`;}
-    fixes+=`<div class="fd-fix p${Math.min(i+1,3)}"><div class="top"><span class="nm">${i+1}. ${desc.h}</span><span class="imp">${gain!=null?'vale +'+gain+'%':'−'+Math.round((1-g.fator)*100)+'% do ROAS'}</span></div>
-      <p>${desc.t}</p><div class="win">${win}</div>${desc.a?`<p class="fix-act">${desc.a}</p>`:''}${ctx}</div>`;
-  });
-  if(!fixes)fixes='<div class="fd-fix" style="border-left:3px solid var(--success)"><div class="top"><span class="nm">Sem gargalo relevante</span></div><p>Todas as etapas perto ou acima da mediana. Se o volume permitir, candidato a escala.</p></div>';
-
-  // ── validação ──
-  const vl=main.validacao||{};
-  const valid=`<div class="fd-valid hideable-value">conferência · reconstruído <b>${nNum(vl.reconstruido)}x</b> = receita ÷ gasto (${nBRL(main.receita_liq)} ÷ ${nBRL(main.gasto)} = <b>${nNum(vl.direto)}x</b>) · divergência ${((vl.divergencia||0)*100).toFixed(1)}% <span class="ok">✓</span></div>`;
-
-  // ── node-row (fatores vs mediana) ──
-  const fu=main.funil||[];let minF=null;fu.forEach(n=>{if(n.fator!=null&&(minF==null||n.fator<minF))minF=n.fator;});
-  let fnodes=fu.map(n=>{
-    const crown=n.piso_falha?'<span class="cr">piso</span>':(n.fator===minF&&n.fator!=null&&n.fator<0.9?'<span class="cr">gargalo</span>':'');
-    const cls=[n.classe,n.piso_falha?'pisohit':''].filter(Boolean).join(' ');
-    const medTxt=n.piso!=null?`med ${fMed(n)} · piso ${nNum(n.piso)}`:`med ${fMed(n)}`;
-    return `<div class="fnode ${cls}">${crown}<div class="lb">${n.label}<small>${n.sub||''}</small></div><div class="v">${fVal(n)}</div><div class="md">${medTxt}</div><div class="fx"><span>${fx(n.fator)}</span><span>${pctS(n.delta)}</span></div></div>`;
-  }).join('');
-  const resCls=main.roas>=1?'rok':(main.roas>=(Number(cfg.roi_maturacao)||0.9)?'ramb':'rbad');
-  fnodes+=`<div class="fnode res ${resCls}"><div class="lb">Resultado<small>ROAS</small></div><div class="v">${nNum(main.roas)}x</div><div class="md">ref ${nNum(main.roas_ref)}x</div><div class="fx"><span>${fx(main.produto)}</span><span>${pctS(main.produto!=null?main.produto-1:null)}</span></div></div>`;
-
-  // ── layout topo: desenho (esq) + painel (dir) ──
-  const topo=`<div class="fd-2col">
-    <div class="fd-card"><div class="fd-lbl">O caminho do dinheiro <span class="s">de cima (o que paga) até embaixo (o que volta)</span></div>${funnelSVG(main,cfg)}</div>
-    <div>${goal}${vazBox}<div class="fd-lbl" style="margin-top:.2rem">O que melhorar</div>${fixes}${valid}</div>
-  </div>`;
-
-  const nodeRow=`<div class="fd-lbl">Linha do funil <span class="s">· cada etapa vs mediana 7d · multiplicadas reconstroem o ROAS</span></div><div class="fnl">${fnodes}</div>`;
-
-  // ── card-a-card ──
-  const card=`<div class="fd-lbl">Fluxo do bot · card a card <span class="s">· drop-off por botão</span></div><div class="leak" id="ficha-card"><p class="note" style="font-size:.72rem;color:var(--muted);margin:0">Carregando fluxo do bot…</p></div>`;
-
-  // ── todas as métricas ──
-  const metrics=allMetricsHTML(b,cfg);
-
-  // ── conjuntos (campanha/geral) ──
-  let kids='';
-  if(tipo!=='conjunto'&&(d.conjuntos||[]).length){
-    const lst=[...d.conjuntos].sort((a,b)=>(a.roas??9)-(b.roas??9)).slice(0,tipo==='geral'?40:60);
-    const badge=v=>{const c=v?.classe;const cl=c==='kill'?'k':c==='hold'?'h':c==='ok'?'o':'m';return `<span class="fbadge ${cl}">${esc(v?.rotulo||'—')}</span>`;};
-    kids=`<div class="fd-lbl">Conjuntos <span class="s">· clique para abrir a ficha · piores ROAS primeiro</span></div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--rl);overflow:auto;max-height:340px">
-      <table class="fkids"><thead><tr><th>Conjunto</th><th style="text-align:right">Gasto</th><th style="text-align:right">ROAS</th><th>Gargalo</th><th>Veredito</th></tr></thead><tbody>
-      ${lst.map(c=>{const g=c.gargalo;const gt=g?`<span class="fbadge ${g.classe==='bad'?'k':g.classe==='amb'?'h':'o'}">${esc((({custo_lead:'Custo/lead',spl:'Sess/lead',par:'PAR',ecpm:'eCPM'})[g.chave])||g.label)} ${g.delta!=null?(g.delta>=0?'+':'')+Math.round(g.delta*100)+'%':''}</span>`:'—';
-        return `<tr onclick="openFichaConj('${esc(c.adset_id)}')"><td><b>${esc((c.adset_name||c.adset_id||'').slice(0,30))}</b></td><td class="n">${nBRL(c.gasto)}</td><td class="n" style="color:${c.roas>=1?'var(--success)':c.roas>=0.9?'var(--warning)':'var(--danger)'}">${nNum(c.roas)}x</td><td>${gt}</td><td>${badge(c.veredito)}</td></tr>`;}).join('')}
-      </tbody></table></div>`;
-  }
-
-  // ── histograma (geral) ──
-  let hist='';
-  if(tipo==='geral'&&d.distribuicao_veredito){
-    const dv=d.distribuicao_veredito;const ordem=['matar','última chance','maturação','vivo','bom','escalar'];
-    const cor={'matar':'var(--danger)','última chance':'#E08060','maturação':'var(--warning)','vivo':'#D9C66A','bom':'#7FE0BC','escalar':'var(--success)'};
-    const max=Math.max(1,...ordem.map(k=>dv[k]||0));
-    hist=`<div class="fd-lbl">Distribuição de ROI <span class="s">· ${d.conjuntos_com_veredito||0} conjuntos com veredito</span></div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:.9rem 1rem"><div class="hist">
-      ${ordem.map(k=>`<div class="hb"><span class="n" style="color:${cor[k]}">${dv[k]||0}</span><div class="bar" style="height:${Math.round((dv[k]||0)/max*100)}%;background:${cor[k]}"></div><span class="x">${k}</span></div>`).join('')}
-      </div></div>`;
-  }
-
-  return head+topo+nodeRow+card+metrics+kids+hist;
-}
-
-// ── desenho SVG do funil (o caminho do dinheiro) — data-driven ──
-function funnelSVG(main,cfg){
-  const b=main.brutos||{};const fu={};(main.funil||[]).forEach(n=>fu[n.chave]=n);
-  const brl=v=>'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-  const iN=v=>Number(v||0).toLocaleString('pt-BR');
-  const col=n=>{const c=n?.classe;return c==='ok'?'#10B981':c==='amb'?'#F59E0B':c==='bad'?'#EF4444':'#9CA3AF';};
-  const fxTxt=n=>n?(n.fator>=1?'ok':(n.piso_falha?'furou piso':Math.round((n.fator-1)*100)+'%')):'';
-  const stages=[
-    {nm:'Investimento',val:brl(b.gasto),conv:null},
-    {nm:'Cliques no anúncio',val:iN(b.cliques_link),conv:{t:'quanto do anúncio virou clique',n:fu.ctr}},
-    {nm:'Leads no bot',val:iN(b.leads),conv:{t:'cliques que viraram lead',n:fu.anuncio_lead}},
-    {nm:'Chegaram no blog',val:iN(b.leads_com_sessao),conv:{t:'quantos chegaram ao site',n:fu.chegada,leak:true}},
-    {nm:'Sessões no blog',val:iN(b.sessoes),conv:{t:'sessões por lead que chegou',n:fu.engajamento}},
-    {nm:'Anúncios abertos',val:iN(b.imp_gam),conv:{t:'anúncios por sessão',n:fu.par,bottleneck:true}},
-    {nm:'Receita',val:brl(b.receita_liq),conv:{t:'quanto cada anúncio rendeu',n:fu.ecpm}},
-  ];
-  const cx=280,Wtop=470,Wbot=130,H=50,GAP=34,y0=18,N=stages.length;
-  const Wi=i=>Wtop-(Wtop-Wbot)*(i/(N-1));
-  const shouldBe=cfg.piso_par&&b.sessoes?Math.round(b.sessoes*Number(cfg.piso_par)):null;
-  let svg='';let vbH=y0+N*(H+GAP)+10;
-  for(let i=0;i<N;i++){
-    const s=stages[i];const yT=y0+i*(H+GAP);
-    // conv label acima
-    if(s.conv){
-      const c=col(s.conv.n),fxt=fxTxt(s.conv.n);
-      const cy=yT-GAP/2+4;
-      svg+=`<text x="${cx}" y="${cy}" text-anchor="middle" class="fsvg-conv">${s.conv.t}${fxt?` · <tspan fill="${c}" class="fsvg-fx">${fxt}</tspan>`:''}</text>`;
-    }
-    const topW=Wi(i),botW=(i===N-1)?0:Wi(i)-((Wtop-Wbot)/(N-1))*0.6;
-    const isBad=s.conv&&(s.conv.bottleneck||(s.conv.n&&s.conv.n.classe==='bad'));
-    const fill=isBad?'#DC2626':'url(#fgrad)';const op=isBad?'.92':(1-i*0.03).toFixed(2);
-    if(i===N-1){ // receita = triângulo
-      svg+=`<path d="M${cx-topW/2},${yT} L${cx+topW/2},${yT} L${cx},${yT+H} Z" fill="url(#fgrad)"/>`;
-    }else{
-      svg+=`<path d="M${cx-topW/2},${yT} L${cx+topW/2},${yT} L${cx+botW/2},${yT+H} L${cx-botW/2},${yT+H} Z" fill="${fill}" opacity="${op}"/>`;
-    }
-    // degrau: dashed should-be no PAR
-    if(s.conv&&s.conv.bottleneck&&shouldBe&&b.imp_gam){
-      svg+=`<path d="M${cx-Wi(i)/2-14},${yT-4} L${cx+Wi(i)/2+14},${yT-4} L${cx+Wi(i)/2},${yT+H+4} L${cx-Wi(i)/2},${yT+H+4} Z" fill="none" stroke="#DC2626" stroke-width="1.4" stroke-dasharray="6 5" opacity=".5"/>`;
-      svg+=`<text x="${cx+Wi(i)/2+22}" y="${yT+H/2}" class="fsvg-note">devia ser<tspan x="${cx+Wi(i)/2+22}" dy="12">~${iN(shouldBe)}</tspan></text>`;
-    }
-    // leak: setas vermelhas na chegada
-    if(s.conv&&s.conv.leak){
-      const lp=b.chegada!=null?Math.round((1-b.chegada)*100):0;
-      svg+=`<text x="${cx-Wi(i)/2-30}" y="${yT+H/2-2}" text-anchor="middle" class="fsvg-leakbig">−${lp}%</text>`;
-      svg+=`<text x="${cx-Wi(i)/2-30}" y="${yT+H/2+12}" text-anchor="middle" class="fsvg-leaksm">vazou</text>`;
-    }
-    // nome + valor
-    const tc=(i===N-1||isBad)?'#fff':'#fff';
-    svg+=`<text x="${cx}" y="${yT+(i===N-1?H-16:22)}" text-anchor="middle" class="fsvg-name">${s.nm}</text>`;
-    svg+=`<text x="${cx}" y="${yT+(i===N-1?H-2:40)}" text-anchor="middle" class="fsvg-val">${s.val}</text>`;
-  }
-  return `<svg viewBox="0 0 560 ${vbH}" class="fsvg"><defs><linearGradient id="fgrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#10B981"/><stop offset="1" stop-color="#047857"/></linearGradient></defs>${svg}</svg>`;
-}
-
-// ── seção "todas as métricas" (crus, agrupados) ──
-function allMetricsHTML(b,cfg){
-  const brl=(v,d=2)=>v==null?'—':'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
-  const brlS=v=>v==null?'—':'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:Math.abs(v)<10?3:2,maximumFractionDigits:Math.abs(v)<10?3:2});
-  const iN=v=>v==null?'—':Number(v).toLocaleString('pt-BR');
-  const pc=v=>v==null?'—':(v*100).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
-  const n2=v=>v==null?'—':Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-  const lucro=(b.receita_liq!=null&&b.gasto!=null)?b.receita_liq-b.gasto:null;
-  const roas=b.gasto>0?b.receita_liq/b.gasto:null;
-  const grupos=[
-    ['Meta / anúncio',[['Investimento',brlS(b.gasto)],['Impressões',iN(b.imp_meta)],['CPM',brlS(b.cpm)],['Cliques no link',iN(b.cliques_link)],['CTR',pc(b.ctr)],['CPC',brlS(b.cpc)],['Orçamento/dia',brl(b.orcamento)]]],
-    ['Bot / Messenger',[['Mensagens (Meta)',iN(b.conversas_meta)],['Leads únicos (bot)',iN(b.leads)],['Custo por mensagem',brlS(b.custo_msg)],['Custo por lead',brlS(b.custo_lead)],['Cliques no bot',iN(b.cliques_ad)],['Cliques no bot / lead',n2(b.cliques_bot_lead)],['Threads',iN(b.threads)],['Leads qualificados',iN(b.leads_qualificados)]]],
-    ['Blog / sessões',[['Sessões',iN(b.sessoes)],['Leads com sessão',iN(b.leads_com_sessao)],['Chegada ao blog',pc(b.chegada)],['Sessões por lead',n2(b.spl)]]],
-    ['GAM / monetização',[['Impressões GAM',iN(b.imp_gam)],['PAR (imp./sessão)',n2(b.par)],['eCPM',brl(b.ecpm)],['RPS (receita/sessão)',brlS(b.rps)],['CPS (custo/sessão)',brlS(b.cps)]]],
-    ['Resultado',[['Receita (líq.)',brl(b.receita_liq)],['Lucro',brl(lucro)],['ROAS',n2(roas)+'x']]],
-  ];
-  const g=grupos.map(([t,ms])=>`<div class="mgroup"><div class="gtitle">${t}</div><div class="mgrid">${ms.map(([l,v])=>`<div class="mc"><span class="ml">${l}</span><span class="mv hideable-value">${v}</span></div>`).join('')}</div></div>`).join('');
-  return `<div class="fd-lbl">Todas as métricas <span class="s">· números do período, sem análise</span></div><div class="fd-card">${g}</div>`;
-}
-// card-a-card: carrega /api/funil-botoes (GAM) e mostra drop-off por bloco
-async function loadCardACard(tipo){
-  const box=document.getElementById('ficha-card');if(!box)return;
-  const since=document.getElementById('f-since').value,until=document.getElementById('f-until').value;
-  try{
-    // fluxo do bot = botões do GAM (utm_medium site_pXX_btYY). Não filtra por domínio
-    // (a chave é o token de página pN, não o nome do domínio). Mostra o fluxo da
-    // página com mais impressões, ordenado por botão.
-    const res=await fetch(`/api/funil-botoes?since=${since}&until=${until}`);
-    if(!res.ok)throw new Error('http '+res.status);
-    const d=await res.json();
-    let botoes=(d.botoes||[]).filter(b=>b.botao);
-    if(!botoes.length){box.innerHTML='<p class="note" style="font-size:.72rem;color:var(--muted);margin:0">Sem dados de fluxo do bot no período.</p>';return;}
-    // escolhe a página (pN) com mais impressões
-    const porPag={};botoes.forEach(b=>{porPag[b.pagina]=(porPag[b.pagina]||0)+Number(b.impressoes||0);});
-    const pagTop=Object.entries(porPag).sort((a,b)=>b[1]-a[1])[0][0];
-    const nBt=s=>{const m=String(s||'').match(/(\d+)/);return m?+m[1]:999;};
-    const seq=botoes.filter(b=>b.pagina===pagTop).sort((a,b)=>nBt(a.botao)-nBt(b.botao));
-    const max=Math.max(1,...seq.map(b=>Number(b.impressoes||0)));
-    let prev=null,rows='';
-    seq.slice(0,14).forEach(b=>{
-      const imp=Number(b.impressoes||0);
-      const ret=prev!=null&&prev>0?imp/prev:1;
-      const drop=prev!=null&&ret<0.75;
-      rows+=`<div class="crow ${drop?'drop':''}"><span class="cn" title="${esc(b.pagina_botao||'')}">${esc(b.botao||'—')}${b.variantes_label&&b.variantes_label.length?' · '+esc(b.variantes_label[0].slice(0,10)):''}</span><div class="tr"><div class="fl" style="width:${Math.round(imp/max*100)}%"></div></div><span class="rt">${prev!=null?(ret*100).toFixed(0)+'%':imp.toLocaleString('pt-BR')}</span></div>`;
-      prev=imp;
-    });
-    box.innerHTML=`<div style="font-size:.62rem;color:var(--muted-light);margin-bottom:.4rem">página ${esc(pagTop)} · ${seq.length} botões</div>`+rows;
-  }catch(e){console.warn('[card-a-card]',e);box.innerHTML='<p class="note" style="font-size:.72rem;color:var(--muted-light);margin:0">Fluxo do bot indisponível (fonte GAM).</p>';}
-}
 function renderCampTable(rows){
   const tb=document.getElementById('camp-db-body');
   const ct=document.getElementById('camp-db-count');
@@ -5606,7 +5082,7 @@ function renderCampTable(rows){
       <td><div class="td-av">
         ${expBtn}
         <div class="t-av">${esc((r.ad_utm||'?').charAt(0).toUpperCase())}</div>
-        ${estrBadge}${paisBadge}${r.campaign_id?`<span class="camp-name-link" onclick="event.stopPropagation();openFicha('campanha','${esc(r.campaign_id)}')" title="Abrir diagnóstico da campanha" style="font-family:monospace;font-size:.8rem;cursor:pointer;text-decoration:underline;text-decoration-color:color-mix(in oklch,var(--accent) 45%,transparent);text-underline-offset:3px">${esc(r.ad_utm)}</span>`:`<span style="font-family:monospace;font-size:.8rem">${esc(r.ad_utm)}</span>`}${pagBadge}
+        ${estrBadge}${paisBadge}<span style="font-family:monospace;font-size:.8rem">${esc(r.ad_utm)}</span>${pagBadge}
       </div></td>
       <td>${domBadge}</td>
       <td class="mo" data-sort="${r.valor_gasto||0}">${BRL(r.valor_gasto)}<span class="uvar-inv" data-utm="${esc(r.ad_utm||'')}"></span></td>
@@ -6901,7 +6377,7 @@ function renderUtmAdsets(box,utm,d,rps){
           <input type="checkbox" checked onchange="toggleAdset('${aid}',this,'${utmS}','${nmFull}')">
           <span class="ios-slider"></span>
         </label>
-        <span class="conj-name-link" onclick="event.stopPropagation();openFicha('conjunto','${aid}')" title="Abrir diagnóstico do conjunto" style="cursor:pointer;text-decoration:underline;text-decoration-color:color-mix(in oklch,var(--accent) 45%,transparent);text-underline-offset:3px">${short}</span>
+        <span>${short}</span>
       </td>
       <td class="mo">${BRL(spend)}</td>
       <td class="mo">${fat!=null?BRL(fat):'—'}</td>
@@ -11492,12 +10968,6 @@ async function drzPublish(payload){
   }
 }
 </script>
-
-<!-- Mach Tahoe Theme & Interactions -->
-<script src="/js/theme.js"></script>
-<script src="/js/components/sidebar.js"></script>
-<script src="/js/components/modal.js"></script>
-<script src="/js/components/dropdown.js"></script>
 
 </body>
 </html>
