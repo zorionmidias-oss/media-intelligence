@@ -83,6 +83,7 @@
 .campanhas-page .cj-na { color: var(--mut); }
 
 /* ROI · 4 dias (usado no expand quando houver série por conjunto) */
+.campanhas-page .roi-cell { display: inline-flex; align-items: center; gap: 11px; justify-content: flex-end; }
 .campanhas-page .roi4d { display: inline-flex; gap: 7px; align-items: flex-end; }
 .campanhas-page .r4c { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 22px; }
 .campanhas-page .r4c em { font-style: normal; font-size: 9px; font-weight: 700; line-height: 1; }

@@ -188,41 +188,46 @@ async function handler(req, res) {
         : since;
       const adsetParams = rebucket
         ? { access_token: token, fields: 'spend,clicks,impressions,actions', time_range: JSON.stringify({ since: sinceReq, until }), time_increment: 1, breakdowns: 'hourly_stats_aggregated_by_advertiser_time_zone', limit: 500 }
-        : { access_token: token, fields: 'spend,clicks,impressions,ctr,cpc,cpm,actions,cost_per_action_type', time_range: JSON.stringify({ since, until }) };
+        : { access_token: token, fields: 'spend,clicks,impressions,actions', time_range: JSON.stringify({ since, until }), time_increment: 1 };
 
       insightJobs.push(
         axios.get(`${META_BASE}/${aid}/insights`, { params: adsetParams, timeout: 15000 }).then(r => {
           const rowsI = r.data?.data || [];
-          let d;
-          if (rebucket) {
-            // soma horas re-bucketed para o dia BR dentro de [since, until]
-            let spend = 0, clicks = 0, impressions = 0; const asum = {};
-            for (const row of rowsI) {
+          // Soma diária → totais do período + gasto por dia. SP: cada row já é 1 dia
+          // (time_increment=1). Contas re-bucketed: horas → dia BR (luxon). O gasto por
+          // dia (spendByDay) é a base da série de ROI do conjunto exibida no detalhe.
+          let spend = 0, clicks = 0, impressions = 0; const asum = {}; const spendByDay = {};
+          for (const row of rowsI) {
+            let dia;
+            if (rebucket) {
               const conv = converterHoraParaBR(row.date_start, row.hourly_stats_aggregated_by_advertiser_time_zone, acctTz);
               if (!conv || conv.dataBR < since || conv.dataBR > until) continue;
-              spend += +row.spend || 0; clicks += +row.clicks || 0; impressions += +row.impressions || 0;
-              for (const a of row.actions || []) asum[a.action_type] = (asum[a.action_type] || 0) + (+a.value || 0);
+              dia = conv.dataBR;
+            } else {
+              dia = row.date_start;
+              if (dia < since || dia > until) continue;
             }
-            d = { spend, clicks, impressions, actions: Object.entries(asum).map(([action_type, value]) => ({ action_type, value })) };
-          } else {
-            d = rowsI[0];
+            const sp = +row.spend || 0;
+            spend += sp; clicks += +row.clicks || 0; impressions += +row.impressions || 0;
+            spendByDay[dia] = (spendByDay[dia] || 0) + sp;
+            for (const a of row.actions || []) asum[a.action_type] = (asum[a.action_type] || 0) + (+a.value || 0);
           }
-          if (!d) return;
-          const ra = pickResult(d.actions, obj);
-          const cpa = !rebucket ? d.cost_per_action_type?.find(c => c.action_type === resultActionType(obj)) : null;
-          adset.spend       = +d.spend || 0;
-          adset.clicks      = +d.clicks || 0;
-          adset.impressions = +d.impressions || 0;
+          const actions = Object.entries(asum).map(([action_type, value]) => ({ action_type, value }));
+          const ra = pickResult(actions, obj);
+          adset.spend       = spend;
+          adset.clicks      = clicks;
+          adset.impressions = impressions;
           adset.results     = ra ? +ra.value : 0;
-          adset.cpc         = rebucket ? (adset.clicks > 0 ? +(adset.spend / adset.clicks).toFixed(4) : 0) : (+d.cpc || 0);
-          adset.ctr         = rebucket ? (adset.impressions > 0 ? +((adset.clicks / adset.impressions) * 100).toFixed(4) : 0) : (+d.ctr || 0);
-          adset.cpm         = rebucket ? (adset.impressions > 0 ? +((adset.spend / adset.impressions) * 1000).toFixed(4) : 0) : (+d.cpm || 0);
-          adset.cost_per_result = cpa ? +cpa.value : (adset.results > 0 ? adset.spend / adset.results : 0);
+          adset.cpc         = clicks > 0 ? +(spend / clicks).toFixed(4) : 0;
+          adset.ctr         = impressions > 0 ? +((clicks / impressions) * 100).toFixed(4) : 0;
+          adset.cpm         = impressions > 0 ? +((spend / impressions) * 1000).toFixed(4) : 0;
+          adset.cost_per_result = adset.results > 0 ? +(spend / adset.results).toFixed(4) : 0;
+          adset._spendByDay = spendByDay;
           // Otimização rápida: resultado = view_content (funil bot) / objetivo (direto),
           // conversas = mensagens iniciadas. Mesma lógica do sync (ads_consolidados).
           const tipo = extractTipo(adset.campaign_name);
-          adset.resultado_vc = getResultadoMeta({ actions: d.actions, objective: obj }, tipo);
-          adset.conversas    = findAction(d.actions, ['onsite_conversion.messaging_conversation_started_7d', 'onsite_conversion.messaging_first_reply']);
+          adset.resultado_vc = getResultadoMeta({ actions, objective: obj }, tipo);
+          adset.conversas    = findAction(actions, ['onsite_conversion.messaging_conversation_started_7d', 'onsite_conversion.messaging_first_reply']);
         }).catch(() => {})
       );
 
@@ -273,6 +278,7 @@ async function handler(req, res) {
         if (!_usdRate) _usdRate = await getUSDtoBRLByDate(until);
         fator *= _usdRate;
       }
+      adset._fator = fator; // reaplicado ao gasto/dia da série de ROI (spendByDay é moeda bruta)
       if (fator === 1) continue;
       console.log(`[drilldown ${utm}] adset "${adset.adset_name}" conta=${adset.account_id} moeda=${cfg.moeda} fator=${fator.toFixed(4)}`);
       adset.spend    = +(adset.spend * fator).toFixed(2);
@@ -319,18 +325,24 @@ async function handler(req, res) {
       if (allAdIds.length > 0) {
         const { data: recRows, error: recErr } = await supabase
           .from('receita_ads')
-          .select('ad_id,receita_bruta')
+          .select('ad_id,data,receita_bruta')
           .in('ad_id', allAdIds)
           .gte('data', since)
           .lte('data', until);
         if (recErr) throw recErr;
         const brutaPorAd = {};
+        const brutaPorAdDia = {}; // ad_id → { data → bruta } (base da série de ROI por dia)
         for (const r of recRows || []) {
           brutaPorAd[r.ad_id] = (brutaPorAd[r.ad_id] || 0) + Number(r.receita_bruta || 0);
+          (brutaPorAdDia[r.ad_id] || (brutaPorAdDia[r.ad_id] = {}));
+          brutaPorAdDia[r.ad_id][r.data] = (brutaPorAdDia[r.ad_id][r.data] || 0) + Number(r.receita_bruta || 0);
         }
         for (const a of adsetsMap.values()) {
           let bruta = null;
+          const revByDay = {}; // receita bruta do conjunto por dia (soma dos ads)
           for (const ad of a.ads) {
+            const perDia = brutaPorAdDia[String(ad.ad_id)];
+            if (perDia) for (const [dia, v] of Object.entries(perDia)) revByDay[dia] = (revByDay[dia] || 0) + v;
             const b = brutaPorAd[String(ad.ad_id)];
             if (b == null) { ad.faturamento_real = null; ad.roi = null; continue; }
             ad.faturamento_real = +(b * 0.9).toFixed(2);
@@ -339,6 +351,18 @@ async function handler(req, res) {
           }
           a.faturamento_real = bruta != null ? +(bruta * 0.9).toFixed(2) : null;
           a.roi = (a.faturamento_real != null && a.spend > 0) ? +(a.faturamento_real / a.spend).toFixed(4) : null;
+          // ── Série diária de ROI% do conjunto (Tendência + ROI 4 dias no detalhe) ──
+          // Só dias com gasto (gasto/dia × fator BRL vs receita líquida/dia). Espelha o
+          // roi_serie da tabela principal: ROI% = (receita_liq − gasto) ÷ gasto × 100.
+          const fator = a._fator || 1;
+          a.roi_serie = Object.keys(a._spendByDay || {})
+            .filter((dia) => (a._spendByDay[dia] || 0) > 0)
+            .sort()
+            .map((dia) => {
+              const g = a._spendByDay[dia] * fator;
+              const rNet = (revByDay[dia] || 0) * 0.9;
+              return { data: dia, roi: +(((rNet - g) / g) * 100).toFixed(2) };
+            });
         }
       }
     } catch (e) {
@@ -360,8 +384,8 @@ async function handler(req, res) {
         : null;
     }
 
-    // Strip auth token before sending
-    for (const a of adsetsMap.values()) delete a._token;
+    // Strip campos internos antes de enviar (token + auxiliares da série de ROI)
+    for (const a of adsetsMap.values()) { delete a._token; delete a._spendByDay; delete a._fator; }
 
     const payload = {
       utm,
