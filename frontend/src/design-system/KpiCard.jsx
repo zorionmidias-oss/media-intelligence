@@ -1,4 +1,5 @@
 import GlassCard from './GlassCard.jsx';
+import Val from './Val.jsx';
 
 // Gera os pontos de um sparkline a partir de um array de números.
 function sparkPoints(data, w = 120, h = 26, pad = 3) {
@@ -20,7 +21,7 @@ export default function KpiCard({ label, value, delta, deltaTone = 'up', spark =
   return (
     <GlassCard className="ds-kpi">
       <div className="lbl">{label}</div>
-      <div className={`val num ${tone || ''}`}>{value}</div>
+      <div className={`val num ${tone || ''}`}><Val>{value}</Val></div>
       {delta != null && (
         <div className="foot">
           <span className={`chip ${deltaTone}`}>{deltaTone === 'up' ? '▲' : '▼'} {delta}</span>

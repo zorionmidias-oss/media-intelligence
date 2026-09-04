@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useApi } from '../hooks/useApi.js';
 import { GlassCard, KpiCard, StatTile, GlassTable, AreaTrend, HourLines } from '../design-system/index.js';
+import Val from '../design-system/Val.jsx';
 import { BRL, NUM, PCT } from '../lib/format.js';
 
 const money = (n, d = 2) => 'R$ ' + (Number(n) || 0).toFixed(d).replace('.', ',');
@@ -70,8 +71,7 @@ export default function Overview({ period, domain }) {
       </div>
 
       {/* GAM */}
-      <div className="ov-sec-lbl">Google Ad Manager</div>
-      <div className="ov-g6">
+      <div className="ov-g6 ov-mt">
         <StatTile label="eCPM" badge="GAM" value={money(k.ecpm)} delta={pctLabel(c.gamEcpm)} deltaTone={pctTone(c.gamEcpm)} />
         <StatTile label="RPS" badge="GAM" value={money(k.rps, 4)} hint="Receita por sessão" />
         <StatTile label="CPC" badge="GAM" value={money(k.cpc)} />
@@ -81,8 +81,7 @@ export default function Overview({ period, domain }) {
       </div>
 
       {/* Meta / funil */}
-      <div className="ov-sec-lbl">Meta (funil)</div>
-      <div className="ov-g4">
+      <div className="ov-g4 ov-mt">
         <StatTile label="Sessões" value={NUM(k.sessoes)} hint="view_content (Meta)" />
         <StatTile label="Resultado" value={NUM(k.results)} />
         <StatTile label="Custo/Resultado" value={money(custoResultado)} hint="Investimento ÷ resultado" />
@@ -92,8 +91,7 @@ export default function Overview({ period, domain }) {
       {/* Pacing / previsão do dia */}
       {prev && (
         <>
-          <div className="ov-sec-lbl">Pacing do dia {k.delayHours > 0 && <span className="ds-stat-badge" style={{ color: 'var(--warn)', background: 'color-mix(in srgb,var(--warn) 16%,transparent)' }}>atraso {k.delayHours}h</span>}</div>
-          <div className="ov-g3">
+          <div className="ov-g3 ov-mt">
             <StatTile label="Orçamento" value={BRL(prev.orcamento_total)} />
             <StatTile label="Valor usado" value={BRL(prev.gasto_atual)} />
             <StatTile label="Falta gastar" value={BRL(prev.orcamento_restante)} />
@@ -131,14 +129,14 @@ export default function Overview({ period, domain }) {
       </div>
 
       {/* Gráfico por hora (intraday) */}
-      <div className="ov-sec-lbl">Performance por hora <span className="ds-stat-badge">hoje vs ontem</span></div>
-      <GlassCard className="ds-panel">
-        <div className="ds-panel-hd" style={{ marginBottom: 10 }}>
-          <div className="ds-hour-legend">
-            <span><i style={{ background: 'var(--accent)' }} />Hoje</span>
-            <span><i style={{ background: 'var(--fg-3)' }} />Ontem</span>
-          </div>
+      <GlassCard className="ds-panel" style={{ marginTop: 20 }}>
+        <div className="ds-panel-hd">
+          <h3>Performance por hora</h3>
           {intra.data?.hora_atual != null && <span style={{ fontSize: 12, color: 'var(--fg-2)' }}>até {String(intra.data.hora_atual).padStart(2, '0')}h · Brasília</span>}
+        </div>
+        <div className="ds-hour-legend" style={{ marginBottom: 12 }}>
+          <span><i style={{ background: 'var(--accent)' }} />Hoje</span>
+          <span><i style={{ background: 'var(--fg-3)' }} />Ontem</span>
         </div>
         <div className="ds-ctogs">
           {HOUR_METRICS.map((m) => (
@@ -153,14 +151,15 @@ export default function Overview({ period, domain }) {
       </GlassCard>
 
       {/* Top campanhas */}
-      <div className="ov-sec-lbl">Top campanhas</div>
       <GlassTable
+        title="Top campanhas"
+        className="ov-mt"
         columns={[
           { key: 'name', label: 'Campanha' },
           { key: 'domain', label: 'Domínio', render: (r) => r.domain || '—' },
-          { key: 'spend', label: 'Investido', align: 'right', render: (r) => <span className="num">{BRL(r.spend)}</span> },
-          { key: 'faturado', label: 'Faturamento', align: 'right', render: (r) => <span className="num">{BRL(r.faturado)}</span> },
-          { key: 'lucro', label: 'Lucro', align: 'right', render: (r) => <span className={`num ${r.lucro >= 0 ? 'pos' : 'neg'}`}>{BRL(r.lucro)}</span> },
+          { key: 'spend', label: 'Investido', align: 'right', render: (r) => <span className="num"><Val>{BRL(r.spend)}</Val></span> },
+          { key: 'faturado', label: 'Faturamento', align: 'right', render: (r) => <span className="num"><Val>{BRL(r.faturado)}</Val></span> },
+          { key: 'lucro', label: 'Lucro', align: 'right', render: (r) => <span className={`num ${r.lucro >= 0 ? 'pos' : 'neg'}`}><Val>{BRL(r.lucro)}</Val></span> },
           { key: 'roas', label: 'ROAS', align: 'right', render: (r) => <span className="num">{ratio(r.roas)}</span> },
           { key: 'roi', label: 'ROI', align: 'right', render: (r) => <span className={`num ${r.roi >= 0 ? 'pos' : 'neg'}`}>{PCT(r.roi)}</span> },
         ]}
@@ -174,7 +173,7 @@ function ResumoRow({ label, value }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 10, borderBottom: '1px solid var(--hair-soft)' }}>
       <span style={{ color: 'var(--fg-2)' }}>{label}</span>
-      <span className="num" style={{ fontWeight: 600 }}>{value}</span>
+      <span className="num" style={{ fontWeight: 600 }}><Val>{value}</Val></span>
     </div>
   );
 }

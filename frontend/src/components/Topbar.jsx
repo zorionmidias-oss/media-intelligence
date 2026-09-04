@@ -1,10 +1,7 @@
-export default function Topbar({ title, subtitle, right }) {
+export default function Topbar({ title, right }) {
   return (
     <header className="ds-top glass">
-      <div>
-        <h1>{title}</h1>
-        {subtitle && <div className="sub">{subtitle}</div>}
-      </div>
+      <h1>{title}</h1>
       <div className="tools">{right}</div>
     </header>
   );
