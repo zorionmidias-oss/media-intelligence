@@ -90,7 +90,9 @@ app.get('/privacidade', (_req, res) => res.sendFile(path.join(__dirname, 'public
 const MOBILE_UA = /Android|iPhone|iPad|iPod|Mobile/i;
 app.get('/', requireAuth, (req, res) => {
   if (MOBILE_UA.test(req.headers['user-agent'] || '')) return res.redirect('/mobile');
-  res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+  // REDESIGN 2026-09: pós-login o desktop vai pro /app (React). Dash antigo segue em /dashboard.html.
+  // Reverter = trocar a linha abaixo por: res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+  res.redirect('/app');
 });
 app.get('/dashboard.html', requireAuth, (_req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
 app.get('/mobile', requireAuth, (_req, res) => res.sendFile(path.join(__dirname, 'public', 'mobile.html')));
