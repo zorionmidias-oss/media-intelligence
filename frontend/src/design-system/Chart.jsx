@@ -71,7 +71,9 @@ function zeroOffset(values) {
 // `nowHour`: hora atual (SP) — desenha marcador "agora Xh" (ReferenceLine + ponto na área de hoje).
 // `valueFormatter`: formata o valor no tooltip (BRL/PCT/etc. — ver frontend/src/lib/format.js).
 export function HourLines({ hoje = [], ontem = [], metricKey, color: _color = 'var(--rev)', height = 240, nowHour = null, valueFormatter }) {
-  const gradId = `hl-grad-${useId()}`;
+  const uid = useId();
+  const fillId = `hl-fill-${uid}`;
+  const strokeId = `hl-stroke-${uid}`;
   const byH = {};
   for (const r of ontem) byH[r.hora] = { hora: r.hora, ontem: r[metricKey] };
   for (const r of hoje) byH[r.hora] = { ...(byH[r.hora] || { hora: r.hora }), hoje: r[metricKey] };
@@ -83,8 +85,8 @@ export function HourLines({ hoje = [], ontem = [], metricKey, color: _color = 'v
   // topo (valor máximo); vermelho esvaindo p/ transparente perto do zero, sólido na base
   // (valor mínimo). Se não cruza zero, vira um fade simples de 2 stops numa cor só.
   const off = zeroOffset(data.map((d) => d.hoje));
-  const FADE = 0.38; // opacidade "sólida" nos extremos (topo/base), some perto do zero
-  const stops = off >= 1
+  const FADE = 0.52; // opacidade "sólida" nos extremos (topo/base), some perto do zero
+  const fillStops = off >= 1
     ? [{ o: 0, c: 'var(--pos)', a: FADE }, { o: 1, c: 'var(--pos)', a: 0 }]
     : off <= 0
       ? [{ o: 0, c: 'var(--neg)', a: 0 }, { o: 1, c: 'var(--neg)', a: FADE }]
@@ -94,13 +96,28 @@ export function HourLines({ hoje = [], ontem = [], metricKey, color: _color = 'v
           { o: off, c: 'var(--neg)', a: 0 },
           { o: 1, c: 'var(--neg)', a: FADE },
         ];
+  // Linha: cor SÓLIDA por sinal (a gradiente de preenchimento fazia a própria linha
+  // sumir perto do zero — origem do "fraquinho"). Menta acima do zero, vermelho abaixo.
+  const strokeStops = off >= 1
+    ? [{ o: 0, c: 'var(--pos)', a: 1 }, { o: 1, c: 'var(--pos)', a: 1 }]
+    : off <= 0
+      ? [{ o: 0, c: 'var(--neg)', a: 1 }, { o: 1, c: 'var(--neg)', a: 1 }]
+      : [
+          { o: 0, c: 'var(--pos)', a: 1 },
+          { o: off, c: 'var(--pos)', a: 1 },
+          { o: off, c: 'var(--neg)', a: 1 },
+          { o: 1, c: 'var(--neg)', a: 1 },
+        ];
 
   return (
     <ResponsiveContainer width="100%" height={height}>
       <ComposedChart data={data} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
         <defs>
-          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-            {stops.map((s, i) => <stop key={i} offset={s.o} stopColor={s.c} stopOpacity={s.a} />)}
+          <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
+            {fillStops.map((s, i) => <stop key={i} offset={s.o} stopColor={s.c} stopOpacity={s.a} />)}
+          </linearGradient>
+          <linearGradient id={strokeId} x1="0" y1="0" x2="0" y2="1">
+            {strokeStops.map((s, i) => <stop key={i} offset={s.o} stopColor={s.c} stopOpacity={s.a} />)}
           </linearGradient>
         </defs>
         <CartesianGrid vertical={false} stroke="var(--bd2)" />
@@ -131,9 +148,9 @@ export function HourLines({ hoje = [], ontem = [], metricKey, color: _color = 'v
           type="monotone"
           dataKey="hoje"
           name="Hoje"
-          stroke={`url(#${gradId})`}
-          strokeWidth={2.5}
-          fill={`url(#${gradId})`}
+          stroke={`url(#${strokeId})`}
+          strokeWidth={2.75}
+          fill={`url(#${fillId})`}
           fillOpacity={1}
           connectNulls
           dot={(props) => (nowX && props.payload?.hora === nowX
