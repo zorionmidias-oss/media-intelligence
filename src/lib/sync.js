@@ -895,7 +895,7 @@ async function syncAll(dateRange) {
     const GAM2_NC = process.env.GAM2_NETWORK_CODE;
 
     // Fetch Meta ads, GAM report, GAM UTM funnels (rede 1 + rede 2) — all in parallel
-    const [metaRes, gamReport, gamFunnels, gamFunnels2, gamReport2] = await Promise.all([
+    const [metaRes, gamReport, gamFunnels, gamFunnels2, gamReport2Batch] = await Promise.all([
       // failedAccounts: null = não sabemos o que falhou → a poda não roda (fail-safe)
       fetchMetaAdsForSync(dr).catch(e => { console.error('[sync] Meta:', e.message); return { ads: [], failedBMs: [`fetch geral: ${e.message}`], failedAccounts: null }; }),
       fetchGAMReport(dr).catch(e => { console.error('[sync] GAM report:', e.message); return null; }),
@@ -907,6 +907,28 @@ async function syncAll(dateRange) {
         ? fetchGAMReport(dr, GAM2_NC).catch(e => { console.warn('[sync] GAM-2 report:', e.message); return null; })
         : Promise.resolve(null),
     ]);
+
+    // GAM-2 report pode voltar vazio sob concorrência: acima ele disputa a fila de
+    // relatórios do GAM com outros 3 jobs (GAM-1 report/funil + GAM-2 funil) dentro do
+    // teto de ~100s do poll. Rodando sozinho (local) sempre volta cheio. Retry único e
+    // SEQUENCIAL (sem concorrência) recupera o ciclo; se ainda falhar, o guard de outage
+    // abaixo preserva os blocos GAM-2 do ciclo anterior — a receitasmenu nunca zera.
+    let gamReport2 = gamReport2Batch;
+    if (GAM2_NC && !Object.keys(gamReport2?.adUnitsByDay || {}).length) {
+      console.warn('[sync] GAM-2 report vazio no batch — retry sequencial');
+      try {
+        const retry = await fetchGAMReport(dr, GAM2_NC);
+        const nDias = Object.keys(retry?.adUnitsByDay || {}).length;
+        if (nDias) {
+          gamReport2 = retry;
+          console.log(`[sync] GAM-2 report retry OK: ${nDias} dia(s) recuperado(s)`);
+        } else {
+          console.warn('[sync] GAM-2 report retry ainda vazio — blocos preservados pelo guard');
+        }
+      } catch (e) {
+        console.warn('[sync] GAM-2 report retry falhou:', e.message, '— blocos preservados pelo guard');
+      }
+    }
 
     const metaAds = metaRes.ads;
     const metaFailedBMs = metaRes.failedBMs;
