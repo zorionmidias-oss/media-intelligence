@@ -119,7 +119,13 @@ async function handler(req, res) {
       });
     }
 
-    // Global: dados_hora agregado global (dominio_id = 0)
+    // Global: receita/GAM vêm do agregado global (dominio_id = 0). O GASTO, porém,
+    // usa SÓ o rastreado — a soma das linhas por domínio (dominio_id != 0) — e NÃO
+    // o total global. O total global inclui campanhas sem página monitorada ("gasto
+    // não rastreado"), que entram sem receita e afundam o ROI (ex.: 22/09 tinha
+    // R$903 não rastreados que jogavam o ROI do dia de +11% para -37%). Assim o ROI
+    // do gráfico fica na mesma base do Overview. O gasto rastreado por hora bate
+    // com ads_consolidados no centavo (é a mesma origem do sync).
     const did = 0;
 
     const buildQuery = (data) =>
@@ -129,21 +135,42 @@ async function handler(req, res) {
         .eq('dominio_id', did)
         .order('hora', { ascending: true });
 
-    const [hojeRes, ontemRes] = await Promise.all([
+    // Gasto rastreado por hora = soma das linhas por domínio (exclui o não rastreado).
+    const buildTrackedSpendQuery = (data) =>
+      supabase.from('dados_hora')
+        .select('hora,investimento_brl')
+        .eq('data', data)
+        .neq('dominio_id', 0);
+
+    const [hojeRes, ontemRes, hojeTrkRes, ontemTrkRes] = await Promise.all([
       buildQuery(dataHoje),
       buildQuery(dataOntem),
+      buildTrackedSpendQuery(dataHoje),
+      buildTrackedSpendQuery(dataOntem),
     ]);
 
-    const mapRows = (rows) => (rows || []).map(r => {
-      const inv = +(r.investimento_brl || 0);
-      const roi = r.roi != null && inv >= 1 ? +(r.roi) : null;
+    const trackedSpendByHora = (rows) => {
+      const m = {};
+      for (const r of rows || []) m[r.hora] = (m[r.hora] || 0) + (Number(r.investimento_brl) || 0);
+      return m;
+    };
+    const trkHoje  = trackedSpendByHora(hojeTrkRes.data);
+    const trkOntem = trackedSpendByHora(ontemTrkRes.data);
+
+    const mapRows = (rows, trkSpend) => (rows || []).map(r => {
+      // inv = gasto RASTREADO da hora (não o total global, que traz gasto sem página).
+      // ROI recalculado aqui a partir dele — não usa mais o roi gravado (que era sobre
+      // o gasto total). receita segue sendo a receita GAM total do agregado global.
+      const inv = +((trkSpend[r.hora] || 0).toFixed(4));
+      const receita = +(r.receita_liquida ?? (r.receita_bruta * 0.9) ?? 0);
+      const roi = inv >= 1 ? +(((receita - inv) / inv) * 100).toFixed(4) : null;
       const imp = r.impressoes || 0;
       const resultado = r.resultado || 0;
       const conversas = r.conversas || 0;
       const sessoes   = r.sessoes   || 0;
       return {
         hora:            r.hora,
-        receita:         +(r.receita_liquida ?? (r.receita_bruta * 0.9) ?? 0),
+        receita,
         ecpm:            +(r.ecpm || 0),
         investimento:    inv,
         roi,
@@ -157,10 +184,10 @@ async function handler(req, res) {
     });
 
     // Retorna apenas horas que existem no banco até horaAtual — sem zero-fill
-    const rawHoje = mapRows(hojeRes.data);
+    const rawHoje = mapRows(hojeRes.data, trkHoje);
     const hoje = rawHoje.filter(r => r.hora <= horaAtual);
 
-    const ontem = mapRows(ontemRes.data);
+    const ontem = mapRows(ontemRes.data, trkOntem);
     const semDados = hoje.length === 0 && ontem.length === 0;
 
     res.json({
