@@ -43,12 +43,18 @@ async function fetchInsightsPaginated(url, params) {
 // após retry, lança — quem chama aborta a conta inteira para não gravar gasto parcial.
 async function fetchInsightsWithDayFallback(accountId, params, { since, until }) {
   const url = `${BASE}/${accountId}/insights`;
-  try {
-    return await fetchInsightsPaginated(url, { ...params, time_range: JSON.stringify({ since, until }) });
-  } catch (e) {
-    if (e.response?.status !== 400) throw e;
-    const sub = e.response?.data?.error?.error_subcode;
-    console.warn(`[sync Meta ${accountId}] range ${since}→${until} rejeitado (400/${sub}) — fallback dia a dia`);
+  // Breakdown horário com range de vários dias: a Meta omite EM SILÊNCIO o último dia
+  // (e horas finais dos demais) — nov/2026, "hoje" sumia do dash. Vai direto dia a dia.
+  if (!params.breakdowns) {
+    try {
+      return await fetchInsightsPaginated(url, { ...params, time_range: JSON.stringify({ since, until }) });
+    } catch (e) {
+      if (e.response?.status !== 400) throw e;
+      const sub = e.response?.data?.error?.error_subcode;
+      console.warn(`[sync Meta ${accountId}] range ${since}→${until} rejeitado (400/${sub}) — fallback dia a dia`);
+    }
+  }
+  {
     const rows = [];
     let cur = DateTime.fromISO(since);
     const end = DateTime.fromISO(until);
@@ -100,8 +106,14 @@ async function fetchMetaAdsForSync(dateRange) {
       const fetchSince = needsRebucket
         ? DateTime.fromISO(since, { zone: 'America/Sao_Paulo' }).minus({ days: 1 }).toISODate()
         : since;
+      // Teto = hoje no fuso da conta: com a busca dia a dia, um dia futuro sozinho dá
+      // 400 "since cannot be in the future" e derrubaria a conta inteira
+      const hojeConta = DateTime.now().setZone(accountTz).toISODate();
       const fetchUntil = needsRebucket
-        ? DateTime.fromISO(until, { zone: 'America/Sao_Paulo' }).plus({ days: 1 }).toISODate()
+        ? DateTime.min(
+            DateTime.fromISO(until, { zone: 'America/Sao_Paulo' }).plus({ days: 1 }),
+            DateTime.fromISO(hojeConta, { zone: 'America/Sao_Paulo' }),
+          ).toISODate()
         : until;
 
       // Fetch campaign budgets (CBO: budget set at campaign level)
@@ -340,12 +352,14 @@ async function fetchMetaHourlySpend(date) {
     }
 
     try {
+      // Um dia por chamada: range de vários dias com breakdown horário perde o último dia
+      for (const dia of [...new Set([hrSince, hrUntil])]) {
       let nextUrl = `${BASE}/${accountId}/insights`;
       let params = {
         access_token: token,
         level: 'campaign',
         fields: 'campaign_name,spend,date_start',
-        time_range: JSON.stringify({ since: hrSince, until: hrUntil }),
+        time_range: JSON.stringify({ since: dia, until: dia }),
         time_increment: 1,
         breakdowns: 'hourly_stats_aggregated_by_advertiser_time_zone',
         limit: 500,
@@ -368,6 +382,7 @@ async function fetchMetaHourlySpend(date) {
           }
         }
         nextUrl = res.data?.paging?.next || null;
+      }
       }
     } catch (e) {
       // Falha no meio da paginação → mapa parcial (faltam as horas mais recentes,
@@ -416,12 +431,14 @@ async function fetchMetaHourlyActions(date) {
     const hrUntil = date;
 
     try {
+      // Um dia por chamada: range de vários dias com breakdown horário perde o último dia
+      for (const dia of [...new Set([hrSince, hrUntil])]) {
       let nextUrl = `${BASE}/${accountId}/insights`;
       let params = {
         access_token: token,
         level: 'campaign',
         fields: 'campaign_name,objective,optimization_goal,actions,clicks,date_start',
-        time_range: JSON.stringify({ since: hrSince, until: hrUntil }),
+        time_range: JSON.stringify({ since: dia, until: dia }),
         time_increment: 1,
         breakdowns: 'hourly_stats_aggregated_by_advertiser_time_zone',
         limit: 500,
@@ -452,6 +469,7 @@ async function fetchMetaHourlyActions(date) {
           }
         }
         nextUrl = res.data?.paging?.next || null;
+      }
       }
     } catch (e) {
       complete = false;
