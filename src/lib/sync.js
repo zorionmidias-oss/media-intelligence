@@ -695,7 +695,9 @@ function mergeByDay(base, extra) {
 //                sem match, cai no único domínio GAM-2 (se houver 1) — ex.: "Ad
 //                Exchange Display" do próprio network — senão descarta (nunca GAM-1).
 //   isGam2=false (rede legado): PREFIXO do codigo_pedido_gam ("MKU-AdX"→"mku_"),
-//                fallback 1º domínio GAM-1 (comportamento inalterado).
+//                sem match → descarta. A rede GAM-1 é compartilhada com sites de
+//                terceiros (god_/lat_/app_…): o antigo fallback "1º domínio GAM-1"
+//                jogava essa receita no mkuker.com (nov/2026: ~R$3,6k/mês, ROI 42%→90%).
 function matchDomainByAdUnit(unitName, dominios, isGam2) {
   const u = String(unitName || '').toLowerCase();
   if (isGam2) {
@@ -709,8 +711,7 @@ function matchDomainByAdUnit(unitName, dominios, isGam2) {
       if (u.startsWith(pfx)) return d.id;
     }
   }
-  const firstG1 = dominios.find(d => (d.gam_fonte || 1) === 1) || dominios[0];
-  return firstG1 ? firstG1.id : null;
+  return null;
 }
 
 // ── Dimensão meta_entidades: hierarquia por id (ad → conjunto → campanha → página) ──

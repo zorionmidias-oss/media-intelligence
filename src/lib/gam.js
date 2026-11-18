@@ -686,12 +686,19 @@ async function fetchGAMHourlyByDomain({ since, until, dominios } = {}) {
   // GAM-1 (rede atual) — comportamento inalterado
   try {
     const rows1 = await _runHourlyReport(NETWORK_CODE, dates);
-    out[0] = _aggregateHourlyRows(rows1, rate, '');
+    const pfxs = [];
     for (const d of doms) {
       if ((d.gam_fonte || 1) !== 1) continue;
       const pfx = _domainAdUnitPrefix(d);
-      if (pfx) out[d.id] = _aggregateHourlyRows(rows1, rate, pfx);
+      if (pfx) { pfxs.push(pfx); out[d.id] = _aggregateHourlyRows(rows1, rate, pfx); }
     }
+    // Global só com blocos dos domínios cadastrados — a rede é compartilhada com
+    // sites de terceiros, que inflavam o "todos" do intraday.
+    const own = rows1.filter(r => {
+      const au = String(r['Dimension.AD_UNIT_NAME'] || r['AD_UNIT_NAME'] || '').toLowerCase();
+      return pfxs.some(p => au.startsWith(p));
+    });
+    out[0] = _aggregateHourlyRows(own, rate, '');
   } catch (e) { console.warn('[GAM fetchHourlyByDomain/GAM-1]', e.message); }
 
   // GAM-2 (rede nova) — match por nome exato do bloco filho
