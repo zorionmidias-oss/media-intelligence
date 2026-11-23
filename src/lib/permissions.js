@@ -127,6 +127,7 @@ const ROUTES = [
   // domains
   R('GET', '/api/dominios/pendentes', ['domains'], 'read'),
   R('POST', '/api/dominios/aprovar', ['domains'], 'write'),
+  R('POST', '/api/dominios/ignorar', ['domains'], 'write'),
   R('POST', '/api/dominios', ['domains'], 'write'),
 
   // metas

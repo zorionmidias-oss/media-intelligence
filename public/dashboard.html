@@ -19,7 +19,7 @@
   <style>
     :root {
       /* ══ IDENTIDADE "BLACK & MENTA" — terminal de operação noturno ══
-         Preto absoluto (OLED), verde-menta como cor de marca (controles/foco/
+         Preto absoluto (OLED), azul-claro como cor de marca (controles/foco/
          ativo — NUNCA em valores), semânticas de dados separadas:
          verde lucro, coral prejuízo, laranja atenção. */
       /* Backgrounds */
@@ -28,7 +28,7 @@
       /* Text */
       --fg:#F1F5F9;--fg-soft:#CBD5E1;--muted:#94A3B8;--muted-light:#475569;
       /* Accent (marca) — UI only: botões, foco, itens ativos */
-      --accent:#00E5B4;--accent-hover:#00FFD1;--accent-soft:rgba(0,229,180,.10);--accent-fg:#001410;
+      --accent:#5AC8FA;--accent-hover:#8AD9FC;--accent-soft:rgba(90,200,250,.10);--accent-fg:#001A26;
       /* Cores semânticas de dados */
       --color-positive:#4ADE80;--color-neutral:#94A3B8;--color-warning:#FF9F45;--color-negative:#FF6B7A;--color-info:#5CA8FF;
       /* Aliases de compatibilidade */
@@ -444,7 +444,7 @@
     .itab-row{display:flex;gap:0;border-bottom:1px solid var(--border);width:fit-content}
     .itab{height:2.25rem;padding:0 1.25rem;border:none;background:transparent;cursor:pointer;font-family:inherit;font-size:.8125rem;font-weight:500;color:var(--muted);transition:all .2s;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px}
     .itab:hover{color:var(--fg)}
-    .itab.on{background:rgba(0,229,180,.12);color:var(--accent);border-bottom-color:var(--accent)}
+    .itab.on{background:rgba(90,200,250,.12);color:var(--accent);border-bottom-color:var(--accent)}
 
     /* ── CAMPAIGN MINI-KPI STRIP ── */
     .ck-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem}
@@ -577,16 +577,11 @@
     .meta-edit-btn{background:transparent;border:none;cursor:pointer;opacity:.35;font-size:.7rem;padding:0;line-height:1;transition:opacity .15s;color:var(--fg)}
     .meta-edit-btn:hover{opacity:1}
 
-    /* ── TICKER DE OPERAÇÃO (assinatura do header) ──
-       Fita única mono: câmbio · atraso de dados · status GAM. Some inteira
-       enquanto nenhum item está visível (JS controla display inline). */
-    .ticker{display:flex;align-items:center;height:2.25rem;border:1px solid var(--border);border-radius:var(--r);background:var(--sec);font-size:.72rem;color:var(--muted);white-space:nowrap;overflow:hidden}
-    .ticker:not(:has([style*="flex"])){display:none}
-    .ticker .topbar-status,.ticker .gam-delay{background:transparent!important;border:none!important;border-radius:0;height:100%;padding:0 .75rem;margin:0;align-items:center;gap:.375rem;font-size:.72rem}
-    .ticker .gam-delay{border-left:1px solid var(--border-strong)!important}
-    .ticker .topbar-status.late{color:var(--color-warning)}
-    .ticker .gam-delay.atrasado{color:var(--warn)}
-    .ticker .gam-delay.muito-atrasado{color:var(--bad)}
+    /* ── STATUS DE OPERAÇÃO: câmbio e atraso como peças separadas ── */
+    .op-pills{display:flex;align-items:center;gap:.5rem}
+    .op-pills .op-pill{display:inline-flex;align-items:center;gap:.375rem;height:2.25rem;padding:0 .75rem;border:1px solid var(--border);border-radius:var(--r);background:var(--sec);font-size:.72rem;color:var(--muted);white-space:nowrap;font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+    .op-pills .op-delay{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 35%,transparent)}
+    .op-pills .op-delay.late{color:var(--bad);background:var(--danger-soft);border-color:color-mix(in srgb,var(--bad) 45%,transparent)}
 
     /* ── NOTIFICATIONS ── */
     .notif-wrap{position:relative}
@@ -935,11 +930,11 @@
 
     /* ── LIGHT THEME ── */
     :root[data-theme="light"]{
-      /* Light: base fria limpa, menta escurecida p/ contraste AA sobre branco */
+      /* Light: base fria limpa, azul escurecido p/ contraste AA sobre branco */
       --bg:#F8FAFC;--card:#FFFFFF;--sec:#F3F6FA;--sec-strong:#EAEEF3;
       --border:#E2E5EA;--border-strong:#D2D6DD;
       --fg:#1B1E28;--fg-soft:#454B5C;--muted:#6D7385;--muted-light:#A8ADBB;
-      --accent:#00805F;--accent-hover:#006B4F;--accent-soft:rgba(0,128,95,0.10);--accent-fg:#FFFFFF;
+      --accent:#0A7BC2;--accent-hover:#08679F;--accent-soft:rgba(10,123,194,0.10);--accent-fg:#FFFFFF;
       --color-positive:#0E9F6E;--color-neutral:#6D7385;--color-warning:#D97706;--color-negative:#E5484D;--color-info:#2563EB;
       --success:var(--color-positive);--success-soft:rgba(14,159,110,0.12);
       --warning:var(--color-warning);--warning-soft:rgba(217,119,6,0.12);
@@ -1373,12 +1368,14 @@
       <button class="pend-badge" id="pend-badge" onclick="nav('domains',document.getElementById('nav-domains'))">
         ⚠ <span id="pend-count">0</span> domínio(s) novo(s)
       </button>
-      <!-- TICKER DE OPERAÇÃO: câmbio · atraso · status GAM, numa fita só -->
-      <div class="ticker" id="op-ticker">
-        <span class="topbar-status tk" id="topbar-status">
-          US$1 = R$<span id="fx-rate">—</span><span id="delay-inline" style="display:none"> · 🕐 <span id="delay-txt">—</span>h</span>
+      <!-- STATUS DE OPERAÇÃO: câmbio e atraso do GAM em peças separadas -->
+      <div class="op-pills" id="op-ticker">
+        <span class="op-pill topbar-status" id="topbar-status" title="Cotação do dólar usada nas conversões">
+          US$1 = R$<span id="fx-rate">—</span>
         </span>
-        <span class="gam-delay tk" id="gam-delay-global"></span>
+        <span class="op-pill op-delay" id="delay-inline" style="display:none" title="Atraso dos dados do GAM">🕐 <span id="delay-txt">—</span>h de atraso</span>
+        <!-- legado: duplicava o atraso acima; mantido oculto p/ compat do JS -->
+        <span class="gam-delay" id="gam-delay-global" hidden></span>
       </div>
       <!-- legacy hidden elements kept for JS compat -->
       <div class="fx-badge" id="fx-badge" style="display:none"></div>
@@ -1581,7 +1578,7 @@
             <canvas id="intraday-canvas"></canvas>
           </div>
           <div id="intraday-legend" style="display:flex;gap:1rem;justify-content:center;margin-top:.5rem;font-size:.75rem;color:var(--muted)">
-            <span><span style="display:inline-block;width:12px;height:2px;background:#00E5B4;border-radius:2px;margin-right:4px;vertical-align:middle"></span>Hoje</span>
+            <span><span style="display:inline-block;width:12px;height:2px;background:#5AC8FA;border-radius:2px;margin-right:4px;vertical-align:middle"></span>Hoje</span>
             <span><span style="display:inline-block;width:12px;height:0;border-top:1.5px dashed rgba(150,150,170,0.6);margin-right:4px;vertical-align:middle"></span>Ontem</span>
           </div>
           <div id="intraday-note" style="display:none;font-size:.7rem;color:var(--muted);text-align:center;margin-top:.25rem">* Investimento distribuído proporcionalmente por hora</div>
@@ -1668,25 +1665,12 @@
               </div>
             </div>
           </div>
-          <style>
-            /* Frente 2 — colunas de diagnóstico (fatores vs mediana 7d) fixas, destacadas */
-            #camp-table th.newcol{background:color-mix(in oklch,var(--accent) 13%,transparent);color:var(--accent);border-bottom-color:color-mix(in oklch,var(--accent) 45%,transparent)}
-            #camp-table td.newcol{background:color-mix(in oklch,var(--accent) 4%,transparent)}
-            #camp-table td.dg{font-family:var(--font-mono)!important;text-align:right;font-variant-numeric:tabular-nums;font-size:.75rem}
-            #camp-table td.dg.gcell{text-align:left}
-            .dg-mute{color:var(--muted-light)}
-            .dg-pill{font-size:.6rem;padding:.08rem .4rem;border-radius:10px;font-weight:600;white-space:nowrap;font-family:var(--font-ui)!important}
-            .dg-pill.k{color:var(--danger);background:var(--danger-soft);border:1px solid color-mix(in oklch,var(--danger) 30%,transparent)}
-            .dg-pill.w{color:var(--warning);background:var(--warning-soft);border:1px solid color-mix(in oklch,var(--warning) 30%,transparent)}
-            .dg-pill.g{color:var(--success);background:var(--success-soft);border:1px solid color-mix(in oklch,var(--success) 30%,transparent)}
-            .dg-pill.n{color:var(--muted);background:var(--sec-strong);border:1px solid var(--border)}
-          </style>
           <table id="camp-table">
             <thead><tr>
               <th>UTM</th><th>Domínio</th><th>Investido</th><th>Fat. Real</th><th>Lucro</th><th>ROAS</th>
-              <th class="col-h" data-col="cpc">CPC</th><th class="col-h" data-col="custo-res">Custo/Result.</th><th class="col-h" data-col="resultados">Resultados</th><th class="col-h" data-col="imp-gam">Imp. GAM</th><th class="col-h" data-col="ecpm">eCPM <span title="eCPM atribuído por UTM campaign via relatórios GAM. O eCPM nos KPIs globais (aba GAM) vem de blocos_anuncio e pode divergir, pois agrega todos os blocos independente da campanha." style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="rps">RPS <span title="Retorno por sessão: faturamento real ÷ sessões (view_content Meta)" style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="sessoes-meta">Sessões (Meta)</th><th class="col-h" data-col="par">PAR <span title="Impressões GAM ÷ sessões (view_content Meta) — anúncios exibidos por sessão do site" style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="sessao-conv">Sessão/Conversa</th><th class="col-h" data-col="breakeven">Breakeven <span title="Custo por sessão ÷ RPS — abaixo de 1 = gastando menos do que ganha" style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="inicio">Início <span title="Primeiro dia em que a campanha teve gasto real" style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="newcol" title="Custo por lead vs mediana 7d — <1 = pior que o normal (custo/lead usa leads do bot, não conversas Meta)">f·custo</th><th class="newcol" title="Sessões por lead vs mediana 7d — <1 = pior">f·sess</th><th class="newcol" title="PAR (imp. GAM ÷ sessão) vs mediana 7d — <1 = pior">f·PAR</th><th class="newcol" title="eCPM GAM vs mediana 7d — <1 = pior">f·eCPM</th><th class="newcol" title="Etapa que mais puxa o ROAS pra baixo (menor fator)">Gargalo</th><th class="newcol" title="ROAS se o gargalo voltar à mediana 7d">Potencial</th><th class="col-acoes">Ações</th>
+              <th class="col-h" data-col="cpc">CPC</th><th class="col-h" data-col="custo-res">Custo/Result.</th><th class="col-h" data-col="resultados">Resultados</th><th class="col-h" data-col="imp-gam">Imp. GAM</th><th class="col-h" data-col="ecpm">eCPM <span title="eCPM atribuído por UTM campaign via relatórios GAM. O eCPM nos KPIs globais (aba GAM) vem de blocos_anuncio e pode divergir, pois agrega todos os blocos independente da campanha." style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="rps">RPS <span title="Retorno por sessão: faturamento real ÷ sessões (view_content Meta)" style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="sessoes-meta">Sessões (Meta)</th><th class="col-h" data-col="par">PAR <span title="Impressões GAM ÷ sessões (view_content Meta) — anúncios exibidos por sessão do site" style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="sessao-conv">Sessão/Conversa</th><th class="col-h" data-col="breakeven">Breakeven <span title="Custo por sessão ÷ RPS — abaixo de 1 = gastando menos do que ganha" style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-h" data-col="inicio">Início <span title="Primeiro dia em que a campanha teve gasto real" style="cursor:help;opacity:.6;font-size:.7rem">ⓘ</span></th><th class="col-acoes">Ações</th>
             </tr></thead>
-            <tbody id="camp-db-body"><tr><td colspan="24" class="empty">Carregando…</td></tr></tbody>
+            <tbody id="camp-db-body"><tr><td colspan="18" class="empty">Carregando…</td></tr></tbody>
           </table>
           <div class="tbl-foot">
             <span style="font-size:.875rem;color:var(--muted)" id="camp-db-count">—</span>
@@ -2643,7 +2627,7 @@
       <div id="ci-conjuntos" style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.85rem"></div>
       <div style="position:relative;height:300px"><canvas id="ci-canvas"></canvas></div>
       <div style="display:flex;gap:1.25rem;justify-content:center;margin-top:.65rem;font-size:.75rem;color:var(--muted)">
-        <span style="display:inline-flex;align-items:center;gap:.35rem"><span style="width:14px;height:2px;background:#00E5B4;display:inline-block;border-radius:2px"></span>Hoje</span>
+        <span style="display:inline-flex;align-items:center;gap:.35rem"><span style="width:14px;height:2px;background:#5AC8FA;display:inline-block;border-radius:2px"></span>Hoje</span>
         <span style="display:inline-flex;align-items:center;gap:.35rem"><span style="width:14px;height:0;border-top:2px dashed rgba(150,150,170,.7);display:inline-block"></span>Ontem</span>
       </div>
     </div>
@@ -4072,26 +4056,26 @@ function renderIntradayChart(data,metric){
         {
           label:'Hoje',
           data:hojeVals,
-          borderColor:'#00E5B4',
+          borderColor:'#5AC8FA',
           // Mesmo degradê de área para TODAS as métricas. No ROI o degradê é
           // ancorado na linha do ZERO: menta esvaindo até o zero em cima,
           // VERMELHO aprofundando abaixo do zero (prejuízo pinta vermelho).
           backgroundColor:(c)=>{
             const{ctx,chartArea,scales}=c.chart;
-            if(!chartArea)return 'rgba(0,229,180,0.08)';
+            if(!chartArea)return 'rgba(90,200,250,0.08)';
             const top=chartArea.top,bot=chartArea.bottom;
             const g=ctx.createLinearGradient(0,top,0,bot);
             if(metric==='roi'&&scales&&scales.y){
               const y0=Math.min(Math.max(scales.y.getPixelForValue(0),top),bot);
               const t=Math.min(Math.max((y0-top)/((bot-top)||1),0),1);
-              g.addColorStop(0,'rgba(0,229,180,0.32)');
-              g.addColorStop(Math.max(t-0.001,0),'rgba(0,229,180,0)');
+              g.addColorStop(0,'rgba(90,200,250,0.32)');
+              g.addColorStop(Math.max(t-0.001,0),'rgba(90,200,250,0)');
               g.addColorStop(Math.min(t+0.001,1),'rgba(255,107,122,0)');
               g.addColorStop(1,'rgba(255,107,122,0.34)');
             }else{
-              g.addColorStop(0,'rgba(0,229,180,0.32)');
-              g.addColorStop(.55,'rgba(0,229,180,0.07)');
-              g.addColorStop(1,'rgba(0,229,180,0)');
+              g.addColorStop(0,'rgba(90,200,250,0.32)');
+              g.addColorStop(.55,'rgba(90,200,250,0.07)');
+              g.addColorStop(1,'rgba(90,200,250,0)');
             }
             return g;
           },
@@ -4103,12 +4087,12 @@ function renderIntradayChart(data,metric){
           fill:{target:'origin'},
           spanGaps:true,
           segment:{
-            borderColor:ctx=>metric!=='roi'?undefined:(ctx.p1.parsed.y<0?'#E5384B':'#00E5B4'),
+            borderColor:ctx=>metric!=='roi'?undefined:(ctx.p1.parsed.y<0?'#E5384B':'#5AC8FA'),
           },
           pointBackgroundColor:ctx=>{
-            if(metric!=='roi')return '#00E5B4';
+            if(metric!=='roi')return '#5AC8FA';
             const v=hojeVals[ctx.dataIndex];
-            return(v!==null&&v<0)?'#E5384B':'#00E5B4';
+            return(v!==null&&v<0)?'#E5384B':'#5AC8FA';
           },
         },
         {
@@ -4278,7 +4262,7 @@ function renderDelay(k){
   if(h===0) return;
   inlineWrap.style.display='';
   if(txt)txt.textContent=h.toFixed(1);
-  if(status){status.className='topbar-status'+(h>3?' late':'');}
+  inlineWrap.classList.toggle('late',h>3);
 }
 
 /* ── CHART.JS TREND ── */
@@ -4701,11 +4685,11 @@ async function loadGamDelayGlobal(){
     if(inlineWrap){
       if(!a.tem_atraso){
         inlineWrap.style.display='none';
-        if(status)status.classList.remove('late');
+        inlineWrap.classList.remove('late');
       }else{
         inlineWrap.style.display='';
         if(txt)txt.textContent=(+a.horas_atraso||0).toFixed(1);
-        if(status)status.classList.toggle('late',a.horas_atraso>=3);
+        inlineWrap.classList.toggle('late',a.horas_atraso>=3);
       }
     }
   }catch(_){}
@@ -4939,7 +4923,7 @@ async function loadCampaignsDB(tipo){
   const tb=document.getElementById('camp-db-body');
   const ct=document.getElementById('camp-db-count');
   const kpiStrip=document.getElementById('camp-kpis');
-  if(tb)tb.innerHTML='<tr><td colspan="24" class="empty">Carregando…</td></tr>';
+  if(tb)tb.innerHTML='<tr><td colspan="18" class="empty">Carregando…</td></tr>';
   if(kpiStrip)kpiStrip.style.display='none';
   const since=document.getElementById('f-since').value;
   const until=document.getElementById('f-until').value;
@@ -4955,9 +4939,8 @@ async function loadCampaignsDB(tipo){
     S.campKPIs=d.kpis||{};
     renderCampKPIs(d.kpis||{},tipo);
     renderCampTable(S.campRows);
-    loadDiagCampanhas(since,until,domain);
   }catch(e){
-    if(tb)tb.innerHTML=`<tr><td colspan="24" class="empty" style="color:var(--bad)">${esc(e.message)}</td></tr>`;
+    if(tb)tb.innerHTML=`<tr><td colspan="18" class="empty" style="color:var(--bad)">${esc(e.message)}</td></tr>`;
     if(ct)ct.textContent='Erro';
   }
 }
@@ -4988,65 +4971,12 @@ function renderCampKPIs(k,tipo){
   strip.style.display='grid';
 }
 
-/* ═══ FRENTE 2 — diagnóstico por campanha (colunas de fator) ═══ */
-S.diagByCamp=S.diagByCamp||{};
-const DG_SHORT={custo_lead:'Custo/lead',spl:'Sess/lead',par:'PAR',ecpm:'eCPM'};
-function _dgFactorSpan(n){
-  if(!n||n.fator==null)return '<span class="dg-mute">·</span>';
-  const col=n.classe==='bad'?'var(--danger)':n.classe==='amb'?'var(--warning)':n.classe==='ok'?'var(--success)':'var(--muted)';
-  const piso=n.piso_falha?' <span title="abaixo do piso absoluto" style="color:var(--warning)">▾</span>':'';
-  return `<span style="color:${col};font-weight:600">${loc(n.fator,2)}×</span>${piso}`;
-}
-function _dgGargSpan(c){
-  const g=c&&c.gargalo;
-  if(!g)return '<span class="dg-mute">·</span>';
-  const cls=g.classe==='bad'?'k':g.classe==='amb'?'w':(g.classe==='ok'?'g':'n');
-  const d=g.delta!=null?` ${g.delta>=0?'+':''}${Math.round(g.delta*100)}%`:'';
-  return `<span class="dg-pill ${cls}">${DG_SHORT[g.chave]||g.label}${d}</span>`;
-}
-function _dgPotSpan(c){
-  const p=c&&c.potencial&&c.potencial.corrigido;
-  if(p==null)return '<span class="dg-mute">·</span>';
-  return `<span style="color:var(--accent);font-weight:600">${loc(p,2)}x</span>`;
-}
-function _dgFat(c,k){const n=c&&(c.fatores||[]).find(x=>x.chave===k);return _dgFactorSpan(n);}
-function dgCellsHTML(campId){
-  const c=(S.diagByCamp||{})[campId];
-  return `<td class="dg newcol" data-dg="fcusto">${_dgFat(c,'custo_lead')}</td>`
-    +`<td class="dg newcol" data-dg="fsess">${_dgFat(c,'spl')}</td>`
-    +`<td class="dg newcol" data-dg="fpar">${_dgFat(c,'par')}</td>`
-    +`<td class="dg newcol" data-dg="fecpm">${_dgFat(c,'ecpm')}</td>`
-    +`<td class="dg newcol gcell" data-dg="gargalo">${_dgGargSpan(c)}</td>`
-    +`<td class="dg newcol" data-dg="potencial">${_dgPotSpan(c)}</td>`;
-}
-function patchDiagCamp(){
-  document.querySelectorAll('#camp-db-body tr.utm-row').forEach(tr=>{
-    const c=(S.diagByCamp||{})[tr.dataset.key];
-    const set=(dg,html)=>{const td=tr.querySelector(`[data-dg="${dg}"]`);if(td)td.innerHTML=html;};
-    set('fcusto',_dgFat(c,'custo_lead'));set('fsess',_dgFat(c,'spl'));
-    set('fpar',_dgFat(c,'par'));set('fecpm',_dgFat(c,'ecpm'));
-    set('gargalo',_dgGargSpan(c));set('potencial',_dgPotSpan(c));
-  });
-}
-async function loadDiagCampanhas(since,until,domain){
-  try{
-    let q=`nivel=campanha&since=${since}&until=${until}`;
-    if(domain&&domain!=='all')q+=`&domain=${encodeURIComponent(domain)}`;
-    const res=await fetch(`/api/diagnostico?${q}`);
-    if(!res.ok)return;
-    const d=await res.json();
-    S.diagByCamp={};
-    for(const c of (d.campanhas||[]))if(c.campaign_id)S.diagByCamp[c.campaign_id]=c;
-    patchDiagCamp();
-  }catch(e){console.warn('[diag-camp]',e);}
-}
-
 function renderCampTable(rows){
   const tb=document.getElementById('camp-db-body');
   const ct=document.getElementById('camp-db-count');
 
   if(!rows.length){
-    tb.innerHTML='<tr><td colspan="24" class="empty">Sem dados no banco para o período selecionado.</td></tr>';
+    tb.innerHTML='<tr><td colspan="18" class="empty">Sem dados no banco para o período selecionado.</td></tr>';
     ct.textContent='0 UTMs';
     return;
   }
@@ -5107,7 +5037,6 @@ function renderCampTable(rows){
       <td class="mo col-h" data-col="sessao-conv" data-sort="${spc!==null&&spc!==undefined?spc:-1}">${spcHtml}</td>
       <td class="mo col-h" data-col="breakeven" data-sort="${be!==null&&be!==undefined?be:-1}">${beHtml}</td>
       <td class="mo col-h" data-col="inicio" data-sort="${r.data_inicio||''}">${inicio}</td>
-      ${dgCellsHTML(r.campaign_id)}
       <td class="col-acoes" style="white-space:nowrap">
         ${r.campaign_id?`<button class="act-btn" onclick="abrirCampIntraday('${esc(r.campaign_id)}','${esc(r.ad_utm||'')}')" title="Intraday por hora · hoje vs ontem" aria-label="Intraday da campanha"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>`:''}
         <button class="act-btn" onclick="abrirHistorico('${esc(r.ad_utm||'')}')" title="Histórico" aria-label="Histórico da UTM"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg></button>
@@ -5150,7 +5079,6 @@ function renderCampTable(rows){
     <td class="mo col-h" data-col="sessao-conv"><strong>${totSpcHtml}</strong></td>
     <td class="mo col-h" data-col="breakeven"><strong>${bePill(totBe)}</strong></td>
     <td class="mo col-h" data-col="inicio">—</td>
-    <td class="dg newcol"></td><td class="dg newcol"></td><td class="dg newcol"></td><td class="dg newcol"></td><td class="dg newcol gcell"></td><td class="dg newcol"></td>
     <td class="col-acoes"></td>
   </tr>`;
 
@@ -5244,6 +5172,7 @@ function renderPendentesList(pendentes){
       ex: ${esc(p.exemplo_nome_campanha||'—')}
     </span>
     <button class="btn btn-s" style="height:1.75rem;font-size:.75rem;flex-shrink:0" onclick="openModalAprovar('${esc(p.prefixo_detectado)}','${esc(p.exemplo_nome_campanha||'')}')">Aprovar</button>
+    <button class="btn btn-s" style="height:1.75rem;font-size:.75rem;flex-shrink:0;background:transparent;border:1px solid var(--border)" title="Tirar da lista sem cadastrar (não volta)" onclick="ignorarDomain('${esc(p.prefixo_detectado)}',this)">Ignorar</button>
   </div>`).join('');
 }
 
@@ -5342,6 +5271,17 @@ async function submitAprovarDomain(){
     closeModal('modal-aprovar-domain');
     loadDominios();
   }catch(e){alert('Erro: '+e.message)}
+}
+
+// Ignorar: tira o prefixo da lista de pendentes sem criar domínio (não volta no próximo sync).
+async function ignorarDomain(prefixo,btn){
+  if(btn)btn.disabled=true;
+  try{
+    const res=await fetch('/api/dominios/ignorar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prefixo_detectado:prefixo})});
+    const d=await res.json();
+    if(!res.ok)throw new Error(d.error||res.statusText);
+    loadDominios();
+  }catch(e){if(btn)btn.disabled=false;showToast('err','Erro ao ignorar: '+e.message)}
 }
 
 /* ═══ LOGOUT ═══ */
@@ -6653,9 +6593,9 @@ function _ciRender(){
   _ciChart=new Chart(canvas,{
     type:'line',
     data:{labels,datasets:[
-      {label:'Hoje',data:hojeVals,borderColor:'#00E5B4',
-       backgroundColor:c=>{const{ctx,chartArea}=c.chart;if(!chartArea)return 'rgba(0,229,180,0.08)';const g=ctx.createLinearGradient(0,chartArea.top,0,chartArea.bottom);g.addColorStop(0,'rgba(0,229,180,0.28)');g.addColorStop(.55,'rgba(0,229,180,0.06)');g.addColorStop(1,'rgba(0,229,180,0)');return g;},
-       borderWidth:2,pointRadius:3,pointHoverRadius:5,tension:.35,fill:{target:'origin'},spanGaps:true,pointBackgroundColor:'#00E5B4'},
+      {label:'Hoje',data:hojeVals,borderColor:'#5AC8FA',
+       backgroundColor:c=>{const{ctx,chartArea}=c.chart;if(!chartArea)return 'rgba(90,200,250,0.08)';const g=ctx.createLinearGradient(0,chartArea.top,0,chartArea.bottom);g.addColorStop(0,'rgba(90,200,250,0.28)');g.addColorStop(.55,'rgba(90,200,250,0.06)');g.addColorStop(1,'rgba(90,200,250,0)');return g;},
+       borderWidth:2,pointRadius:3,pointHoverRadius:5,tension:.35,fill:{target:'origin'},spanGaps:true,pointBackgroundColor:'#5AC8FA'},
       {label:'Ontem',data:ontemVals,borderColor:'rgba(150,150,170,0.6)',backgroundColor:'transparent',borderWidth:1.5,borderDash:[5,4],pointRadius:0,pointHoverRadius:4,tension:.35,fill:false,spanGaps:true},
     ]},
     options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},

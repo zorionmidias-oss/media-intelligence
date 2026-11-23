@@ -600,6 +600,19 @@ app.post('/api/dominios/aprovar', requireAuth, async (req, res) => {
   res.json(newDomain);
 });
 
+// Ignorar: só tira da lista de pendentes (resolvido=true, sem criar domínio).
+// O sync faz upsert sem tocar em `resolvido`, então o prefixo não volta.
+app.post('/api/dominios/ignorar', requireAuth, async (req, res) => {
+  const { prefixo_detectado } = req.body || {};
+  if (!prefixo_detectado) return res.status(400).json({ error: 'prefixo_detectado é obrigatório' });
+  const { error } = await supabase
+    .from('dominios_pendentes')
+    .update({ resolvido: true })
+    .eq('prefixo_detectado', prefixo_detectado);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
 // ── Metas ─────────────────────────────────────────────────────────────────────
 app.get('/api/metas', requireAuth, metasHandler);
 app.post('/api/metas', requireAuth, metasHandler);
