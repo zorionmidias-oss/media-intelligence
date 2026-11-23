@@ -28,7 +28,7 @@
       /* Text */
       --fg:#F1F5F9;--fg-soft:#CBD5E1;--muted:#94A3B8;--muted-light:#475569;
       /* Accent (marca) — UI only: botões, foco, itens ativos */
-      --accent:#5AC8FA;--accent-hover:#8AD9FC;--accent-soft:rgba(90,200,250,.10);--accent-fg:#001A26;
+      --accent:#0055FF;--accent-hover:#3377FF;--accent-soft:rgba(0,85,255,.14);--accent-fg:#FFFFFF;
       /* Cores semânticas de dados */
       --color-positive:#4ADE80;--color-neutral:#94A3B8;--color-warning:#FF9F45;--color-negative:#FF6B7A;--color-info:#5CA8FF;
       /* Aliases de compatibilidade */
@@ -444,7 +444,7 @@
     .itab-row{display:flex;gap:0;border-bottom:1px solid var(--border);width:fit-content}
     .itab{height:2.25rem;padding:0 1.25rem;border:none;background:transparent;cursor:pointer;font-family:inherit;font-size:.8125rem;font-weight:500;color:var(--muted);transition:all .2s;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px}
     .itab:hover{color:var(--fg)}
-    .itab.on{background:rgba(90,200,250,.12);color:var(--accent);border-bottom-color:var(--accent)}
+    .itab.on{background:rgba(0,85,255,.12);color:var(--accent);border-bottom-color:var(--accent)}
 
     /* ── CAMPAIGN MINI-KPI STRIP ── */
     .ck-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem}
@@ -569,9 +569,8 @@
     .usd-sub{font-size:.7rem;color:var(--muted);margin-top:.15rem;display:block}
     .meta-progress{margin-top:.75rem}
     .meta-bar{width:100%;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
-    .meta-fill{height:100%;background:var(--color-warning);transition:width .5s ease;border-radius:2px;min-width:0}
-    .meta-fill.near{background:var(--color-info)}
-    .meta-fill.complete,.meta-fill.over{background:var(--color-positive)}
+    .meta-fill{height:100%;background:var(--accent);transition:width .5s ease;border-radius:2px;min-width:0}
+    .meta-fill.near,.meta-fill.complete,.meta-fill.over{background:var(--accent)}
     .meta-lbl-row{display:flex;justify-content:space-between;align-items:center;margin-top:.35rem;font-size:.65rem;color:var(--muted)}
     .meta-lbl-cur{color:var(--fg);font-weight:600}
     .meta-edit-btn{background:transparent;border:none;cursor:pointer;opacity:.35;font-size:.7rem;padding:0;line-height:1;transition:opacity .15s;color:var(--fg)}
@@ -934,7 +933,7 @@
       --bg:#F8FAFC;--card:#FFFFFF;--sec:#F3F6FA;--sec-strong:#EAEEF3;
       --border:#E2E5EA;--border-strong:#D2D6DD;
       --fg:#1B1E28;--fg-soft:#454B5C;--muted:#6D7385;--muted-light:#A8ADBB;
-      --accent:#0A7BC2;--accent-hover:#08679F;--accent-soft:rgba(10,123,194,0.10);--accent-fg:#FFFFFF;
+      --accent:#0055FF;--accent-hover:#0044CC;--accent-soft:rgba(0,85,255,0.10);--accent-fg:#FFFFFF;
       --color-positive:#0E9F6E;--color-neutral:#6D7385;--color-warning:#D97706;--color-negative:#E5484D;--color-info:#2563EB;
       --success:var(--color-positive);--success-soft:rgba(14,159,110,0.12);
       --warning:var(--color-warning);--warning-soft:rgba(217,119,6,0.12);
@@ -1260,7 +1259,6 @@
   <div class="sb-logo">
     <span class="logo">2Junior's</span>
   </div>
-  <button class="btn-criar-campanha" onclick="openCampTypeModal()">+ Criar Campanha</button>
   <nav class="sb-nav">
     <div class="sb-group">Operação</div>
     <button class="nav-btn on" onclick="nav('overview',this)">
@@ -1374,8 +1372,6 @@
           US$1 = R$<span id="fx-rate">—</span>
         </span>
         <span class="op-pill op-delay" id="delay-inline" style="display:none" title="Atraso dos dados do GAM">🕐 <span id="delay-txt">—</span>h de atraso</span>
-        <!-- legado: duplicava o atraso acima; mantido oculto p/ compat do JS -->
-        <span class="gam-delay" id="gam-delay-global" hidden></span>
       </div>
       <!-- legacy hidden elements kept for JS compat -->
       <div class="fx-badge" id="fx-badge" style="display:none"></div>
@@ -1578,7 +1574,7 @@
             <canvas id="intraday-canvas"></canvas>
           </div>
           <div id="intraday-legend" style="display:flex;gap:1rem;justify-content:center;margin-top:.5rem;font-size:.75rem;color:var(--muted)">
-            <span><span style="display:inline-block;width:12px;height:2px;background:#5AC8FA;border-radius:2px;margin-right:4px;vertical-align:middle"></span>Hoje</span>
+            <span><span style="display:inline-block;width:12px;height:2px;background:#0055FF;border-radius:2px;margin-right:4px;vertical-align:middle"></span>Hoje</span>
             <span><span style="display:inline-block;width:12px;height:0;border-top:1.5px dashed rgba(150,150,170,0.6);margin-right:4px;vertical-align:middle"></span>Ontem</span>
           </div>
           <div id="intraday-note" style="display:none;font-size:.7rem;color:var(--muted);text-align:center;margin-top:.25rem">* Investimento distribuído proporcionalmente por hora</div>
@@ -2627,7 +2623,7 @@
       <div id="ci-conjuntos" style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.85rem"></div>
       <div style="position:relative;height:300px"><canvas id="ci-canvas"></canvas></div>
       <div style="display:flex;gap:1.25rem;justify-content:center;margin-top:.65rem;font-size:.75rem;color:var(--muted)">
-        <span style="display:inline-flex;align-items:center;gap:.35rem"><span style="width:14px;height:2px;background:#5AC8FA;display:inline-block;border-radius:2px"></span>Hoje</span>
+        <span style="display:inline-flex;align-items:center;gap:.35rem"><span style="width:14px;height:2px;background:#0055FF;display:inline-block;border-radius:2px"></span>Hoje</span>
         <span style="display:inline-flex;align-items:center;gap:.35rem"><span style="width:14px;height:0;border-top:2px dashed rgba(150,150,170,.7);display:inline-block"></span>Ontem</span>
       </div>
     </div>
@@ -2776,10 +2772,8 @@ function showLoading(){
   });
   const ds=document.getElementById('delay-spin-ico');
   const dd=document.getElementById('delay-dot');
-  const db=document.getElementById('delay-badge');
   if(ds)ds.style.display='inline';
   if(dd)dd.style.display='none';
-  if(db){db.style.display='inline-flex';db.className='delay-badge st';}
   document.getElementById('delay-txt').textContent='GAM…';
   const fs=document.getElementById('force-spin-ico');
   if(fs)fs.style.display='inline';
@@ -4056,26 +4050,26 @@ function renderIntradayChart(data,metric){
         {
           label:'Hoje',
           data:hojeVals,
-          borderColor:'#5AC8FA',
+          borderColor:'#0055FF',
           // Mesmo degradê de área para TODAS as métricas. No ROI o degradê é
           // ancorado na linha do ZERO: menta esvaindo até o zero em cima,
           // VERMELHO aprofundando abaixo do zero (prejuízo pinta vermelho).
           backgroundColor:(c)=>{
             const{ctx,chartArea,scales}=c.chart;
-            if(!chartArea)return 'rgba(90,200,250,0.08)';
+            if(!chartArea)return 'rgba(0,85,255,0.08)';
             const top=chartArea.top,bot=chartArea.bottom;
             const g=ctx.createLinearGradient(0,top,0,bot);
             if(metric==='roi'&&scales&&scales.y){
               const y0=Math.min(Math.max(scales.y.getPixelForValue(0),top),bot);
               const t=Math.min(Math.max((y0-top)/((bot-top)||1),0),1);
-              g.addColorStop(0,'rgba(90,200,250,0.32)');
-              g.addColorStop(Math.max(t-0.001,0),'rgba(90,200,250,0)');
+              g.addColorStop(0,'rgba(0,85,255,0.32)');
+              g.addColorStop(Math.max(t-0.001,0),'rgba(0,85,255,0)');
               g.addColorStop(Math.min(t+0.001,1),'rgba(255,107,122,0)');
               g.addColorStop(1,'rgba(255,107,122,0.34)');
             }else{
-              g.addColorStop(0,'rgba(90,200,250,0.32)');
-              g.addColorStop(.55,'rgba(90,200,250,0.07)');
-              g.addColorStop(1,'rgba(90,200,250,0)');
+              g.addColorStop(0,'rgba(0,85,255,0.32)');
+              g.addColorStop(.55,'rgba(0,85,255,0.07)');
+              g.addColorStop(1,'rgba(0,85,255,0)');
             }
             return g;
           },
@@ -4087,12 +4081,12 @@ function renderIntradayChart(data,metric){
           fill:{target:'origin'},
           spanGaps:true,
           segment:{
-            borderColor:ctx=>metric!=='roi'?undefined:(ctx.p1.parsed.y<0?'#E5384B':'#5AC8FA'),
+            borderColor:ctx=>metric!=='roi'?undefined:(ctx.p1.parsed.y<0?'#E5384B':'#0055FF'),
           },
           pointBackgroundColor:ctx=>{
-            if(metric!=='roi')return '#5AC8FA';
+            if(metric!=='roi')return '#0055FF';
             const v=hojeVals[ctx.dataIndex];
-            return(v!==null&&v<0)?'#E5384B':'#5AC8FA';
+            return(v!==null&&v<0)?'#E5384B':'#0055FF';
           },
         },
         {
@@ -6593,9 +6587,9 @@ function _ciRender(){
   _ciChart=new Chart(canvas,{
     type:'line',
     data:{labels,datasets:[
-      {label:'Hoje',data:hojeVals,borderColor:'#5AC8FA',
-       backgroundColor:c=>{const{ctx,chartArea}=c.chart;if(!chartArea)return 'rgba(90,200,250,0.08)';const g=ctx.createLinearGradient(0,chartArea.top,0,chartArea.bottom);g.addColorStop(0,'rgba(90,200,250,0.28)');g.addColorStop(.55,'rgba(90,200,250,0.06)');g.addColorStop(1,'rgba(90,200,250,0)');return g;},
-       borderWidth:2,pointRadius:3,pointHoverRadius:5,tension:.35,fill:{target:'origin'},spanGaps:true,pointBackgroundColor:'#5AC8FA'},
+      {label:'Hoje',data:hojeVals,borderColor:'#0055FF',
+       backgroundColor:c=>{const{ctx,chartArea}=c.chart;if(!chartArea)return 'rgba(0,85,255,0.08)';const g=ctx.createLinearGradient(0,chartArea.top,0,chartArea.bottom);g.addColorStop(0,'rgba(0,85,255,0.28)');g.addColorStop(.55,'rgba(0,85,255,0.06)');g.addColorStop(1,'rgba(0,85,255,0)');return g;},
+       borderWidth:2,pointRadius:3,pointHoverRadius:5,tension:.35,fill:{target:'origin'},spanGaps:true,pointBackgroundColor:'#0055FF'},
       {label:'Ontem',data:ontemVals,borderColor:'rgba(150,150,170,0.6)',backgroundColor:'transparent',borderWidth:1.5,borderDash:[5,4],pointRadius:0,pointHoverRadius:4,tension:.35,fill:false,spanGaps:true},
     ]},
     options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
