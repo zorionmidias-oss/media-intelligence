@@ -3679,8 +3679,10 @@ function renderFunilConversao(){
   const col=i=>i===bad?'var(--danger)':'var(--accent)';
   let paths='';
   for(let i=0;i<4;i++){
-    const x0=i===0?0:xs[i],x1=i===3?W:xs[i+1];
-    const a=xs[i],b=xs[i+1],m=(a+b)/2,h0=hs[i]/2,h1=hs[i+1]/2;
+    // respiro de G entre blocos (divisão de etapa, como no mockup)
+    const G=5,a=i===0?xs[i]:xs[i]+G,b=i===3?xs[i+1]:xs[i+1]-G;
+    const x0=i===0?0:a,x1=i===3?W:b;
+    const m=(a+b)/2,h0=hs[i]/2,h1=hs[i+1]/2;
     const top=`M${x0},${cy-h0} L${a},${cy-h0} C${m},${cy-h0} ${m},${cy-h1} ${b},${cy-h1} L${x1},${cy-h1}`;
     const bot=`L${x1},${cy+h1} L${b},${cy+h1} C${m},${cy+h1} ${m},${cy+h0} ${a},${cy+h0} L${x0},${cy+h0} Z`;
     paths+=`<path d="${top} ${bot}" fill="${col(i)}" fill-opacity="${i===bad?.9:.85}"/>`;
