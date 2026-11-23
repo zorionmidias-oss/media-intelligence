@@ -41,3 +41,21 @@ Coluna "Tendência" do `/app`; funil cliques→bot→link→monetizado (próximo
 ## Validação
 Servidor local + navegador automatizado: expandir campanha real, print, conferir 1–2
 conjuntos (valores dos 4 dias) contra a resposta crua do `/api/drilldown` da janela.
+
+## Ajustes visuais que entraram no mesmo branch (23/11, pedidos do Kayke)
+- **Domínios:** botão **Ignorar** nos pendentes → `POST /api/dominios/ignorar` (marca
+  `dominios_pendentes.resolvido=true`, não cria domínio; o upsert do sync não reabre).
+  Permissão `domains/write` em `src/lib/permissions.js`. Bloco de pendentes virou tabela.
+- **Topo:** dólar e atraso do GAM em peças separadas; removidos os 2 cards duplicados de
+  atraso (`#gam-delay-global` e o `#delay-badge` que o loading exibia).
+- **Campanhas:** removidas as 6 colunas de diagnóstico (f·custo, f·sess, f·PAR, f·eCPM,
+  Gargalo, Potencial) e a chamada a `/api/diagnostico` (a rota continua existindo).
+- **Barra lateral:** removido o botão "+ Criar Campanha" (o da tela de Templates fica).
+- **Cor de marca:** menta → azul-claro `#5AC8FA` (escuro) / `#0A7BC2` (claro). Barra de
+  meta usa a cor de marca em todos os estados. (`#0055FF` foi testado e rejeitado.)
+- **Contornos:** token `--border-card` quase invisível em todas as caixas e janelas
+  sobrepostas; inputs, botões e linhas internas de tabela seguem em `--border`.
+- **Filtro de domínio (topo):** lista própria no lugar do `<select>` nativo; o select
+  `#f-domain` continua escondido como fonte da verdade. Escolher já chama `refreshAll()`.
+- **Tipografia:** Poppins em tudo (texto, títulos, números, Chart.js); saíram Inter,
+  Space Grotesk e JetBrains Mono. Logo segue Playfair. Números com `tabular-nums`.
