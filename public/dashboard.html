@@ -1003,6 +1003,16 @@
     .preset-item:hover{background:var(--sec)}
     .preset-item.active{background:color-mix(in oklch,var(--accent) 12%,transparent);color:var(--accent);font-weight:600}
     .preset-divider{border:none;border-top:1px solid var(--border);margin:.25rem 0}
+    /* Filtro de domínio: lista própria (espelha o <select id="f-domain"> escondido) */
+    .dom-dd{position:relative}
+    .dom-dd .date-picker-btn{min-width:170px;justify-content:space-between}
+    .dom-dd.open .date-picker-btn{border-color:var(--accent);background:var(--sec)}
+    .dom-dd.open .cal-chevron{transform:rotate(180deg)}
+    .dom-dd .date-picker-popup{min-width:220px;max-height:340px;overflow-y:auto;padding:.4rem}
+    .dom-dd.open .date-picker-popup{display:flex}
+    .dom-dd .preset-item{display:flex;align-items:center;justify-content:space-between;gap:.75rem}
+    .dom-dd .preset-item .dd-ck{visibility:hidden;color:var(--accent)}
+    .dom-dd .preset-item.active .dd-ck{visibility:visible}
     .preset-label-small{font-size:.625rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;padding:.25rem .75rem 0;display:block}
     #custom-range{background:var(--sec);border:1px solid var(--border);color:var(--fg);padding:.4375rem .75rem;border-radius:.375rem;font-size:.8125rem;font-family:inherit;cursor:pointer;width:100%;box-sizing:border-box;margin-top:.25rem;height:2.25rem}
     #custom-range::placeholder{color:var(--muted)}
@@ -1369,7 +1379,14 @@
             </div>
           </div>
         </div>
-        <select id="f-domain" style="min-width:140px"><option value="all">Todos os domínios</option></select>
+        <select id="f-domain" style="display:none"><option value="all">Todos os domínios</option></select>
+        <div class="dom-dd" id="dom-dd">
+          <button class="date-picker-btn" type="button" onclick="domDdToggle(event)" aria-haspopup="listbox">
+            <span class="cal-label" id="dom-dd-label">Todos os domínios</span>
+            <svg class="cal-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="date-picker-popup" role="listbox"><div class="presets-list" id="dom-dd-list"></div></div>
+        </div>
       </div>
     </div>
     <div class="hdr-r">
@@ -4794,6 +4811,43 @@ function renderGAM(k,adUnits){
   makeTableSortable('adunit-table');
   applyDefaultSort('adunit-table',2);
 }
+
+/* ═══ DOMAIN DROPDOWN (lista própria sobre o <select id="f-domain"> escondido) ═══
+   O select segue sendo a fonte da verdade (todo o código lê .value); a lista só
+   espelha as opções e, ao escolher, grava no select e atualiza a tela. */
+function domDdRender(){
+  const sel=document.getElementById('f-domain');
+  const list=document.getElementById('dom-dd-list');
+  const lbl=document.getElementById('dom-dd-label');
+  if(!sel||!list)return;
+  const ck='<svg class="dd-ck" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+  list.innerHTML=[...sel.options].map((o,i)=>
+    (i===1?'<hr class="preset-divider">':'')+
+    `<button type="button" role="option" class="preset-item${o.value===sel.value?' active':''}" data-v="${esc(o.value).replace(/"/g,'&quot;')}" onclick="domDdPick(this.dataset.v)"><span>${esc(o.textContent)}</span>${ck}</button>`
+  ).join('');
+  if(lbl)lbl.textContent=sel.options[sel.selectedIndex]?.textContent||'Todos os domínios';
+}
+function domDdToggle(e){
+  e.stopPropagation();
+  const dd=document.getElementById('dom-dd');
+  if(!dd.classList.contains('open'))domDdRender();
+  dd.classList.toggle('open');
+}
+function domDdPick(v){
+  const sel=document.getElementById('f-domain');
+  document.getElementById('dom-dd').classList.remove('open');
+  if(sel.value===v)return;
+  sel.value=v;
+  domDdRender();
+  refreshAll();
+}
+document.addEventListener('click',e=>{
+  const dd=document.getElementById('dom-dd');
+  if(dd&&!dd.contains(e.target))dd.classList.remove('open');
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('dom-dd')?.classList.remove('open');});
+// Opções são preenchidas em populateDomainSelect/renderNetworks → mantém o rótulo em dia
+new MutationObserver(domDdRender).observe(document.getElementById('f-domain'),{childList:true});
 
 /* ═══ DOMAIN SELECT ═══ */
 async function populateDomainSelect(){
