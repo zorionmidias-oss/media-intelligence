@@ -720,6 +720,13 @@
     .ud-pill.ok{background:var(--success-soft);color:var(--success)}
     .ud-pill.warn{background:color-mix(in oklch,var(--warn) 15%,transparent);color:var(--warn)}
     .ud-pill.bad{background:var(--danger-soft);color:var(--danger)}
+    /* ROI · 4 dias (hoje + 3 anteriores) no expand de conjuntos */
+    .ud-r4{display:inline-flex;gap:6px;align-items:flex-end}
+    .ud-r4 .r4c{display:inline-flex;flex-direction:column;align-items:center;gap:1px;min-width:36px}
+    .ud-r4 .r4c em{font-style:normal;font-weight:700;font-size:.66rem}
+    .ud-r4 .r4c i{display:block;width:10px;border-radius:2px}
+    .ud-r4 .r4c small{font-size:.56rem;color:var(--muted)}
+    .ud-r4 .r4c.parcial{opacity:.5}
     .ud-bud{white-space:nowrap;display:flex;align-items:center;justify-content:flex-end;gap:.4rem}
     .ud-bud-val{display:inline-block;min-width:70px;text-align:right;font-family:ui-monospace,Menlo,monospace;font-weight:600}
     .ud-bud-edit{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;padding:.1rem .25rem;border-radius:.3rem;transition:all .15s;line-height:1}
@@ -6335,16 +6342,47 @@ async function toggleUtmExpand(utm,campId,btn){
   try{
     const since=document.getElementById('f-since').value;
     const until=document.getElementById('f-until').value;
-    const r=await fetch(`/api/drilldown/${encodeURIComponent(utm)}?since=${since}&until=${until}&adsets_only=1&rps=${rps||0}${campId?`&campaign_id=${encodeURIComponent(campId)}`:''}`);
+    const base=`/api/drilldown/${encodeURIComponent(utm)}?adsets_only=1&rps=${rps||0}${campId?`&campaign_id=${encodeURIComponent(campId)}`:''}`;
+    // ROI · 4 dias: janela fixa (hoje + 3), independente do filtro. Falha → coluna "—", tabela segue.
+    const dias4=janela4dBR();
+    const p4=fetch(`${base}&since=${dias4[0]}&until=${dias4[3]}`).then(x=>x.ok?x.json():null).catch(()=>null);
+    const r=await fetch(`${base}&since=${since}&until=${until}`);
     if(!r.ok)throw new Error((await r.json()).error||r.statusText);
     const d=await r.json();
-    renderUtmAdsets(box,utm,d,rps);
+    renderUtmAdsets(box,utm,d,rps,await p4);
   }catch(e){
     box.innerHTML=`<div class="utm-detail-load" style="color:var(--bad)">${esc(e.message)}</div>`;
   }
 }
 
-function renderUtmAdsets(box,utm,d,rps){
+// Janela fixa do "ROI · 4 dias": D-3 … hoje (fuso SP), YYYY-MM-DD.
+function janela4dBR(){
+  const t=new Date(hojeBR()+'T12:00:00Z').getTime();
+  return [3,2,1,0].map(n=>new Date(t-n*864e5).toISOString().slice(0,10));
+}
+
+// 4 slots fixos: ROI em x (1 + ROI%/100 do roi_serie do drilldown) + mini-barra ∝ |x−1| + DD/MM.
+// Dia sem gasto → "—". Hoje esmaecido (dia em andamento).
+function roi4dHtml(serie,dias){
+  const byDia={};(serie||[]).forEach(s=>{byDia[s.data]=1+(+s.roi||0)/100;});
+  const vals=dias.map(dia=>byDia[dia]!=null?byDia[dia]:null);
+  const mx=Math.max(0,...vals.filter(v=>v!=null).map(v=>Math.abs(v-1)))||1;
+  const hoje=hojeBR();
+  return `<span class="ud-r4">${dias.map((dia,i)=>{
+    const v=vals[i];
+    const dd=`${dia.slice(8,10)}/${dia.slice(5,7)}`;
+    const parc=dia===hoje?' parcial" title="parcial — dia em andamento':'';
+    if(v==null)return `<span class="r4c${parc}"><em style="color:var(--muted)">—</em><i style="height:3px;background:var(--border)"></i><small>${dd}</small></span>`;
+    const cls=corROI(v);
+    const col=cls==='ok'?'var(--success)':cls==='warn'?'var(--warn)':'var(--danger)';
+    const h=Math.max(3,(Math.abs(v-1)/mx)*22);
+    return `<span class="r4c${parc}"><em style="color:${col}">${v.toFixed(2)}x</em><i style="height:${h.toFixed(0)}px;background:${col}"></i><small>${dd}</small></span>`;
+  }).join('')}</span>`;
+}
+
+function renderUtmAdsets(box,utm,d,rps,d4){
+  const dias4=janela4dBR();
+  const serie4={};(d4?.adsets||[]).forEach(a=>{serie4[a.adset_id]=a.roi_serie||[];});
   const adsets=(d.adsets||[]).filter(a=>a.status==='ACTIVE').sort((a,b)=>(b.spend||0)-(a.spend||0));
   if(!adsets.length){
     box.innerHTML=`<div class="utm-detail-load">Nenhum conjunto ativo com gasto no período.</div>`;
@@ -6382,6 +6420,7 @@ function renderUtmAdsets(box,utm,d,rps){
       <td class="mo">${BRL(spend)}</td>
       <td class="mo">${fat!=null?BRL(fat):'—'}</td>
       <td class="mo">${roi!=null?`<span class="ud-pill ${clsRoi}">${roi.toFixed(2)}x</span>`:'—'}</td>
+      <td class="mo">${d4?roi4dHtml(serie4[a.adset_id],dias4):'—'}</td>
       <td class="mo">${NUM(resultado)}</td>
       <td class="mo">${custoRes>0?BRL(custoRes):'—'}</td>
       <td class="mo">${NUM(conversas)}</td>
@@ -6407,7 +6446,7 @@ function renderUtmAdsets(box,utm,d,rps){
     </div>
     <div class="ud-table-wrap"><table class="ud-table"><thead><tr>
       <th>Conjunto</th><th>Gasto</th><th title="Receita GAM líquida (×0.9) dos anúncios deste conjunto, via ad id na utm_campaign">Receita</th>
-      <th title="Receita líquida ÷ gasto (com imposto)">ROI</th><th>Resultado</th><th>Custo/Res.</th><th>Conversas</th>
+      <th title="Receita líquida ÷ gasto (com imposto)">ROI</th><th title="ROI por dia — hoje + 3 dias anteriores, independente do filtro. Hoje esmaecido = parcial">ROI · 4 dias</th><th>Resultado</th><th>Custo/Res.</th><th>Conversas</th>
       <th title="Sessões (view_content) ÷ Conversas iniciadas">Sessão/Lead</th><th title="Receita GAM líquida ÷ sessões (view_content) do próprio conjunto — retorno por sessão">RPS</th><th title="Custo por sessão do conjunto ÷ RPS da página — abaixo de 1 = gastando menos do que ganha">Break Even</th><th>Orçamento/dia</th>
     </tr></thead><tbody>${rowsHtml}</tbody></table></div>`;
 }
