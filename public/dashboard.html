@@ -248,6 +248,26 @@
     .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
     .g5{display:grid;grid-template-columns:repeat(5,1fr);gap:.75rem}
     .pac-sec-lbl{font-size:.6875rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.5rem}
+    /* ── FUNIL DE CONVERSÃO ── */
+    .fnl-card{margin-bottom:1.25rem;padding:1.1rem 1.25rem 1.25rem}
+    .fnl-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem}
+    .fnl-title{font-size:1rem;font-weight:600;color:var(--fg)}
+    .fnl-nav{display:flex;align-items:center;gap:.4rem}
+    .fnl-arrow{background:transparent;border:none;color:var(--muted);font-size:1.15rem;line-height:1;cursor:pointer;padding:.1rem .4rem;border-radius:var(--r)}
+    .fnl-arrow:hover{color:var(--fg);background:var(--sec)}
+    .fnl-scope{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:.25rem .7rem;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+    .fnl-body{position:relative}
+    .fnl-svg{display:block;width:100%;height:190px}
+    .fnl-pills,.fnl-lbls{position:absolute;left:0;right:0;pointer-events:none}
+    .fnl-pills{top:0;height:190px}
+    .fnl-pill{position:absolute;top:50%;transform:translate(-50%,-50%);padding:.22rem .6rem;border-radius:999px;background:var(--card);border:1px solid var(--border-strong);font-size:.75rem;font-weight:700;color:var(--fg);white-space:nowrap;pointer-events:auto;cursor:default}
+    .fnl-pill.bad{color:var(--danger);border-color:color-mix(in oklch,var(--danger) 45%,transparent)}
+    .fnl-lbls{position:relative;display:grid;grid-template-columns:repeat(5,1fr);margin-top:.6rem}
+    .fnl-lbl{text-align:center}
+    .fnl-lbl b{display:block;font-size:1.05rem;font-weight:700;color:var(--fg);font-variant-numeric:tabular-nums}
+    .fnl-lbl span{display:block;font-size:.66rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+    .fnl-lbl small{display:block;font-size:.64rem;color:var(--muted-light);margin-top:.1rem}
+    .fnl-empty{padding:2.5rem 0;text-align:center;color:var(--muted);font-size:.8rem}
     .pac-card{background:var(--card);border:1px solid var(--border-card);border-radius:var(--rl);padding:.875rem 1rem;position:relative}
     .pac-card-lbl{font-size:.6875rem;color:var(--muted);font-weight:500;margin-bottom:.375rem;display:flex;align-items:center;gap:.375rem}
     .pac-card-val{font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;font-size:1.25rem;font-weight:700;color:var(--fg);line-height:1.2;font-feature-settings:'tnum' 1}
@@ -1477,6 +1497,19 @@
             </div>
             <button class="meta-edit-btn" id="meta-add-roas" onclick="openMetaModal('roas_diario')" title="Definir meta" style="font-size:.68rem;opacity:.3;margin-top:.5rem">+ meta</button>
           </div>
+        </div>
+
+        <!-- Funil de Conversão (spec 2026-11-23-funil-conversao-design) -->
+        <div class="card fnl-card" id="fnl-card">
+          <div class="fnl-hd">
+            <span class="fnl-title">Funil de Conversão</span>
+            <div class="fnl-nav">
+              <button type="button" class="fnl-arrow" onclick="fnlNav(-1)" aria-label="Anterior">‹</button>
+              <span class="fnl-scope" id="fnl-scope">Geral</span>
+              <button type="button" class="fnl-arrow" onclick="fnlNav(1)" aria-label="Próximo">›</button>
+            </div>
+          </div>
+          <div class="fnl-body" id="fnl-body"><div class="fnl-empty">Carregando…</div></div>
         </div>
 
         <!-- Pacing do dia -->
@@ -3600,6 +3633,70 @@ async function loadData(force=false){
   loadGamKpis();
   loadPaises();
   loadOrcamentoStatus(since,until);
+  loadFunilConversao(q);
+}
+
+/* ═══ FUNIL DE CONVERSÃO (spec 2026-11-23-funil-conversao-design) ═══
+   Cliques → Conversas (bot) → Página abriu → Visualização de conteúdo → Impressões GAM.
+   Passagem que encolhe = %; que cresce (ex.: impressões ≈2× VC) = multiplicador "x".
+   Vermelho = passagem mais abaixo da mediana 7d (desvio < 0,9). Setas: Geral → campanhas. */
+const FNL_ETAPAS=[['cliques','Cliques'],['conversas','Conversas iniciadas'],['pagina_abriu','Cliques no link'],['vc','Visualização de conteúdo'],['imp_gam','Impressões']];
+const FNL_PASS=['t12','t23','t34','x45'];
+let _fnl={lista:[],i:0};
+async function loadFunilConversao(q){
+  const body=document.getElementById('fnl-body');
+  if(!body)return;
+  try{
+    const r=await fetch(`/api/funil-conversao?${q}`);
+    if(!r.ok)throw new Error((await r.json().catch(()=>({}))).error||r.statusText);
+    const d=await r.json();
+    const atual=_fnl.lista[_fnl.i]?.campaign_id;
+    _fnl.lista=[d.geral,...(d.campanhas||[])];
+    const idx=atual?_fnl.lista.findIndex(f=>f.campaign_id===atual):0;
+    _fnl.i=idx>=0?idx:0;
+    renderFunilConversao();
+  }catch(e){body.innerHTML=`<div class="fnl-empty" style="color:var(--bad)">${esc(e.message)}</div>`;}
+}
+function fnlNav(dir){
+  if(!_fnl.lista.length)return;
+  _fnl.i=(_fnl.i+dir+_fnl.lista.length)%_fnl.lista.length;
+  renderFunilConversao();
+}
+function renderFunilConversao(){
+  const body=document.getElementById('fnl-body');
+  const f=_fnl.lista[_fnl.i];
+  document.getElementById('fnl-scope').textContent=f?(f.nome||'—'):'Geral';
+  document.getElementById('fnl-scope').title=f?(f.nome||''):'';
+  if(!f||!(f.etapas.cliques>0)){body.innerHTML='<div class="fnl-empty">Sem cliques no período.</div>';return;}
+  const vals=FNL_ETAPAS.map(([k])=>+f.etapas[k]||0);
+  // gargalo: menor taxa÷referência, só se < 0,9
+  let bad=-1,pior=0.9;
+  FNL_PASS.forEach((k,i)=>{const t=f.taxas[k],r=f.ref?.[k];if(t!=null&&r>0&&t/r<pior){pior=t/r;bad=i;}});
+  // geometria: 5 colunas, faixa centrada; altura proporcional ao valor (mín. 4px)
+  const W=1000,H=190,cy=H/2,maxH=H-20,mx=Math.max(...vals)||1;
+  const hs=vals.map(v=>v>0?Math.max(4,(v/mx)*maxH):2);
+  const xs=vals.map((_,i)=>W*(i+.5)/5);
+  const col=i=>i===bad?'var(--danger)':'var(--accent)';
+  let paths='';
+  for(let i=0;i<4;i++){
+    const x0=i===0?0:xs[i],x1=i===3?W:xs[i+1];
+    const a=xs[i],b=xs[i+1],m=(a+b)/2,h0=hs[i]/2,h1=hs[i+1]/2;
+    const top=`M${x0},${cy-h0} L${a},${cy-h0} C${m},${cy-h0} ${m},${cy-h1} ${b},${cy-h1} L${x1},${cy-h1}`;
+    const bot=`L${x1},${cy+h1} L${b},${cy+h1} C${m},${cy+h1} ${m},${cy+h0} ${a},${cy+h0} L${x0},${cy+h0} Z`;
+    paths+=`<path d="${top} ${bot}" fill="${col(i)}" fill-opacity="${i===bad?.9:.85}"/>`;
+  }
+  const pct=x=>`${(x*100).toLocaleString('pt-BR',{maximumFractionDigits:1})}%`;
+  const fmt=x=>x==null?'—':(x>1?`${x.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})}x`:pct(x));
+  const pills=FNL_PASS.map((k,i)=>{
+    const t=f.taxas[k],r=f.ref?.[k];
+    const tip=r!=null?`normal 7d: ${fmt(r)}`:'sem referência 7d';
+    return `<span class="fnl-pill${i===bad?' bad':''}" style="left:${(i+1)*20}%" title="${tip}">${fmt(t)}</span>`;
+  }).join('');
+  const lbls=FNL_ETAPAS.map(([k,n])=>`<div class="fnl-lbl"><b class="hideable-value">${NUM(f.etapas[k])}</b><span>${n}</span>${
+    k==='conversas'?`<small title="Conversas iniciadas segundo a Meta (conta a mesma pessoa mais de uma vez)">Meta: ${NUM(f.etapas.conversas_meta)}</small>`:
+    k==='pagina_abriu'?'<small title="Só conta quem teve a página carregada no blog">página abriu</small>':''}</div>`).join('');
+  body.innerHTML=`<svg class="fnl-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${paths}</svg>
+    <div class="fnl-pills">${pills}</div><div class="fnl-lbls">${lbls}</div>`;
 }
 
 /* ═══ PACING DO DIA ═══ */

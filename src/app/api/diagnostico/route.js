@@ -207,3 +207,4 @@ async function handler(req, res) {
 }
 
 module.exports = handler;
+module.exports.buscarLinhas = buscarLinhas; // reusado por /api/funil-conversao

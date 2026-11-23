@@ -27,6 +27,7 @@ const campanhaIntradayHandler = require('./src/app/api/campanha-intraday/route')
 const orcamentoStatusHandler = require('./src/app/api/orcamento-status/route');
 const { customHandler: relatorioCustomHandler } = require('./src/app/api/relatorios/route');
 const diagnosticoHandler = require('./src/app/api/diagnostico/route');
+const funilConversaoHandler = require('./src/app/api/funil-conversao/route');
 const revenueByUtmHandler = require('./src/app/api/revenue-by-utm/route');
 const roiPorPaisHandler = require('./src/app/api/roi-por-pais/route');
 const supabase = require('./src/lib/supabase');
@@ -279,6 +280,7 @@ app.get('/api/gam-status', requireAuth, gamStatusHandler);
 app.get('/api/intraday', requireAuth, intradayHandler);
 app.get('/api/roi-por-pais', requireAuth, roiPorPaisHandler);
 app.get('/api/diagnostico', requireAuth, diagnosticoHandler);
+app.get('/api/funil-conversao', requireAuth, funilConversaoHandler);
 app.get('/api/campanha-intraday/:campaignId', requireAuth, campanhaIntradayHandler);
 // Marcar campanha como otimizada HOJE (botão ✓ na aba Campanhas do redesign).
 // Upsert em `campanha_otimizacao` (1 linha por campaign_id); a aba lê ultima_otimizacao daí.

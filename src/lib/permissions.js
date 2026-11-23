@@ -44,6 +44,7 @@ const ROUTES = [
 
   // overview
   R('GET', '/api/overview', ['overview'], 'read'),
+  R('GET', '/api/funil-conversao', ['overview'], 'read'),
   R('GET', '/api/orcamento-status', ['overview', 'campaigns'], 'read'),
   R('GET', '/api/gam-status', ['overview', 'gam'], 'read'),
   R('GET', '/api/intraday', ['overview'], 'read'),
