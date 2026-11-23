@@ -487,12 +487,22 @@
     .modal-actions{display:flex;gap:.5rem;justify-content:flex-end;margin-top:.25rem}
 
     /* ── DOMAINS TABLE ── */
-    .dom-pending-card{background:color-mix(in oklch,var(--warn) 8%,transparent);border:1px solid color-mix(in oklch,var(--warn) 30%,transparent);border-radius:var(--rl);padding:1.25rem;margin-bottom:.5rem}
-    .dom-pending-title{font-size:.875rem;font-weight:600;color:var(--warn);margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem}
-    .dom-pending-row{display:flex;align-items:center;gap:.75rem;padding:.5rem 0;border-bottom:1px solid color-mix(in oklch,var(--warn) 15%,transparent)}
-    .dom-pending-row:last-child{border-bottom:none}
-    .dom-pending-prefix{font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;font-size:.875rem;font-weight:600;color:var(--warn)}
-    .dom-pending-example{font-size:.75rem;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .dom-pending-card{background:var(--card);border:1px solid var(--border-card);border-radius:var(--rl);margin-bottom:1.25rem;overflow:hidden}
+    .dom-pending-title{display:flex;align-items:center;gap:.6rem;padding:.9rem 1.1rem;font-size:.85rem;font-weight:600;color:var(--fg)}
+    .dom-pending-title svg{color:var(--warn);flex-shrink:0}
+    .dom-pending-title small{font-weight:400;color:var(--muted);font-size:.75rem}
+    .dom-pending-count{display:inline-flex;align-items:center;justify-content:center;min-width:1.4rem;height:1.25rem;padding:0 .4rem;border-radius:999px;background:color-mix(in oklch,var(--warn) 14%,transparent);color:var(--warn);font-size:.7rem;font-weight:700}
+    .dom-pending-tbl{width:100%;border-collapse:collapse;font-size:.8rem}
+    .dom-pending-tbl th{text-align:left;padding:.5rem 1.1rem;background:var(--sec);color:var(--muted);font-size:.62rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+    .dom-pending-tbl td{padding:.6rem 1.1rem;border-top:1px solid var(--border);vertical-align:middle}
+    .dom-pending-tbl tbody tr:hover{background:var(--sec)}
+    .dom-pending-prefix{display:inline-block;padding:.15rem .5rem;border-radius:var(--r);background:var(--sec-strong);font-family:var(--font-mono);font-size:.78rem;font-weight:600;color:var(--fg);letter-spacing:.02em}
+    .dom-pending-example{color:var(--muted);max-width:420px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .dom-pending-when{color:var(--muted);font-size:.75rem;white-space:nowrap}
+    .dom-pending-acts{display:flex;gap:.4rem;justify-content:flex-end}
+    .dom-pending-acts .btn{height:1.85rem;padding:0 .8rem;font-size:.75rem}
+    .dom-pending-acts .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+    .dom-pending-acts .btn-ghost:hover{color:var(--fg);border-color:var(--border-strong)}
     .logo{font-family:'Playfair Display','Georgia',serif;font-weight:700;font-style:italic;font-size:1.1rem;color:var(--logo-color);letter-spacing:.5px;white-space:nowrap;transition:opacity .3s,width .3s}
     .sb.col .logo{opacity:0;width:0;overflow:hidden}
     /* Contas Meta */
@@ -1806,9 +1816,10 @@
         <div class="dom-pending-card" id="dom-pending-section" style="display:none">
           <div class="dom-pending-title">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
-            Domínios detectados automaticamente — aguardando aprovação
+            Domínios novos detectados <span class="dom-pending-count" id="dom-pending-count">0</span>
+            <small>aprove para cadastrar ou ignore para tirar da lista</small>
           </div>
-          <div id="dom-pending-list"><div class="empty" style="padding:.5rem 0;font-size:.8125rem">Nenhum pendente</div></div>
+          <div id="dom-pending-list"><div class="empty" style="padding:.5rem 1.1rem;font-size:.8125rem">Nenhum pendente</div></div>
         </div>
 
         <!-- Registered domains table -->
@@ -5160,14 +5171,20 @@ function renderPendentesList(pendentes){
   sec.style.display=count>0?'block':'none';
   if(!count){list.innerHTML='<div class="empty" style="padding:.5rem 0;font-size:.8125rem">Nenhum domínio pendente</div>';return}
 
-  list.innerHTML=pendentes.map(p=>`<div class="dom-pending-row">
-    <span class="dom-pending-prefix">${esc(p.prefixo_detectado)}</span>
-    <span class="dom-pending-example" title="${esc(p.exemplo_nome_campanha||'')}">
-      ex: ${esc(p.exemplo_nome_campanha||'—')}
-    </span>
-    <button class="btn btn-s" style="height:1.75rem;font-size:.75rem;flex-shrink:0" onclick="openModalAprovar('${esc(p.prefixo_detectado)}','${esc(p.exemplo_nome_campanha||'')}')">Aprovar</button>
-    <button class="btn btn-s" style="height:1.75rem;font-size:.75rem;flex-shrink:0;background:transparent;border:1px solid var(--border)" title="Tirar da lista sem cadastrar (não volta)" onclick="ignorarDomain('${esc(p.prefixo_detectado)}',this)">Ignorar</button>
-  </div>`).join('');
+  const cnt=document.getElementById('dom-pending-count');
+  if(cnt)cnt.textContent=count;
+  const quando=iso=>iso?new Date(iso).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
+  list.innerHTML=`<table class="dom-pending-tbl"><thead><tr>
+    <th>Prefixo</th><th>Exemplo de campanha</th><th>Detectado em</th><th></th>
+  </tr></thead><tbody>${pendentes.map(p=>`<tr>
+    <td><span class="dom-pending-prefix">${esc(p.prefixo_detectado)}</span></td>
+    <td><div class="dom-pending-example" title="${esc(p.exemplo_nome_campanha||'')}">${esc(p.exemplo_nome_campanha||'—')}</div></td>
+    <td class="dom-pending-when">${quando(p.primeira_deteccao)}</td>
+    <td><div class="dom-pending-acts">
+      <button class="btn btn-ghost" title="Tirar da lista sem cadastrar (não volta)" onclick="ignorarDomain('${esc(p.prefixo_detectado)}',this)">Ignorar</button>
+      <button class="btn btn-p" onclick="openModalAprovar('${esc(p.prefixo_detectado)}','${esc(p.exemplo_nome_campanha||'')}')">Aprovar</button>
+    </div></td>
+  </tr>`).join('')}</tbody></table>`;
 }
 
 /* ═══ SYNC STATUS ═══ */
