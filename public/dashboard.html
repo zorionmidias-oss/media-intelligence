@@ -24,7 +24,7 @@
          verde lucro, coral prejuízo, laranja atenção. */
       /* Backgrounds */
       --bg:#000000;--card:#0A0A0D;--sec:#121216;--sec-strong:#1A1A21;
-      --border:#1E1E26;--border-strong:#2B2B36;--border-card:rgba(255,255,255,.045);
+      --border:#1E1E26;--border-strong:#2B2B36;--border-card:rgba(255,255,255,.022);
       /* Text */
       --fg:#F1F5F9;--fg-soft:#CBD5E1;--muted:#94A3B8;--muted-light:#475569;
       /* Accent (marca) — UI only: botões, foco, itens ativos */
@@ -268,7 +268,7 @@
     .card{background:var(--card);border:1px solid var(--border-card);border-radius:var(--rl);padding:1.25rem;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.04)}
     .card-hv{transition:border-color .3s var(--ease),transform .35s var(--ease-out),box-shadow .35s var(--ease);cursor:default}
     .card-hv::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,color-mix(in oklch,var(--accent) 5%,transparent),transparent);opacity:0;transition:opacity .5s;pointer-events:none}
-    .card-hv:hover{border-color:color-mix(in oklch,var(--accent) 22%,transparent);transform:translateY(-2px);box-shadow:var(--shadow-md)}
+    .card-hv:hover{border-color:color-mix(in oklch,var(--accent) 14%,transparent);transform:translateY(-2px);box-shadow:var(--shadow-md)}
     .card-hv:hover::before{opacity:1}
 
     /* ── KPI ── */
@@ -931,7 +931,7 @@
     :root[data-theme="light"]{
       /* Light: base fria limpa, azul escurecido p/ contraste AA sobre branco */
       --bg:#F8FAFC;--card:#FFFFFF;--sec:#F3F6FA;--sec-strong:#EAEEF3;
-      --border:#E2E5EA;--border-strong:#D2D6DD;--border-card:rgba(15,23,42,.06);
+      --border:#E2E5EA;--border-strong:#D2D6DD;--border-card:rgba(15,23,42,.035);
       --fg:#1B1E28;--fg-soft:#454B5C;--muted:#6D7385;--muted-light:#A8ADBB;
       --accent:#0A7BC2;--accent-hover:#08679F;--accent-soft:rgba(10,123,194,0.10);--accent-fg:#FFFFFF;
       --color-positive:#0E9F6E;--color-neutral:#6D7385;--color-warning:#D97706;--color-negative:#E5484D;--color-info:#2563EB;
