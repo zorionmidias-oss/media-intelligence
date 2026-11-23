@@ -24,11 +24,11 @@
          verde lucro, coral prejuízo, laranja atenção. */
       /* Backgrounds */
       --bg:#000000;--card:#0A0A0D;--sec:#121216;--sec-strong:#1A1A21;
-      --border:#1E1E26;--border-strong:#2B2B36;
+      --border:#1E1E26;--border-strong:#2B2B36;--border-card:rgba(255,255,255,.045);
       /* Text */
       --fg:#F1F5F9;--fg-soft:#CBD5E1;--muted:#94A3B8;--muted-light:#475569;
       /* Accent (marca) — UI only: botões, foco, itens ativos */
-      --accent:#0055FF;--accent-hover:#3377FF;--accent-soft:rgba(0,85,255,.14);--accent-fg:#FFFFFF;
+      --accent:#5AC8FA;--accent-hover:#8AD9FC;--accent-soft:rgba(90,200,250,.10);--accent-fg:#001A26;
       /* Cores semânticas de dados */
       --color-positive:#4ADE80;--color-neutral:#94A3B8;--color-warning:#FF9F45;--color-negative:#FF6B7A;--color-info:#5CA8FF;
       /* Aliases de compatibilidade */
@@ -265,10 +265,10 @@
     .g-ch{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:1.5rem}
 
     /* ── CARD ── */
-    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:1.25rem;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.04)}
+    .card{background:var(--card);border:1px solid var(--border-card);border-radius:var(--rl);padding:1.25rem;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.04)}
     .card-hv{transition:border-color .3s var(--ease),transform .35s var(--ease-out),box-shadow .35s var(--ease);cursor:default}
     .card-hv::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,color-mix(in oklch,var(--accent) 5%,transparent),transparent);opacity:0;transition:opacity .5s;pointer-events:none}
-    .card-hv:hover{border-color:color-mix(in oklch,var(--accent) 50%,transparent);transform:translateY(-2px);box-shadow:var(--shadow-md)}
+    .card-hv:hover{border-color:color-mix(in oklch,var(--accent) 22%,transparent);transform:translateY(-2px);box-shadow:var(--shadow-md)}
     .card-hv:hover::before{opacity:1}
 
     /* ── KPI ── */
@@ -444,12 +444,12 @@
     .itab-row{display:flex;gap:0;border-bottom:1px solid var(--border);width:fit-content}
     .itab{height:2.25rem;padding:0 1.25rem;border:none;background:transparent;cursor:pointer;font-family:inherit;font-size:.8125rem;font-weight:500;color:var(--muted);transition:all .2s;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px}
     .itab:hover{color:var(--fg)}
-    .itab.on{background:rgba(0,85,255,.12);color:var(--accent);border-bottom-color:var(--accent)}
+    .itab.on{background:rgba(90,200,250,.12);color:var(--accent);border-bottom-color:var(--accent)}
 
     /* ── CAMPAIGN MINI-KPI STRIP ── */
     .ck-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem}
     @media(max-width:900px){.ck-strip{grid-template-columns:repeat(2,1fr)}}
-    .ck{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:.75rem 1rem}
+    .ck{background:var(--card);border:1px solid var(--border-card);border-radius:var(--r);padding:.75rem 1rem}
     .ck-lbl{font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.3rem}
     .ck-val{font-family:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;font-size:1.1rem;font-weight:700;color:var(--fg);line-height:1.1}
     .ck-sub{font-size:.7rem;color:var(--muted);margin-top:.2rem}
@@ -578,7 +578,7 @@
 
     /* ── STATUS DE OPERAÇÃO: câmbio e atraso como peças separadas ── */
     .op-pills{display:flex;align-items:center;gap:.5rem}
-    .op-pills .op-pill{display:inline-flex;align-items:center;gap:.375rem;height:2.25rem;padding:0 .75rem;border:1px solid var(--border);border-radius:var(--r);background:var(--sec);font-size:.72rem;color:var(--muted);white-space:nowrap;font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+    .op-pills .op-pill{display:inline-flex;align-items:center;gap:.375rem;height:2.25rem;padding:0 .75rem;border:1px solid var(--border-card);border-radius:var(--r);background:var(--sec);font-size:.72rem;color:var(--muted);white-space:nowrap;font-family:var(--font-mono);font-variant-numeric:tabular-nums}
     .op-pills .op-delay{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 35%,transparent)}
     .op-pills .op-delay.late{color:var(--bad);background:var(--danger-soft);border-color:color-mix(in srgb,var(--bad) 45%,transparent)}
 
@@ -836,7 +836,7 @@
     .badge-soon{background:var(--info-soft);color:var(--info);padding:1px 6px;border-radius:3px;font-size:.625rem;letter-spacing:.5px}
     .funil-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:1.5rem}
     @media(max-width:700px){.funil-cards{grid-template-columns:repeat(2,1fr)}}
-    .card-mini{background:var(--card);border:1px solid var(--border);border-radius:.625rem;padding:1rem}
+    .card-mini{background:var(--card);border:1px solid var(--border-card);border-radius:.625rem;padding:1rem}
     .card-mini label{font-size:.625rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:.5rem}
     .card-mini strong{font-size:1.375rem;font-weight:700;display:block;line-height:1.2}
     .card-mini small{color:var(--muted);font-size:.6875rem;display:block;margin-top:.25rem}
@@ -931,9 +931,9 @@
     :root[data-theme="light"]{
       /* Light: base fria limpa, azul escurecido p/ contraste AA sobre branco */
       --bg:#F8FAFC;--card:#FFFFFF;--sec:#F3F6FA;--sec-strong:#EAEEF3;
-      --border:#E2E5EA;--border-strong:#D2D6DD;
+      --border:#E2E5EA;--border-strong:#D2D6DD;--border-card:rgba(15,23,42,.06);
       --fg:#1B1E28;--fg-soft:#454B5C;--muted:#6D7385;--muted-light:#A8ADBB;
-      --accent:#0055FF;--accent-hover:#0044CC;--accent-soft:rgba(0,85,255,0.10);--accent-fg:#FFFFFF;
+      --accent:#0A7BC2;--accent-hover:#08679F;--accent-soft:rgba(10,123,194,0.10);--accent-fg:#FFFFFF;
       --color-positive:#0E9F6E;--color-neutral:#6D7385;--color-warning:#D97706;--color-negative:#E5484D;--color-info:#2563EB;
       --success:var(--color-positive);--success-soft:rgba(14,159,110,0.12);
       --warning:var(--color-warning);--warning-soft:rgba(217,119,6,0.12);
@@ -1574,7 +1574,7 @@
             <canvas id="intraday-canvas"></canvas>
           </div>
           <div id="intraday-legend" style="display:flex;gap:1rem;justify-content:center;margin-top:.5rem;font-size:.75rem;color:var(--muted)">
-            <span><span style="display:inline-block;width:12px;height:2px;background:#0055FF;border-radius:2px;margin-right:4px;vertical-align:middle"></span>Hoje</span>
+            <span><span style="display:inline-block;width:12px;height:2px;background:#5AC8FA;border-radius:2px;margin-right:4px;vertical-align:middle"></span>Hoje</span>
             <span><span style="display:inline-block;width:12px;height:0;border-top:1.5px dashed rgba(150,150,170,0.6);margin-right:4px;vertical-align:middle"></span>Ontem</span>
           </div>
           <div id="intraday-note" style="display:none;font-size:.7rem;color:var(--muted);text-align:center;margin-top:.25rem">* Investimento distribuído proporcionalmente por hora</div>
@@ -2623,7 +2623,7 @@
       <div id="ci-conjuntos" style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.85rem"></div>
       <div style="position:relative;height:300px"><canvas id="ci-canvas"></canvas></div>
       <div style="display:flex;gap:1.25rem;justify-content:center;margin-top:.65rem;font-size:.75rem;color:var(--muted)">
-        <span style="display:inline-flex;align-items:center;gap:.35rem"><span style="width:14px;height:2px;background:#0055FF;display:inline-block;border-radius:2px"></span>Hoje</span>
+        <span style="display:inline-flex;align-items:center;gap:.35rem"><span style="width:14px;height:2px;background:#5AC8FA;display:inline-block;border-radius:2px"></span>Hoje</span>
         <span style="display:inline-flex;align-items:center;gap:.35rem"><span style="width:14px;height:0;border-top:2px dashed rgba(150,150,170,.7);display:inline-block"></span>Ontem</span>
       </div>
     </div>
@@ -4050,26 +4050,26 @@ function renderIntradayChart(data,metric){
         {
           label:'Hoje',
           data:hojeVals,
-          borderColor:'#0055FF',
+          borderColor:'#5AC8FA',
           // Mesmo degradê de área para TODAS as métricas. No ROI o degradê é
           // ancorado na linha do ZERO: menta esvaindo até o zero em cima,
           // VERMELHO aprofundando abaixo do zero (prejuízo pinta vermelho).
           backgroundColor:(c)=>{
             const{ctx,chartArea,scales}=c.chart;
-            if(!chartArea)return 'rgba(0,85,255,0.08)';
+            if(!chartArea)return 'rgba(90,200,250,0.08)';
             const top=chartArea.top,bot=chartArea.bottom;
             const g=ctx.createLinearGradient(0,top,0,bot);
             if(metric==='roi'&&scales&&scales.y){
               const y0=Math.min(Math.max(scales.y.getPixelForValue(0),top),bot);
               const t=Math.min(Math.max((y0-top)/((bot-top)||1),0),1);
-              g.addColorStop(0,'rgba(0,85,255,0.32)');
-              g.addColorStop(Math.max(t-0.001,0),'rgba(0,85,255,0)');
+              g.addColorStop(0,'rgba(90,200,250,0.32)');
+              g.addColorStop(Math.max(t-0.001,0),'rgba(90,200,250,0)');
               g.addColorStop(Math.min(t+0.001,1),'rgba(255,107,122,0)');
               g.addColorStop(1,'rgba(255,107,122,0.34)');
             }else{
-              g.addColorStop(0,'rgba(0,85,255,0.32)');
-              g.addColorStop(.55,'rgba(0,85,255,0.07)');
-              g.addColorStop(1,'rgba(0,85,255,0)');
+              g.addColorStop(0,'rgba(90,200,250,0.32)');
+              g.addColorStop(.55,'rgba(90,200,250,0.07)');
+              g.addColorStop(1,'rgba(90,200,250,0)');
             }
             return g;
           },
@@ -4081,12 +4081,12 @@ function renderIntradayChart(data,metric){
           fill:{target:'origin'},
           spanGaps:true,
           segment:{
-            borderColor:ctx=>metric!=='roi'?undefined:(ctx.p1.parsed.y<0?'#E5384B':'#0055FF'),
+            borderColor:ctx=>metric!=='roi'?undefined:(ctx.p1.parsed.y<0?'#E5384B':'#5AC8FA'),
           },
           pointBackgroundColor:ctx=>{
-            if(metric!=='roi')return '#0055FF';
+            if(metric!=='roi')return '#5AC8FA';
             const v=hojeVals[ctx.dataIndex];
-            return(v!==null&&v<0)?'#E5384B':'#0055FF';
+            return(v!==null&&v<0)?'#E5384B':'#5AC8FA';
           },
         },
         {
@@ -6587,9 +6587,9 @@ function _ciRender(){
   _ciChart=new Chart(canvas,{
     type:'line',
     data:{labels,datasets:[
-      {label:'Hoje',data:hojeVals,borderColor:'#0055FF',
-       backgroundColor:c=>{const{ctx,chartArea}=c.chart;if(!chartArea)return 'rgba(0,85,255,0.08)';const g=ctx.createLinearGradient(0,chartArea.top,0,chartArea.bottom);g.addColorStop(0,'rgba(0,85,255,0.28)');g.addColorStop(.55,'rgba(0,85,255,0.06)');g.addColorStop(1,'rgba(0,85,255,0)');return g;},
-       borderWidth:2,pointRadius:3,pointHoverRadius:5,tension:.35,fill:{target:'origin'},spanGaps:true,pointBackgroundColor:'#0055FF'},
+      {label:'Hoje',data:hojeVals,borderColor:'#5AC8FA',
+       backgroundColor:c=>{const{ctx,chartArea}=c.chart;if(!chartArea)return 'rgba(90,200,250,0.08)';const g=ctx.createLinearGradient(0,chartArea.top,0,chartArea.bottom);g.addColorStop(0,'rgba(90,200,250,0.28)');g.addColorStop(.55,'rgba(90,200,250,0.06)');g.addColorStop(1,'rgba(90,200,250,0)');return g;},
+       borderWidth:2,pointRadius:3,pointHoverRadius:5,tension:.35,fill:{target:'origin'},spanGaps:true,pointBackgroundColor:'#5AC8FA'},
       {label:'Ontem',data:ontemVals,borderColor:'rgba(150,150,170,0.6)',backgroundColor:'transparent',borderWidth:1.5,borderDash:[5,4],pointRadius:0,pointHoverRadius:4,tension:.35,fill:false,spanGaps:true},
     ]},
     options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
