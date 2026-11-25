@@ -1,6 +1,6 @@
 'use strict';
 const cron = require('node-cron');
-const { syncAll } = require('./sync');
+const { syncAll, syncPaginas } = require('./sync');
 const { detectarAlertas, detectarConjuntosSemGasto, detectarUtmOrfao } = require('./alertas');
 const { atualizarPlanilhaGestao } = require('./sheetsGestao');
 
@@ -55,6 +55,11 @@ function startScheduler() {
       .then(() => detectarUtmOrfao())
       .then(() => syncPlanilhaGestao())
       .catch(e => console.error('[scheduler] Sync cron falhou:', e.message));
+  });
+
+  // Tela Estrutura do bot lê adsets_ativos por página: antes só atualizava no botão manual.
+  cron.schedule('*/30 * * * *', () => {
+    syncPaginas().catch(e => console.error('[scheduler] syncPaginas falhou:', e.message));
   });
 
   // Every day at 06:00 BR — full backfill of yesterday's finalized data.

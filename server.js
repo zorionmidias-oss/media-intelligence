@@ -481,6 +481,12 @@ app.post('/api/admin/recalcular-imposto', requireAuth, async (req, res) => {
   res.json({ ok: true, message: `Recalculando ${(contas || []).length} conta(s)...` });
 });
 
+// ── Integração: tela Estrutura do bot (só leitura, chave compartilhada) ─────
+// Sem requireAuth de propósito: a proteção é a chave x-integracao-chave (o porteiro global
+// deixa passar requests sem cookie; a rota responde 401 sozinha).
+const { paginasAtivasHandler } = require('./src/lib/integracao');
+app.get('/api/integracao/paginas-ativas', paginasAtivasHandler());
+
 // ── Páginas Meta ─────────────────────────────────────────────────────────────
 app.get('/api/paginas', requireAuth, async (req, res) => {
   try {
